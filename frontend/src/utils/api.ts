@@ -162,7 +162,26 @@ export const api = {
       apiRequest(`/dashboards/${id}`, { 
         method: 'DELETE',
         requireAuth: true 
-      }, token)
+      }, token),
+    getMembers: (dashboardId: string, token: string) => 
+      apiRequest(`/dashboards/${dashboardId}/members`, { requireAuth: true }, token),
+    addMember: (dashboardId: string, memberData: any, token: string) => 
+      apiRequest(`/dashboards/${dashboardId}/members`, { 
+        method: 'POST', 
+        body: memberData,
+        requireAuth: true 
+      }, token),
+    removeMember: (dashboardId: string, memberId: string, token: string) => 
+      apiRequest(`/dashboards/${dashboardId}/members/${memberId}`, { 
+        method: 'DELETE',
+        requireAuth: true 
+      }, token),
+    inviteByTelegram: (dashboardId: string, telegramData: { telegram_id: number, role?: string }, token: string) => 
+      apiRequest(`/dashboards/${dashboardId}/invite-by-telegram`, { 
+        method: 'POST', 
+        body: telegramData,
+        requireAuth: true 
+      }, token),
   },
   
   // Users endpoints

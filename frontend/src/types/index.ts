@@ -6,6 +6,7 @@ export interface User {
   avatar: string | null;
   type?: 'guest' | 'telegram';
   token?: string;
+  telegram_id?: number;
 }
 
 // Project related types
@@ -46,9 +47,32 @@ export interface TelegramWebApp {
   };
 }
 
+// Dashboard related types
+export interface Dashboard {
+  id: string;
+  name: string;
+  description: string;
+  owner_id: string;
+  created_at: string;
+}
+
+export interface DashboardDetail extends Dashboard {
+  projects: Project[];
+}
+
+export interface DashboardMember {
+  id: string;
+  dashboard_id: string;
+  user_id: string;
+  role: 'viewer' | 'editor' | 'admin';
+  created_at: string;
+  is_active: boolean;
+  user?: User;
+}
+
 declare global {
   interface Window {
-    Telegram?: {
+    Telegram: {
       WebApp: TelegramWebApp;
     };
   }

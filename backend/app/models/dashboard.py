@@ -18,3 +18,4 @@ class Dashboard(Base):
     # Relationships
     owner = relationship("User", back_populates="dashboards")
     projects = relationship("Project", back_populates="dashboard", cascade="all, delete")
+    members = relationship("DashboardMember", backref="dashboard_members", cascade="all, delete")

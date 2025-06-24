@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { Project, ProjectStatus, User } from '../types';
+import type { Project, ProjectStatus, User, Dashboard, DashboardMember } from '../types';
 import { loadProjects, loadTeamMembers, saveProjects, saveTeamMembers, getDarkMode, saveDarkMode } from './storage';
 import { api } from './api';
 
@@ -23,6 +23,18 @@ interface AppContextType {
   addTeamMember: (name: string) => void;
   removeTeamMember: (name: string) => void;
   
+  // Dashboard state
+  dashboards: Dashboard[];
+  loadDashboards: () => Promise<Dashboard[]>;
+  getDashboard: (id: string) => Promise<any>;
+  createDashboard: (data: {name: string, description?: string}) => Promise<Dashboard>;
+  deleteDashboard: (id: string) => Promise<void>;
+  
+  // Dashboard members state
+  getDashboardMembers: (dashboardId: string) => Promise<DashboardMember[]>;
+  inviteUserByTelegramId: (dashboardId: string, telegramId: number, role?: string) => Promise<void>;
+  removeDashboardMember: (dashboardId: string, memberId: string) => Promise<void>;
+  
   // Theme state
   isDarkMode: boolean;
   toggleTheme: () => void;
@@ -37,6 +49,7 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
   const [projects, setProjects] = useState<Project[]>([]);
+  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [teamMembers, setTeamMembers] = useState<string[]>(['You', 'Vasya']);
   const [isDarkMode, setIsDarkMode] = useState(() => getDarkMode());
   
@@ -45,7 +58,13 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     const fetchData = async () => {
       if (currentUser && currentUser.token) {
         try {
-          // Try to load projects from backend first
+          // Загружаем данные о дашбордах
+          const dashboardsData = await api.dashboards.getAll(currentUser.token);
+          if (dashboardsData && Array.isArray(dashboardsData)) {
+            setDashboards(dashboardsData as Dashboard[]);
+          }
+          
+          // Загружаем проекты 
           const backendProjects = await api.projects.getAll(currentUser.token);
           if (backendProjects && Array.isArray(backendProjects)) {
             setProjects(backendProjects as Project[]);
@@ -307,6 +326,97 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     setIsDarkMode(prev => !prev);
   };
   
+    // Функции для работы с дашбордами
+  const loadDashboards = async () => {
+    if (!currentUser?.token) {
+      return [];
+    }
+    try {
+      const data = await api.dashboards.getAll(currentUser.token);
+      setDashboards(data as Dashboard[]);
+      return data as Dashboard[];
+    } catch (error) {
+      console.error('Error loading dashboards:', error);
+      return [];
+    }
+  };
+
+  const getDashboard = async (id: string) => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      return await api.dashboards.getOne(id, currentUser.token);
+    } catch (error) {
+      console.error(`Error getting dashboard ${id}:`, error);
+      throw error;
+    }
+  };
+
+  const createDashboard = async (data: {name: string, description?: string}) => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      const newDashboard = await api.dashboards.create(data, currentUser.token);
+      setDashboards([...dashboards, newDashboard as Dashboard]);
+      return newDashboard as Dashboard;
+    } catch (error) {
+      console.error('Error creating dashboard:', error);
+      throw error;
+    }
+  };
+
+  const deleteDashboard = async (id: string) => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      await api.dashboards.delete(id, currentUser.token);
+      setDashboards(dashboards.filter(d => d.id !== id));
+    } catch (error) {
+      console.error(`Error deleting dashboard ${id}:`, error);
+      throw error;
+    }
+  };
+
+  // Функции для работы с участниками дашборда
+  const getDashboardMembers = async (dashboardId: string) => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      return await api.dashboards.getMembers(dashboardId, currentUser.token) as DashboardMember[];
+    } catch (error) {
+      console.error(`Error getting members for dashboard ${dashboardId}:`, error);
+      throw error;
+    }
+  };
+
+  const inviteUserByTelegramId = async (dashboardId: string, telegramId: number, role: string = 'viewer') => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      await api.dashboards.inviteByTelegram(dashboardId, { telegram_id: telegramId, role }, currentUser.token);
+    } catch (error) {
+      console.error(`Error inviting user to dashboard ${dashboardId}:`, error);
+      throw error;
+    }
+  };
+
+  const removeDashboardMember = async (dashboardId: string, memberId: string) => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      await api.dashboards.removeMember(dashboardId, memberId, currentUser.token);
+    } catch (error) {
+      console.error(`Error removing member ${memberId} from dashboard ${dashboardId}:`, error);
+      throw error;
+    }
+  };
+
   const contextValue: AppContextType = {
     currentUser,
     setCurrentUser,
@@ -320,6 +430,14 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     teamMembers,
     addTeamMember, 
     removeTeamMember,
+    dashboards,
+    loadDashboards,
+    getDashboard,
+    createDashboard,
+    deleteDashboard,
+    getDashboardMembers,
+    inviteUserByTelegramId,
+    removeDashboardMember,
     isDarkMode,
     toggleTheme
   };

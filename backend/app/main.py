@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine
 from . import models
-from .routes import auth, users, projects, dashboards
+from .routes import auth, users, projects, dashboards, dashboard_members
 import uvicorn
 
 # Create database tables
@@ -39,6 +39,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(dashboards.router, prefix="/api/dashboards", tags=["dashboards"])
+app.include_router(dashboard_members.router, prefix="/api/dashboards", tags=["dashboard_members"])
 
 
 @app.get("/")

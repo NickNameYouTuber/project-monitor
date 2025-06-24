@@ -6,6 +6,7 @@ import ProjectBoard from './components/project/ProjectBoard'
 import ProjectModal from './components/modals/ProjectModal'
 import MemberModal from './components/modals/MemberModal'
 import { AppProvider, useAppContext } from './utils/AppContext'
+import AppRouter from './router/AppRouter'
 import './index.css'
 
 // Main Content component (requires authentication)
@@ -42,9 +43,17 @@ const MainContent: React.FC = () => {
 
 // App Root Component
 function App() {
+  // Setup Telegram Web App
+  useEffect(() => {
+    // Initialize Telegram Web App if it exists
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.ready();
+    }
+  }, []);
+
   return (
     <AppProvider>
-      <AppContent />
+      <AppRouter />
     </AppProvider>
   );
 }

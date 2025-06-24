@@ -5,10 +5,11 @@ import type { ProjectStatus, ProjectPriority } from '../../types';
 interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
+  dashboardId?: string;
 }
 
-const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose }) => {
-  const { addProject, teamMembers } = useAppContext();
+const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardId }) => {
+  const { addProject, teamMembers, currentUser } = useAppContext();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [assignee, setAssignee] = useState('Team');
@@ -30,14 +31,19 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    addProject({
+    if (!currentUser?.token) return;
+    
+    // Используем dashboardId, если он передан
+    const projectData = {
       name,
       description,
       assignee,
       priority,
-      status
-    });
+      status,
+      dashboard_id: dashboardId
+    };
     
+    addProject(projectData);
     onClose();
   };
 
