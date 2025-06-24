@@ -16,8 +16,8 @@ services:
     env_file:
       - ./frontend/.env
     environment:
-      - VITE_API_URL=http://localhost:7671/api
-      - NODE_ENV=development
+      - VITE_API_URL=https://projectsmonitor.nicorp.tech/api
+      - NODE_ENV=production
 
   backend:
     build: 
