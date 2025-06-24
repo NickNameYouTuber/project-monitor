@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: project-monitor-frontend
+    ports:
+      - "7670:7670"
+    depends_on:
+      - backend
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env
+    environment:
+      - VITE_API_URL=http://localhost:7671/api
+      - NODE_ENV=development
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: project-monitor-backend
+    ports:
+      - "7671:7671"
+    volumes:
+      - ./db-data:/data
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      - DATABASE_URL=/data/app.db
+      - HOST=0.0.0.0
+      - PORT=7671
+
+networks:
+  project-monitor-network:
+    driver: bridge

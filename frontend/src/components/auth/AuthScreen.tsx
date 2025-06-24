@@ -1,0 +1,231 @@
+import React, { useState } from 'react';
+import { useAppContext } from '../../utils/AppContext';
+import type { User } from '../../types';
+import TelegramLoginWidget from './TelegramLoginWidget';
+
+const AuthScreen: React.FC = () => {
+  const { login } = useAppContext();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // API URL - would come from env in production
+  const API_URL = 'http://localhost:7671/api';
+  
+  // Function to handle Telegram authentication using the Login Widget
+  const handleTelegramAuth = async (telegramUser: any) => {
+    setIsLoading(true);
+    try {
+      console.log('Received Telegram user data:', telegramUser);
+      
+      // Prepare auth data for backend using the data from Telegram Login Widget
+      const authData = {
+        telegram_id: telegramUser.id,
+        first_name: telegramUser.first_name,
+        last_name: telegramUser.last_name || '',
+        username: telegramUser.username || '',
+        photo_url: telegramUser.photo_url || '',
+        init_data: '', // Not used with Login Widget
+        auth_date: telegramUser.auth_date,
+        hash: telegramUser.hash
+      };
+      
+      console.log('Sending auth data to backend:', authData);
+      
+      // Send to backend with mode: 'cors' explicitly set
+      const response = await fetch(`${API_URL}/auth/telegram`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors', // Explicitly set CORS mode
+        body: JSON.stringify(authData)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Convert backend user data to frontend User format
+        const userData: User = {
+          id: data.user.id,
+          name: `${data.user.first_name} ${data.user.last_name || ''}`.trim(),
+          username: data.user.username,
+          avatar: data.user.avatar_url,
+          type: 'telegram',
+          token: data.access_token // Store the JWT token
+        };
+        login(userData);
+      } else {
+        // Handle non-OK responses
+        try {
+          const errorData = await response.json();
+          console.error('Telegram auth failed:', errorData);
+          alert(`Authentication failed: ${errorData.detail || 'Unknown error'}`);
+        } catch (e) {
+          console.error('Failed to parse error response:', e);
+          alert(`Authentication failed: Server returned ${response.status}`);
+        }
+      }
+    } catch (error) {
+      console.error('Telegram auth error:', error);
+      alert('Failed to authenticate with Telegram. Please try again or continue as guest.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Helper function for test login
+  const useTestLogin = async () => {
+    try {
+      const testAuthData = {
+        telegram_id: 123456789,
+        first_name: 'Test',
+        last_name: 'User',
+        username: 'testuser',
+        photo_url: null,
+        init_data: 'test_init_data',
+        auth_date: Math.floor(Date.now() / 1000),
+        hash: ''
+      };
+      
+      console.log('Using test login with data:', testAuthData);
+      
+      // Send to backend with mode: 'cors' explicitly set
+      const response = await fetch(`${API_URL}/auth/telegram`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors', // Explicitly set CORS mode
+        body: JSON.stringify(testAuthData)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Convert backend user data to frontend User format
+        const userData: User = {
+          id: data.user.id,
+          name: `${data.user.first_name} ${data.user.last_name || ''}`.trim(),
+          username: data.user.username,
+          avatar: data.user.avatar_url,
+          type: 'telegram',
+          token: data.access_token // Store the JWT token
+        };
+        login(userData);
+      } else {
+        try {
+          const errorData = await response.json();
+          console.error('Test auth failed:', errorData);
+          alert(`Authentication failed: ${errorData.detail || 'Unknown error'}`);
+        } catch (e) {
+          console.error('Failed to parse error response:', e);
+          alert(`Authentication failed: Server returned ${response.status}`);
+        }
+      }
+    } catch (error) {
+      console.error('Test login failed:', error);
+      alert('Test login failed. Please try guest login instead.');
+    }
+  };
+
+  // Function to handle guest authentication
+  const handleGuestAuth = async () => {
+    setIsLoading(true);
+    try {
+      console.log('Attempting guest login');
+      // Call the guest login endpoint
+      const response = await fetch(`${API_URL}/auth/guest`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors', // Explicitly set CORS mode
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Convert backend user data to frontend User format
+        const userData: User = {
+          id: data.user.id,
+          name: `${data.user.first_name} ${data.user.last_name || ''}`.trim(),
+          username: data.user.username,
+          avatar: data.user.avatar_url,
+          type: 'guest',
+          token: data.access_token // Store the JWT token
+        };
+        login(userData);
+      } else {
+        const errorData = await response.json();
+        console.error('Guest login failed:', errorData);
+        alert(`Guest login failed: ${errorData.detail || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Guest login error:', error);
+      alert('Failed to login as guest. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get bot name from environment variables
+  const BOT_NAME = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'ProjectMonitorBot';
+
+  return (
+    <div className="fixed inset-0 auth-container flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-tasks text-white text-2xl"></i>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Project Monitor</h1>
+          <p className="text-gray-600 dark:text-gray-300">Track your team projects and personal goals</p>
+        </div>
+        
+        <div className="space-y-6">
+          <div className="flex justify-center">
+            {/* Telegram Login Widget */}
+            <TelegramLoginWidget
+              botName={BOT_NAME}
+              dataOnauth={handleTelegramAuth}
+              buttonSize="large"
+              cornerRadius={10}
+              requestAccess={true}
+            />
+          </div>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">or</span>
+            </div>
+          </div>
+          
+          <button 
+            onClick={handleGuestAuth}
+            disabled={isLoading}
+            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white px-6 py-4 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+          >
+            Continue as Guest
+          </button>
+
+          {/* Test login button for development */}
+          <button 
+            onClick={useTestLogin}
+            disabled={isLoading}
+            className="w-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+          >
+            Test Login (Dev Only)
+          </button>
+        </div>
+        
+        {isLoading && (
+          <div className="text-center mt-6">
+            <div className="loading-spinner w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+            <p className="text-gray-600 dark:text-gray-300">Authenticating...</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AuthScreen;

@@ -1,0 +1,341 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import type { Project, ProjectStatus, User } from '../types';
+import { loadProjects, loadTeamMembers, saveProjects, saveTeamMembers, getDarkMode, saveDarkMode } from './storage';
+import { api } from './api';
+
+interface AppContextType {
+  // User state
+  currentUser: User | null;
+  setCurrentUser: (user: User | null) => void;
+  login: (user: User) => void;
+  logout: () => void;
+  
+  // Projects state
+  projects: Project[];
+  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'order'>) => void;
+  deleteProject: (id: string) => void;
+  moveProject: (projectId: string, newStatus: ProjectStatus) => void;
+  reorderProjects: (draggedId: string, targetId: string, position: 'above' | 'below') => void;
+  
+  // Team members state
+  teamMembers: string[];
+  addTeamMember: (name: string) => void;
+  removeTeamMember: (name: string) => void;
+  
+  // Theme state
+  isDarkMode: boolean;
+  toggleTheme: () => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+  // User state - load from local storage if available
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [teamMembers, setTeamMembers] = useState<string[]>(['You', 'Vasya']);
+  const [isDarkMode, setIsDarkMode] = useState(() => getDarkMode());
+  
+  // Load data when user changes
+  useEffect(() => {
+    const fetchData = async () => {
+      if (currentUser && currentUser.token) {
+        try {
+          // Try to load projects from backend first
+          const backendProjects = await api.projects.getAll(currentUser.token);
+          if (backendProjects && Array.isArray(backendProjects)) {
+            setProjects(backendProjects as Project[]);
+          } else {
+            // Fallback to local storage if API fails
+            const loadedProjects = loadProjects(currentUser.id);
+            setProjects(loadedProjects);
+          }
+          
+          // Try to get dashboard data (which includes team members)
+          // For now fallback to local storage for team members
+          const loadedTeamMembers = loadTeamMembers(currentUser.id);
+          setTeamMembers(loadedTeamMembers);
+        } catch (error) {
+          console.error('Error loading data from API:', error);
+          // Fallback to local storage
+          const loadedProjects = loadProjects(currentUser.id);
+          const loadedTeamMembers = loadTeamMembers(currentUser.id);
+          
+          setProjects(loadedProjects);
+          setTeamMembers(loadedTeamMembers);
+        }
+      }
+    };
+    
+    fetchData();
+  }, [currentUser]);
+  
+  // Dark mode effect
+  useEffect(() => {
+    const html = document.documentElement;
+    
+    if (isDarkMode) {
+      html.classList.add('dark');
+    } else {
+      html.classList.remove('dark');
+    }
+    
+    saveDarkMode(isDarkMode);
+  }, [isDarkMode]);
+  
+  // Login function
+  const login = (user: User) => {
+    setCurrentUser(user);
+    // Save user data to local storage for session persistence
+    localStorage.setItem('currentUser', JSON.stringify(user));
+  };
+  
+  // Logout function
+  const logout = () => {
+    // Clear user data
+    setCurrentUser(null);
+    setProjects([]);
+    setTeamMembers(['You', 'Vasya']);
+    
+    // Clear local storage
+    localStorage.removeItem('currentUser');
+    
+    // Force page reload to clear any state
+    window.location.reload();
+  };
+  
+  // Add new project
+  const addProject = async (projectData: Omit<Project, 'id' | 'createdAt' | 'order'>) => {
+    try {
+      if (currentUser && currentUser.token) {
+        // Create project via API
+        const apiProject = {
+          name: projectData.name,
+          description: projectData.description,
+          priority: projectData.priority,
+          status: projectData.status,
+          assignee: projectData.assignee
+        };
+        
+        const newProject = await api.projects.create(apiProject, currentUser.token);
+        setProjects([...projects, newProject as Project]);
+      } else {
+        // Fallback to local storage
+        const uuid = crypto.randomUUID();
+        const newProject: Project = {
+          ...projectData,
+          id: uuid,
+          order: projects.filter(p => p.status === projectData.status).length,
+          createdAt: new Date().toISOString()
+        };
+        
+        const newProjects = [...projects, newProject];
+        setProjects(newProjects);
+        
+        if (currentUser) {
+          saveProjects(currentUser.id, newProjects);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+      alert('Failed to create project. Please try again.');
+    }
+  };
+  
+  // Delete project
+  const deleteProject = async (id: string) => {
+    try {
+      if (currentUser && currentUser.token) {
+        // Delete project via API
+        await api.projects.delete(id, currentUser.token);
+        const newProjects = projects.filter(project => project.id !== id);
+        setProjects(newProjects);
+      } else {
+        // Fallback to local storage
+        const newProjects = projects.filter(project => project.id !== id);
+        setProjects(newProjects);
+        
+        if (currentUser) {
+          saveProjects(currentUser.id, newProjects);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      alert('Failed to delete project. Please try again.');
+    }
+  };
+  
+  // Move project to new status
+  const moveProject = async (projectId: string, newStatus: ProjectStatus) => {
+    try {
+      // Find the project to update
+      const projectToUpdate = projects.find(p => p.id === projectId);
+      if (!projectToUpdate) return;
+      
+      // Create updated projects array locally first for responsive UI
+      const newProjects = projects.map(project => 
+        project.id === projectId 
+          ? { ...project, status: newStatus, order: projects.filter(p => p.status === newStatus).length }
+          : project
+      );
+      
+      setProjects(newProjects);
+      
+      if (currentUser && currentUser.token) {
+        // Update project via API
+        await api.projects.updateStatus(
+          projectId, 
+          newStatus,
+          currentUser.token
+        );
+      } else if (currentUser) {
+        // Fallback to local storage
+        saveProjects(currentUser.id, newProjects);
+      }
+    } catch (error) {
+      console.error('Error updating project status:', error);
+      // Rollback the change if API call fails
+      const loadedProjects = currentUser?.token ? 
+        await api.projects.getAll(currentUser.token) : 
+        loadProjects(currentUser?.id || '');
+      setProjects(loadedProjects as Project[]);
+      alert('Failed to update project status. Please try again.');
+    }
+  };
+  
+  // Reorder projects (for drag and drop)
+  const reorderProjects = async (draggedId: string, targetId: string, position: 'above' | 'below') => {
+    try {
+      const draggedProject = projects.find(p => p.id === draggedId);
+      const targetProject = projects.find(p => p.id === targetId);
+      
+      if (!draggedProject || !targetProject) return;
+      
+      // If moving to a different status
+      const statusChanged = draggedProject.status !== targetProject.status;
+      if (statusChanged) {
+        draggedProject.status = targetProject.status;
+      }
+      
+      // Reorder projects within status group
+      const statusProjects = projects
+        .filter(p => p.status === targetProject.status && p.id !== draggedId)
+        .sort((a, b) => a.order - b.order);
+      
+      const targetIndex = statusProjects.findIndex(p => p.id === targetId);
+      let insertIndex = position === 'above' ? targetIndex : targetIndex + 1;
+      
+      // Insert dragged project at new position
+      statusProjects.splice(insertIndex, 0, draggedProject);
+      
+      // Update orders for all projects in this status
+      statusProjects.forEach((project, index) => {
+        project.order = index;
+      });
+      
+      // Combine with projects in other statuses
+      const otherProjects = projects.filter(p => p.status !== targetProject.status || p.id === draggedId);
+      const newProjects = [...statusProjects, ...otherProjects];
+      
+      setProjects(newProjects);
+      
+      if (currentUser && currentUser.token) {
+        // Use API to update project order and status if needed
+        if (statusChanged) {
+          await api.projects.updateStatus(
+            draggedId,
+            targetProject.status,
+            currentUser.token
+          );
+        }
+        
+        // Send reorder data to API
+        const reorderData = {
+          projectId: draggedId,
+          targetProjectId: targetId,
+          position: position
+        };
+        await api.projects.reorder(reorderData, currentUser.token);
+      } else if (currentUser) {
+        // Fallback to local storage
+        saveProjects(currentUser.id, newProjects);
+      }
+    } catch (error) {
+      console.error('Error reordering projects:', error);
+      // Reload projects to restore correct order
+      if (currentUser?.token) {
+        const backendProjects = await api.projects.getAll(currentUser.token);
+        setProjects(backendProjects as Project[]);
+      } else if (currentUser) {
+        const loadedProjects = loadProjects(currentUser.id);
+        setProjects(loadedProjects);
+      }
+      alert('Failed to reorder projects. Please try again.');
+    }
+  };
+  
+  // Add team member
+  const addTeamMember = (name: string) => {
+    if (name && !teamMembers.includes(name)) {
+      const newTeamMembers = [...teamMembers, name];
+      setTeamMembers(newTeamMembers);
+      
+      if (currentUser) {
+        saveTeamMembers(currentUser.id, newTeamMembers);
+      }
+    }
+  };
+  
+  // Remove team member
+  const removeTeamMember = (name: string) => {
+    if (name !== 'You') { // Don't allow removing yourself
+      const newTeamMembers = teamMembers.filter(member => member !== name);
+      setTeamMembers(newTeamMembers);
+      
+      if (currentUser) {
+        saveTeamMembers(currentUser.id, newTeamMembers);
+      }
+    }
+  };
+  
+  // Toggle dark/light theme
+  const toggleTheme = () => {
+    setIsDarkMode(prev => !prev);
+  };
+  
+  const contextValue: AppContextType = {
+    currentUser,
+    setCurrentUser,
+    login,
+    logout,
+    projects,
+    addProject,
+    deleteProject,
+    moveProject,
+    reorderProjects,
+    teamMembers,
+    addTeamMember, 
+    removeTeamMember,
+    isDarkMode,
+    toggleTheme
+  };
+  
+  return (
+    <AppContext.Provider value={contextValue}>
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+// Custom hook to use the app context
+export const useAppContext = () => {
+  const context = useContext(AppContext);
+  if (context === undefined) {
+    throw new Error('useAppContext must be used within an AppProvider');
+  }
+  return context;
+};
