@@ -3,7 +3,7 @@
  */
 
 // API base URL - should come from environment variables in production
-const API_URL = 'http://localhost:7671/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://projectsmonitor.nicorp.tech/api';
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
