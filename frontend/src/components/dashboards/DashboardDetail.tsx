@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../utils/AppContext';
 import { api } from '../../utils/api';
-import type { DashboardDetail as DashboardDetailType, DashboardMember, Project } from '../../types';
+import type { DashboardDetail as DashboardDetailType, DashboardMember } from '../../types';
 import ProjectBoard from '../project/ProjectBoard';
 import ProjectModal from '../modals/ProjectModal';
 
@@ -58,10 +58,14 @@ const DashboardDetail: React.FC = () => {
       // Фильтруем проекты, принадлежащие текущему дашборду
       const dashboardProjects = projects.filter(p => p.dashboard_id === dashboardId);
       
-      if (JSON.stringify(dashboardProjects) !== JSON.stringify(dashboard.projects)) {
+      // Используем ID проектов для сравнения вместо полных объектов
+      const currentIds = dashboard.projects.map(p => p.id).sort().join(',');
+      const newIds = dashboardProjects.map(p => p.id).sort().join(',');
+      
+      if (currentIds !== newIds) {
         setDashboard(prev => prev ? {
           ...prev,
-          projects: dashboardProjects
+          projects: [...dashboardProjects] // Создаем новый массив для избежания ссылочных проблем
         } : null);
       }
     }
@@ -77,15 +81,9 @@ const DashboardDetail: React.FC = () => {
     setMemberRole('viewer');
   };
   
-  // Обработчик изменения проектов
-  const handleProjectsChange = (updatedProjects: Project[]) => {
-    if (dashboard) {
-      setDashboard({
-        ...dashboard,
-        projects: updatedProjects
-      });
-    }
-  };
+  // Больше не используем отдельный обработчик изменения проектов
+  // Всё управление состоянием проектов происходит через AppContext
+  // и синхронизируется через useEffect выше
 
   // Функция для приглашения пользователя по Telegram ID
   const handleInviteByTelegram = async () => {
@@ -328,7 +326,6 @@ const DashboardDetail: React.FC = () => {
             {dashboard.projects.length > 0 ? (
               <ProjectBoard 
                 projects={dashboard.projects} 
-                onProjectsChange={handleProjectsChange} 
               />
             ) : (
               <div className="px-4 py-8 bg-white dark:bg-gray-800 rounded-lg shadow">
