@@ -8,7 +8,7 @@ import ProjectModal from '../modals/ProjectModal';
 
 const DashboardDetail: React.FC = () => {
   const { dashboardId } = useParams<{ dashboardId: string }>();
-  const { currentUser } = useAppContext();
+  const { currentUser, projects } = useAppContext();
   const navigate = useNavigate();
   
   // Состояние дашборда и его участников
@@ -51,6 +51,21 @@ const DashboardDetail: React.FC = () => {
     
     fetchDashboardData();
   }, [currentUser, dashboardId]);
+  
+  // Синхронизируем проекты из глобального состояния с состоянием дашборда
+  useEffect(() => {
+    if (dashboard && dashboardId) {
+      // Фильтруем проекты, принадлежащие текущему дашборду
+      const dashboardProjects = projects.filter(p => p.dashboard_id === dashboardId);
+      
+      if (JSON.stringify(dashboardProjects) !== JSON.stringify(dashboard.projects)) {
+        setDashboard(prev => prev ? {
+          ...prev,
+          projects: dashboardProjects
+        } : null);
+      }
+    }
+  }, [projects, dashboard, dashboardId]);
 
   // Обработчики для модальных окон
   const openProjectModal = () => setProjectModalOpen(true);
@@ -60,6 +75,16 @@ const DashboardDetail: React.FC = () => {
     setInviteByTelegramModalOpen(false);
     setTelegramId('');
     setMemberRole('viewer');
+  };
+  
+  // Обработчик изменения проектов
+  const handleProjectsChange = (updatedProjects: Project[]) => {
+    if (dashboard) {
+      setDashboard({
+        ...dashboard,
+        projects: updatedProjects
+      });
+    }
   };
 
   // Функция для приглашения пользователя по Telegram ID
@@ -87,16 +112,6 @@ const DashboardDetail: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to invite user by Telegram ID:', err);
       setError(err.message || 'Failed to invite user. Please check the Telegram ID and try again.');
-    }
-  };
-
-  // Функция для обработки изменений проектов
-  const handleProjectsChange = (updatedProjects: Project[]) => {
-    if (dashboard) {
-      setDashboard({
-        ...dashboard,
-        projects: updatedProjects
-      });
     }
   };
 

@@ -8,9 +8,16 @@ interface ProjectBoardProps {
   onProjectsChange?: (updatedProjects: Project[]) => void;
 }
 
-const ProjectBoard: React.FC<ProjectBoardProps> = ({ projects }) => {
+const ProjectBoard: React.FC<ProjectBoardProps> = ({ projects, onProjectsChange }) => {
   const { moveProject, reorderProjects } = useAppContext();
   const [draggedProject, setDraggedProject] = useState<Project | null>(null);
+  
+  // Local update function to keep parent component in sync
+  const updateProjects = (updatedProjects: Project[]) => {
+    if (onProjectsChange) {
+      onProjectsChange(updatedProjects);
+    }
+  };
 
   // Handle drag start
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, project: Project) => {
@@ -59,6 +66,17 @@ const ProjectBoard: React.FC<ProjectBoardProps> = ({ projects }) => {
       
       // Reorder the projects
       if (targetId !== draggedProject.id) {
+        // Calculate new positions locally to update UI immediately
+        const targetProject = projects.find(p => p.id === targetId);
+        if (targetProject && draggedProject.status !== targetProject.status) {
+          // Status change - update locally first
+          const updatedProjects = projects.map(p => 
+            p.id === draggedProject.id ? { ...p, status: targetProject.status } : p
+          );
+          updateProjects(updatedProjects);
+        }
+        
+        // Call API to persist changes
         reorderProjects(draggedProject.id, targetId, position);
       }
     }
@@ -73,6 +91,13 @@ const ProjectBoard: React.FC<ProjectBoardProps> = ({ projects }) => {
     const projectId = e.dataTransfer.getData('text/plain');
     
     if (projectId && draggedProject && draggedProject.status !== status) {
+      // Update locally first for immediate UI feedback
+      const updatedProjects = projects.map(p => 
+        p.id === projectId ? { ...p, status } : p
+      );
+      updateProjects(updatedProjects);
+      
+      // Call API to persist changes
       moveProject(projectId, status);
     }
     
@@ -104,7 +129,7 @@ const ProjectBoard: React.FC<ProjectBoardProps> = ({ projects }) => {
       />
       
       <ProjectColumn
-        title="On Pause"
+        title="On Testing"
         status="onPause"
         projects={projects}
         colorClass="bg-orange-500"

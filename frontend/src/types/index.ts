@@ -22,6 +22,7 @@ export interface Project {
   status: ProjectStatus;
   order: number;
   createdAt: string;
+  dashboard_id?: string; // Add dashboard_id field
 }
 
 // Drag & Drop types

@@ -53,7 +53,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDragStart, onDragO
             {project.assignee}
           </span>
         </div>
-        <span className="text-xs text-gray-400 dark:text-gray-500">#{project.id}</span>
       </div>
     </div>
   );
