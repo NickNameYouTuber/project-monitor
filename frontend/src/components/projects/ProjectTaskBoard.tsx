@@ -34,12 +34,12 @@ const ProjectTaskBoard: React.FC = () => {
             <i className="fas fa-arrow-left mr-2"></i>
             Back to Dashboard
           </Link>
-          <h1 className="text-2xl font-bold text-gray-800">{currentProject?.name || 'Loading...'}</h1>
-          <p className="text-gray-600">{currentProject?.description}</p>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">{currentProject?.name || 'Loading...'}</h1>
+          <p className="text-gray-600 text-gray-800 dark:text-gray-200">{currentProject?.description}</p>
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg shadow h-[calc(100vh-220px)] overflow-hidden">
+      <div className="rounded-lg shadow h-[calc(100vh-220px)] overflow-hidden">
         {projectId && (
           <TaskBoardProvider projectId={projectId}>
             <TaskBoard projectId={projectId} />
