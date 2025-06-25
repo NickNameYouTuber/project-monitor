@@ -190,7 +190,7 @@ const AuthScreen: React.FC = () => {
             />
           </div>
           
-          <div className="relative">
+          {/* <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
             </div>
@@ -205,16 +205,16 @@ const AuthScreen: React.FC = () => {
             className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white px-6 py-4 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition"
           >
             Continue as Guest
-          </button>
+          </button> */}
 
           {/* Test login button for development */}
-          <button 
+          {/* <button 
             onClick={useTestLogin}
             disabled={isLoading}
             className="w-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-300 dark:hover:bg-gray-500 transition"
           >
             Test Login (Dev Only)
-          </button>
+          </button> */}
         </div>
         
         {isLoading && (

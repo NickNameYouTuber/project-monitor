@@ -58,9 +58,10 @@ const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
           {/* Theme Toggle Button */}
           <button 
             onClick={toggleTheme}
-            className="theme-toggle w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            className="theme-toggle w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-white transition-colors"
+            aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
           >
-            <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+            <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-xl`}></i>
           </button>
           
           {/* User Panel */}

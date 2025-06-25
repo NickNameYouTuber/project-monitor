@@ -27,7 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <nav className="ml-6 flex space-x-4">
                 <button 
                   onClick={() => navigate('/dashboards')}
-                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Dashboards
                 </button>
