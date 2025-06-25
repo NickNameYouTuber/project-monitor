@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { DragDropContext } from 'react-beautiful-dnd';
-import type { DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable } from 'react-beautiful-dnd';
+import type { DropResult, DroppableProvided } from 'react-beautiful-dnd';
 import { TaskBoardProvider, useTaskBoard } from '../../context/TaskBoardContext';
 import TaskColumn from './TaskColumn';
 import TaskDetail from './TaskDetail';
@@ -99,17 +99,26 @@ const TaskBoard = ({ }: TaskBoardProps) => {
       </div>
       
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="task-board-content flex overflow-x-auto pb-4 h-full">
-          {columns
-            .sort((a, b) => a.order - b.order)
-            .map(column => (
-              <TaskColumn 
-                key={column.id} 
-                column={column} 
-                tasks={tasks.filter(task => task.column_id === column.id).sort((a, b) => a.order - b.order)} 
-              />
-            ))}
-        </div>
+        <Droppable droppableId="board-columns" direction="horizontal" type="column">
+          {(provided: DroppableProvided) => (
+            <div 
+              className="task-board-content flex overflow-x-auto pb-4 h-full"
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
+              {columns
+                .sort((a, b) => a.order - b.order)
+                .map(column => (
+                  <TaskColumn 
+                    key={column.id} 
+                    column={column} 
+                    tasks={tasks.filter(task => task.column_id === column.id).sort((a, b) => a.order - b.order)} 
+                  />
+                ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
       </DragDropContext>
 
       {/* Форма добавления колонки */}
