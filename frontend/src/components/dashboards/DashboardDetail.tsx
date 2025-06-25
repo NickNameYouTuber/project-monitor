@@ -400,7 +400,8 @@ const DashboardDetail: React.FC = () => {
       <ProjectModal 
         isOpen={isProjectModalOpen} 
         onClose={closeProjectModal} 
-        dashboardId={dashboardId} 
+        dashboardId={dashboardId}
+        dashboardMembers={members}
       />
       
       {/* Модальное окно для приглашения по Telegram ID */}

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../utils/AppContext';
-import type { ProjectStatus, ProjectPriority } from '../../types';
+import type { ProjectStatus, ProjectPriority, DashboardMember } from '../../types';
 
 interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   dashboardId?: string;
+  dashboardMembers?: DashboardMember[];
 }
 
-const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardId }) => {
-  const { addProject, teamMembers, currentUser } = useAppContext();
+const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardId, dashboardMembers = [] }) => {
+  const { addProject, currentUser } = useAppContext();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [assignee, setAssignee] = useState('Team');
@@ -92,9 +93,16 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
                 onChange={(e) => setAssignee(e.target.value)}
                 className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="Team">Team Project</option>
-                {teamMembers.map(member => (
-                  <option key={member} value={member}>{member}</option>
+                <option value="Team">Team</option>
+                {currentUser?.username && (
+                  <option value={currentUser.username}>You</option>
+                )}
+                {dashboardMembers.map(member => (
+                  member.user && member.user.username !== currentUser?.username && (
+                    <option key={member.user.username} value={member.user.username}>
+                      {member.user.username}
+                    </option>
+                  )
                 ))}
               </select>
             </div>
