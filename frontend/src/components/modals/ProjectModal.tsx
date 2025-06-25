@@ -61,38 +61,38 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 sm:p-0"
+      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center p-4 sm:p-0"
       onClick={handleBackdropClick}
     >
       <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden w-full">
-          <div className="px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white">Add New Project</h3>
+        <div className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
+          <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
+            <h3 className="text-lg sm:text-xl font-semibold text-text-primary">Add New Project</h3>
             <CloseButton onClick={onClose} />
           </div>
           <div className="p-4 sm:p-6">
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Project Name</label>
+              <label className="block text-text-secondary text-sm font-bold mb-2">Project Name</label>
               <input 
                 type="text" 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-input text-text-primary" 
                 required
               />
             </div>
             <div className="mb-4">
-              <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Description</label>
+              <label className="block text-text-secondary text-sm font-bold mb-2">Description</label>
               <textarea 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-24" 
+                className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-input text-text-primary h-24" 
                 required
               />
             </div>
             <div className="mb-4">
-              <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Assigned To</label>
+              <label className="block text-text-secondary text-sm font-bold mb-2">Assigned To</label>
               <select 
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
@@ -112,7 +112,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
               </select>
             </div>
             <div className="mb-4">
-              <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Priority</label>
+              <label className="block text-text-secondary text-sm font-bold mb-2">Priority</label>
               <select 
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as ProjectPriority)}
@@ -124,7 +124,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
               </select>
             </div>
             <div className="mb-4">
-              <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Status</label>
+              <label className="block text-text-secondary text-sm font-bold mb-2">Status</label>
               <select 
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ProjectStatus)}
@@ -140,13 +140,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
               <button 
                 type="button" 
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-white transition w-full sm:w-auto"
+                className="px-4 py-2 rounded-lg bg-bg-secondary text-text-secondary hover:bg-bg-hover transition w-full sm:w-auto"
               >
                 Cancel
               </button>
               <button 
                 type="submit" 
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition w-full sm:w-auto mb-2 sm:mb-0"
+                className="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg transition w-full sm:w-auto mb-2 sm:mb-0"
               >
                 Add Project
               </button>

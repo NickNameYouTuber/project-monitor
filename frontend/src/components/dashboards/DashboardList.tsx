@@ -72,15 +72,15 @@ const DashboardList: React.FC = () => {
       
       {/* Error message */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 my-4">
+        <div className="bg-state-error-light border-l-4 border-state-error p-4 my-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-5 w-5 text-state-error" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-state-error">{error}</p>
             </div>
           </div>
         </div>
@@ -89,7 +89,7 @@ const DashboardList: React.FC = () => {
       {/* Loading state */}
       {isLoading ? (
         <div className="flex justify-center py-10">
-          <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
@@ -123,7 +123,7 @@ const DashboardList: React.FC = () => {
       {/* Create dashboard modal */}
       {showCreateModal && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+          className="fixed inset-0 bg-overlay z-50 flex items-center justify-center"
           onClick={(e) => {
             // Закрытие при клике вне модального окна
             if (e.target === e.currentTarget) setShowCreateModal(false);

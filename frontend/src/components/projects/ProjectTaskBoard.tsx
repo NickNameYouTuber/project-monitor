@@ -18,7 +18,7 @@ const ProjectTaskBoard: React.FC = () => {
   if (!currentProject) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-gray-500">Loading project...</div>
+        <div className="text-text-secondary">Loading project...</div>
       </div>
     );
   }
@@ -29,13 +29,13 @@ const ProjectTaskBoard: React.FC = () => {
         <div>
           <Link
             to={`/dashboards/${currentProject?.dashboard_id || ''}`}
-            className="text-blue-500 hover:text-blue-600 flex items-center mb-2"
+            className="text-primary hover:text-primary-hover flex items-center mb-2"
           >
             <i className="fas fa-arrow-left mr-2"></i>
             Back to Dashboard
           </Link>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">{currentProject?.name || 'Loading...'}</h1>
-          <p className="text-gray-600 text-gray-800 dark:text-gray-200">{currentProject?.description}</p>
+          <h1 className="text-2xl font-bold text-text-primary">{currentProject?.name || 'Loading...'}</h1>
+          <p className="text-text-secondary">{currentProject?.description}</p>
         </div>
       </div>
 
