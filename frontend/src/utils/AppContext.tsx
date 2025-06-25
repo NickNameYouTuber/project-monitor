@@ -101,18 +101,8 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     fetchData();
   }, [currentUser]);
   
-  // Dark mode effect
-  useEffect(() => {
-    const html = document.documentElement;
-    
-    if (isDarkMode) {
-      html.classList.add('dark');
-    } else {
-      html.classList.remove('dark');
-    }
-    
-    saveDarkMode(isDarkMode);
-  }, [isDarkMode]);
+  // ПРИМЕЧАНИЕ: управление темной темой и сохранение настроек теперь происходит 
+  // автоматически в next-themes, этот эффект больше не нужен
   
   // Login function
   const login = (user: User) => {
