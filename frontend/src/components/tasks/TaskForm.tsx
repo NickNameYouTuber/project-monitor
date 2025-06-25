@@ -143,10 +143,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 sm:p-0">
+    <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center p-4 sm:p-0">
       <div className="w-full max-w-md mx-auto">
-        <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden w-full max-h-[90vh] overflow-y-auto">
-          <div className="px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full max-h-[90vh] overflow-y-auto">
+          <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
             <h3 className="text-lg sm:text-xl font-semibold text-text-primary">
               {mode === 'create' ? 'Create New Task' : 'Edit Task'}
             </h3>
@@ -169,86 +169,105 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
 
             <form ref={formRef} onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                <label className="block text-text-secondary text-sm font-bold mb-2">
                   Title *
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
                   placeholder="Enter task title"
                   autoFocus
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                <label className="block text-text-secondary text-sm font-bold mb-2">
                   Description
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
                   placeholder="Enter task description"
                   rows={4}
                 ></textarea>
               </div>
 
               <div className="mb-6">
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                <label className="block text-text-secondary text-sm font-bold mb-2">
                   Assignees
                 </label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary mb-2"
                   placeholder="Search users..."
+                  className="w-full px-3 py-2 mb-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
                 />
                 
-                <div className="max-h-40 overflow-y-auto border border-border-primary rounded-lg bg-bg-secondary">
-                  {filteredUsers.map(user => (
-                    <div
-                      key={user.id}
-                      onClick={() => toggleAssignee(user.id)}
-                      className={`px-3 py-2 cursor-pointer flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors ${
-                        selectedAssignees.includes(user.id) 
-                          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700' 
-                          : ''
-                      } ${user.isProjectMember ? 'font-medium' : ''}`}
-                    >
-                      <span className="text-gray-800 dark:text-white">{user.username}</span>
-                      {user.isProjectMember && <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">(Project Member)</span>}
-                      {selectedAssignees.includes(user.id) && (
-                        <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                  ))}
-                  {filteredUsers.length === 0 && (
-                    <div className="px-3 py-2 text-gray-500 dark:text-gray-400 text-center">
+                <div className="max-h-48 overflow-y-auto border border-border-primary rounded-lg">
+                  {filteredUsers.length === 0 ? (
+                    <div className="p-3 text-center text-text-muted">
                       No users found
                     </div>
+                  ) : (
+                    filteredUsers.map(user => (
+                      <div
+                        key={user.id}
+                        className={`flex items-center px-3 py-2 hover:bg-primary/10 cursor-pointer ${user.isProjectMember ? 'bg-primary/10' : ''}`}
+                        onClick={() => toggleAssignee(user.id)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedAssignees.includes(user.id)}
+                          onChange={() => toggleAssignee(user.id)}
+                          className="mr-3"
+                        />
+                        <div className="flex items-center">
+                          <span className={`w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white mr-2`}>
+                            {user.username.charAt(0).toUpperCase()}
+                          </span>
+                          <div>
+                            <div className="text-sm font-medium text-text-primary">{user.username}</div>
+                            {user.isProjectMember && (
+                              <div className="text-xs text-text-muted">
+                                Project member
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3">
-                <button 
-                  type="button" 
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-2 space-y-reverse sm:space-y-0 sm:space-x-3 mt-6">
+                <button
+                  type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors duration-200"
+                  className="px-4 py-2 rounded-lg bg-bg-secondary text-text-secondary hover:bg-bg-hover transition w-full sm:w-auto"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isLoading}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 disabled:opacity-50"
+                  className="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg transition w-full sm:w-auto mb-2 sm:mb-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  {isLoading ? 'Saving...' : (mode === 'create' ? 'Create Task' : 'Update Task')}
+                  {isLoading ? (
+                    <>
+                      <svg className="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {mode === 'create' ? 'Creating...' : 'Updating...'}
+                    </>
+                  ) : (
+                    mode === 'create' ? 'Create Task' : 'Update Task'
+                  )}
                 </button>
               </div>
             </form>

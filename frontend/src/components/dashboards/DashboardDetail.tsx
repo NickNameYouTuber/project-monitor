@@ -449,17 +449,17 @@ const DashboardDetail: React.FC = () => {
       {/* Модальное окно для приглашения по имени пользователя */}
       {isInviteByTelegramModalOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 sm:p-0"
+          className="fixed inset-0 bg-overlay z-50 flex items-center justify-center p-4 sm:p-0"
           onClick={(e) => {
             // Закрытие при клике вне модального окна
             if (e.target === e.currentTarget) closeInviteByTelegramModal();
           }}
         >
           <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden w-full">
+            <div className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
               {/* Заголовок с кнопкой закрытия для мобильных */}
-              <div className="px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white">Invite User</h3>
+              <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
+                <h3 className="text-lg sm:text-xl font-semibold text-text-primary">Invite User</h3>
                 <CloseButton onClick={closeInviteByTelegramModal} />
               </div>
               
@@ -467,39 +467,39 @@ const DashboardDetail: React.FC = () => {
               <div className="p-4 sm:p-6">
                 {/* Поиск пользователя */}
                 <div className="mb-4">
-                  <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Search by Username</label>
+                  <label className="block text-text-secondary text-sm font-bold mb-2">Search by Username</label>
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     <input 
                       type="text" 
                       value={usernameSearch}
                       onChange={(e) => setUsernameSearch(e.target.value)}
                       placeholder="Enter username"
-                      className="w-full sm:flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                      className="w-full sm:flex-1 px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary" 
                     />
                     <button 
                       onClick={handleSearchUsers} 
                       disabled={!usernameSearch.trim() || isSearching}
-                      className={`w-full sm:w-auto px-4 py-2 rounded-lg ${!usernameSearch.trim() || isSearching ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 transition-colors'} text-white`}
+                      className={`w-full sm:w-auto px-4 py-2 rounded-lg ${!usernameSearch.trim() || isSearching ? 'bg-bg-disabled cursor-not-allowed text-text-muted' : 'bg-primary hover:bg-primary-hover transition-colors text-white'}`}
                     >
                       {isSearching ? 'Searching...' : 'Search'}
                     </button>
                   </div>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-sm text-text-muted">
                     User must have logged in to the app with Telegram at least once
                   </p>
                 </div>
 
                 {/* Результаты поиска */}
                 {searchResults.length > 0 && (
-                  <div className="mb-4 max-h-40 overflow-y-auto border dark:border-gray-600 rounded-lg">
+                  <div className="mb-4 max-h-40 overflow-y-auto border border-border-primary rounded-lg">
                     {searchResults.map(user => (
                       <div 
                         key={user.id} 
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex flex-col sm:flex-row sm:justify-between sm:items-center border-b last:border-b-0 dark:border-gray-600"
+                        className="p-2 hover:bg-primary/10 cursor-pointer flex flex-col sm:flex-row sm:justify-between sm:items-center border-b last:border-b-0 border-border-primary"
                         onClick={() => selectUser(user)}
                       >
-                        <span className="text-gray-800 dark:text-gray-200 font-medium">{user.username}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 sm:mt-0">ID: {user.telegram_id}</span>
+                        <span className="text-text-primary font-medium">{user.username}</span>
+                        <span className="text-xs text-text-muted mt-1 sm:mt-0">ID: {user.telegram_id}</span>
                       </div>
                     ))}
                   </div>
@@ -509,19 +509,19 @@ const DashboardDetail: React.FC = () => {
               {/* Выбранный пользователь */}
               {selectedUser && (
                 <div className="p-4 sm:p-6 pt-0">
-                  <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                    <p className="text-gray-800 dark:text-white font-medium">Selected user: {selectedUser.username}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Telegram ID: {selectedUser.telegram_id}</p>
+                  <div className="mb-4 p-3 bg-bg-secondary rounded-lg border border-border-primary">
+                    <p className="text-text-primary font-medium">Selected user: {selectedUser.username}</p>
+                    <p className="text-sm text-text-muted">Telegram ID: {selectedUser.telegram_id}</p>
                   </div>
 
                   {/* Скрытое поле для Telegram ID */}
                   <input type="hidden" value={telegramId} />
                   <div className="mb-4">
-                    <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Role</label>
+                    <label className="block text-text-secondary text-sm font-bold mb-2">Role</label>
                     <select 
                       value={memberRole}
                       onChange={(e) => setMemberRole(e.target.value as any)}
-                      className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
                     >
                       <option value="viewer">Viewer</option>
                       <option value="editor">Editor</option>
@@ -533,14 +533,14 @@ const DashboardDetail: React.FC = () => {
                     <button 
                       type="button" 
                       onClick={closeInviteByTelegramModal}
-                      className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-white transition w-full sm:w-auto"
+                      className="px-4 py-2 rounded-lg bg-bg-secondary text-text-secondary hover:bg-bg-hover transition w-full sm:w-auto"
                     >
                       Cancel
                     </button>
                     <button 
                       onClick={handleInviteByTelegram}
                       disabled={!telegramId.trim() || !selectedUser}
-                      className={`bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition w-full sm:w-auto ${
+                      className={`bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg transition w-full sm:w-auto mb-2 sm:mb-0 ${
                         !telegramId.trim() || !selectedUser ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >

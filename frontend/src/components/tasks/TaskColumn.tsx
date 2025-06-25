@@ -110,10 +110,10 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
           </Droppable>
 
           {/* Кнопка добавления задачи */}
-          <div className="p-3 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
+          <div className="p-3 border-t border-border-primary bg-bg-secondary">
             <button
               onClick={() => setIsAddingTask(true)}
-              className="w-full py-2 px-3 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg text-sm transition-colors duration-200 border-2 border-dashed border-gray-300 dark:border-gray-600"
+              className="w-full py-2 px-3 text-text-secondary hover:text-text-primary hover:bg-primary/10 rounded-lg text-sm transition-colors duration-200 border-2 border-dashed border-border-primary"
             >
               + Add Task
             </button>
