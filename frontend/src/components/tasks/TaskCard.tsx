@@ -56,37 +56,37 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
             </div>
           )}
           
-          <div className="task-card-footer flex justify-between items-center mt-3">
-            {/* Отображаем список исполнителей */}
-            <div className="flex items-center flex-1 overflow-hidden">
-              {assigneeData.assignees.length > 0 ? (
-                <div className="flex items-center space-x-1 overflow-hidden">
-                  {/* Показываем исполнителей по имени */}
-                  <div className="flex flex-wrap overflow-hidden whitespace-nowrap text-xs">
-                    {assigneeData.assignees.slice(0, 2).map((assignee, index) => (
+          <div className="task-card-footer flex items-center mt-3 text-xs overflow-hidden">
+            {/* Отображаем список исполнителей и дату в одной строке */}
+            <div className="flex items-center space-x-1 overflow-hidden flex-grow pr-2">
+              {assigneeData.assignees.length > 0 && (
+                <>
+                  {/* Отображаем исполнителей с полными именами */}
+                  {assigneeData.assignees.map((assignee, index) => {
+                    // Определяем, есть ли место для запятой после имени
+                    const isLast = index === assigneeData.assignees.length - 1;
+                    // Меняем цвет, если это текущий пользователь
+                    const isCurrentUser = currentUser && assignee.id === currentUser.id;
+                    
+                    return (
                       <span 
                         key={assignee.id}
-                        className={`mr-1 ${currentUser && assignee.id === currentUser.id ? 'text-state-success font-medium' : 'text-text-secondary'}`}
+                        className={`${isCurrentUser ? 'text-state-success font-medium' : 'text-text-secondary'}`}
                         title={assignee.username}
                       >
-                        {assignee.username}
-                        {index < Math.min(assigneeData.assignees.length, 2) - 1 ? ',' : ''}
+                        {assignee.username}{!isLast && ", "}
                       </span>
-                    ))}
-                    {assigneeData.assignees.length > 2 && (
-                      <span className="text-text-muted" title={`+ ${assigneeData.assignees.length - 2} more assignees`}>
-                        +{assigneeData.assignees.length - 2}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <span className="text-xs text-text-muted">No assignees</span>
+                    );
+                  })}
+                </>
+              )}
+              {assigneeData.assignees.length === 0 && (
+                <span className="text-text-muted">Нет исполнителей</span>
               )}
             </div>
             
             {/* Отображаем дату */}
-            <span className="text-xs text-text-muted ml-2 whitespace-nowrap">
+            <span className="text-text-muted whitespace-nowrap ml-auto">
               {new Date(task.created_at).toLocaleDateString()}
             </span>
           </div>

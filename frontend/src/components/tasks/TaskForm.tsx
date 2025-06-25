@@ -88,8 +88,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   
   // Обработка списка пользователей и участников проекта
   useEffect(() => {
+    // Проверяем, есть ли текущий пользователь в списке пользователей
+    let usersList = [...users];
+    
+    // Если текущий пользователь не найден в списке, добавляем его
+    if (currentUser && !users.some(u => u.id === currentUser.id)) {
+      console.log('Adding current user to the list:', currentUser);
+      usersList = [...usersList, currentUser];
+    }
+    
     // Добавляем флаг isProjectMember к каждому пользователю
-    const enhancedUsers: UserWithProjectStatus[] = users.map(user => ({
+    const enhancedUsers: UserWithProjectStatus[] = usersList.map(user => ({
       ...user,
       // Считаем пользователя участником проекта, если:
       // 1. Он в списке участников дашборда ИЛИ
@@ -101,6 +110,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
     // Не фильтруем ранее выбранных пользователей, поскольку мы можем редактировать существующие задачи
     
     setUsersWithStatus(enhancedUsers);
+    
+    // Добавляем консольный вывод для отладки
+    console.log('Users with status:', enhancedUsers);
+    console.log('Project members:', projectMembers);
+    console.log('Current user:', currentUser);
   }, [users, projectMembers, currentUser]);
 
   // Закрытие по клику вне формы
