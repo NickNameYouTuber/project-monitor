@@ -30,18 +30,18 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className="task-column bg-white dark:bg-gray-800 rounded-lg mr-4 flex-shrink-0 w-72 max-h-full flex flex-col shadow-sm border border-gray-200 dark:border-gray-700"
+          className="task-column bg-bg-card rounded-lg mr-4 flex-shrink-0 w-72 max-h-full flex flex-col shadow-sm border border-border-primary"
         >
           {/* Заголовок колонки */}
           <div 
-            className="column-header p-4 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg border-b border-gray-200 dark:border-gray-600"
+            className="column-header p-4 flex justify-between items-center bg-bg-secondary rounded-t-lg border-b border-border-primary"
             {...provided.dragHandleProps}
           >
-            <h3 className="font-semibold text-gray-800 dark:text-white">{column.name}</h3>
+            <h3 className="font-semibold text-text-primary">{column.name}</h3>
             <div className="column-actions relative">
               <button 
                 onClick={() => setShowColumnMenu(!showColumnMenu)}
-                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 focus:outline-none p-1 rounded-full bg-gray-50 dark:bg-gray-700 transition-colors"
+                className="text-text-muted hover:text-text-secondary focus:outline-none p-1 rounded-full bg-bg-secondary transition-colors"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>

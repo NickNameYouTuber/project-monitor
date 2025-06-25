@@ -46,23 +46,23 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   }
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-start p-6 border-b border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 bg-overlay flex items-center justify-center z-50 p-4">
+      <div className="bg-bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-start p-6 border-b border-border-primary">
           <div className="flex-1">
             {column && (
-              <span className="inline-block bg-gray-200 dark:bg-gray-600 rounded-full px-3 py-1 text-xs text-gray-700 dark:text-gray-300 mb-3">
+              <span className="inline-block bg-bg-secondary rounded-full px-3 py-1 text-xs text-text-secondary mb-3">
                 {column.name}
               </span>
             )}
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">{task.title}</h2>
+            <h2 className="text-xl font-semibold text-text-primary">{task.title}</h2>
           </div>
           
           <div className="flex items-center space-x-2 ml-4">
             <div className="relative">
               <button 
                 onClick={() => setShowMenu(!showMenu)}
-                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 p-1 rounded-full bg-white dark:bg-gray-800 transition-colors"
+                className="text-text-muted hover:text-text-secondary p-1 rounded-full bg-bg-card transition-colors"
                 aria-label="Task options"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -71,11 +71,11 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
               </button>
               
               {showMenu && (
-                <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 z-10">
+                <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-bg-card border border-border-primary z-10">
                   <div className="py-1">
                     <button
                       onClick={handleEdit}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                      className="block w-full text-left px-4 py-2 text-sm text-text-secondary hover:bg-bg-secondary transition-colors"
                     >
                       Edit Task
                     </button>

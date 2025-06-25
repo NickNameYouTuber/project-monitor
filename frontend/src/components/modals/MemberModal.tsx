@@ -59,7 +59,7 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose }) => {
                 type="text" 
                 value={memberName}
                 onChange={(e) => setMemberName(e.target.value)}
-                className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-input text-text-primary" 
+                className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary" 
                 required
               />
             </div>

@@ -75,24 +75,24 @@ const TaskBoard = ({ }: TaskBoardProps) => {
   };
 
   if (loading && columns.length === 0) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return <div className="flex justify-center items-center h-64 text-text-secondary">Loading...</div>;
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+      <div className="bg-state-error-light border border-state-error text-state-error px-4 py-3 rounded relative" role="alert">
         <span className="block sm:inline">{error}</span>
       </div>
     );
   }
 
   return (
-    <div className="task-board flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="task-board-header flex justify-between items-center mb-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Task Board</h2>
+    <div className="task-board flex flex-col h-full bg-bg-primary">
+      <div className="task-board-header flex justify-between items-center mb-4 p-4 bg-bg-card border-b border-border-primary">
+        <h2 className="text-xl font-semibold text-text-primary">Task Board</h2>
         <button 
           onClick={() => setIsAddingColumn(true)}
-          className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+          className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
         >
           Add Column
         </button>

@@ -88,21 +88,21 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
 
           <div className="p-4 sm:p-6">
             {error && (
-              <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-2 rounded mb-4">
+              <div className="bg-state-error-light border border-state-error text-state-error px-4 py-2 rounded mb-4">
                 {error}
               </div>
             )}
 
             <form ref={formRef} onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                <label className="block text-text-secondary text-sm font-bold mb-2">
                   Column Name
                 </label>
                 <input 
                   type="text" 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary" 
                   placeholder="Enter column name"
                   required
                   autoFocus
@@ -113,14 +113,14 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
                 <button 
                   type="button" 
                   onClick={onClose}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors duration-200"
+                  className="px-4 py-2 text-text-secondary bg-bg-secondary hover:bg-bg-hover rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 disabled:opacity-50"
+                  className="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg transition-colors duration-200 disabled:opacity-50"
                 >
                   {isLoading ? 'Saving...' : (mode === 'create' ? 'Create Column' : 'Update Column')}
                 </button>

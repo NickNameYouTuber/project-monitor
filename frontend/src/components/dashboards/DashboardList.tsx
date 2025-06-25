@@ -138,7 +138,7 @@ const DashboardList: React.FC = () => {
                   type="text"
                   value={newDashboardName}
                   onChange={(e) => setNewDashboardName(e.target.value)}
-                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:border-primary bg-bg-input text-text-primary"
+                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:border-primary bg-bg-secondary text-text-primary"
                   required
                 />
               </div>
@@ -147,7 +147,7 @@ const DashboardList: React.FC = () => {
                 <textarea
                   value={newDashboardDescription}
                   onChange={(e) => setNewDashboardDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:border-primary bg-bg-input text-text-primary h-24"
+                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:border-primary bg-bg-secondary text-text-primary h-24"
                 />
               </div>
               <div className="flex justify-end space-x-3">

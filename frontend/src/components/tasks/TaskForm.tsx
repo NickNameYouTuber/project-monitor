@@ -147,12 +147,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
       <div className="w-full max-w-md mx-auto">
         <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden w-full max-h-[90vh] overflow-y-auto">
           <div className="px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white">
+            <h3 className="text-lg sm:text-xl font-semibold text-text-primary">
               {mode === 'create' ? 'Create New Task' : 'Edit Task'}
             </h3>
             <button
               onClick={onClose}
-              className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 transition-colors"
+              className="text-text-muted hover:text-text-secondary transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -162,7 +162,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
 
           <div className="p-4 sm:p-6">
             {error && (
-              <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-2 rounded mb-4">
+              <div className="bg-state-error-light border border-state-error text-state-error px-4 py-2 rounded mb-4">
                 {error}
               </div>
             )}
@@ -203,11 +203,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-2"
+                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary mb-2"
                   placeholder="Search users..."
                 />
                 
-                <div className="max-h-40 overflow-y-auto border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                <div className="max-h-40 overflow-y-auto border border-border-primary rounded-lg bg-bg-secondary">
                   {filteredUsers.map(user => (
                     <div
                       key={user.id}

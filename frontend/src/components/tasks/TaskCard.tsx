@@ -24,15 +24,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={handleCardClick}
-          className={`task-card p-3 mb-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:shadow-md dark:hover:shadow-lg transition-shadow duration-200
-                    ${snapshot.isDragging ? 'shadow-lg bg-blue-50 dark:bg-blue-900/20' : 'shadow-sm'}`}
+          className={`task-card p-3 mb-3 bg-bg-card rounded-lg border border-border-primary cursor-pointer hover:shadow-md transition-shadow duration-200
+                    ${snapshot.isDragging ? 'shadow-lg bg-primary/10' : 'shadow-sm'}`}
         >
-          <div className="task-card-title font-medium text-gray-800 dark:text-white mb-2">
+          <div className="task-card-title font-medium text-text-primary mb-2">
             {task.title}
           </div>
           
           {task.description && (
-            <div className="task-card-description text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+            <div className="task-card-description text-sm text-text-secondary mb-3 line-clamp-2">
               {task.description}
             </div>
           )}
@@ -42,7 +42,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
               {task.assignees.slice(0, 3).map((assignee) => (
                 <div 
                   key={assignee.id} 
-                  className="h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-500 flex items-center justify-center text-xs overflow-hidden mr-1 mb-1 text-gray-700 dark:text-gray-200"
+                  className="h-6 w-6 rounded-full bg-bg-secondary flex items-center justify-center text-xs overflow-hidden mr-1 mb-1 text-text-secondary"
                   title={assignee.username}
                 >
                   {assignee.username.charAt(0).toUpperCase()}
