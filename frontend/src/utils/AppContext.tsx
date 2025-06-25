@@ -204,15 +204,26 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           : project
       );
       
+      // Update state immediately for UI responsiveness
       setProjects(newProjects);
       
       if (currentUser && currentUser.token) {
         // Update project via API
-        await api.projects.updateStatus(
+        const response = await api.projects.updateStatus(
           projectId, 
           newStatus,
           currentUser.token
         );
+        
+        // If API response is successful but doesn't return updated data,
+        // leave the optimistically updated state as is
+        if (response && typeof response === 'object') {
+          // If API returns the updated project, sync with it
+          const updatedProjects = projects.map(p => 
+            p.id === projectId ? { ...p, ...response } : p
+          );
+          setProjects(updatedProjects);
+        }
       } else if (currentUser) {
         // Fallback to local storage
         saveProjects(currentUser.id, newProjects);
@@ -236,10 +247,16 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       
       if (!draggedProject || !targetProject) return;
       
+      // Save original state for potential rollback
+      const originalStatus = draggedProject.status;
+      
       // If moving to a different status
       const statusChanged = draggedProject.status !== targetProject.status;
+      
+      // Create a deep copy to avoid mutation issues
+      const draggedProjectCopy = { ...draggedProject };
       if (statusChanged) {
-        draggedProject.status = targetProject.status;
+        draggedProjectCopy.status = targetProject.status;
       }
       
       // Reorder projects within status group
@@ -251,7 +268,7 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       let insertIndex = position === 'above' ? targetIndex : targetIndex + 1;
       
       // Insert dragged project at new position
-      statusProjects.splice(insertIndex, 0, draggedProject);
+      statusProjects.splice(insertIndex, 0, draggedProjectCopy);
       
       // Update orders for all projects in this status
       statusProjects.forEach((project, index) => {
@@ -259,13 +276,25 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       });
       
       // Combine with projects in other statuses
-      const otherProjects = projects.filter(p => p.status !== targetProject.status || p.id === draggedId);
-      const newProjects = [...statusProjects, ...otherProjects];
+      const otherProjects = projects.filter(p => p.status !== targetProject.status && p.id !== draggedId);
+      const projectsInOriginalStatus = statusChanged ? 
+        projects.filter(p => p.status === originalStatus) : [];
       
+      // Create a new projects array with the updated order
+      const newProjects = [
+        ...statusProjects,
+        ...otherProjects,
+        ...projectsInOriginalStatus
+      ].filter((project, index, self) => 
+        // Remove any duplicates that might have been created
+        index === self.findIndex(p => p.id === project.id)
+      );
+      
+      // Update state immediately for responsive UI
       setProjects(newProjects);
       
       if (currentUser && currentUser.token) {
-        // Use API to update project order and status if needed
+        // Use API to update project status if needed
         if (statusChanged) {
           await api.projects.updateStatus(
             draggedId,
@@ -280,7 +309,12 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           targetProjectId: targetId,
           position: position
         };
-        await api.projects.reorder(reorderData, currentUser.token);
+        const response = await api.projects.reorder(reorderData, currentUser.token);
+        
+        // If the API returns new ordering data, use it to update the state
+        if (response && typeof response === 'object' && Array.isArray(response)) {
+          setProjects(response as Project[]);
+        }
       } else if (currentUser) {
         // Fallback to local storage
         saveProjects(currentUser.id, newProjects);
