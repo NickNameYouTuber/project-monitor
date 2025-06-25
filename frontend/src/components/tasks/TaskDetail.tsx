@@ -72,6 +72,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
               </button>
             </div>
             <div className="p-4 sm:p-6">
+              {column && (
+                <div className="mb-3">
+                  <span className="inline-block bg-bg-secondary rounded-full px-3 py-1 text-xs text-text-secondary">
+                    {column.name}
+                  </span>
+                </div>
+              )}
               {task.description && (
                 <p className="text-text-secondary mb-4">{task.description}</p>
               )}
