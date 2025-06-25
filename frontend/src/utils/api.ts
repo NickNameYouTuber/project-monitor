@@ -5,8 +5,10 @@
 // API base URL - should come from environment variables in production
 // Для продакшена используем относительные пути, для разработки - абсолютные
 const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+
+// Важно использовать тот же протокол, что и у сайта (для предотвращения Mixed Content)
 const API_URL = isProduction 
-  ? '/api' // В продакшене используем относительный путь
+  ? `${window.location.protocol}//` + window.location.host + '/api' // В продакшене используем текущий протокол и хост
   : (import.meta.env.VITE_API_URL || 'http://localhost:7671/api'); // В разработке полный URL
 
 interface ApiOptions {
