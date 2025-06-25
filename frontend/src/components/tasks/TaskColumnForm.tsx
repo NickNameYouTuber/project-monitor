@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { TaskColumn, TaskColumnCreate, TaskColumnUpdate } from '../../utils/api/taskColumns';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { useAppContext } from '../../utils/AppContext';
+import CloseButton from '../ui/CloseButton';
 
 interface TaskColumnFormProps {
   column?: TaskColumn;
@@ -69,22 +70,27 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
   };
 
   return (
-    <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center p-4 sm:p-0">
-      <div className="w-full max-w-md mx-auto">
-        <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
-          <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
-            <h3 className="text-lg sm:text-xl font-semibold text-text-primary">
-              {mode === 'create' ? 'Add New Column' : 'Edit Column'}
-            </h3>
-            <button
-              onClick={onClose}
-              className="text-text-muted hover:text-text-secondary transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <>
+      {/* Полупрозрачный фон (модальная подложка) */}
+      <div
+        className="fixed inset-0 bg-overlay z-40"
+        onClick={(e) => {
+          // Закрытие при клике вне модального окна
+          if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+            onClose();
+          }
+        }}
+      />
+      {/* Модальное окно */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+        <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
+          <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
+            <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
+              <h3 className="text-lg sm:text-xl font-semibold text-text-primary">
+                {mode === 'create' ? 'Add New Column' : 'Edit Column'}
+              </h3>
+              <CloseButton onClick={onClose} />
+            </div>
 
           <div className="p-4 sm:p-6">
             {error && (
@@ -140,6 +146,7 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
         </div>
       </div>
     </div>
+    </>
   );
 };
 

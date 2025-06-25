@@ -85,7 +85,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
                       <div 
                         key={assignee.id}
                         className={`px-2 py-0.5 rounded-full text-xs ${isCurrentUser 
-                          ? 'border border-state-success text-state-success bg-state-success bg-opacity-10' 
+                          ? 'border border-state-success text-state-success' 
                           : 'bg-bg-secondary text-text-secondary'}`}
                         title={assignee.username}
                       >

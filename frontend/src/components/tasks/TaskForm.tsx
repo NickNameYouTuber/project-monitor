@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import type { Task, TaskCreate, TaskUpdate } from '../../utils/api/tasks';
-import { useTaskBoard } from '../../context/TaskBoardContext';
+import React, { useState, useEffect, useRef, FormEvent } from 'react';
+import { useTaskBoardContext } from './TaskBoardContext';
+import type { Task, Status, Priority, User, DashboardMember } from '../../types';
 import { useAppContext } from '../../utils/AppContext';
-import type { User, DashboardMember } from '../../types';
+import CloseButton from '../ui/CloseButton';
 
 // Расширенный интерфейс для пользователя с флагом участия в проекте
 interface UserWithProjectStatus extends User {
@@ -206,22 +206,27 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   };
 
   return (
-    <div className="fixed inset-0 bg-overlay z-50 flex items-center justify-center p-4 sm:p-0">
-      <div className="w-full max-w-md mx-auto">
-        <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full max-h-[90vh] overflow-y-auto">
-          <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
-            <h3 className="text-lg sm:text-xl font-semibold text-text-primary">
-              {mode === 'create' ? 'Create New Task' : 'Edit Task'}
-            </h3>
-            <button
-              onClick={onClose}
-              className="text-text-muted hover:text-text-secondary transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <>
+      {/* Полупрозрачный фон (модальная подложка) */}
+      <div
+        className="fixed inset-0 bg-overlay z-40"
+        onClick={(e) => {
+          // Закрытие при клике вне модального окна
+          if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+            onClose();
+          }
+        }}
+      />
+      {/* Модальное окно */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+        <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
+          <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
+              <h3 className="text-lg sm:text-xl font-semibold text-text-primary">
+                {mode === 'create' ? 'Create New Task' : 'Edit Task'}
+              </h3>
+              <CloseButton onClick={onClose} />
+            </div>
 
           <div className="p-4 sm:p-6">
             {error && (
@@ -340,6 +345,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
         </div>
       </div>
     </div>
+    </>
   );
 };
 
