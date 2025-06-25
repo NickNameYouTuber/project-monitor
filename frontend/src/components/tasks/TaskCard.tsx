@@ -61,12 +61,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
             <div className="flex items-center space-x-1 overflow-hidden flex-grow pr-2">
               {assigneeData.assignees.length > 0 && (
                 <>
-                  {/* Отображаем исполнителей с полными именами */}
-                  {assigneeData.assignees.map((assignee, index) => {
-                    // Определяем, есть ли место для запятой после имени
-                    const isLast = index === assigneeData.assignees.length - 1;
+                  {/* Отображаем первых 2 исполнителей с полными именами */}
+                  {assigneeData.assignees.slice(0, 2).map((assignee, index) => {
                     // Меняем цвет, если это текущий пользователь
                     const isCurrentUser = currentUser && assignee.id === currentUser.id;
+                    // Добавляем запятую после первого имени, если есть второй исполнитель или больше
+                    const showComma = index === 0 && assigneeData.assignees.length > 1;
                     
                     return (
                       <span 
@@ -74,10 +74,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
                         className={`${isCurrentUser ? 'text-state-success font-medium' : 'text-text-secondary'}`}
                         title={assignee.username}
                       >
-                        {assignee.username}{!isLast && ", "}
+                        {assignee.username}{showComma && ", "}
                       </span>
                     );
                   })}
+                  
+                  {/* Показываем индикатор +N, если исполнителей больше двух */}
+                  {assigneeData.assignees.length > 2 && (
+                    <span 
+                      className="text-text-secondary ml-1" 
+                      title={`+ ${assigneeData.assignees.length - 2} дополнительных исполнителей`}
+                    >
+                      +{assigneeData.assignees.length - 2}
+                    </span>
+                  )}
                 </>
               )}
               {assigneeData.assignees.length === 0 && (
