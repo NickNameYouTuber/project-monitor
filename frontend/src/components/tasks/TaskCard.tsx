@@ -8,41 +8,6 @@ interface TaskCardProps {
   index: number;
 }
 
-// Helper functions for styling based on task properties
-const getPriorityColor = (task: Task) => {
-  // Проверка, есть ли свойство priority в типе Task
-  const priority = (task as any).priority;
-  if (!priority) return 'border-slate-300';
-  
-  switch(priority.toLowerCase()) {
-    case 'high':
-      return 'border-red-500';
-    case 'medium':
-      return 'border-yellow-500';
-    case 'low':
-      return 'border-green-500';
-    default:
-      return 'border-slate-300';
-  }
-};
-
-const getPriorityBadgeColor = (task: Task) => {
-  // Проверка, есть ли свойство priority в типе Task
-  const priority = (task as any).priority;
-  if (!priority) return '';
-  
-  switch(priority.toLowerCase()) {
-    case 'high':
-      return 'bg-red-100 text-red-800';
-    case 'medium':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'low':
-      return 'bg-green-100 text-green-800';
-    default:
-      return 'bg-slate-100 text-slate-800';
-  }
-};
-
 const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
   const { setSelectedTask } = useTaskBoard();
   
@@ -59,59 +24,49 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={handleCardClick}
-          className={`task-card p-4 mb-3 bg-white rounded-lg border-l-4 ${getPriorityColor(task)} shadow-sm cursor-pointer hover:shadow-md transition-all duration-200
-                    ${snapshot.isDragging ? 'shadow-lg bg-indigo-50 border-indigo-500' : ''}`}
-          style={{
-            transform: snapshot.isDragging ? 'rotate(2deg)' : 'rotate(0)',
-            transition: 'transform 0.2s'
-          }}
+          className={`task-card p-3 mb-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:shadow-md dark:hover:shadow-lg transition-shadow duration-200
+                    ${snapshot.isDragging ? 'shadow-lg bg-blue-50 dark:bg-blue-900/20' : 'shadow-sm'}`}
         >
-          <div className="task-card-title font-semibold text-slate-800 mb-2 flex items-center">
-            <span className="truncate">{task.title}</span>
-            {(task as any).priority && (
-              <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${getPriorityBadgeColor(task)}`}>
-                {(task as any).priority}
-              </span>
-            )}
+          <div className="task-card-title font-medium text-gray-800 dark:text-white mb-2">
+            {task.title}
           </div>
           
           {task.description && (
-            <div className="task-card-description text-sm text-slate-600 mb-3 line-clamp-2 bg-slate-50 p-2 rounded-md border border-slate-100">
+            <div className="task-card-description text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
               {task.description}
             </div>
           )}
           
           {task.assignees && task.assignees.length > 0 && (
-            <div className="task-card-assignees flex flex-wrap mt-3 justify-between items-center border-t border-slate-100 pt-2">
-              <div className="flex -space-x-2">
-                {task.assignees.slice(0, 3).map((assignee) => (
-                  <div 
-                    key={assignee.id} 
-                    className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-xs text-white font-medium overflow-hidden border border-white shadow-sm"
-                    title={assignee.username}
-                  >
-                    {assignee.username.charAt(0).toUpperCase()}
-                  </div>
-                ))}
-                
-                {task.assignees.length > 3 && (
-                  <div className="h-7 w-7 rounded-full bg-slate-400 flex items-center justify-center text-xs text-white font-medium border border-white shadow-sm">
-                    +{task.assignees.length - 3}
-                  </div>
-                )}
-              </div>
-              
-              {/* Индикатор дедлайна или статуса */}
-              {(task as any).due_date && (
-                <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-yellow-600/20">
-                  <svg className="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {new Date((task as any).due_date).toLocaleDateString()}
-                </span>
+            <div className="task-card-assignees flex flex-wrap mt-2">
+              {task.assignees.slice(0, 3).map((assignee) => (
+                <div 
+                  key={assignee.id} 
+                  className="h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-500 flex items-center justify-center text-xs overflow-hidden mr-1 mb-1 text-gray-700 dark:text-gray-200"
+                  title={assignee.username}
+                >
+                  {assignee.username.charAt(0).toUpperCase()}
+                </div>
+              ))}
+              {task.assignees.length > 3 && (
+                <div className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
+                  +{task.assignees.length - 3}
+                </div>
               )}
             </div>
           )}
+          
+          <div className="task-card-footer flex justify-between items-center mt-3">
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {task.assignees.length} assignee{task.assignees.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {new Date(task.created_at).toLocaleDateString()}
+            </span>
+          </div>
         </div>
       )}
     </Draggable>

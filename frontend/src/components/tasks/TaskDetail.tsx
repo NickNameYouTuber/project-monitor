@@ -46,89 +46,96 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   }
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-start mb-4">
-          <div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-start p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex-1">
             {column && (
-              <span className="inline-block bg-gray-200 rounded px-2 py-1 text-xs text-gray-700 mb-2">
+              <span className="inline-block bg-gray-200 dark:bg-gray-600 rounded-full px-3 py-1 text-xs text-gray-700 dark:text-gray-300 mb-3">
                 {column.name}
               </span>
             )}
-            <h2 className="text-xl font-semibold text-gray-800">{task.title}</h2>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">{task.title}</h2>
           </div>
           
-          <div className="relative">
-            <button 
-              onClick={() => setShowMenu(!showMenu)}
-              className="text-gray-500 hover:text-gray-700 mr-2"
-              aria-label="Task options"
-            >
-              <i className="fas fa-ellipsis-v"></i>
-            </button>
-            
-            {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white z-10">
-                <div className="py-1">
-                  <button
-                    onClick={handleEdit}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Edit Task
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                  >
-                    Delete Task
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            <button 
-              onClick={handleClose}
-              className="text-gray-500 hover:text-gray-700"
-              aria-label="Close task details"
-            >
-              <i className="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
-        
-        {task.description && (
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Description</h3>
-            <div className="bg-gray-50 p-4 rounded border border-gray-200 text-gray-800 whitespace-pre-wrap">
-              {task.description}
-            </div>
-          </div>
-        )}
-        
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Assignees</h3>
-          {task.assignees && task.assignees.length > 0 ? (
-            <div className="flex flex-wrap">
-              {task.assignees.map((assignee) => (
-                <div 
-                  key={assignee.id}
-                  className="flex items-center bg-gray-100 rounded-full pl-1 pr-3 py-1 mr-2 mb-2"
-                >
-                  <div className="h-6 w-6 rounded-full bg-gray-300 flex items-center justify-center text-xs mr-2">
-                    {assignee.username.charAt(0).toUpperCase()}
+          <div className="flex items-center space-x-2 ml-4">
+            <div className="relative">
+              <button 
+                onClick={() => setShowMenu(!showMenu)}
+                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 p-1 rounded transition-colors"
+                aria-label="Task options"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+              </button>
+              
+              {showMenu && (
+                <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 z-10">
+                  <div className="py-1">
+                    <button
+                      onClick={handleEdit}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Edit Task
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Delete Task
+                    </button>
                   </div>
-                  <span className="text-sm text-gray-800">{assignee.username}</span>
                 </div>
-              ))}
+              )}
             </div>
-          ) : (
-            <p className="text-gray-500">No assignees</p>
-          )}
+
+            <button
+              onClick={handleClose}
+              className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 p-1 rounded transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
         
-        <div className="text-sm text-gray-500">
-          <p>Created: {new Date(task.created_at).toLocaleString()}</p>
-          <p>Last Updated: {new Date(task.updated_at).toLocaleString()}</p>
+        <div className="p-6">
+          {task.description && (
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</h3>
+              <div className="text-gray-800 dark:text-white whitespace-pre-wrap bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                {task.description}
+              </div>
+            </div>
+          )}
+          
+          {task.assignees && task.assignees.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Assignees</h3>
+              <div className="flex flex-wrap gap-2">
+                {task.assignees.map((assignee) => (
+                  <div 
+                    key={assignee.id} 
+                    className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1"
+                  >
+                    <div className="h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-500 flex items-center justify-center text-xs mr-2 text-gray-700 dark:text-gray-200">
+                      {assignee.username.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{assignee.username}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+              <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
+              <span>Updated: {new Date(task.updated_at).toLocaleDateString()}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
