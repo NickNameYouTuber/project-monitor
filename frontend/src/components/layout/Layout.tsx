@@ -34,7 +34,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <nav className="hidden md:ml-6 md:flex md:space-x-4">
                 <button 
                   onClick={() => navigate('/dashboards')}
-                  className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Dashboards
                 </button>
@@ -45,7 +45,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="flex md:hidden items-center">
               <button
                 onClick={toggleMobileMenu}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
                 aria-expanded="false"
               >
                 <span className="sr-only">Open main menu</span>
@@ -66,7 +66,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="hidden md:flex md:items-center">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-md text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors mr-2"
+                className="p-2 rounded-md text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors mr-2"
                 aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
               >
                 {isDarkMode ? (
@@ -94,7 +94,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </span>
                   <button
                     onClick={logout}
-                    className="ml-4 px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md"
+                    className="ml-4 px-3 py-1 text-sm bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-white rounded-md"
                   >
                     Logout
                   </button>
@@ -113,7 +113,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   navigate('/dashboards');
                   setIsMobileMenuOpen(false);
                 }}
-                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Dashboards
               </button>
@@ -123,7 +123,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <span className="text-gray-700 dark:text-white mr-2">Theme:</span>
                 <button
                   onClick={toggleTheme}
-                  className="p-2 rounded-md text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="p-2 rounded-md text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                   aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
                 >
                   {isDarkMode ? 'Dark Mode' : 'Light Mode'}
@@ -146,7 +146,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
                 <button
                   onClick={logout}
-                  className="block w-full text-left px-3 py-2 text-base font-medium text-red-500 hover:text-red-700 dark:hover:text-red-300 rounded-md"
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
                 >
                   Logout
                 </button>
