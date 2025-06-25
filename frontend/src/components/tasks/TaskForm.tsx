@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { Task, TaskCreate, TaskUpdate } from '../../utils/api/tasks';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { useAppContext } from '../../utils/AppContext';
@@ -94,6 +94,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
       isProjectMember: projectMembers.some(member => member.user_id === user.id)
     }));
     
+    // Фильтруем выбранных пользователей, оставляя только участников проекта
+    // Это позволит удалить пользователей, которые не являются членами проекта, но были выбраны ранее
+    setSelectedAssignees(prev => prev.filter(id => 
+      enhancedUsers.find(u => u.id === id && u.isProjectMember)
+    ));
+    
     setUsersWithStatus(enhancedUsers);
   }, [users, projectMembers]);
 
@@ -153,17 +159,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
     }
   };
 
-  // Фильтрация пользователей по поисковому запросу
-  const filteredUsers = usersWithStatus.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-  // Сортируем: сперва участники проекта, потом по имени
-  .sort((a, b) => {
-    if (a.isProjectMember !== b.isProjectMember) {
-      return a.isProjectMember ? -1 : 1;
-    }
-    return a.username.localeCompare(b.username);
-  });
+  // Фильтрация пользователей на основе поиска и принадлежности к проекту
+  const filteredUsers = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+    // Только участники проекта могут быть назначены на задачу
+    return usersWithStatus
+      .filter(user => 
+        user.isProjectMember && user.username.toLowerCase().includes(searchLower)
+      )
+      // Сортируем по имени пользователя
+      .sort((a, b) => a.username.localeCompare(b.username));
+  }, [searchTerm, usersWithStatus]);
 
   // Обработка выбора/снятия выбора исполнителя
   const toggleAssignee = (userId: string) => {
@@ -231,11 +237,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
                 <label className="block text-text-secondary text-sm font-bold mb-2">
                   Assignees
                 </label>
+                <div className="text-xs text-text-muted mb-2">Only project members can be assigned to tasks</div>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search users..."
+                  placeholder="Search project members..."
                   className="w-full px-3 py-2 mb-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
                 />
                 

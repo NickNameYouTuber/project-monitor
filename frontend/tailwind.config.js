@@ -23,6 +23,7 @@ export default {
           'secondary': 'var(--bg-secondary)',
           'card': 'var(--bg-card)',
           'header': 'var(--bg-header)',
+          'overlay': 'var(--bg-overlay)',
         },
         
         // Границы
