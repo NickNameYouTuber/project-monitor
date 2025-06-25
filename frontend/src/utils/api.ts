@@ -22,68 +22,70 @@ interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: any;
   requireAuth?: boolean;
+  token?: string;
 }
 
 /**
  * Make an API request with authentication if token is provided
  */
 export async function apiRequest<T>(
-  endpoint: string, 
-  options: ApiOptions = {},
-  token?: string
+  endpoint: string,
+  options: ApiOptions = {}
 ): Promise<T> {
-  const {
-    method = 'GET',
-    body,
-    requireAuth = true
-  } = options;
-
-  // Prepare headers
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
   };
 
-  // Add authorization header if token is provided
-  if (requireAuth && token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  } else if (requireAuth && !token) {
-    throw new Error('Authentication token required for this request');
+  // Добавляем токен авторизации, если он предоставлен и требуется авторизация
+  if (options.requireAuth && options.token) {
+    headers['Authorization'] = `Bearer ${options.token}`;
   }
 
-  // Prepare request options
-  const requestOptions: RequestInit = {
-    method,
+  // Формируем URL, добавляя API_URL в начало, если endpoint не начинается с http(s)://
+  const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
+
+  // Настройки запроса
+  const fetchOptions: RequestInit = {
+    method: options.method || 'GET',
     headers,
     credentials: 'include',
   };
 
-  // Add body if provided
-  if (body) {
-    requestOptions.body = JSON.stringify(body);
+  // Если есть тело запроса и метод не GET, добавляем его
+  if (options.body && options.method !== 'GET') {
+    fetchOptions.body = JSON.stringify(options.body);
   }
 
-  // Make the request
-  const response = await fetch(`${API_URL}${endpoint}`, requestOptions);
+  // Отправляем запрос
+  const response = await fetch(url, fetchOptions);
 
-  // Handle non-JSON responses
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.indexOf('application/json') === -1) {
-    if (!response.ok) {
-      throw new Error(`API request failed with status: ${response.status}`);
-    }
-    return response.text() as unknown as T;
-  }
-
-  // Parse response as JSON
-  const data = await response.json();
-
-  // Handle error responses
+  // Если ответ не успешный, выбрасываем ошибку
   if (!response.ok) {
-    throw new Error(data.detail || 'API request failed');
+    // Пытаемся получить тело ответа, если оно есть
+    let errorMessage = `HTTP error! Status: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.detail || errorData.message || errorMessage;
+    } catch (e) {
+      // Если не удалось распарсить JSON, используем статус код
+    }
+    
+    throw new Error(errorMessage);
   }
 
+  // Если ответ пустой (например, для DELETE запросов), возвращаем пустой объект
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  // Парсим JSON ответ
+  const data = await response.json();
+  
   return data as T;
 }
+
+import taskColumnsApi from './api/taskColumns';
+import tasksApi from './api/tasks';
 
 // API endpoints for different resources
 export const api = {
@@ -199,17 +201,73 @@ export const api = {
   
   // Users endpoints
   users: {
-    getAll: (token: string) => 
-      apiRequest('/users', { requireAuth: true }, token),
-    getOne: (id: string, token: string) => 
-      apiRequest(`/users/${id}`, { requireAuth: true }, token),
-    update: (userData: any, token: string) => 
-      apiRequest('/users/me', { 
-        method: 'PUT', 
+    getAll(token: string) {
+      return apiRequest<any>('/users', { requireAuth: true, token });
+    },
+    getOne(id: string, token: string) {
+      return apiRequest<any>(`/users/${id}`, { requireAuth: true, token });
+    },
+    update(userData: any, token: string) {
+      return apiRequest<any>('/users', {
+        method: 'PUT',
         body: userData,
-        requireAuth: true 
-      }, token),
-    searchByUsername: (username: string, token: string = '') => 
-      apiRequest(`/users/search?username=${encodeURIComponent(username)}`, { requireAuth: false }, token)
+        requireAuth: true,
+        token
+      });
+    },
+    searchByUsername(username: string, token: string = '') {
+      return apiRequest<any>(`/users/search?username=${encodeURIComponent(username)}`, { requireAuth: token ? true : false, token });
+    }
+  },
+  
+  // Task Columns endpoints
+  taskColumns: {
+    getAll(projectId: string, token: string) {
+      return taskColumnsApi.getAll(projectId, token);
+    },
+    get(columnId: string, token: string) {
+      return taskColumnsApi.get(columnId, token);
+    },
+    create(columnData: any, token: string) {
+      return taskColumnsApi.create(columnData, token);
+    },
+    update(columnId: string, updateData: any, token: string) {
+      return taskColumnsApi.update(columnId, updateData, token);
+    },
+    delete(columnId: string, token: string) {
+      return taskColumnsApi.delete(columnId, token);
+    },
+    reorder(projectId: string, columnIds: string[], token: string) {
+      return taskColumnsApi.reorder(projectId, columnIds, token);
+    }
+  },
+  
+  // Tasks endpoints
+  tasks: {
+    create(taskData: any, token: string) {
+      return tasksApi.create(taskData, token);
+    },
+    get(taskId: string, token: string) {
+      return tasksApi.get(taskId, token);
+    },
+    getByColumn(columnId: string, token: string) {
+      return tasksApi.getByColumn(columnId, token);
+    },
+    getByProject(projectId: string, token: string) {
+      return tasksApi.getByProject(projectId, token);
+    },
+    update(taskId: string, updateData: any, token: string) {
+      return tasksApi.update(taskId, updateData, token);
+    },
+    move(taskId: string, moveData: any, token: string) {
+      return tasksApi.move(taskId, moveData, token);
+    },
+    delete(taskId: string, token: string) {
+      return tasksApi.delete(taskId, token);
+    },
+    reorder(columnId: string, taskIds: string[], token: string) {
+      return tasksApi.reorder(columnId, taskIds, token);
+    }
   }
 };
+}

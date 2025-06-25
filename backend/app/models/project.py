@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 import datetime
 from ..database import Base
+import uuid
 
 
 class Project(Base):
@@ -23,3 +24,4 @@ class Project(Base):
     # Relationships
     owner = relationship("User", back_populates="projects")
     dashboard = relationship("Dashboard", back_populates="projects")
+    task_columns = relationship("TaskColumn", back_populates="project", cascade="all, delete-orphan")

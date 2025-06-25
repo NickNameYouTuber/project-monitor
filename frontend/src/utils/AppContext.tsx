@@ -13,15 +13,21 @@ interface AppContextType {
   
   // Projects state
   projects: Project[];
+  currentProject: Project | null;
   addProject: (project: Omit<Project, 'id' | 'createdAt'> & { dashboard_id?: string }) => void;
   deleteProject: (id: string) => void;
   moveProject: (projectId: string, newStatus: ProjectStatus) => void;
   reorderProjects: (draggedId: string, targetId: string, position: 'above' | 'below') => void;
+  fetchProject: (projectId: string, token: string) => Promise<Project | null>;
   
   // Team members state
   teamMembers: string[];
   addTeamMember: (name: string) => void;
   removeTeamMember: (name: string) => void;
+  
+  // User management for task assignments
+  users: User[];
+  fetchUsers: (token: string) => Promise<void>;
   
   // Dashboard state
   dashboards: Dashboard[];
@@ -44,13 +50,12 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   // User state - load from local storage if available
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
-  const [teamMembers, setTeamMembers] = useState<string[]>(['You', 'Vasya']);
+  const [teamMembers, setTeamMembers] = useState<string[]>(['You']);
+  const [users, setUsers] = useState<User[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(() => getDarkMode());
   
   // Load data when user changes
@@ -118,7 +123,7 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     // Clear user data
     setCurrentUser(null);
     setProjects([]);
-    setTeamMembers(['You', 'Vasya']);
+    setTeamMembers(['You']);
     
     // Clear local storage
     localStorage.removeItem('currentUser');
@@ -417,18 +422,41 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   };
 
   // Функции для работы с участниками дашборда
-  const getDashboardMembers = async (dashboardId: string) => {
+  // Fetch a single project by ID
+  const fetchProject = async (projectId: string, token: string): Promise<Project | null> => {
+    try {
+      const project = await api.projects.getOne(projectId, token);
+      setCurrentProject(project as Project);
+      return project as Project;
+    } catch (error) {
+      console.error(`Error fetching project ${projectId}:`, error);
+      return null;
+    }
+  };
+
+  // Fetch users for task assignments
+  const fetchUsers = async (token: string): Promise<void> => {
+    try {
+      const fetchedUsers = await api.users.getAll(token);
+      setUsers(fetchedUsers as User[]);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const getDashboardMembers = async (dashboardId: string): Promise<DashboardMember[]> => {
     if (!currentUser?.token) {
       throw new Error('User not authenticated');
     }
     try {
-      return await api.dashboards.getMembers(dashboardId, currentUser.token) as DashboardMember[];
+      const members = await api.dashboards.getMembers(dashboardId, currentUser.token);
+      return members as DashboardMember[];
     } catch (error) {
-      console.error(`Error getting members for dashboard ${dashboardId}:`, error);
+      console.error(`Error getting dashboard members for ${dashboardId}:`, error);
       throw error;
     }
   };
-
+  
   const inviteUserByTelegramId = async (dashboardId: string, telegramId: number, role: string = 'viewer') => {
     if (!currentUser?.token) {
       throw new Error('User not authenticated');
@@ -440,7 +468,7 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const removeDashboardMember = async (dashboardId: string, memberId: string) => {
     if (!currentUser?.token) {
       throw new Error('User not authenticated');
@@ -448,38 +476,42 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     try {
       await api.dashboards.removeMember(dashboardId, memberId, currentUser.token);
     } catch (error) {
-      console.error(`Error removing member ${memberId} from dashboard ${dashboardId}:`, error);
+      console.error(`Error removing member from dashboard ${dashboardId}:`, error);
       throw error;
     }
   };
 
-  const contextValue: AppContextType = {
-    currentUser,
-    setCurrentUser,
-    login,
-    logout,
-    projects,
-    addProject,
-    deleteProject,
-    moveProject,
-    reorderProjects,
-    teamMembers,
-    addTeamMember, 
-    removeTeamMember,
-    dashboards,
-    loadDashboards,
-    getDashboard,
-    createDashboard,
-    deleteDashboard,
-    getDashboardMembers,
-    inviteUserByTelegramId,
-    removeDashboardMember,
-    isDarkMode,
-    toggleTheme
-  };
-  
   return (
-    <AppContext.Provider value={contextValue}>
+    <AppContext.Provider
+      value={{
+        currentUser,
+        setCurrentUser,
+        login,
+        logout,
+        projects,
+        currentProject,
+        addProject,
+        deleteProject,
+        moveProject,
+        reorderProjects,
+        fetchProject,
+        teamMembers,
+        addTeamMember,
+        removeTeamMember,
+        users,
+        fetchUsers,
+        dashboards,
+        loadDashboards,
+        getDashboard,
+        createDashboard,
+        deleteDashboard,
+        getDashboardMembers,
+        inviteUserByTelegramId,
+        removeDashboardMember,
+        isDarkMode,
+        toggleTheme,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

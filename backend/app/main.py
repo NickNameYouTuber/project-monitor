@@ -2,13 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks
 import uvicorn
 
 # Create database tables
 models.user.Base.metadata.create_all(bind=engine)
 models.project.Base.metadata.create_all(bind=engine)
 models.dashboard.Base.metadata.create_all(bind=engine)
+models.task_column.Base.metadata.create_all(bind=engine)
+models.task.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Project Monitor API",
@@ -40,6 +42,8 @@ app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(dashboards.router, prefix="/api/dashboards", tags=["dashboards"])
 app.include_router(dashboard_members.router, prefix="/api/dashboards", tags=["dashboard_members"])
+app.include_router(task_columns.router)
+app.include_router(tasks.router)
 
 
 @app.get("/")

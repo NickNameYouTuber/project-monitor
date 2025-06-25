@@ -1,0 +1,144 @@
+import React, { useState } from 'react';
+import { DragDropContext, DropResult } from 'react-beautiful-dnd';
+import { TaskBoardProvider, useTaskBoard } from '../../context/TaskBoardContext';
+import TaskColumn from './TaskColumn';
+import TaskDetail from './TaskDetail';
+import TaskColumnForm from './TaskColumnForm';
+import { TaskColumnCreate } from '../../utils/api/taskColumns';
+import { TaskCreate } from '../../utils/api/tasks';
+
+interface TaskBoardProps {
+  projectId: string;
+}
+
+// Обертка с провайдером контекста
+const TaskBoardWithProvider: React.FC<TaskBoardProps> = ({ projectId }) => {
+  return (
+    <TaskBoardProvider projectId={projectId}>
+      <TaskBoardContent />
+    </TaskBoardProvider>
+  );
+};
+
+// Внутренний компонент для работы с контекстом
+const TaskBoardContent: React.FC = () => {
+  const { 
+    columns, 
+    tasks, 
+    loading, 
+    error,
+    selectedTask,
+    reorderColumns,
+    reorderTasks,
+    moveTask
+  } = useTaskBoard();
+
+  const [isAddingColumn, setIsAddingColumn] = useState(false);
+
+  const handleDragEnd = (result: DropResult) => {
+    const { source, destination, type, draggableId } = result;
+    
+    // Если нет назначения или перетаскивание вернулось на ту же позицию - ничего не делаем
+    if (!destination || 
+        (source.droppableId === destination.droppableId && source.index === destination.index)) {
+      return;
+    }
+    
+    // Если перетаскиваем колонку
+    if (type === 'column') {
+      const newColumnOrder = Array.from(columns.map(col => col.id));
+      newColumnOrder.splice(source.index, 1);
+      newColumnOrder.splice(destination.index, 0, draggableId);
+      
+      reorderColumns(newColumnOrder);
+      return;
+    }
+    
+    // Если перетаскиваем карточку внутри одной колонки
+    if (source.droppableId === destination.droppableId) {
+      const columnId = source.droppableId;
+      const taskIds = tasks
+        .filter(task => task.column_id === columnId)
+        .sort((a, b) => a.order - b.order)
+        .map(task => task.id);
+      
+      taskIds.splice(source.index, 1);
+      taskIds.splice(destination.index, 0, draggableId);
+      
+      reorderTasks(columnId, taskIds);
+    } 
+    // Если перемещаем карточку между колонками
+    else {
+      const targetColumnTasks = tasks
+        .filter(task => task.column_id === destination.droppableId)
+        .sort((a, b) => a.order - b.order)
+        .map(task => task.id);
+      
+      // Вставляем задачу на новую позицию
+      targetColumnTasks.splice(destination.index, 0, draggableId);
+      
+      // Перемещаем задачу в новую колонку
+      moveTask(draggableId, {
+        column_id: destination.droppableId,
+        order: destination.index
+      });
+    }
+  };
+
+  if (loading && columns.length === 0) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <span className="block sm:inline">{error}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="task-board flex flex-col h-full">
+      <div className="task-board-header flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Task Board</h2>
+        <button 
+          onClick={() => setIsAddingColumn(true)}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+        >
+          Add Column
+        </button>
+      </div>
+      
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="task-board-content flex overflow-x-auto pb-4 h-full">
+          {columns
+            .sort((a, b) => a.order - b.order)
+            .map(column => (
+              <TaskColumn 
+                key={column.id} 
+                column={column} 
+                tasks={tasks.filter(task => task.column_id === column.id).sort((a, b) => a.order - b.order)} 
+              />
+            ))}
+        </div>
+      </DragDropContext>
+
+      {/* Форма добавления колонки */}
+      {isAddingColumn && (
+        <TaskColumnForm 
+          onClose={() => setIsAddingColumn(false)} 
+          mode="create" 
+        />
+      )}
+      
+      {/* Детали задачи */}
+      {selectedTask && (
+        <TaskDetail 
+          task={selectedTask} 
+        />
+      )}
+    </div>
+  );
+};
+
+export default TaskBoardWithProvider;

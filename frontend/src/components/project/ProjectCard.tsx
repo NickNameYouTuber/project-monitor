@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Project } from '../../types';
 import { useAppContext } from '../../utils/AppContext';
 
@@ -11,6 +12,7 @@ interface ProjectCardProps {
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDragStart, onDragOver, onDrop }) => {
   const { deleteProject } = useAppContext();
+  const navigate = useNavigate();
   
   const priorityColors = {
     high: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200',
@@ -31,16 +33,30 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDragStart, onDragO
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="font-semibold text-gray-800 dark:text-white text-lg">{project.name}</h3>
-        <button 
-          onClick={() => {
-            if(confirm('Are you sure you want to delete this project?')) {
-              deleteProject(project.id);
-            }
-          }} 
-          className="p-1.5 rounded bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-300 hover:bg-red-100 dark:hover:bg-red-800/40 hover:text-red-600 dark:hover:text-red-300 transition"
-        >
-          <i className="fas fa-trash text-sm"></i>
-        </button>
+        <div className="flex space-x-1">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/projects/${project.id}/tasks`);
+            }} 
+            className="p-1.5 rounded bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-800/40 hover:text-blue-600 dark:hover:text-blue-300 transition"
+            title="Open task board"
+          >
+            <i className="fas fa-tasks text-sm"></i>
+          </button>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              if(confirm('Are you sure you want to delete this project?')) {
+                deleteProject(project.id);
+              }
+            }} 
+            className="p-1.5 rounded bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-300 hover:bg-red-100 dark:hover:bg-red-800/40 hover:text-red-600 dark:hover:text-red-300 transition"
+            title="Delete project"
+          >
+            <i className="fas fa-trash text-sm"></i>
+          </button>
+        </div>
       </div>
       <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">{project.description}</p>
       <div className="flex justify-between items-center">

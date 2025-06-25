@@ -4,6 +4,7 @@ import { useAppContext } from '../utils/AppContext';
 import AuthScreen from '../components/auth/AuthScreen';
 import DashboardList from '../components/dashboards/DashboardList';
 import DashboardDetail from '../components/dashboards/DashboardDetail';
+import ProjectTaskBoard from '../components/projects/ProjectTaskBoard';
 import Layout from '../components/layout/Layout';
 
 // Protected route component
@@ -39,6 +40,19 @@ const AppRouter: React.FC = () => {
           element={
             <ProtectedRoute 
               element={<Layout><DashboardDetail /></Layout>} 
+            />
+          } 
+        />
+        
+        <Route 
+          path="/projects/:projectId/tasks" 
+          element={
+            <ProtectedRoute 
+              element={
+                <Layout>
+                  <ProjectTaskBoard />
+                </Layout>
+              } 
             />
           } 
         />
