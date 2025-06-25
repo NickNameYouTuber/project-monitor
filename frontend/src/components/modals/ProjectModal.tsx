@@ -40,7 +40,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
       assignee,
       priority,
       status,
-      dashboard_id: dashboardId
+      dashboard_id: dashboardId,
+      order: 1000 // Добавляем поле order для новых проектов
     };
     
     addProject(projectData);

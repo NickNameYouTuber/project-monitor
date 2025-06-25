@@ -17,11 +17,12 @@ const DashboardDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Состояние для модальных окон
+  // Состояние для модальных окон и управления интерфейсом
   const [isProjectModalOpen, setProjectModalOpen] = useState(false);
   const [isInviteByTelegramModalOpen, setInviteByTelegramModalOpen] = useState(false);
   const [telegramId, setTelegramId] = useState('');
   const [memberRole, setMemberRole] = useState<'viewer' | 'editor' | 'admin'>('viewer');
+  const [showMembersSection, setShowMembersSection] = useState(false);
 
   // Загрузка данных дашборда и участников
   useEffect(() => {
@@ -166,43 +167,49 @@ const DashboardDetail: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Заголовок дашборда с кнопками действий */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{dashboard.name}</h1>
-          {dashboard.description && (
-            <p className="text-gray-600 dark:text-gray-400 mt-1">{dashboard.description}</p>
-          )}
-        </div>
-        
-        <div className="flex space-x-3">
-          <button
-            onClick={() => navigate('/dashboards')}
-            className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            Back to Dashboards
-          </button>
-          <button
-            onClick={openProjectModal}
-            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm"
-          >
-            Add Project
-          </button>
-          <button
-            onClick={openInviteByTelegramModal}
-            className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm"
-          >
-            Invite by Telegram
-          </button>
-        </div>
-      </div>
-      
-      {/* Список участников */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Dashboard Members</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <div className="container mx-auto px-4 py-8">
+      {dashboard && (
+        <>
+          {/* Заголовок дашборда */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{dashboard.name}</h1>
+              {dashboard.description && (
+                <p className="text-gray-600 dark:text-gray-400">{dashboard.description}</p>
+              )}
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setShowMembersSection(!showMembersSection)}
+                className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-2 px-4 rounded-md"
+              >
+                Members
+              </button>
+              <button
+                onClick={openProjectModal}
+                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md"
+              >
+                Add Project
+              </button>
+            </div>
+          </div>
+          
+          {/* Список участников дашборда - показываем только если showMembersSection = true */}
+          {showMembersSection && (
+            <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+              <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+                <h2 className="text-lg font-medium text-gray-900 dark:text-white">Dashboard Members</h2>
+                {dashboard.owner_id === currentUser?.id && (
+                  <button
+                    onClick={openInviteByTelegramModal}
+                    className="bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-md text-sm"
+                  >
+                    Add Member
+                  </button>
+                )}
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -295,30 +302,60 @@ const DashboardDetail: React.FC = () => {
                 </tr>
               )}
             </tbody>
-          </table>
-        </div>
-      </div>
-      
-      {/* Проекты дашборда */}
-      <div className="mt-8">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Projects</h2>
-        {dashboard.projects.length > 0 ? (
-          <ProjectBoard 
-            projects={dashboard.projects} 
-            onProjectsChange={handleProjectsChange} 
-          />
-        ) : (
-          <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <p className="text-gray-500 dark:text-gray-400">No projects yet</p>
-            <button
-              onClick={openProjectModal}
-              className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-            >
-              Add First Project
-            </button>
+                </table>
+              </div>
+            </div>
+          )}
+          
+          {/* Проекты дашборда со столбцами статусов */}
+          <div className="mt-8">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Projects</h2>
+            {dashboard.projects.length > 0 ? (
+              <ProjectBoard 
+                projects={dashboard.projects} 
+                onProjectsChange={handleProjectsChange} 
+              />
+            ) : (
+              <div className="px-4 py-8 bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Столбец "In Plans" */}
+                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+                    <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4">In Plans</h3>
+                    <div className="text-center py-10">
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">No projects yet</p>
+                    </div>
+                  </div>
+                  
+                  {/* Столбец "In Progress" */}
+                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+                    <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4">In Progress</h3>
+                    <div className="text-center py-10">
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">No projects yet</p>
+                    </div>
+                  </div>
+                  
+                  {/* Столбец "Completed" */}
+                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+                    <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4">Completed</h3>
+                    <div className="text-center py-10">
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">No projects yet</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="text-center mt-8">
+                  <button
+                    onClick={openProjectModal}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                  >
+                    Add First Project
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
       
       {/* Модальное окно для добавления проекта */}
       <ProjectModal 
