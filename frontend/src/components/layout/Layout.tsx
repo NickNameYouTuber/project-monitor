@@ -22,7 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            {/* Logo and hamburger menu for mobile */}
+            {/* Logo and brand */}
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">
@@ -34,39 +34,39 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <nav className="hidden md:ml-6 md:flex md:space-x-4">
                 <button 
                   onClick={() => navigate('/dashboards')}
-                  className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Dashboards
                 </button>
               </nav>
-              
-              {/* Mobile menu button */}
-              <div className="-mr-2 flex md:hidden ml-4">
-                <button
-                  onClick={toggleMobileMenu}
-                  className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none"
-                  aria-expanded="false"
-                >
-                  <span className="sr-only">Open main menu</span>
-                  {/* Icon when menu is closed */}
-                  {!isMobileMenuOpen ? (
-                    <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                  ) : (
-                    <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+            </div>
+            
+            {/* Mobile menu button - moved to right */}
+            <div className="flex md:hidden items-center">
+              <button
+                onClick={toggleMobileMenu}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
+                aria-expanded="false"
+              >
+                <span className="sr-only">Open main menu</span>
+                {/* Icon when menu is closed */}
+                {!isMobileMenuOpen ? (
+                  <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                ) : (
+                  <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </button>
             </div>
             
             {/* User menu & Dark mode toggle - desktop */}
             <div className="hidden md:flex md:items-center">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-md text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors mr-2"
+                className="p-2 rounded-md text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors mr-2"
                 aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
               >
                 {isDarkMode ? (
@@ -113,7 +113,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   navigate('/dashboards');
                   setIsMobileMenuOpen(false);
                 }}
-                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Dashboards
               </button>
@@ -123,10 +123,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <span className="text-gray-700 dark:text-white mr-2">Theme:</span>
                 <button
                   onClick={toggleTheme}
-                  className="p-2 rounded-md text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
+                  className="p-2 rounded-md text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
                   aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
                 >
-                  {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                  {isDarkMode ? 'Dark Mode' : 'Light Mode'}
                 </button>
               </div>
               
@@ -146,7 +146,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
                 <button
                   onClick={logout}
-                  className="block w-full text-left px-3 py-2 text-base font-medium text-red-500 hover:bg-red-100 dark:hover:bg-red-900 hover:text-red-700 dark:hover:text-red-300 rounded-md"
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-red-500 hover:text-red-700 dark:hover:text-red-300 rounded-md"
                 >
                   Logout
                 </button>
