@@ -62,7 +62,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
             <div className="relative">
               <button 
                 onClick={() => setShowMenu(!showMenu)}
-                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 p-1 rounded transition-colors"
+                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 p-1 rounded-full bg-white dark:bg-gray-800 transition-colors"
                 aria-label="Task options"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -75,13 +75,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                   <div className="py-1">
                     <button
                       onClick={handleEdit}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                     >
                       Edit Task
                     </button>
                     <button
                       onClick={handleDelete}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                     >
                       Delete Task
                     </button>
