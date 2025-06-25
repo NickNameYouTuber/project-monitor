@@ -440,96 +440,113 @@ const DashboardDetail: React.FC = () => {
       {/* Модальное окно для приглашения по имени пользователя */}
       {isInviteByTelegramModalOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 sm:p-0"
           onClick={(e) => {
             // Закрытие при клике вне модального окна
             if (e.target === e.currentTarget) closeInviteByTelegramModal();
           }}
         >
-          <div className="flex items-center justify-center min-h-screen p-4 w-full">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Invite User</h3>
-              
-              {/* Поиск пользователя */}
-              <div className="mb-4">
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Search by Username</label>
-                <div className="flex space-x-2">
-                  <input 
-                    type="text" 
-                    value={usernameSearch}
-                    onChange={(e) => setUsernameSearch(e.target.value)}
-                    placeholder="Enter username"
-                    className="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
-                  />
-                  <button 
-                    onClick={handleSearchUsers} 
-                    disabled={!usernameSearch.trim() || isSearching}
-                    className={`px-4 py-2 rounded-lg ${!usernameSearch.trim() || isSearching ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 transition-colors'} text-white`}
-                  >
-                    {isSearching ? 'Searching...' : 'Search'}
-                  </button>
-                </div>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  User must have logged in to the app with Telegram at least once
-                </p>
+          <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden w-full">
+              {/* Заголовок с кнопкой закрытия для мобильных */}
+              <div className="px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white">Invite User</h3>
+                <button 
+                  onClick={closeInviteByTelegramModal}
+                  className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-
-              {/* Результаты поиска */}
-              {searchResults.length > 0 && (
-                <div className="mb-4 max-h-40 overflow-y-auto border dark:border-gray-600 rounded-lg">
-                  {searchResults.map(user => (
-                    <div 
-                      key={user.id} 
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-b last:border-b-0 dark:border-gray-600"
-                      onClick={() => selectUser(user)}
+              
+              {/* Содержимое модального окна */}
+              <div className="p-4 sm:p-6">
+                {/* Поиск пользователя */}
+                <div className="mb-4">
+                  <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Search by Username</label>
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <input 
+                      type="text" 
+                      value={usernameSearch}
+                      onChange={(e) => setUsernameSearch(e.target.value)}
+                      placeholder="Enter username"
+                      className="w-full sm:flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                    />
+                    <button 
+                      onClick={handleSearchUsers} 
+                      disabled={!usernameSearch.trim() || isSearching}
+                      className={`w-full sm:w-auto px-4 py-2 rounded-lg ${!usernameSearch.trim() || isSearching ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 transition-colors'} text-white`}
                     >
-                      <span className="text-gray-800 dark:text-gray-200">{user.username}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">ID: {user.telegram_id}</span>
-                    </div>
-                  ))}
+                      {isSearching ? 'Searching...' : 'Search'}
+                    </button>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    User must have logged in to the app with Telegram at least once
+                  </p>
                 </div>
-              )}
+
+                {/* Результаты поиска */}
+                {searchResults.length > 0 && (
+                  <div className="mb-4 max-h-40 overflow-y-auto border dark:border-gray-600 rounded-lg">
+                    {searchResults.map(user => (
+                      <div 
+                        key={user.id} 
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex flex-col sm:flex-row sm:justify-between sm:items-center border-b last:border-b-0 dark:border-gray-600"
+                        onClick={() => selectUser(user)}
+                      >
+                        <span className="text-gray-800 dark:text-gray-200 font-medium">{user.username}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 sm:mt-0">ID: {user.telegram_id}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+               </div>
 
               {/* Выбранный пользователь */}
               {selectedUser && (
-                <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                  <p className="text-gray-800 dark:text-white font-medium">Selected user: {selectedUser.username}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Telegram ID: {selectedUser.telegram_id}</p>
+                <div className="p-4 sm:p-6 pt-0">
+                  <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                    <p className="text-gray-800 dark:text-white font-medium">Selected user: {selectedUser.username}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Telegram ID: {selectedUser.telegram_id}</p>
+                  </div>
+
+                  {/* Скрытое поле для Telegram ID */}
+                  <input type="hidden" value={telegramId} />
+                  <div className="mb-4">
+                    <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Role</label>
+                    <select 
+                      value={memberRole}
+                      onChange={(e) => setMemberRole(e.target.value as any)}
+                      className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="viewer">Viewer</option>
+                      <option value="editor">Editor</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-2 space-y-reverse sm:space-y-0 sm:space-x-3 mt-4">
+                    <button 
+                      type="button" 
+                      onClick={closeInviteByTelegramModal}
+                      className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-white transition w-full sm:w-auto"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={handleInviteByTelegram}
+                      disabled={!telegramId.trim() || !selectedUser}
+                      className={`bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition w-full sm:w-auto ${
+                        !telegramId.trim() || !selectedUser ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      Invite
+                    </button>
+                  </div>
                 </div>
               )}
-
-              {/* Скрытое поле для Telegram ID */}
-              <input type="hidden" value={telegramId} />
-              <div className="mb-4">
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Role</label>
-                <select 
-                  value={memberRole}
-                  onChange={(e) => setMemberRole(e.target.value as any)}
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="viewer">Viewer</option>
-                  <option value="editor">Editor</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-              <div className="flex justify-end space-x-3">
-                <button 
-                  type="button" 
-                  onClick={closeInviteByTelegramModal}
-                  className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-white transition"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleInviteByTelegram}
-                  disabled={!telegramId.trim() || !selectedUser}
-                  className={`bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition ${
-                    !telegramId.trim() || !selectedUser ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  Invite
-                </button>
-              </div>
             </div>
           </div>
         </div>
