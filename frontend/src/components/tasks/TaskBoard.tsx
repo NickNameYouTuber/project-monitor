@@ -80,20 +80,29 @@ const TaskBoard = ({ }: TaskBoardProps) => {
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-        <span className="block sm:inline">{error}</span>
+      <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md my-4" role="alert">
+        <div className="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span className="font-medium">Error: </span>
+          <span className="ml-1">{error}</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="task-board flex flex-col h-full">
-      <div className="task-board-header flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Task Board</h2>
+    <div className="task-board flex flex-col h-full bg-gradient-to-b from-slate-50 to-slate-100 p-5 rounded-lg shadow-sm">
+      <div className="task-board-header flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
+        <h2 className="text-2xl font-bold text-slate-800">Task Board</h2>
         <button 
           onClick={() => setIsAddingColumn(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-2 shadow-sm"
         >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
           Add Column
         </button>
       </div>
@@ -102,9 +111,10 @@ const TaskBoard = ({ }: TaskBoardProps) => {
         <Droppable droppableId="board-columns" direction="horizontal" type="column">
           {(provided: DroppableProvided) => (
             <div 
-              className="task-board-content flex overflow-x-auto pb-4 h-full"
+              className="task-board-content flex overflow-x-auto pb-4 h-full space-x-4 px-1"
               ref={provided.innerRef}
               {...provided.droppableProps}
+              style={{ minHeight: '70vh' }}
             >
               {columns
                 .sort((a, b) => a.order - b.order)

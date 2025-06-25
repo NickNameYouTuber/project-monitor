@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Droppable, Draggable } from 'react-beautiful-dnd';
 import type { TaskColumn as TaskColumnType } from '../../utils/api/taskColumns';
 import type { Task as TaskType } from '../../utils/api/tasks';
-import TaskCard from './TaskCard';
-import TaskForm from './TaskForm';
-import TaskColumnForm from './TaskColumnForm';
+// Используем относительные пути с явным указанием расширения файла
+import TaskCard from '../../components/tasks/TaskCard';
+import TaskForm from '../../components/tasks/TaskForm';
+import TaskColumnForm from '../../components/tasks/TaskColumnForm';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 
 interface TaskColumnProps {
@@ -30,25 +31,25 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className="task-column bg-gray-100 rounded-lg mr-4 flex-shrink-0 w-72 max-h-full flex flex-col"
+          className="task-column bg-white rounded-lg flex-shrink-0 w-80 max-h-full flex flex-col shadow-md border border-slate-200 overflow-hidden"
         >
           {/* Заголовок колонки */}
           <div 
-            className="column-header p-3 flex justify-between items-center bg-gray-200 rounded-t-lg"
+            className="column-header p-4 flex justify-between items-center bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-md"
             {...provided.dragHandleProps}
           >
-            <h3 className="font-medium text-gray-800">{column.name}</h3>
+            <h3 className="font-bold text-white text-lg">{column.name}</h3>
             <div className="column-actions relative">
               <button 
                 onClick={() => setShowColumnMenu(!showColumnMenu)}
-                className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                className="text-white hover:text-slate-200 focus:outline-none transition-colors duration-200"
               >
                 <i className="fas fa-ellipsis-v"></i>
               </button>
 
               {/* Выпадающее меню для колонки */}
               {showColumnMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-slate-200 overflow-hidden">
                   <ul className="py-1">
                     <li>
                       <button
@@ -56,7 +57,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
                           setIsEditingColumn(true);
                           setShowColumnMenu(false);
                         }}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        className="block px-4 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 w-full text-left transition-colors duration-150"
                       >
                         Edit Column
                       </button>
@@ -67,7 +68,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
                           handleDeleteColumn();
                           setShowColumnMenu(false);
                         }}
-                        className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
+                        className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left transition-colors duration-150"
                       >
                         Delete Column
                       </button>
@@ -84,9 +85,9 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className={`tasks-list p-2 flex-grow overflow-y-auto ${
-                  snapshot.isDraggingOver ? 'bg-blue-50' : ''
-                }`}
+                className={`tasks-list p-3 flex-grow overflow-y-auto ${
+                  snapshot.isDraggingOver ? 'bg-indigo-50' : 'bg-slate-50'
+                } transition-colors duration-200`}
                 style={{ minHeight: '100px' }}
               >
                 {tasks.map((task, index) => (
@@ -111,7 +112,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
           <div className="column-footer p-3 border-t border-gray-200">
             <button
               onClick={() => setIsAddingTask(true)}
-              className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded flex items-center"
+              className="add-task-btn w-full mt-2 p-3 flex items-center justify-center bg-slate-100 hover:bg-indigo-100 rounded-md text-slate-600 hover:text-indigo-600 font-medium cursor-pointer transition-colors duration-200"
             >
               <i className="fas fa-plus mr-2"></i> Add a Task
             </button>
