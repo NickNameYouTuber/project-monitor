@@ -111,7 +111,7 @@ const DashboardList: React.FC = () => {
                 {dashboard.description && (
                   <p className="text-gray-600 dark:text-gray-400 mt-1">{dashboard.description}</p>
                 )}
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
                   Created: {new Date(dashboard.created_at).toLocaleDateString()}
                 </p>
               </div>

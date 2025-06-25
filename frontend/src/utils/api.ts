@@ -3,7 +3,11 @@
  */
 
 // API base URL - should come from environment variables in production
-const API_URL = import.meta.env.VITE_API_URL || 'https://projectsmonitor.nicorp.tech/api';
+// Для продакшена используем относительные пути, для разработки - абсолютные
+const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const API_URL = isProduction 
+  ? '/api' // В продакшене используем относительный путь
+  : (import.meta.env.VITE_API_URL || 'http://localhost:7671/api'); // В разработке полный URL
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
