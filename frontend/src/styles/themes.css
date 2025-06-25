@@ -16,6 +16,7 @@
   --bg-secondary: #f9fafb;
   --bg-card: #f3f4f6;
   --bg-header: #ffffff;
+  --bg-input: #ffffff;
   
   /* Границы */
   --border-primary: #e5e7eb;
@@ -26,6 +27,12 @@
   --state-warning: #f59e0b;
   --state-error: #ef4444;
   --state-info: #3b82f6;
+  
+  /* Состояния (легкий фон) */
+  --state-success-light: #d1fae5;
+  --state-warning-light: #fef3c7;
+  --state-error-light: #fee2e2;
+  --state-info-light: #dbeafe;
 }
 
 /* Темная тема */
@@ -45,6 +52,7 @@
   --bg-secondary: #111827;
   --bg-card: #374151;
   --bg-header: #1f2937;
+  --bg-input: #2d3748;
   
   /* Границы */
   --border-primary: #4b5563;
@@ -55,4 +63,10 @@
   --state-warning: #fbbf24;
   --state-error: #f87171;
   --state-info: #60a5fa;
+  
+  /* Состояния (легкий фон) */
+  --state-success-light: rgba(52, 211, 153, 0.2);
+  --state-warning-light: rgba(251, 191, 36, 0.2);
+  --state-error-light: rgba(248, 113, 113, 0.2);
+  --state-info-light: rgba(96, 165, 250, 0.2);
 }

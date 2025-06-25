@@ -11,9 +11,9 @@ const CloseButton: React.FC<CloseButtonProps> = ({ onClick, className = '', aria
     <button 
       onClick={onClick}
       className={`inline-flex items-center justify-center p-2 rounded-md 
-        text-gray-700 dark:text-white bg-white dark:bg-gray-800 
-        hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 
-        dark:hover:bg-gray-700 focus:outline-none transition-colors ${className}`}
+        text-text-primary bg-bg-card 
+        hover:text-text-primary hover:bg-bg-hover 
+        focus:outline-none transition-colors ${className}`}
       aria-label={ariaLabel}
     >
       <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -44,13 +44,13 @@ const ProjectColumn: React.FC<ProjectColumnProps> = ({
     .sort((a, b) => b.order - a.order);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <div className="bg-bg-card rounded-lg shadow-md p-6">
       <div className="flex items-center mb-4">
         <div className={`w-3 h-3 ${colorClass} rounded-full mr-3`}></div>
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">{title}</h2>
+        <h2 className="text-xl font-semibold text-text-primary">{title}</h2>
       </div>
       <div 
-        className="space-y-4 min-h-[150px] border-2 border-dashed border-transparent hover:border-gray-200 dark:hover:border-gray-700 rounded-lg p-2"
+        className="space-y-4 min-h-[150px] border-2 border-dashed border-transparent hover:border-border-primary rounded-lg p-2"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}

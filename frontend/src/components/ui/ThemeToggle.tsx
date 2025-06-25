@@ -16,7 +16,7 @@ const ThemeToggle: React.FC = () => {
       {theme === 'dark' ? (
         // Иконка солнца для светлого режима
         <svg
-          className="w-5 h-5 text-yellow-400"
+          className="w-5 h-5 text-state-warning"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -32,7 +32,7 @@ const ThemeToggle: React.FC = () => {
       ) : (
         // Иконка луны для темного режима
         <svg
-          className="w-5 h-5 text-gray-700"
+          className="w-5 h-5 text-text-secondary"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
