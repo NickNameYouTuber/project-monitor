@@ -101,7 +101,8 @@ button:focus-visible {
 
 /* Custom styles */
 .drag-over {
-  @apply border-2 border-dashed border-primary bg-primary/10;
+  @apply border-2 border-dashed border-primary;
+  background-color: rgba(var(--primary-rgb), 0.1);
 }
 
 .drag-above {

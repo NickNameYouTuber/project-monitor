@@ -2,13 +2,19 @@
 
 :root {
   /* Светлая тема (по умолчанию) */
+  /* Основные цвета */
   --color-primary: #3b82f6;
+  --primary-rgb: 59, 130, 246;
   --color-secondary: #6b7280;
+  --secondary-rgb: 107, 114, 128;
   --color-accent: #8b5cf6;
+  --accent-rgb: 139, 92, 246;
   
   /* Цвета текста */
   --text-primary: #1f2937;
+  --text-primary-rgb: 31, 41, 55;
   --text-secondary: #4b5563;
+  --text-secondary-rgb: 75, 85, 99;
   --text-muted: #9ca3af;
   
   /* Фоны */
@@ -39,6 +45,7 @@
 .dark {
   /* Основные цвета */
   --color-primary: #60a5fa;
+  --primary-rgb: 96, 165, 250;
   --color-secondary: #9ca3af;
   --color-accent: #a78bfa;
   
