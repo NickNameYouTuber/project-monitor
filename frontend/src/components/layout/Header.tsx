@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../../utils/AppContext';
+import ThemeToggle from '../ui/ThemeToggle';
 
 interface HeaderProps {
   onAddProject: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
-  const { currentUser, logout, isDarkMode, toggleTheme } = useAppContext();
+  const { currentUser, logout } = useAppContext();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -55,14 +56,8 @@ const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
           <p className="text-gray-600 dark:text-gray-300 mt-1">Track your team projects and personal goals</p>
         </div>
         <div className="flex items-center space-x-3">
-          {/* Theme Toggle Button */}
-          <button 
-            onClick={toggleTheme}
-            className="theme-toggle w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-white transition-colors"
-            aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-          >
-            <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-xl`}></i>
-          </button>
+          {/* Theme Toggle Button - новая версия */}
+          <ThemeToggle />
           
           {/* User Panel */}
           <div className="relative" ref={dropdownRef}>

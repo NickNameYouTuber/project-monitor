@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Project, ProjectStatus, User, Dashboard, DashboardMember } from '../types';
-import { loadProjects, loadTeamMembers, saveProjects, saveTeamMembers, getDarkMode, saveDarkMode } from './storage';
+import { loadProjects, loadTeamMembers, saveProjects, saveTeamMembers } from './storage';
+import { useTheme as useNextTheme } from '../context/ThemeContext';
 import { api } from './api';
 
 interface AppContextType {
@@ -42,7 +43,7 @@ interface AppContextType {
   removeDashboardMember: (dashboardId: string, memberId: string) => Promise<void>;
   
   // Theme state
-  isDarkMode: boolean;
+  isDarkMode: boolean | string | undefined;
   toggleTheme: () => void;
 }
 
@@ -56,7 +57,9 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [teamMembers, setTeamMembers] = useState<string[]>(['You']);
   const [users, setUsers] = useState<User[]>([]);
-  const [isDarkMode, setIsDarkMode] = useState(() => getDarkMode());
+  // Используем next-themes для определения темы
+  const { theme, setTheme: setNextTheme } = useNextTheme();
+  const [isDarkMode, setIsDarkMode] = useState<boolean | string | undefined>(theme);
   
   // Load data when user changes
   useEffect(() => {
@@ -364,7 +367,9 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   
   // Toggle dark/light theme
   const toggleTheme = () => {
-    setIsDarkMode(prev => !prev);
+    const newTheme = isDarkMode === 'dark' ? 'light' : 'dark';
+    setNextTheme(newTheme);
+    setIsDarkMode(newTheme);
   };
   
     // Функции для работы с дашбордами
