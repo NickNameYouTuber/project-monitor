@@ -5,6 +5,7 @@ import { api } from '../../utils/api';
 import type { DashboardDetail as DashboardDetailType, DashboardMember } from '../../types';
 import ProjectBoard from '../project/ProjectBoard';
 import ProjectModal from '../modals/ProjectModal';
+import CloseButton from '../ui/CloseButton';
 
 const DashboardDetail: React.FC = () => {
   const { dashboardId } = useParams<{ dashboardId: string }>();
@@ -451,14 +452,7 @@ const DashboardDetail: React.FC = () => {
               {/* Заголовок с кнопкой закрытия для мобильных */}
               <div className="px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white">Invite User</h3>
-                <button 
-                  onClick={closeInviteByTelegramModal}
-                  className="text-gray-400 hover:text-gray-500 focus:outline-none"
-                >
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <CloseButton onClick={closeInviteByTelegramModal} />
               </div>
               
               {/* Содержимое модального окна */}

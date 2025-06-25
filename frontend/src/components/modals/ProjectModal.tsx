@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../utils/AppContext';
 import type { ProjectStatus, ProjectPriority, DashboardMember } from '../../types';
+import CloseButton from '../ui/CloseButton';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -67,14 +68,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden w-full">
           <div className="px-4 py-3 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white">Add New Project</h3>
-            <button 
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <CloseButton onClick={onClose} />
           </div>
           <div className="p-4 sm:p-6">
           <form onSubmit={handleSubmit}>
