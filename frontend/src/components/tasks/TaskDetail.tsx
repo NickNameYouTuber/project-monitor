@@ -31,17 +31,14 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
     setShowMenu(false);
   };
 
-  // Находим колонку для задачи
   const column = columns.find(col => col.id === task.column_id);
   
-  // Обработчик клика по фону модального окна
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       handleClose();
     }
   };
 
-  // Если активирован режим редактирования, показываем форму редактирования
   if (isEditing) {
     return (
       <TaskForm 
@@ -56,20 +53,17 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   
   return (
     <>
-      {/* Затемняющий фон */}
       <div className="fixed inset-0 bg-overlay z-40" onClick={handleBackdropClick} />
-      {/* Модальное окно */}
       <div 
         className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0"
         onClick={handleBackdropClick}
       >
-        <div className="w-full max-w-2xl mx-auto">
+        <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
           <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto">
             <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
               <div className="flex-1">
                 <h3 className="text-lg sm:text-xl font-semibold text-text-primary">{task.title}</h3>
               </div>
-          
               <div className="flex items-center space-x-2">
                 <div className="relative">
                   <button 
@@ -81,7 +75,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                       <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
                     </svg>
                   </button>
-                  
                   {showMenu && (
                     <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-bg-card border border-border-primary z-10">
                       <div className="py-1">
@@ -101,11 +94,9 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                     </div>
                   )}
                 </div>
-                
                 <CloseButton onClick={handleClose} />
-          </div>
-        </div>
-        
+              </div>
+            </div>
             <div className="p-4 sm:p-6">
               {column && (
                 <div className="mb-4">
@@ -115,7 +106,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                   </div>
                 </div>
               )}
-              
               {task.description && (
                 <div className="mb-6">
                   <div className="text-sm text-text-secondary mb-2 font-bold">Description</div>
@@ -124,7 +114,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                   </div>
                 </div>
               )}
-          
               {task.assignees && task.assignees.length > 0 && (
                 <div className="mb-6">
                   <div className="text-sm text-text-secondary mb-3 font-bold">Assignees</div>
@@ -143,14 +132,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                   </div>
                 </div>
               )}
-          
               <div className="border-t border-border-primary pt-4">
                 <div className="flex justify-between text-sm text-text-muted">
                   <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
                   <span>Updated: {new Date(task.updated_at).toLocaleDateString()}</span>
                 </div>
               </div>
-        </div>
+            </div>
           </div>
         </div>
       </div>
