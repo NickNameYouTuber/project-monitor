@@ -18,20 +18,35 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
     setSelectedTask(task);
   };
   
-  // Рассчитываем максимальное количество отображаемых исполнителей
-  // Делаем метку, является ли пользователь исполнителем задачи
+  // Подготавливаем список исполнителей и сортируем его
+  // так, чтобы текущий пользователь был первым
   const assigneeData = useMemo(() => {
     if (!task.assignees || task.assignees.length === 0) {
-      return { assignees: [], isCurrentUserAssigned: false };
+      return { assignees: [], isCurrentUserAssigned: false, hiddenAssignees: [] };
     }
     
-    const isCurrentUserAssigned = task.assignees.some(
-      assignee => currentUser && assignee.id === currentUser.id
-    );
+    // Проверяем, является ли текущий пользователь исполнителем
+    const currentUserIndex = currentUser ? task.assignees.findIndex(assignee => assignee.id === currentUser.id) : -1;
+    const isCurrentUserAssigned = currentUserIndex !== -1;
+    
+    // Сортируем список так, чтобы текущий пользователь был первым
+    let sortedAssignees = [...task.assignees];
+    if (isCurrentUserAssigned && currentUserIndex > 0) {
+      // Извлекаем текущего пользователя
+      const currentUserAssignee = sortedAssignees[currentUserIndex];
+      // Удаляем его из текущей позиции
+      sortedAssignees.splice(currentUserIndex, 1);
+      // Добавляем в начало списка
+      sortedAssignees.unshift(currentUserAssignee);
+    }
+    
+    // Приготовим список скрытых исполнителей
+    const hiddenAssignees = sortedAssignees.slice(2);
     
     return { 
-      assignees: task.assignees,
-      isCurrentUserAssigned 
+      assignees: sortedAssignees,
+      isCurrentUserAssigned,
+      hiddenAssignees
     };
   }, [task.assignees, currentUser]);
   
@@ -80,12 +95,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
                   })}
                   
                   {/* Показываем индикатор +N, если исполнителей больше двух */}
-                  {assigneeData.assignees.length > 2 && (
+                  {assigneeData.hiddenAssignees.length > 0 && (
                     <span 
                       className="text-text-secondary ml-1" 
-                      title={`+ ${assigneeData.assignees.length - 2} дополнительных исполнителей`}
+                      title={
+                        // Добавляем к подсказке список имен скрытых пользователей
+                        `Также назначены: ${assigneeData.hiddenAssignees.map(a => a.username).join(', ')}`
+                      }
                     >
-                      +{assigneeData.assignees.length - 2}
+                      +{assigneeData.hiddenAssignees.length}
                     </span>
                   )}
                 </>
