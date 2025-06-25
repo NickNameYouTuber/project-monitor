@@ -78,7 +78,13 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     try {
       setLoading(true);
       const newColumn = await api.taskColumns.create(columnData, token);
-      setColumns(prev => [...prev, newColumn].sort((a, b) => a.order - b.order));
+      console.log('Adding new column:', newColumn);
+      console.log('Previous columns:', columns);
+      setColumns(prev => {
+        const updated = [...prev, newColumn].sort((a, b) => a.order - b.order);
+        console.log('Updated columns:', updated);
+        return updated;
+      });
       setError(null);
       return newColumn;
     } catch (err: any) {
