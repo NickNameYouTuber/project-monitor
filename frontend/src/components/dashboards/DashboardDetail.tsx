@@ -317,7 +317,7 @@ const DashboardDetail: React.FC = () => {
               />
             ) : (
               <div className="px-4 py-8 bg-white dark:bg-gray-800 rounded-lg shadow">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   {/* Столбец "In Plans" */}
                   <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
                     <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4">In Plans</h3>
@@ -329,6 +329,14 @@ const DashboardDetail: React.FC = () => {
                   {/* Столбец "In Progress" */}
                   <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
                     <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4">In Progress</h3>
+                    <div className="text-center py-10">
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">No projects yet</p>
+                    </div>
+                  </div>
+                  
+                  {/* Столбец "On Testing" */}
+                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+                    <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4">On Testing</h3>
                     <div className="text-center py-10">
                       <p className="text-gray-500 dark:text-gray-400 mb-4">No projects yet</p>
                     </div>

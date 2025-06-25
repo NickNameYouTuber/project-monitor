@@ -13,7 +13,7 @@ interface AppContextType {
   
   // Projects state
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'order'>) => void;
+  addProject: (project: Omit<Project, 'id' | 'createdAt'> & { dashboard_id?: string }) => void;
   deleteProject: (id: string) => void;
   moveProject: (projectId: string, newStatus: ProjectStatus) => void;
   reorderProjects: (draggedId: string, targetId: string, position: 'above' | 'below') => void;
@@ -128,7 +128,7 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   };
   
   // Add new project
-  const addProject = async (projectData: Omit<Project, 'id' | 'createdAt' | 'order'>) => {
+  const addProject = async (projectData: Omit<Project, 'id' | 'createdAt'> & { dashboard_id?: string }) => {
     try {
       if (currentUser && currentUser.token) {
         // Create project via API
@@ -137,7 +137,9 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           description: projectData.description,
           priority: projectData.priority,
           status: projectData.status,
-          assignee: projectData.assignee
+          assignee: projectData.assignee,
+          order: projectData.order || 1000, // Добавляем обязательное поле order
+          dashboard_id: projectData.dashboard_id
         };
         
         const newProject = await api.projects.create(apiProject, currentUser.token);
