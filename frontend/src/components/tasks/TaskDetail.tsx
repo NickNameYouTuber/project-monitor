@@ -75,7 +75,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                   <button 
                     onClick={() => setShowMenu(!showMenu)}
                     className="text-text-muted hover:text-text-secondary p-1 rounded-full transition-colors"
-                    aria-label="Опции задачи"
+                    aria-label="Task options"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
@@ -89,13 +89,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                           onClick={handleEdit}
                           className="block w-full text-left px-4 py-2 text-sm text-text-secondary hover:bg-bg-secondary transition-colors"
                         >
-                          Редактировать
+                          Edit Task
                         </button>
                         <button
                           onClick={handleDelete}
                           className="block w-full text-left px-4 py-2 text-sm text-state-error hover:bg-bg-secondary transition-colors"
                         >
-                          Удалить
+                          Delete Task
                         </button>
                       </div>
                     </div>
@@ -109,7 +109,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
             <div className="p-4 sm:p-6">
               {column && (
                 <div className="mb-4">
-                  <div className="text-sm text-text-secondary mb-2">Колонка</div>
+                  <div className="text-sm text-text-secondary mb-2 font-bold">Column</div>
                   <div className="inline-block bg-bg-secondary rounded-full px-3 py-1 text-sm text-text-secondary">
                     {column.name}
                   </div>
@@ -118,16 +118,16 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
               
               {task.description && (
                 <div className="mb-6">
-                  <div className="text-sm text-text-secondary mb-2">Описание</div>
+                  <div className="text-sm text-text-secondary mb-2 font-bold">Description</div>
                   <div className="whitespace-pre-wrap bg-bg-secondary rounded-lg p-4 text-text-primary border border-border-primary">
-                    {task.description || <span className="text-text-muted italic">Нет описания</span>}
+                    {task.description || <span className="text-text-muted italic">No description</span>}
                   </div>
                 </div>
               )}
           
               {task.assignees && task.assignees.length > 0 && (
                 <div className="mb-6">
-                  <div className="text-sm text-text-secondary mb-3">Исполнители</div>
+                  <div className="text-sm text-text-secondary mb-3 font-bold">Assignees</div>
                   <div className="flex flex-wrap gap-2">
                     {task.assignees.map((assignee) => (
                       <div 
@@ -146,8 +146,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
           
               <div className="border-t border-border-primary pt-4">
                 <div className="flex justify-between text-sm text-text-muted">
-                  <span>Создано: {new Date(task.created_at).toLocaleDateString()}</span>
-                  <span>Обновлено: {new Date(task.updated_at).toLocaleDateString()}</span>
+                  <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
+                  <span>Updated: {new Date(task.updated_at).toLocaleDateString()}</span>
                 </div>
               </div>
         </div>

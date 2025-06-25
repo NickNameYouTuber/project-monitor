@@ -231,7 +231,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
           <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full max-h-[90vh] overflow-y-auto">
             <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
               <h3 className="text-lg sm:text-xl font-semibold text-text-primary">
-                {mode === 'create' ? 'Добавить задачу' : 'Редактировать задачу'}
+                {mode === 'create' ? 'Add New Task' : 'Edit Task'}
               </h3>
               <CloseButton onClick={onClose} />
             </div>
@@ -344,7 +344,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
                       {mode === 'create' ? 'Creating...' : 'Updating...'}
                     </>
                   ) : (
-                    mode === 'create' ? 'Create Task' : 'Update Task'
+                    mode === 'create' ? 'Add Task' : 'Update Task'
                   )}
                 </button>
               </div>
