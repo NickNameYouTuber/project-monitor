@@ -17,8 +17,27 @@ router = APIRouter()
 async def read_projects(skip: int = 0, limit: int = 100, 
                        current_user: User = Depends(get_current_active_user),
                        db: Session = Depends(get_db)):
-    projects = db.query(Project).filter(Project.owner_id == current_user.id)\
-                .offset(skip).limit(limit).all()
+    from sqlalchemy import or_
+    from ..models.dashboard_member import DashboardMember
+    
+    # Получаем ID дашбордов, в которых пользователь является участником
+    dashboards_as_member = db.query(DashboardMember.dashboard_id).filter(
+        DashboardMember.user_id == current_user.id,
+        DashboardMember.is_active == True
+    ).all()
+    
+    dashboard_ids = [d[0] for d in dashboards_as_member]
+    
+    # Запрос проектов с объединением условий:
+    # 1. Проекты, где пользователь является владельцем
+    # 2. Проекты, связанные с дашбордами, где пользователь является участником
+    projects = db.query(Project).filter(
+        or_(
+            Project.owner_id == current_user.id,
+            Project.dashboard_id.in_(dashboard_ids)
+        )
+    ).offset(skip).limit(limit).all()
+    
     return projects
 
 

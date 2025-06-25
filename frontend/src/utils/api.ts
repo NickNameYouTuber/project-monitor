@@ -188,7 +188,7 @@ export const api = {
         token
       }),
     inviteByTelegram: (dashboardId: string, telegramData: any, token: string) => 
-      apiRequest(`/dashboards/${dashboardId}/invite_by_telegram`, { 
+      apiRequest(`/dashboards/${dashboardId}/invite-by-telegram`, { 
         method: 'POST', 
         body: telegramData,
         requireAuth: true,
