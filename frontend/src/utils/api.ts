@@ -205,7 +205,7 @@ export const api = {
   // Users endpoints
   users: {
     getAll(token: string) {
-      return apiRequest('/users', { requireAuth: true, token });
+      return apiRequest('/users/search', { requireAuth: true, token }); // Используем публичный endpoint для поиска пользователей
     },
     getOne(id: string, token: string) {
       return apiRequest(`/users/${id}`, { requireAuth: true, token });

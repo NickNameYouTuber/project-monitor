@@ -35,32 +35,56 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   const formRef = useRef<HTMLFormElement>(null);
 
   // Загрузка пользователей для назначения задач
+  // useRef для отслеживания уже запущенных запросов, чтобы избежать бесконечных циклов
+  const loadedRef = useRef<{[key: string]: boolean}>({});
+  
   useEffect(() => {
+    // Используем projectId как ключ для отслеживания загрузки
+    const key = `${projectId}`;
+    
+    // Проверяем, что данные еще не были загружены для этого проекта
+    if (loadedRef.current[key]) {
+      return;
+    }
+    
+    // Отмечаем, что загрузка началась
+    loadedRef.current[key] = true;
+    
     const fetchData = async () => {
-      if (currentUser?.token) {
+      if (!currentUser?.token) return;
+      
+      try {
         // Загружаем всех пользователей системы
         await fetchUsers(currentUser.token);
         
-        try {
-          // Находим проект в списке проектов или используем currentProject
-          const project = projects.find(p => p.id === projectId) || currentProject;
-          
+        // Чтобы избежать бесконечных запросов, сначала проверим локально
+        let dashboardId = null;
+        
+        // Попытка найти dashboard_id в текущих данных
+        // Сначала проверим currentProject
+        if (currentProject?.id === projectId && currentProject?.dashboard_id) {
+          dashboardId = currentProject.dashboard_id;
+        } 
+        // Затем поищем в списке проектов
+        else {
+          const project = projects.find(p => p.id === projectId);
           if (project?.dashboard_id) {
-            // Если у проекта есть dashboard_id, используем его для получения участников дашборда
-            const members = await getDashboardMembers(project.dashboard_id);
-            setProjectMembers(members);
-            console.log(`Loaded ${members.length} members for dashboard ${project.dashboard_id}`);
-          } else {
-            console.warn('Project does not have a dashboard_id', projectId);
+            dashboardId = project.dashboard_id;
           }
-        } catch (err) {
-          console.error('Error fetching project members:', err);
         }
+        
+        if (dashboardId) {
+          // Если нашли dashboard_id, получаем участников дашборда
+          const members = await getDashboardMembers(dashboardId);
+          setProjectMembers(members);
+        }
+      } catch (err) {
+        console.error('Error fetching data for TaskForm:', err);
       }
     };
     
     fetchData();
-  }, [currentUser, fetchUsers, getDashboardMembers, projectId, projects, currentProject]);
+  }, [projectId, currentUser?.token]); // Используем только неизменяемые значения как зависимости
   
   // Обработка списка пользователей и участников проекта
   useEffect(() => {
