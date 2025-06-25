@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import type { Task } from '../../utils/api/tasks';
 import { useTaskBoard } from '../../context/TaskBoardContext';
+import { useAppContext } from '../../utils/AppContext';
 
 interface TaskCardProps {
   task: Task;
@@ -10,11 +11,29 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
   const { setSelectedTask } = useTaskBoard();
+  const { currentUser } = useAppContext();
   
   // Открытие модального окна с деталями задачи
   const handleCardClick = () => {
     setSelectedTask(task);
   };
+  
+  // Рассчитываем максимальное количество отображаемых исполнителей
+  // Делаем метку, является ли пользователь исполнителем задачи
+  const assigneeData = useMemo(() => {
+    if (!task.assignees || task.assignees.length === 0) {
+      return { assignees: [], isCurrentUserAssigned: false };
+    }
+    
+    const isCurrentUserAssigned = task.assignees.some(
+      assignee => currentUser && assignee.id === currentUser.id
+    );
+    
+    return { 
+      assignees: task.assignees,
+      isCurrentUserAssigned 
+    };
+  }, [task.assignees, currentUser]);
   
   return (
     <Draggable draggableId={task.id} index={index}>
@@ -37,33 +56,37 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
             </div>
           )}
           
-          {task.assignees && task.assignees.length > 0 && (
-            <div className="task-card-assignees flex flex-wrap mt-2">
-              {task.assignees.slice(0, 3).map((assignee) => (
-                <div 
-                  key={assignee.id} 
-                  className="h-6 w-6 rounded-full bg-bg-secondary flex items-center justify-center text-xs overflow-hidden mr-1 mb-1 text-text-secondary"
-                  title={assignee.username}
-                >
-                  {assignee.username.charAt(0).toUpperCase()}
+          <div className="task-card-footer flex justify-between items-center mt-3">
+            {/* Отображаем список исполнителей */}
+            <div className="flex items-center flex-1 overflow-hidden">
+              {assigneeData.assignees.length > 0 ? (
+                <div className="flex items-center space-x-1 overflow-hidden">
+                  {/* Показываем исполнителей по имени */}
+                  <div className="flex flex-wrap overflow-hidden whitespace-nowrap text-xs">
+                    {assigneeData.assignees.slice(0, 2).map((assignee, index) => (
+                      <span 
+                        key={assignee.id}
+                        className={`mr-1 ${currentUser && assignee.id === currentUser.id ? 'text-state-success font-medium' : 'text-text-secondary'}`}
+                        title={assignee.username}
+                      >
+                        {assignee.username}
+                        {index < Math.min(assigneeData.assignees.length, 2) - 1 ? ',' : ''}
+                      </span>
+                    ))}
+                    {assigneeData.assignees.length > 2 && (
+                      <span className="text-text-muted" title={`+ ${assigneeData.assignees.length - 2} more assignees`}>
+                        +{assigneeData.assignees.length - 2}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              ))}
-              {task.assignees.length > 3 && (
-                <div className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">
-                  +{task.assignees.length - 3}
-                </div>
+              ) : (
+                <span className="text-xs text-text-muted">No assignees</span>
               )}
             </div>
-          )}
-          
-          <div className="task-card-footer flex justify-between items-center mt-3">
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {task.assignees.length} assignee{task.assignees.length !== 1 ? 's' : ''}
-              </span>
-            </div>
             
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            {/* Отображаем дату */}
+            <span className="text-xs text-text-muted ml-2 whitespace-nowrap">
               {new Date(task.created_at).toLocaleDateString()}
             </span>
           </div>

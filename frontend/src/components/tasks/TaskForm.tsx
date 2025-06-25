@@ -91,17 +91,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
     // Добавляем флаг isProjectMember к каждому пользователю
     const enhancedUsers: UserWithProjectStatus[] = users.map(user => ({
       ...user,
-      isProjectMember: projectMembers.some(member => member.user_id === user.id)
+      // Считаем пользователя участником проекта, если:
+      // 1. Он в списке участников дашборда ИЛИ
+      // 2. Это текущий пользователь
+      isProjectMember: Boolean(projectMembers.some(member => member.user_id === user.id) || 
+                       (currentUser && user.id === currentUser.id))
     }));
     
-    // Фильтруем выбранных пользователей, оставляя только участников проекта
-    // Это позволит удалить пользователей, которые не являются членами проекта, но были выбраны ранее
-    setSelectedAssignees(prev => prev.filter(id => 
-      enhancedUsers.find(u => u.id === id && u.isProjectMember)
-    ));
+    // Не фильтруем ранее выбранных пользователей, поскольку мы можем редактировать существующие задачи
     
     setUsersWithStatus(enhancedUsers);
-  }, [users, projectMembers]);
+  }, [users, projectMembers, currentUser]);
 
   // Закрытие по клику вне формы
   useEffect(() => {
@@ -159,25 +159,36 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
     }
   };
 
-  // Фильтрация пользователей на основе поиска и принадлежности к проекту
+  // Фильтрация пользователей на основе поиска
   const filteredUsers = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
-    // Только участники проекта могут быть назначены на задачу
+    
     return usersWithStatus
-      .filter(user => 
-        user.isProjectMember && user.username.toLowerCase().includes(searchLower)
-      )
-      // Сортируем по имени пользователя
-      .sort((a, b) => a.username.localeCompare(b.username));
+      // Фильтруем по поисковой строке
+      .filter(user => user.username.toLowerCase().includes(searchLower))
+      // Сортируем: сначала участники проекта, затем по алфавиту
+      .sort((a, b) => {
+        if (a.isProjectMember !== b.isProjectMember) {
+          return a.isProjectMember ? -1 : 1; // Участники проекта всегда выше
+        }
+        return a.username.localeCompare(b.username); // Затем сортируем по имени
+      });
   }, [searchTerm, usersWithStatus]);
 
   // Обработка выбора/снятия выбора исполнителя
-  const toggleAssignee = (userId: string) => {
-    setSelectedAssignees(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
+  const toggleAssignee = (userId: string, isProjectMember: boolean) => {
+    // Разрешаем выбирать только участников проекта
+    if (!isProjectMember) {
+      return; // Если пользователь не участник, ничего не делаем
+    }
+    
+    setSelectedAssignees(prev => {
+      if (prev.includes(userId)) {
+        return prev.filter(id => id !== userId);
+      } else {
+        return [...prev, userId];
+      }
+    });
   };
 
   return (
@@ -242,7 +253,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search project members..."
+                  placeholder="Search members..."
                   className="w-full px-3 py-2 mb-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
                 />
                 
@@ -255,14 +266,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
                     filteredUsers.map(user => (
                       <div
                         key={user.id}
-                        className={`flex items-center px-3 py-2 hover:bg-primary/10 cursor-pointer ${user.isProjectMember ? 'bg-primary/10' : ''}`}
-                        onClick={() => toggleAssignee(user.id)}
+                        className={`flex items-center px-3 py-2 hover:bg-primary/10 cursor-pointer ${user.isProjectMember ? 'bg-primary/10' : 'opacity-50'}`}
+                        onClick={() => toggleAssignee(user.id, user.isProjectMember)}
                       >
                         <input
                           type="checkbox"
                           checked={selectedAssignees.includes(user.id)}
-                          onChange={() => toggleAssignee(user.id)}
+                          onChange={() => toggleAssignee(user.id, user.isProjectMember)}
                           className="mr-3"
+                          disabled={!user.isProjectMember}
                         />
                         <div className="flex items-center">
                           <span className={`w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white mr-2`}>
