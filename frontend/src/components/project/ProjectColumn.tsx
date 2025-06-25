@@ -50,7 +50,7 @@ const ProjectColumn: React.FC<ProjectColumnProps> = ({
         <h2 className="text-xl font-semibold text-text-primary">{title}</h2>
       </div>
       <div 
-        className="space-y-4 min-h-[150px] border-2 border-dashed border-transparent hover:border-border-primary rounded-lg p-2"
+        className="space-y-4 min-h-[150px] border-2 border-dashed border-transparent hover:border-border-primary rounded-lg p-3"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}

@@ -101,15 +101,15 @@ button:focus-visible {
 
 /* Custom styles */
 .drag-over {
-  @apply border-2 border-dashed border-blue-400 bg-blue-500/10;
+  @apply border-2 border-dashed border-primary bg-primary/10;
 }
 
 .drag-above {
-  @apply border-t-2 border-t-blue-400;
+  @apply border-t-2 border-t-primary;
 }
 
 .drag-below {
-  @apply border-b-2 border-b-blue-400;
+  @apply border-b-2 border-b-primary;
 }
 
 .project-card {
