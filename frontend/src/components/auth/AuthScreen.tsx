@@ -71,98 +71,7 @@ const AuthScreen: React.FC = () => {
     }
   };
   
-  // Helper function for test login
-  const useTestLogin = async () => {
-    try {
-      const testAuthData = {
-        telegram_id: 123456789,
-        first_name: 'Test',
-        last_name: 'User',
-        username: 'testuser',
-        photo_url: null,
-        init_data: 'test_init_data',
-        auth_date: Math.floor(Date.now() / 1000),
-        hash: ''
-      };
-      
-      console.log('Using test login with data:', testAuthData);
-      
-      // Send to backend with mode: 'cors' explicitly set
-      const response = await fetch(`${API_URL}/auth/telegram`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        mode: 'cors', // Explicitly set CORS mode
-        body: JSON.stringify(testAuthData)
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        // Convert backend user data to frontend User format
-        const userData: User = {
-          id: data.user.id,
-          name: `${data.user.first_name} ${data.user.last_name || ''}`.trim(),
-          username: data.user.username,
-          avatar: data.user.avatar_url,
-          type: 'telegram',
-          token: data.access_token // Store the JWT token
-        };
-        login(userData);
-      } else {
-        try {
-          const errorData = await response.json();
-          console.error('Test auth failed:', errorData);
-          alert(`Authentication failed: ${errorData.detail || 'Unknown error'}`);
-        } catch (e) {
-          console.error('Failed to parse error response:', e);
-          alert(`Authentication failed: Server returned ${response.status}`);
-        }
-      }
-    } catch (error) {
-      console.error('Test login failed:', error);
-      alert('Test login failed. Please try guest login instead.');
-    }
-  };
-
-  // Function to handle guest authentication
-  const handleGuestAuth = async () => {
-    setIsLoading(true);
-    try {
-      console.log('Attempting guest login');
-      // Call the guest login endpoint
-      const response = await fetch(`${API_URL}/auth/guest`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        mode: 'cors', // Explicitly set CORS mode
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        // Convert backend user data to frontend User format
-        const userData: User = {
-          id: data.user.id,
-          name: `${data.user.first_name} ${data.user.last_name || ''}`.trim(),
-          username: data.user.username,
-          avatar: data.user.avatar_url,
-          type: 'guest',
-          token: data.access_token // Store the JWT token
-        };
-        login(userData);
-      } else {
-        const errorData = await response.json();
-        console.error('Guest login failed:', errorData);
-        alert(`Guest login failed: ${errorData.detail || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Guest login error:', error);
-      alert('Failed to login as guest. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Удалены неиспользуемые функции useTestLogin и handleGuestAuth
 
   // Get bot name from environment variables
   const BOT_NAME = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'ProjectMonitorBot';
@@ -190,6 +99,7 @@ const AuthScreen: React.FC = () => {
             />
           </div>
           
+          {/* Guest login temporarily disabled */}
           {/* <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
@@ -200,20 +110,9 @@ const AuthScreen: React.FC = () => {
           </div>
           
           <button 
-            onClick={handleGuestAuth}
-            disabled={isLoading}
             className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white px-6 py-4 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition"
           >
             Continue as Guest
-          </button> */}
-
-          {/* Test login button for development */}
-          {/* <button 
-            onClick={useTestLogin}
-            disabled={isLoading}
-            className="w-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-300 dark:hover:bg-gray-500 transition"
-          >
-            Test Login (Dev Only)
           </button> */}
         </div>
         
