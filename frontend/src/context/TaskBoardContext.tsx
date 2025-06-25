@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { api } from '../utils/api';
 import type { Task, TaskCreate, TaskUpdate, TaskMove } from '../utils/api/tasks';
@@ -56,16 +56,8 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
   
   const token = currentUser?.token || '';
   
-  // Загрузка данных при инициализации
-  useEffect(() => {
-    if (projectId && token) {
-      fetchColumns(projectId);
-      fetchTasks(projectId);
-    }
-  }, [projectId, token]);
-  
   // Методы для колонок
-  const fetchColumns = async (projectId: string) => {
+  const fetchColumns = useCallback(async (projectId: string) => {
     if (!token) return;
     
     try {
@@ -78,9 +70,9 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
   
-  const addColumn = async (columnData: TaskColumnCreate) => {
+  const addColumn = useCallback(async (columnData: TaskColumnCreate) => {
     if (!token) return;
     
     try {
@@ -94,9 +86,9 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
   
-  const updateColumn = async (columnId: string, updateData: TaskColumnUpdate) => {
+  const updateColumn = useCallback(async (columnId: string, updateData: TaskColumnUpdate) => {
     if (!token) return;
     
     try {
@@ -110,9 +102,9 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
   
-  const deleteColumn = async (columnId: string) => {
+  const deleteColumn = useCallback(async (columnId: string) => {
     if (!token) return;
     
     try {
@@ -127,9 +119,9 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
   
-  const reorderColumns = async (columnIds: string[]) => {
+  const reorderColumns = useCallback(async (columnIds: string[]) => {
     if (!token || !projectId) return;
     
     try {
@@ -153,10 +145,10 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, projectId, columns, fetchColumns]);
   
   // Методы для задач
-  const fetchTasks = async (projectId: string) => {
+  const fetchTasks = useCallback(async (projectId: string) => {
     if (!token) return;
     
     try {
@@ -169,9 +161,9 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
   
-  const addTask = async (taskData: TaskCreate) => {
+  const addTask = useCallback(async (taskData: TaskCreate) => {
     if (!token) return;
     
     try {
@@ -185,9 +177,9 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
   
-  const updateTask = async (taskId: string, updateData: TaskUpdate) => {
+  const updateTask = useCallback(async (taskId: string, updateData: TaskUpdate) => {
     if (!token) return;
     
     try {
@@ -204,9 +196,9 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, selectedTask]);
   
-  const moveTask = async (taskId: string, moveData: TaskMove) => {
+  const moveTask = useCallback(async (taskId: string, moveData: TaskMove) => {
     if (!token) return;
     
     try {
@@ -232,9 +224,9 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, tasks, projectId, fetchTasks]);
   
-  const deleteTask = async (taskId: string) => {
+  const deleteTask = useCallback(async (taskId: string) => {
     if (!token) return;
     
     try {
@@ -250,9 +242,9 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, selectedTask]);
   
-  const reorderTasks = async (columnId: string, taskIds: string[]) => {
+  const reorderTasks = useCallback(async (columnId: string, taskIds: string[]) => {
     if (!token) return;
     
     try {
@@ -281,7 +273,15 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, tasks, projectId, fetchTasks]);
+  
+  // Загрузка данных при инициализации
+  useEffect(() => {
+    if (projectId && token) {
+      fetchColumns(projectId);
+      fetchTasks(projectId);
+    }
+  }, [projectId, fetchColumns, fetchTasks]); // Добавляем функции в зависимости
   
   const contextValue: TaskBoardContextType = {
     columns,
