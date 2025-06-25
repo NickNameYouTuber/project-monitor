@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TaskColumn, TaskColumnCreate, TaskColumnUpdate } from '../../utils/api/taskColumns';
+import type { TaskColumn, TaskColumnCreate, TaskColumnUpdate } from '../../utils/api/taskColumns';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { useAppContext } from '../../utils/AppContext';
 
@@ -11,7 +11,7 @@ interface TaskColumnFormProps {
 
 const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }) => {
   const { addColumn, updateColumn, columns } = useTaskBoard();
-  const { projects, currentProject } = useAppContext();
+  const { currentProject } = useAppContext();
   const [name, setName] = useState(column?.name || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');

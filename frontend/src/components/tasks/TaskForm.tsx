@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Task, TaskCreate, TaskUpdate } from '../../utils/api/tasks';
+import type { Task, TaskCreate, TaskUpdate } from '../../utils/api/tasks';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { useAppContext } from '../../utils/AppContext';
 
@@ -61,7 +61,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
     try {
       if (mode === 'create') {
         // Создание новой задачи
-        const existingTasks = task ? [] : columns.find(c => c.id === columnId)?.tasks || [];
+        // TaskColumn может не иметь свойства tasks в типе, но мы ожидаем его наличие
+        const existingTasks = task ? [] : (columns.find(c => c.id === columnId) as any)?.tasks || [];
         const taskData: TaskCreate = {
           title: title.trim(),
           description: description.trim(),

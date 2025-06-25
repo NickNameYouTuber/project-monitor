@@ -4,14 +4,16 @@
 
 // API base URL - should come from environment variables in production
 // Для продакшена используем относительные пути, для разработки - абсолютные
-const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+import taskColumnsApi from './api/taskColumns';
+import tasksApi from './api/tasks';
 
 // Важно использовать тот же протокол, что и у сайта (для предотвращения Mixed Content)
 // Для продакшена обязательно используем относительный путь
 let API_URL = '';
 
-if (isProduction) {
-  // Тот же подход, что работал в etoile.nicorp.tech
+// Определяем API URL в зависимости от режима
+if (import.meta.env.MODE === 'production') {
+  // Для продакшена используем относительный путь
   API_URL = '/api';
 } else {
   // В разработке полный URL
@@ -28,20 +30,24 @@ interface ApiOptions {
 /**
  * Make an API request with authentication if token is provided
  */
-export async function apiRequest<T>(
+export async function apiRequest(
   endpoint: string,
   options: ApiOptions = {}
-): Promise<T> {
+): Promise<any> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json'
   };
 
   // Добавляем токен авторизации, если он предоставлен и требуется авторизация
-  if (options.requireAuth && options.token) {
-    headers['Authorization'] = `Bearer ${options.token}`;
+  if (options.requireAuth && !options.token) {
+    throw new Error('Authentication token is required for this request');
   }
 
-  // Формируем URL, добавляя API_URL в начало, если endpoint не начинается с http(s)://
+  // Добавляем токен в заголовки запроса
+  if (options.token) {
+    headers.Authorization = `Bearer ${options.token}`;
+  }
+
   const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
 
   // Настройки запроса
@@ -75,140 +81,137 @@ export async function apiRequest<T>(
 
   // Если ответ пустой (например, для DELETE запросов), возвращаем пустой объект
   if (response.status === 204) {
-    return {} as T;
+    return {};
   }
 
   // Парсим JSON ответ
   const data = await response.json();
   
-  return data as T;
+  return data;
 }
 
-import taskColumnsApi from './api/taskColumns';
-import tasksApi from './api/tasks';
-
-// API endpoints for different resources
+// API clients for different endpoints
 export const api = {
   // Auth endpoints
   auth: {
-    login: (username: string, password: string) => 
-      apiRequest('/auth/token', { 
-        method: 'POST', 
-        body: { username, password },
-        requireAuth: false
-      }),
     register: (userData: any) => 
       apiRequest('/auth/register', { 
         method: 'POST', 
-        body: userData,
+        body: userData, 
         requireAuth: false
       }),
-    telegramAuth: (authData: any) => 
-      apiRequest('/auth/telegram', { 
+    login: (credentials: any) => 
+      apiRequest('/auth/login', { 
         method: 'POST', 
-        body: authData,
-        requireAuth: false
-      }),
-    guestLogin: () => 
-      apiRequest('/auth/guest', { 
-        method: 'POST',
+        body: credentials, 
         requireAuth: false
       }),
     getCurrentUser: (token: string) => 
-      apiRequest('/users/me', { requireAuth: true }, token)
+      apiRequest('/users/me', { requireAuth: true, token })
   },
   
   // Projects endpoints
   projects: {
     getAll: (token: string) => 
-      apiRequest('/projects', { requireAuth: true }, token),
+      apiRequest('/projects', { requireAuth: true, token }),
     getOne: (id: string, token: string) => 
-      apiRequest(`/projects/${id}`, { requireAuth: true }, token),
+      apiRequest(`/projects/${id}`, { requireAuth: true, token }),
     create: (projectData: any, token: string) => 
       apiRequest('/projects', { 
         method: 'POST', 
         body: projectData,
-        requireAuth: true 
-      }, token),
+        requireAuth: true,
+        token
+      }),
     update: (id: string, projectData: any, token: string) => 
       apiRequest(`/projects/${id}`, { 
         method: 'PUT', 
         body: projectData,
-        requireAuth: true 
-      }, token),
+        requireAuth: true,
+        token
+      }),
     delete: (id: string, token: string) => 
       apiRequest(`/projects/${id}`, { 
         method: 'DELETE',
-        requireAuth: true 
-      }, token),
+        requireAuth: true,
+        token
+      }),
     updateStatus: (id: string, status: string, token: string) => 
       apiRequest(`/projects/${id}/status`, {
         method: 'PATCH',
         body: { status },
-        requireAuth: true
-      }, token),
+        requireAuth: true,
+        token
+      }),
     reorder: (reorderData: any, token: string) => 
       apiRequest('/projects/reorder', {
         method: 'POST',
         body: reorderData,
-        requireAuth: true
-      }, token)
+        requireAuth: true,
+        token
+      })
   },
   
   // Dashboards endpoints
   dashboards: {
     getAll: (token: string) => 
-      apiRequest('/dashboards', { requireAuth: true }, token),
+      apiRequest('/dashboards', { requireAuth: true, token }),
     getOne: (id: string, token: string) => 
-      apiRequest(`/dashboards/${id}`, { requireAuth: true }, token),
+      apiRequest(`/dashboards/${id}`, { requireAuth: true, token }),
     create: (dashboardData: any, token: string) => 
       apiRequest('/dashboards', { 
         method: 'POST', 
         body: dashboardData,
-        requireAuth: true 
-      }, token),
+        requireAuth: true,
+        token
+      }),
     update: (id: string, dashboardData: any, token: string) => 
       apiRequest(`/dashboards/${id}`, { 
         method: 'PUT', 
         body: dashboardData,
-        requireAuth: true 
-      }, token),
+        requireAuth: true,
+        token
+      }),
     delete: (id: string, token: string) => 
       apiRequest(`/dashboards/${id}`, { 
         method: 'DELETE',
-        requireAuth: true 
-      }, token),
+        requireAuth: true,
+        token
+      }),
     getMembers: (dashboardId: string, token: string) => 
-      apiRequest(`/dashboards/${dashboardId}/members`, { requireAuth: true }, token),
+      apiRequest(`/dashboards/${dashboardId}/members`, { requireAuth: true, token }),
     addMember: (dashboardId: string, memberData: any, token: string) => 
       apiRequest(`/dashboards/${dashboardId}/members`, { 
         method: 'POST', 
         body: memberData,
-        requireAuth: true 
-      }, token),
+        requireAuth: true,
+        token
+      }),
+    inviteByTelegram: (dashboardId: string, telegramData: any, token: string) => 
+      apiRequest(`/dashboards/${dashboardId}/invite_by_telegram`, { 
+        method: 'POST', 
+        body: telegramData,
+        requireAuth: true,
+        token
+      }),
     removeMember: (dashboardId: string, memberId: string, token: string) => 
       apiRequest(`/dashboards/${dashboardId}/members/${memberId}`, { 
         method: 'DELETE',
-        requireAuth: true 
-      }, token),
-    inviteByTelegram: (dashboardId: string, telegramData: { telegram_id: number, role?: string }, token: string) => 
-      apiRequest(`/dashboards/${dashboardId}/invite-by-telegram`, { 
-        method: 'POST', 
-        body: telegramData,
-        requireAuth: true 
-      }, token),
+        requireAuth: true,
+        token
+      }),
   },
   
   // Users endpoints
   users: {
     getAll(token: string) {
-      return apiRequest<any>('/users', { requireAuth: true, token });
+      return apiRequest('/users', { requireAuth: true, token });
     },
     getOne(id: string, token: string) {
-      return apiRequest<any>(`/users/${id}`, { requireAuth: true, token });
+      return apiRequest(`/users/${id}`, { requireAuth: true, token });
     },
     update(userData: any, token: string) {
-      return apiRequest<any>('/users', {
+      return apiRequest('/users', {
         method: 'PUT',
         body: userData,
         requireAuth: true,
@@ -216,7 +219,7 @@ export const api = {
       });
     },
     searchByUsername(username: string, token: string = '') {
-      return apiRequest<any>(`/users/search?username=${encodeURIComponent(username)}`, { requireAuth: token ? true : false, token });
+      return apiRequest(`/users/search?username=${encodeURIComponent(username)}`, { requireAuth: token ? true : false, token });
     }
   },
   
@@ -270,4 +273,3 @@ export const api = {
     }
   }
 };
-}

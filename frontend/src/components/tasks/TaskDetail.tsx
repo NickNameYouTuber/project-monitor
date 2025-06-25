@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Task } from '../../utils/api/tasks';
+import type { Task } from '../../utils/api/tasks';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import TaskForm from './TaskForm';
 

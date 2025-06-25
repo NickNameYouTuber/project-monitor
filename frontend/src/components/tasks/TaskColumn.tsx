@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Droppable, Draggable } from 'react-beautiful-dnd';
-import { TaskColumn as TaskColumnType } from '../../utils/api/taskColumns';
-import { Task as TaskType } from '../../utils/api/tasks';
+import type { TaskColumn as TaskColumnType } from '../../utils/api/taskColumns';
+import type { Task as TaskType } from '../../utils/api/tasks';
 import TaskCard from './TaskCard';
 import TaskForm from './TaskForm';
 import TaskColumnForm from './TaskColumnForm';

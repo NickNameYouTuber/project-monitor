@@ -1,36 +1,25 @@
-import React, { useState } from 'react';
-import { DragDropContext, DropResult } from 'react-beautiful-dnd';
+import { useState } from 'react';
+import { DragDropContext } from 'react-beautiful-dnd';
+import type { DropResult } from 'react-beautiful-dnd';
 import { TaskBoardProvider, useTaskBoard } from '../../context/TaskBoardContext';
 import TaskColumn from './TaskColumn';
 import TaskDetail from './TaskDetail';
 import TaskColumnForm from './TaskColumnForm';
-import { TaskColumnCreate } from '../../utils/api/taskColumns';
-import { TaskCreate } from '../../utils/api/tasks';
 
 interface TaskBoardProps {
   projectId: string;
 }
 
-// Обертка с провайдером контекста
-const TaskBoardWithProvider: React.FC<TaskBoardProps> = ({ projectId }) => {
-  return (
-    <TaskBoardProvider projectId={projectId}>
-      <TaskBoardContent />
-    </TaskBoardProvider>
-  );
-};
-
-// Внутренний компонент для работы с контекстом
-const TaskBoardContent: React.FC = () => {
+const TaskBoard = ({ }: TaskBoardProps) => {
   const { 
     columns, 
     tasks, 
-    loading, 
-    error,
-    selectedTask,
+    reorderTasks, 
+    moveTask, 
+    selectedTask, 
+    loading,
     reorderColumns,
-    reorderTasks,
-    moveTask
+    error
   } = useTaskBoard();
 
   const [isAddingColumn, setIsAddingColumn] = useState(false);
@@ -141,4 +130,13 @@ const TaskBoardContent: React.FC = () => {
   );
 };
 
-export default TaskBoardWithProvider;
+// Обертка для доски задач с провайдером контекста
+const TaskBoardWrapper = ({ projectId }: TaskBoardProps) => {
+  return (
+    <TaskBoardProvider projectId={projectId}>
+      <TaskBoard projectId={projectId} />
+    </TaskBoardProvider>
+  );
+};
+
+export default TaskBoardWrapper;

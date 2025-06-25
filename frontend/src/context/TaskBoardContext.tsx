@@ -1,7 +1,8 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { api } from '../utils/api';
-import { Task, TaskCreate, TaskUpdate, TaskMove } from '../utils/api/tasks';
-import { TaskColumn, TaskColumnCreate, TaskColumnUpdate } from '../utils/api/taskColumns';
+import type { Task, TaskCreate, TaskUpdate, TaskMove } from '../utils/api/tasks';
+import type { TaskColumn, TaskColumnCreate, TaskColumnUpdate } from '../utils/api/taskColumns';
 import { useAppContext } from '../utils/AppContext';
 
 interface TaskBoardContextType {
