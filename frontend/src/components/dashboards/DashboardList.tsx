@@ -61,10 +61,10 @@ const DashboardList: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Your Dashboards</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Your Dashboards</h1>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+          className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md"
         >
           Create Dashboard
         </button>
@@ -98,20 +98,20 @@ const DashboardList: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {dashboards.length === 0 ? (
             <div className="col-span-full text-center py-10">
-              <p className="text-gray-500 dark:text-gray-400">You don't have any dashboards yet. Create one to get started!</p>
+              <p className="text-text-secondary">You don't have any dashboards yet. Create one to get started!</p>
             </div>
           ) : (
             dashboards.map((dashboard) => (
               <div
                 key={dashboard.id}
                 onClick={() => handleDashboardClick(dashboard.id)}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer p-6"
+                className="bg-bg-card rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer p-6"
               >
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{dashboard.name}</h3>
+                <h3 className="text-lg font-semibold text-text-primary">{dashboard.name}</h3>
                 {dashboard.description && (
-                  <p className="text-gray-600 dark:text-gray-400 mt-1">{dashboard.description}</p>
+                  <p className="text-text-secondary mt-1">{dashboard.description}</p>
                 )}
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                <p className="text-sm text-text-muted mt-3">
                   Created: {new Date(dashboard.created_at).toLocaleDateString()}
                 </p>
               </div>
@@ -130,38 +130,38 @@ const DashboardList: React.FC = () => {
           }}
         >
           <div className="flex items-center justify-center min-h-screen p-4 w-full">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Create New Dashboard</h3>
+            <div className="bg-bg-card rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-xl font-semibold text-text-primary mb-4">Create New Dashboard</h3>
               <div className="mb-4">
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Dashboard Name</label>
+                <label className="block text-text-secondary text-sm font-bold mb-2">Dashboard Name</label>
                 <input
                   type="text"
                   value={newDashboardName}
                   onChange={(e) => setNewDashboardName(e.target.value)}
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:border-primary bg-bg-input text-text-primary"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Description</label>
+                <label className="block text-text-secondary text-sm font-bold mb-2">Description</label>
                 <textarea
                   value={newDashboardDescription}
                   onChange={(e) => setNewDashboardDescription(e.target.value)}
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-24"
+                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:border-primary bg-bg-input text-text-primary h-24"
                 />
               </div>
               <div className="flex justify-end space-x-3">
                 <button 
                   type="button" 
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-white transition"
+                  className="px-4 py-2 rounded bg-bg-secondary text-text-secondary hover:bg-bg-hover hover:text-text-primary transition"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleCreateDashboard}
                   disabled={!newDashboardName.trim()}
-                  className={`bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition ${
+                  className={`bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg transition ${
                     !newDashboardName.trim() ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
