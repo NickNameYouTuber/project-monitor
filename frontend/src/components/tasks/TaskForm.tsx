@@ -19,7 +19,7 @@ interface TaskFormProps {
 
 const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose, mode }) => {
   const { addTask, updateTask, columns } = useTaskBoard();
-  const { users, fetchUsers, currentUser, getDashboardMembers } = useAppContext();
+  const { users, fetchUsers, currentUser, getDashboardMembers, currentProject, projects } = useAppContext();
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>(
@@ -41,10 +41,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
         // Загружаем всех пользователей системы
         await fetchUsers(currentUser.token);
         
-        // Загружаем участников данного проекта/дашборда
         try {
-          const members = await getDashboardMembers(projectId);
-          setProjectMembers(members);
+          // Находим проект в списке проектов или используем currentProject
+          const project = projects.find(p => p.id === projectId) || currentProject;
+          
+          if (project?.dashboard_id) {
+            // Если у проекта есть dashboard_id, используем его для получения участников дашборда
+            const members = await getDashboardMembers(project.dashboard_id);
+            setProjectMembers(members);
+            console.log(`Loaded ${members.length} members for dashboard ${project.dashboard_id}`);
+          } else {
+            console.warn('Project does not have a dashboard_id', projectId);
+          }
         } catch (err) {
           console.error('Error fetching project members:', err);
         }
@@ -52,7 +60,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
     };
     
     fetchData();
-  }, [currentUser, fetchUsers, getDashboardMembers, projectId]);
+  }, [currentUser, fetchUsers, getDashboardMembers, projectId, projects, currentProject]);
   
   // Обработка списка пользователей и участников проекта
   useEffect(() => {

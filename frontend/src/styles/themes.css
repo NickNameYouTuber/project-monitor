@@ -23,6 +23,7 @@
   --bg-card: #f3f4f6;
   --bg-header: #ffffff;
   --bg-input: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.6); /* Затемнение для модальных окон */
   
   /* Границы */
   --border-primary: #e5e7eb;
@@ -60,6 +61,7 @@
   --bg-card: #374151;
   --bg-header: #1f2937;
   --bg-input: #2d3748;
+  --bg-overlay: rgba(0, 0, 0, 0.75); /* Более темное затемнение для модальных окон в темной теме */
   
   /* Границы */
   --border-primary: #4b5563;
