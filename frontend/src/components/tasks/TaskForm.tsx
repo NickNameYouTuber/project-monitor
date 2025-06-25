@@ -1,6 +1,12 @@
-import React, { useState, useEffect, useRef, FormEvent } from 'react';
-import { useTaskBoardContext } from './TaskBoardContext';
-import type { Task, Status, Priority, User, DashboardMember } from '../../types';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useTaskBoard } from '../../context/TaskBoardContext';
+import type { Task, TaskCreate, TaskUpdate } from '../../utils/api/tasks';
+import type { User, DashboardMember } from '../../types';
+
+interface Assignee {
+  id: string;
+  username: string;
+}
 import { useAppContext } from '../../utils/AppContext';
 import CloseButton from '../ui/CloseButton';
 
@@ -23,7 +29,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>(
-    task?.assignees?.map(a => a.id) || []
+    task?.assignees?.map((a: Assignee) => a.id) || []
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -132,7 +138,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   }, [onClose]);
 
   // Обработка создания/редактирования задачи
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!title.trim()) {
       setError('Task title is required');
@@ -146,7 +152,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
       if (mode === 'create') {
         // Создание новой задачи
         // TaskColumn может не иметь свойства tasks в типе, но мы ожидаем его наличие
-        const existingTasks = task ? [] : (columns.find(c => c.id === columnId) as any)?.tasks || [];
+        const existingTasks = task ? [] : (columns.find((c: any) => c.id === columnId) as any)?.tasks || [];
         const taskData: TaskCreate = {
           title: title.trim(),
           description: description.trim(),
@@ -174,14 +180,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   };
 
   // Фильтрация пользователей на основе поиска
-  const filteredUsers = useMemo(() => {
+  const filteredUsers: UserWithProjectStatus[] = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
     
     return usersWithStatus
       // Фильтруем по поисковой строке
-      .filter(user => user.username.toLowerCase().includes(searchLower))
+      .filter((user: UserWithProjectStatus) => user.username.toLowerCase().includes(searchLower))
       // Сортируем: сначала участники проекта, затем по алфавиту
-      .sort((a, b) => {
+      .sort((a: UserWithProjectStatus, b: UserWithProjectStatus) => {
         if (a.isProjectMember !== b.isProjectMember) {
           return a.isProjectMember ? -1 : 1; // Участники проекта всегда выше
         }
@@ -282,7 +288,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
                       No users found
                     </div>
                   ) : (
-                    filteredUsers.map(user => (
+                    filteredUsers.map((user: UserWithProjectStatus) => (
                       <div
                         key={user.id}
                         className={`flex items-center px-3 py-2 hover:bg-primary/10 cursor-pointer ${user.isProjectMember ? 'bg-primary/10' : 'opacity-50'}`}
