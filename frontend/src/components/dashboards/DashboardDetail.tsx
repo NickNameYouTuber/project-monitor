@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../utils/AppContext';
 import { api } from '../../utils/api';
-import { DashboardDetail as DashboardDetailType, DashboardMember, Project } from '../../types';
+import type { DashboardDetail as DashboardDetailType, DashboardMember, Project } from '../../types';
 import ProjectBoard from '../project/ProjectBoard';
 import ProjectModal from '../modals/ProjectModal';
 
@@ -19,7 +19,6 @@ const DashboardDetail: React.FC = () => {
   
   // Состояние для модальных окон
   const [isProjectModalOpen, setProjectModalOpen] = useState(false);
-  const [isMemberModalOpen, setMemberModalOpen] = useState(false);
   const [isInviteByTelegramModalOpen, setInviteByTelegramModalOpen] = useState(false);
   const [telegramId, setTelegramId] = useState('');
   const [memberRole, setMemberRole] = useState<'viewer' | 'editor' | 'admin'>('viewer');
@@ -34,11 +33,11 @@ const DashboardDetail: React.FC = () => {
         
         // Загружаем информацию о дашборде
         const dashboardData = await api.dashboards.getOne(dashboardId, currentUser.token);
-        setDashboard(dashboardData);
+        setDashboard(dashboardData as DashboardDetailType);
         
         // Загружаем участников дашборда
         const membersData = await api.dashboards.getMembers(dashboardId, currentUser.token);
-        setMembers(membersData);
+        setMembers(membersData as DashboardMember[]);
         
         setError(null);
       } catch (err) {
@@ -55,8 +54,6 @@ const DashboardDetail: React.FC = () => {
   // Обработчики для модальных окон
   const openProjectModal = () => setProjectModalOpen(true);
   const closeProjectModal = () => setProjectModalOpen(false);
-  const openMemberModal = () => setMemberModalOpen(true);
-  const closeMemberModal = () => setMemberModalOpen(false);
   const openInviteByTelegramModal = () => setInviteByTelegramModalOpen(true);
   const closeInviteByTelegramModal = () => {
     setInviteByTelegramModalOpen(false);
@@ -82,13 +79,23 @@ const DashboardDetail: React.FC = () => {
       
       // Обновляем список участников
       const membersData = await api.dashboards.getMembers(dashboardId, currentUser.token);
-      setMembers(membersData);
+      setMembers(membersData as DashboardMember[]);
       
       closeInviteByTelegramModal();
       setError(null);
     } catch (err: any) {
       console.error('Failed to invite user by Telegram ID:', err);
       setError(err.message || 'Failed to invite user. Please check the Telegram ID and try again.');
+    }
+  };
+
+  // Функция для обработки изменений проектов
+  const handleProjectsChange = (updatedProjects: Project[]) => {
+    if (dashboard) {
+      setDashboard({
+        ...dashboard,
+        projects: updatedProjects
+      });
     }
   };
 
@@ -108,15 +115,7 @@ const DashboardDetail: React.FC = () => {
     }
   };
 
-  // Обработчик для проектов дашборда
-  const handleProjectsChange = (updatedProjects: Project[]) => {
-    if (dashboard) {
-      setDashboard({
-        ...dashboard,
-        projects: updatedProjects
-      });
-    }
-  };
+  // Обработчик для проектов дашборда уже определен выше
 
   if (isLoading) {
     return (

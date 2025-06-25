@@ -5,6 +5,7 @@ import { useAppContext } from '../../utils/AppContext';
 
 interface ProjectBoardProps {
   projects: Project[];
+  onProjectsChange?: (updatedProjects: Project[]) => void;
 }
 
 const ProjectBoard: React.FC<ProjectBoardProps> = ({ projects }) => {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../utils/AppContext';
 import { api } from '../../utils/api';
-import { Dashboard } from '../../types';
+import type { Dashboard } from '../../types';
 
 const DashboardList: React.FC = () => {
   const { currentUser } = useAppContext();
@@ -22,11 +22,11 @@ const DashboardList: React.FC = () => {
       try {
         setIsLoading(true);
         const data = await api.dashboards.getAll(currentUser.token);
-        setDashboards(data);
+        setDashboards(data as Dashboard[]);
         setError(null);
-      } catch (err) {
-        console.error('Failed to fetch dashboards:', err);
-        setError('Failed to load dashboards. Please try again.');
+      } catch (error) {
+        console.error('Failed to load dashboards:', error);
+        setError('Failed to load dashboards.');
       } finally {
         setIsLoading(false);
       }
@@ -44,7 +44,7 @@ const DashboardList: React.FC = () => {
         description: newDashboardDescription.trim()
       }, currentUser.token);
       
-      setDashboards([...dashboards, newDashboard]);
+      setDashboards([...dashboards, newDashboard as Dashboard]);
       setShowCreateModal(false);
       setNewDashboardName('');
       setNewDashboardDescription('');
