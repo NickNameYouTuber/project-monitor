@@ -34,6 +34,12 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
     };
   }, [onClose]);
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  };
+
   // Обработка создания/редактирования колонки
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +88,7 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
         }}
       />
       {/* Модальное окно */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0" onClick={handleBackdropClick}>
         <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
           <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
             <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
