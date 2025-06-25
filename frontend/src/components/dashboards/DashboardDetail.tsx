@@ -110,11 +110,11 @@ const DashboardDetail: React.FC = () => {
   
   // Функция для поиска пользователей по никнейму
   const handleSearchUsers = async () => {
-    if (!currentUser?.token || !usernameSearch.trim()) return;
+    if (!usernameSearch.trim()) return;
     
     try {
       setIsSearching(true);
-      const results = await api.users.searchByUsername(usernameSearch, currentUser.token);
+      const results = await api.users.searchByUsername(usernameSearch);
       setSearchResults(Array.isArray(results) ? results : []);
       setError(null);
     } catch (err) {

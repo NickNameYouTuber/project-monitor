@@ -209,7 +209,7 @@ export const api = {
         body: userData,
         requireAuth: true 
       }, token),
-    searchByUsername: (username: string, token: string) => 
-      apiRequest(`/users/search?username=${encodeURIComponent(username)}`, { requireAuth: true }, token)
+    searchByUsername: (username: string, token: string = '') => 
+      apiRequest(`/users/search?username=${encodeURIComponent(username)}`, { requireAuth: false }, token)
   }
 };

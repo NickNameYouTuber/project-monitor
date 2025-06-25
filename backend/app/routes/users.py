@@ -65,6 +65,20 @@ async def read_users(skip: int = 0, limit: int = 100,
     return users
 
 
+@router.get("/search", response_model=List[UserResponse])
+async def search_users(username: str = None, 
+                      db: Session = Depends(get_db)):
+    # Поиск пользователей по имени пользователя, доступен всем
+    query = db.query(User)
+    if username:
+        query = query.filter(User.username.ilike(f'%{username}%'))
+    
+    # Возвращаем только пользователей с заполненным telegram_id
+    query = query.filter(User.telegram_id != None)
+    users = query.limit(10).all()  # Ограничиваем результаты для производительности
+    return users
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 async def read_user(user_id: str,
                    current_user: User = Depends(get_admin_user),
