@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { DragDropContext } from 'react-beautiful-dnd';
+import type { DropResult } from 'react-beautiful-dnd';
 import type { Project, ProjectStatus } from '../../types';
 import ProjectColumn from './ProjectColumn';
 import { useAppContext } from '../../utils/AppContext';
@@ -10,123 +12,85 @@ interface ProjectBoardProps {
 
 const ProjectBoard: React.FC<ProjectBoardProps> = ({ projects }) => {
   const { moveProject, reorderProjects } = useAppContext();
-  const [draggedProject, setDraggedProject] = useState<Project | null>(null);
 
-  // Handle drag start
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, project: Project) => {
-    setDraggedProject(project);
-    e.dataTransfer.setData('text/plain', project.id.toString());
-    
-    // Set drag image
-    if (e.target instanceof HTMLElement) {
-      e.dataTransfer.setDragImage(e.target, 20, 20);
+  const handleDragEnd = (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+
+    // Если нет назначения или перетаскивание вернулось на ту же позицию - ничего не делаем
+    if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
+      return;
     }
-  };
 
-  // Handle drag over on a project card
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    
-    if (e.currentTarget.classList.contains('project-card')) {
-      // Get the drag position (top half or bottom half)
-      const rect = e.currentTarget.getBoundingClientRect();
-      const y = e.clientY - rect.top;
-      const isTopHalf = y < rect.height / 2;
+    // Если перемещаем проект внутри той же колонки
+    if (source.droppableId === destination.droppableId) {
+      const sourceProject = projects.find(p => p.id === draggableId);
+      if (!sourceProject) return;
       
-      // Remove any existing position classes
-      e.currentTarget.classList.remove('drag-above', 'drag-below');
+      // Находим проект, на место которого нужно поставить перетаскиваемый проект
+      const columnProjects = projects
+        .filter(p => p.status === sourceProject.status && p.id !== draggableId)
+        .sort((a, b) => b.order - a.order);
       
-      // Add the correct position class
-      e.currentTarget.classList.add(isTopHalf ? 'drag-above' : 'drag-below');
-    }
-  };
-
-  // Handle drop on a project card
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetId?: string) => {
-    e.preventDefault();
-    
-    if (!draggedProject || !targetId) return;
-    
-    // Remove drag styling
-    if (e.currentTarget.classList.contains('project-card')) {
-      e.currentTarget.classList.remove('drag-above', 'drag-below');
+      // Определяем ID проекта, на место которого нужно поставить перетаскиваемый
+      const targetIndex = Math.min(destination.index, columnProjects.length - 1);
+      const targetId = columnProjects[targetIndex]?.id || '';
       
-      // Get the drop position (above or below)
-      const rect = e.currentTarget.getBoundingClientRect();
-      const y = e.clientY - rect.top;
-      const isTopHalf = y < rect.height / 2;
-      const position = isTopHalf ? 'above' : 'below';
+      // Определяем позицию (выше или ниже)
+      const position = destination.index <= targetIndex ? 'above' : 'below';
       
-      // Reorder the projects
-      if (targetId !== draggedProject.id) {
-        // Call API to persist changes
-        reorderProjects(draggedProject.id, targetId, position);
+      // Обновляем порядок проектов
+      if (targetId) {
+        reorderProjects(draggableId, targetId, position);
       }
+    } 
+    // Если перемещаем проект между колонками
+    else {
+      // Получаем статус колонки назначения
+      const destStatus = destination.droppableId as ProjectStatus;
+      
+      // Просто меняем статус проекта
+      moveProject(draggableId, destStatus);
     }
-    
-    setDraggedProject(null);
   };
 
-  // Handle drop on a column
-  const handleColumnDrop = (e: React.DragEvent<HTMLDivElement>, status: ProjectStatus) => {
-    e.preventDefault();
-    
-    const projectId = e.dataTransfer.getData('text/plain');
-    
-    if (projectId && draggedProject && draggedProject.status !== status) {
-      // Call API to persist changes
-      moveProject(projectId, status);
-    }
-    
-    setDraggedProject(null);
-  };
+  // Статические колонки с заголовками и цветами
+  const columns = [
+    { 
+      status: 'backlog' as ProjectStatus,
+      title: 'Backlog', 
+      colorClass: 'bg-gray-400'
+    },
+    { 
+      status: 'pending' as ProjectStatus,
+      title: 'Pending',
+      colorClass: 'bg-yellow-400'
+    },
+    { 
+      status: 'in_progress' as ProjectStatus,
+      title: 'In Progress', 
+      colorClass: 'bg-blue-400'
+    },
+    { 
+      status: 'completed' as ProjectStatus,
+      title: 'Completed',
+      colorClass: 'bg-green-400'
+    },
+  ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <ProjectColumn
-        title="In Plans"
-        status="inPlans"
-        projects={projects}
-        colorClass="bg-blue-500"
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onColumnDrop={handleColumnDrop}
-      />
-      
-      <ProjectColumn
-        title="In Progress"
-        status="inProgress"
-        projects={projects}
-        colorClass="bg-yellow-500"
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onColumnDrop={handleColumnDrop}
-      />
-      
-      <ProjectColumn
-        title="On Pause"
-        status="onPause"
-        projects={projects}
-        colorClass="bg-orange-500"
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onColumnDrop={handleColumnDrop}
-      />
-      
-      <ProjectColumn
-        title="Completed"
-        status="completed"
-        projects={projects}
-        colorClass="bg-green-500"
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onColumnDrop={handleColumnDrop}
-      />
-    </div>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {columns.map(column => (
+          <ProjectColumn
+            key={column.status}
+            title={column.title}
+            status={column.status}
+            projects={projects}
+            colorClass={column.colorClass}
+          />
+        ))}
+      </div>
+    </DragDropContext>
   );
 };
 
