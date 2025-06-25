@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Task, TaskCreate, TaskUpdate } from '../../utils/api/tasks';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { useAppContext } from '../../utils/AppContext';
+import type { User, DashboardMember } from '../../types';
+
+// Расширенный интерфейс для пользователя с флагом участия в проекте
+interface UserWithProjectStatus extends User {
+  isProjectMember: boolean;
+}
 
 interface TaskFormProps {
   task?: Task;
@@ -13,7 +19,7 @@ interface TaskFormProps {
 
 const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose, mode }) => {
   const { addTask, updateTask, columns } = useTaskBoard();
-  const { users, fetchUsers, currentUser } = useAppContext();
+  const { users, fetchUsers, currentUser, getDashboardMembers } = useAppContext();
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>(
@@ -22,16 +28,42 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [projectMembers, setProjectMembers] = useState<DashboardMember[]>([]);
+  const [usersWithStatus, setUsersWithStatus] = useState<UserWithProjectStatus[]>([]);
 
   const modalRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Загрузка пользователей для назначения задач
   useEffect(() => {
-    if (currentUser?.token) {
-      fetchUsers(currentUser.token);
-    }
-  }, [currentUser, fetchUsers]);
+    const fetchData = async () => {
+      if (currentUser?.token) {
+        // Загружаем всех пользователей системы
+        await fetchUsers(currentUser.token);
+        
+        // Загружаем участников данного проекта/дашборда
+        try {
+          const members = await getDashboardMembers(projectId);
+          setProjectMembers(members);
+        } catch (err) {
+          console.error('Error fetching project members:', err);
+        }
+      }
+    };
+    
+    fetchData();
+  }, [currentUser, fetchUsers, getDashboardMembers, projectId]);
+  
+  // Обработка списка пользователей и участников проекта
+  useEffect(() => {
+    // Добавляем флаг isProjectMember к каждому пользователю
+    const enhancedUsers: UserWithProjectStatus[] = users.map(user => ({
+      ...user,
+      isProjectMember: projectMembers.some(member => member.user_id === user.id)
+    }));
+    
+    setUsersWithStatus(enhancedUsers);
+  }, [users, projectMembers]);
 
   // Закрытие по клику вне формы
   useEffect(() => {
@@ -90,9 +122,16 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   };
 
   // Фильтрация пользователей по поисковому запросу
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = usersWithStatus.filter(user =>
     user.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  )
+  // Сортируем: сперва участники проекта, потом по имени
+  .sort((a, b) => {
+    if (a.isProjectMember !== b.isProjectMember) {
+      return a.isProjectMember ? -1 : 1;
+    }
+    return a.username.localeCompare(b.username);
+  });
 
   // Обработка выбора/снятия выбора исполнителя
   const toggleAssignee = (userId: string) => {
@@ -177,9 +216,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
                         selectedAssignees.includes(user.id) 
                           ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700' 
                           : ''
-                      }`}
+                      } ${user.isProjectMember ? 'font-medium' : ''}`}
                     >
                       <span className="text-gray-800 dark:text-white">{user.username}</span>
+                      {user.isProjectMember && <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">(Project Member)</span>}
                       {selectedAssignees.includes(user.id) && (
                         <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

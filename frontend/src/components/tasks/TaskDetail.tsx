@@ -92,7 +92,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
 
             <button
               onClick={handleClose}
-              className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 p-1 rounded transition-colors"
+              className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 p-1 rounded-full bg-gray-50 dark:bg-gray-700 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -105,7 +105,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
           {task.description && (
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</h3>
-              <div className="text-gray-800 dark:text-white whitespace-pre-wrap bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <div className="whitespace-pre-wrap bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-gray-800 dark:text-gray-200">
                 {task.description}
               </div>
             </div>

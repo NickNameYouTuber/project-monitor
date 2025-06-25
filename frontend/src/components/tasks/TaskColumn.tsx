@@ -41,7 +41,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
             <div className="column-actions relative">
               <button 
                 onClick={() => setShowColumnMenu(!showColumnMenu)}
-                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 focus:outline-none p-1 rounded transition-colors"
+                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 focus:outline-none p-1 rounded-full bg-gray-50 dark:bg-gray-700 transition-colors"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
@@ -50,7 +50,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
 
               {/* Выпадающее меню для колонки */}
               {showColumnMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-10">
+                <div className="absolute right-0 mt-2 w-48 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-10">
                   <ul className="py-1">
                     <li>
                       <button
@@ -58,7 +58,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
                           setIsEditingColumn(true);
                           setShowColumnMenu(false);
                         }}
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left transition-colors"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left transition-colors"
                       >
                         Edit Column
                       </button>
@@ -69,7 +69,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
                           handleDeleteColumn();
                           setShowColumnMenu(false);
                         }}
-                        className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left transition-colors"
+                        className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left transition-colors"
                       >
                         Delete Column
                       </button>
@@ -110,10 +110,10 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
           </Droppable>
 
           {/* Кнопка добавления задачи */}
-          <div className="p-3 border-t border-gray-200 dark:border-gray-600">
+          <div className="p-3 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
             <button
               onClick={() => setIsAddingTask(true)}
-              className="w-full py-2 px-3 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-sm transition-colors duration-200 border-2 border-dashed border-gray-300 dark:border-gray-600"
+              className="w-full py-2 px-3 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg text-sm transition-colors duration-200 border-2 border-dashed border-gray-300 dark:border-gray-600"
             >
               + Add Task
             </button>

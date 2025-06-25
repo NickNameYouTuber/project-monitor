@@ -88,8 +88,8 @@ const TaskBoard = ({ }: TaskBoardProps) => {
 
   return (
     <div className="task-board flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="task-board-header flex justify-between items-center mb-6 p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Task Board</h2>
+      <div className="task-board-header flex justify-between items-center mb-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Task Board</h2>
         <button 
           onClick={() => setIsAddingColumn(true)}
           className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
