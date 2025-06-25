@@ -3,4 +3,4 @@ from .project import ProjectBase, ProjectCreate, ProjectUpdate, ProjectResponse,
 from .dashboard import DashboardBase, DashboardCreate, DashboardUpdate, DashboardResponse, DashboardDetailResponse
 from .dashboard_member import DashboardMemberBase, DashboardMemberCreate, DashboardMemberUpdate, DashboardMemberResponse
 from .task_column import TaskColumnBase, TaskColumnCreate, TaskColumnUpdate, TaskColumn, TaskColumnDetail
-from .task import TaskBase, TaskCreate, TaskUpdate, Task, TaskDetail
+from .task import TaskBase, TaskCreate, TaskUpdate, TaskMoveUpdate, Task, TaskDetail

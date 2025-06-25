@@ -33,7 +33,7 @@ class AssigneeBase(BaseModel):
     username: str
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Task(TaskBase):
@@ -45,4 +45,9 @@ class Task(TaskBase):
     assignees: List[AssigneeBase] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class TaskDetail(Task):
+    """Детальная модель задачи с дополнительной информацией"""
+    pass

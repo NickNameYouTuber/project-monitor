@@ -22,11 +22,11 @@ class TaskColumn(TaskColumnBase):
     project_id: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class TaskColumnDetail(TaskColumn):
     tasks: List["TaskBase"] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True

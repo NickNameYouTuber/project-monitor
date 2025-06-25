@@ -24,11 +24,11 @@ class DashboardResponse(DashboardBase):
     owner_id: str
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class DashboardDetailResponse(DashboardResponse):
     projects: List[ProjectResponse] = []
     
     class Config:
-        orm_mode = True
+        from_attributes = True

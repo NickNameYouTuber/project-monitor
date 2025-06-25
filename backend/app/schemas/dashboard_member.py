@@ -24,14 +24,14 @@ class DashboardMemberResponse(DashboardMemberBase):
     is_active: bool
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class DashboardMemberDetailResponse(DashboardMemberResponse):
     user: UserResponse
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class DashboardInviteByTelegram(BaseModel):
