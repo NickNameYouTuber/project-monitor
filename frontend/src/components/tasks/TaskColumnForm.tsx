@@ -87,7 +87,7 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
           <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
             <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
               <h3 className="text-lg sm:text-xl font-semibold text-text-primary">
-                {mode === 'create' ? 'Add New Column' : 'Edit Column'}
+                {mode === 'create' ? 'Добавить колонку' : 'Редактировать колонку'}
               </h3>
               <CloseButton onClick={onClose} />
             </div>
