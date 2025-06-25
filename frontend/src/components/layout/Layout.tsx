@@ -27,7 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <nav className="ml-6 flex space-x-4">
                 <button 
                   onClick={() => navigate('/dashboards')}
-                  className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Dashboards
                 </button>
@@ -38,7 +38,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="flex items-center">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-md text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors mr-2"
+                className="p-2 rounded-md text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors mr-2"
                 aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
               >
                 {isDarkMode ? (
