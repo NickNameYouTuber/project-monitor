@@ -56,18 +56,18 @@ const ProjectBoard: React.FC<ProjectBoardProps> = ({ projects }) => {
   // Статические колонки с заголовками и цветами
   const columns = [
     { 
-      status: 'backlog' as ProjectStatus,
-      title: 'Backlog', 
+      status: 'inPlans' as ProjectStatus,
+      title: 'In Plans', 
       colorClass: 'bg-gray-400'
     },
     { 
-      status: 'pending' as ProjectStatus,
-      title: 'Pending',
+      status: 'inProgress' as ProjectStatus,
+      title: 'In Progress',
       colorClass: 'bg-yellow-400'
     },
     { 
-      status: 'in_progress' as ProjectStatus,
-      title: 'In Progress', 
+      status: 'onPause' as ProjectStatus,
+      title: 'On Pause', 
       colorClass: 'bg-blue-400'
     },
     { 
