@@ -9,6 +9,7 @@ import uvicorn
 models.user.Base.metadata.create_all(bind=engine)
 models.project.Base.metadata.create_all(bind=engine)
 models.dashboard.Base.metadata.create_all(bind=engine)
+models.dashboard_member.Base.metadata.create_all(bind=engine)
 models.task_column.Base.metadata.create_all(bind=engine)
 models.task.Base.metadata.create_all(bind=engine)
 
