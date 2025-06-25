@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Task } from '../../utils/api/tasks';
+import type { Comment } from '../../utils/api/comments';
 import { useTaskBoard } from '../../context/TaskBoardContext';
+import { useAppContext } from '../../utils/AppContext';
 import TaskForm from './TaskForm';
 import CloseButton from '../ui/CloseButton';
+import TaskComments from '../comments/TaskComments';
+import commentsApi from '../../utils/api/comments';
 
 interface TaskDetailProps {
   task: Task;
@@ -10,8 +14,11 @@ interface TaskDetailProps {
 
 const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   const { setSelectedTask, deleteTask, columns } = useTaskBoard();
+  const { currentUser } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const modalRef = React.useRef<HTMLDivElement | null>(null);
   
   const handleClose = () => {
@@ -36,6 +43,66 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       handleClose();
+    }
+  };
+
+  // Загрузка комментариев
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (currentUser?.token) {
+        setIsLoadingComments(true);
+        try {
+          const data = await commentsApi.getByTask(task.id, currentUser.token);
+          setComments(data);
+        } catch (error) {
+          console.error('Error fetching comments:', error);
+        } finally {
+          setIsLoadingComments(false);
+        }
+      }
+    };
+    
+    fetchComments();
+  }, [task.id, currentUser?.token]);
+  
+  // Обработчики для работы с комментариями
+  const handleAddComment = async (content: string) => {
+    if (!currentUser?.token) return;
+    
+    try {
+      const newComment = await commentsApi.create(
+        { task_id: task.id, content },
+        currentUser.token
+      );
+      setComments(prevComments => [...prevComments, newComment]);
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+  };
+  
+  const handleUpdateComment = async (commentId: string, content: string) => {
+    if (!currentUser?.token) return;
+    
+    try {
+      await commentsApi.update(commentId, { content }, currentUser.token);
+      setComments(prevComments => 
+        prevComments.map(comment => 
+          comment.id === commentId ? { ...comment, content, updated_at: new Date().toISOString() } : comment
+        )
+      );
+    } catch (error) {
+      console.error('Error updating comment:', error);
+    }
+  };
+  
+  const handleDeleteComment = async (commentId: string) => {
+    if (!currentUser?.token) return;
+    
+    try {
+      await commentsApi.delete(commentId, currentUser.token);
+      setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
     }
   };
 
@@ -118,26 +185,59 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                 <div className="mb-6">
                   <div className="text-sm text-text-secondary mb-3 font-bold">Assignees</div>
                   <div className="flex flex-wrap gap-2">
-                    {task.assignees.map((assignee) => (
-                      <div 
-                        key={assignee.id} 
-                        className="flex items-center bg-bg-secondary rounded-full px-3 py-1 border border-border-primary"
-                      >
-                        <div className="h-6 w-6 rounded-full bg-bg-primary flex items-center justify-center text-xs mr-2 text-text-primary">
-                          {assignee.username.charAt(0).toUpperCase()}
+                    {task.assignees.map((assignee) => {
+                      const isCurrentUser = currentUser?.id === assignee.id;
+                      return (
+                        <div 
+                          key={assignee.id} 
+                          className={`flex items-center rounded-full px-3 py-1 border ${isCurrentUser 
+                            ? 'bg-primary/10 border-primary' 
+                            : 'bg-bg-secondary border-border-primary'}`}
+                        >
+                          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs mr-2 ${isCurrentUser 
+                            ? 'bg-primary text-white' 
+                            : 'bg-bg-primary text-text-primary'}`}>
+                            {assignee.username.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-sm text-text-primary">
+                            {assignee.username}
+                            {isCurrentUser && (
+                              <span className="ml-1 text-xs text-primary">(you)</span>
+                            )}
+                          </span>
                         </div>
-                        <span className="text-sm text-text-primary">{assignee.username}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
-              <div className="border-t border-border-primary pt-4">
+              <div className="border-t border-border-primary pt-4 mb-6">
                 <div className="flex justify-between text-sm text-text-muted">
                   <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
                   <span>Updated: {new Date(task.updated_at).toLocaleDateString()}</span>
                 </div>
               </div>
+              
+              {/* Секция комментариев с поддержкой Markdown */}
+              {isLoadingComments ? (
+                <div className="text-center py-6 text-text-muted">
+                  <div className="flex justify-center items-center">
+                    <svg className="animate-spin h-5 w-5 text-primary mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading comments...
+                  </div>
+                </div>
+              ) : (
+                <TaskComments 
+                  taskId={task.id}
+                  comments={comments}
+                  onAddComment={handleAddComment}
+                  onUpdateComment={handleUpdateComment}
+                  onDeleteComment={handleDeleteComment}
+                />
+              )}
             </div>
           </div>
         </div>
