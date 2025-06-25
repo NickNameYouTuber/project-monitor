@@ -73,38 +73,38 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
           
           <div className="task-card-footer flex items-center mt-3 text-xs overflow-hidden">
             {/* Отображаем список исполнителей и дату в одной строке */}
-            <div className="flex items-center space-x-1 overflow-hidden flex-grow pr-2">
+            <div className="flex items-center flex-wrap gap-1 overflow-hidden flex-grow pr-2">
               {assigneeData.assignees.length > 0 && (
                 <>
-                  {/* Отображаем первых 2 исполнителей с полными именами */}
-                  {assigneeData.assignees.slice(0, 2).map((assignee, index) => {
-                    // Меняем цвет, если это текущий пользователь
+                  {/* Отображаем первых 2 исполнителей в капсулах */}
+                  {assigneeData.assignees.slice(0, 2).map((assignee) => {
+                    // Определяем, является ли пользователь текущим
                     const isCurrentUser = currentUser && assignee.id === currentUser.id;
-                    // Добавляем запятую после первого имени, если есть второй исполнитель или больше
-                    const showComma = index === 0 && assigneeData.assignees.length > 1;
                     
                     return (
-                      <span 
+                      <div 
                         key={assignee.id}
-                        className={`${isCurrentUser ? 'text-state-success font-medium' : 'text-text-secondary'}`}
+                        className={`px-2 py-0.5 rounded-full text-xs ${isCurrentUser 
+                          ? 'border border-state-success text-state-success bg-state-success bg-opacity-10' 
+                          : 'bg-bg-secondary text-text-secondary'}`}
                         title={assignee.username}
                       >
-                        {assignee.username}{showComma && ", "}
-                      </span>
+                        {assignee.username}
+                      </div>
                     );
                   })}
                   
-                  {/* Показываем индикатор +N, если исполнителей больше двух */}
+                  {/* Показываем индикатор +N тоже в виде капсулы */}
                   {assigneeData.hiddenAssignees.length > 0 && (
-                    <span 
-                      className="text-text-secondary ml-1" 
+                    <div 
+                      className="px-2 py-0.5 rounded-full bg-bg-secondary text-text-muted text-xs"
                       title={
                         // Добавляем к подсказке список имен скрытых пользователей
                         `Также назначены: ${assigneeData.hiddenAssignees.map(a => a.username).join(', ')}`
                       }
                     >
                       +{assigneeData.hiddenAssignees.length}
-                    </span>
+                    </div>
                   )}
                 </>
               )}

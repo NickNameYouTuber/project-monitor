@@ -60,10 +60,17 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-overlay z-50 flex items-center justify-center p-4 sm:p-0"
-      onClick={handleBackdropClick}
-    >
+    <>
+      {/* Полупрозрачный фон (модальная подложка) */}
+      <div
+        className="fixed inset-0 bg-overlay z-40"
+        onClick={handleBackdropClick}
+      />
+      {/* Модальное окно */}
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0"
+        onClick={handleBackdropClick}
+      >
       <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
         <div className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
           <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
@@ -156,6 +163,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
         </div>
       </div>
     </div>
+    </>
   );
 };
 

@@ -448,13 +448,22 @@ const DashboardDetail: React.FC = () => {
       
       {/* Модальное окно для приглашения по имени пользователя */}
       {isInviteByTelegramModalOpen && (
-        <div 
-          className="fixed inset-0 bg-overlay z-50 flex items-center justify-center p-4 sm:p-0"
-          onClick={(e) => {
-            // Закрытие при клике вне модального окна
-            if (e.target === e.currentTarget) closeInviteByTelegramModal();
-          }}
-        >
+        <>
+          {/* Полупрозрачный фон (модальная подложка) */}
+          <div
+            className="fixed inset-0 bg-overlay z-40"
+            onClick={(e) => {
+              // Закрытие при клике вне модального окна
+              if (e.target === e.currentTarget) closeInviteByTelegramModal();
+            }}
+          />
+          {/* Модальное окно */}
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) closeInviteByTelegramModal();
+            }}
+          >
           <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
             <div className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
               {/* Заголовок с кнопкой закрытия для мобильных */}
@@ -552,6 +561,7 @@ const DashboardDetail: React.FC = () => {
             </div>
           </div>
         </div>
+        </>
       )}
     </div>
   );
