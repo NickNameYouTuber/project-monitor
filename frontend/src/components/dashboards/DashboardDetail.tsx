@@ -58,11 +58,30 @@ const DashboardDetail: React.FC = () => {
       // Фильтруем проекты, принадлежащие текущему дашборду
       const dashboardProjects = projects.filter(p => p.dashboard_id === dashboardId);
       
-      // Используем ID проектов для сравнения вместо полных объектов
-      const currentIds = dashboard.projects.map(p => p.id).sort().join(',');
-      const newIds = dashboardProjects.map(p => p.id).sort().join(',');
+      // Проверяем, есть ли изменения в проектах (статусы, порядки, и т.д.)
+      let hasChanges = false;
       
-      if (currentIds !== newIds) {
+      // Проверка на новые или удаленные проекты
+      if (dashboard.projects.length !== dashboardProjects.length) {
+        hasChanges = true;
+      } else {
+        // Создаем map для быстрого доступа к проектам по ID
+        const currentProjects = new Map();
+        dashboard.projects.forEach(p => currentProjects.set(p.id, p));
+        
+        // Проверяем изменения в проектах (статус, порядок и т.д.)
+        for (const project of dashboardProjects) {
+          const currentProject = currentProjects.get(project.id);
+          if (!currentProject || 
+              currentProject.status !== project.status || 
+              currentProject.order !== project.order) {
+            hasChanges = true;
+            break;
+          }
+        }
+      }
+      
+      if (hasChanges) {
         setDashboard(prev => prev ? {
           ...prev,
           projects: [...dashboardProjects] // Создаем новый массив для избежания ссылочных проблем
