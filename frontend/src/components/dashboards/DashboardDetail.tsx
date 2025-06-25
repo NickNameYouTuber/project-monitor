@@ -20,9 +20,13 @@ const DashboardDetail: React.FC = () => {
   // Состояние для модальных окон и управления интерфейсом
   const [isProjectModalOpen, setProjectModalOpen] = useState(false);
   const [isInviteByTelegramModalOpen, setInviteByTelegramModalOpen] = useState(false);
+  const [usernameSearch, setUsernameSearch] = useState('');
   const [telegramId, setTelegramId] = useState('');
   const [memberRole, setMemberRole] = useState<'viewer' | 'editor' | 'admin'>('viewer');
   const [showMembersSection, setShowMembersSection] = useState(false);
+  const [searchResults, setSearchResults] = useState<Array<{id: string, username: string, telegram_id: number}>>([]);
+  const [selectedUser, setSelectedUser] = useState<{id: string, username: string, telegram_id: number} | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Загрузка данных дашборда и участников
   useEffect(() => {
@@ -96,8 +100,37 @@ const DashboardDetail: React.FC = () => {
   const openInviteByTelegramModal = () => setInviteByTelegramModalOpen(true);
   const closeInviteByTelegramModal = () => {
     setInviteByTelegramModalOpen(false);
+    setUsernameSearch('');
     setTelegramId('');
     setMemberRole('viewer');
+    setSearchResults([]);
+    setSelectedUser(null);
+    setError(null);
+  };
+  
+  // Функция для поиска пользователей по никнейму
+  const handleSearchUsers = async () => {
+    if (!currentUser?.token || !usernameSearch.trim()) return;
+    
+    try {
+      setIsSearching(true);
+      const results = await api.users.searchByUsername(usernameSearch, currentUser.token);
+      setSearchResults(Array.isArray(results) ? results : []);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to search users:', err);
+      setError('Failed to search users. Please try again.');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+  
+  // Функция для выбора пользователя из результатов поиска
+  const selectUser = (user: {id: string, username: string, telegram_id: number}) => {
+    setSelectedUser(user);
+    setTelegramId(user.telegram_id.toString());
+    setSearchResults([]);
   };
   
   // Больше не используем отдельный обработчик изменения проектов
@@ -404,7 +437,7 @@ const DashboardDetail: React.FC = () => {
         dashboardMembers={members}
       />
       
-      {/* Модальное окно для приглашения по Telegram ID */}
+      {/* Модальное окно для приглашения по имени пользователя */}
       {isInviteByTelegramModalOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
@@ -415,21 +448,58 @@ const DashboardDetail: React.FC = () => {
         >
           <div className="flex items-center justify-center min-h-screen p-4 w-full">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Invite User by Telegram ID</h3>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Invite User</h3>
+              
+              {/* Поиск пользователя */}
               <div className="mb-4">
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Telegram ID</label>
-                <input 
-                  type="text" 
-                  value={telegramId}
-                  onChange={(e) => setTelegramId(e.target.value)}
-                  placeholder="Enter Telegram ID"
-                  className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
-                  required
-                />
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Search by Username</label>
+                <div className="flex space-x-2">
+                  <input 
+                    type="text" 
+                    value={usernameSearch}
+                    onChange={(e) => setUsernameSearch(e.target.value)}
+                    placeholder="Enter username"
+                    className="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                  />
+                  <button 
+                    onClick={handleSearchUsers} 
+                    disabled={!usernameSearch.trim() || isSearching}
+                    className={`px-4 py-2 rounded-lg ${!usernameSearch.trim() || isSearching ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 transition-colors'} text-white`}
+                  >
+                    {isSearching ? 'Searching...' : 'Search'}
+                  </button>
+                </div>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   User must have logged in to the app with Telegram at least once
                 </p>
               </div>
+
+              {/* Результаты поиска */}
+              {searchResults.length > 0 && (
+                <div className="mb-4 max-h-40 overflow-y-auto border dark:border-gray-600 rounded-lg">
+                  {searchResults.map(user => (
+                    <div 
+                      key={user.id} 
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-b last:border-b-0 dark:border-gray-600"
+                      onClick={() => selectUser(user)}
+                    >
+                      <span className="text-gray-800 dark:text-gray-200">{user.username}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">ID: {user.telegram_id}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Выбранный пользователь */}
+              {selectedUser && (
+                <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <p className="text-gray-800 dark:text-white font-medium">Selected user: {selectedUser.username}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Telegram ID: {selectedUser.telegram_id}</p>
+                </div>
+              )}
+
+              {/* Скрытое поле для Telegram ID */}
+              <input type="hidden" value={telegramId} />
               <div className="mb-4">
                 <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Role</label>
                 <select 
@@ -452,9 +522,9 @@ const DashboardDetail: React.FC = () => {
                 </button>
                 <button 
                   onClick={handleInviteByTelegram}
-                  disabled={!telegramId.trim()}
+                  disabled={!telegramId.trim() || !selectedUser}
                   className={`bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition ${
-                    !telegramId.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                    !telegramId.trim() || !selectedUser ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   Invite

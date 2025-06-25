@@ -208,6 +208,8 @@ export const api = {
         method: 'PUT', 
         body: userData,
         requireAuth: true 
-      }, token)
+      }, token),
+    searchByUsername: (username: string, token: string) => 
+      apiRequest(`/users/search?username=${encodeURIComponent(username)}`, { requireAuth: true }, token)
   }
 };
