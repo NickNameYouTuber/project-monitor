@@ -37,8 +37,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
   const [projectMembers, setProjectMembers] = useState<DashboardMember[]>([]);
   const [usersWithStatus, setUsersWithStatus] = useState<UserWithProjectStatus[]>([]);
 
-  const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Закрытие при клике на фон модального окна
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   // Загрузка пользователей для назначения задач
   // useRef для отслеживания уже запущенных запросов, чтобы избежать бесконечных циклов
@@ -211,21 +218,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
     });
   };
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
-    }
-  };
-
   return (
     <>
-      {/* Полупрозрачный фон (модальная подложка) */}
-      <div
-        className="fixed inset-0 bg-overlay z-40"
-        onClick={handleBackdropClick}
-      />
+      {/* Затемняющий фон */}
+      <div className="fixed inset-0 bg-overlay z-40" onClick={handleBackdropClick}/>
       {/* Модальное окно */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0" onClick={handleBackdropClick}>
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0"
+        onClick={handleBackdropClick}
+      >
         <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
           <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full max-h-[90vh] overflow-y-auto">
             <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">

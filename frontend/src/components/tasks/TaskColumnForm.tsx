@@ -17,8 +17,15 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Закрытие при клике на фон модального окна
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   // Закрытие по клику вне формы
   useEffect(() => {
@@ -33,12 +40,6 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [onClose]);
-
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
-    }
-  };
 
   // Обработка создания/редактирования колонки
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,18 +78,13 @@ const TaskColumnForm: React.FC<TaskColumnFormProps> = ({ column, onClose, mode }
 
   return (
     <>
-      {/* Полупрозрачный фон (модальная подложка) */}
-      <div
-        className="fixed inset-0 bg-overlay z-40"
-        onClick={(e) => {
-          // Закрытие при клике вне модального окна
-          if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-            onClose();
-          }
-        }}
-      />
+      {/* Затемняющий фон */}
+      <div className="fixed inset-0 bg-overlay z-40" onClick={handleBackdropClick} />
       {/* Модальное окно */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0" onClick={handleBackdropClick}>
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0"
+        onClick={handleBackdropClick}
+      >
         <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
           <div ref={modalRef} className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
             <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
