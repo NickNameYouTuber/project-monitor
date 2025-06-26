@@ -186,29 +186,46 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                 <div className="mb-6">
                   <div className="text-sm text-text-secondary mb-3 font-bold">Assignees</div>
                   <div className="flex flex-wrap gap-2">
-                    {task.assignees.map((assignee) => {
-                      const isCurrentUser = currentUser?.id === assignee.id;
-                      return (
-                        <div 
-                          key={assignee.id} 
-                          className={`flex items-center rounded-full px-3 py-1 border ${isCurrentUser 
-                            ? 'bg-primary/10 border-primary' 
-                            : 'bg-bg-secondary border-border-primary'}`}
-                        >
-                          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs mr-2 ${isCurrentUser 
-                            ? 'bg-primary text-white' 
-                            : 'bg-bg-primary text-text-primary'}`}>
-                            {assignee.username.charAt(0).toUpperCase()}
+                    {(() => {
+                      // Сортируем assignees так, чтобы текущий пользователь был первым
+                      let sortedAssignees = [...task.assignees];
+                      const currentUserIndex = currentUser 
+                        ? sortedAssignees.findIndex(assignee => assignee.id === currentUser.id)
+                        : -1;
+                        
+                      if (currentUserIndex > 0) {
+                        // Извлекаем текущего пользователя
+                        const currentUserAssignee = sortedAssignees[currentUserIndex];
+                        // Удаляем его с текущей позиции
+                        sortedAssignees.splice(currentUserIndex, 1);
+                        // Вставляем в начало списка
+                        sortedAssignees.unshift(currentUserAssignee);
+                      }
+                      
+                      return sortedAssignees.map((assignee) => {
+                        const isCurrentUser = currentUser?.id === assignee.id;
+                        return (
+                          <div 
+                            key={assignee.id} 
+                            className={`flex items-center rounded-full px-3 py-1 border ${isCurrentUser 
+                              ? 'border-state-success text-state-success bg-bg-card' 
+                              : 'bg-bg-secondary border-border-primary'}`}
+                          >
+                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs mr-2 ${isCurrentUser 
+                              ? 'bg-state-success text-white' 
+                              : 'bg-bg-primary text-text-primary'}`}>
+                              {assignee.username.charAt(0).toUpperCase()}
+                            </div>
+                            <span className={`text-sm ${isCurrentUser ? 'text-state-success' : 'text-text-primary'}`}>
+                              {assignee.username}
+                              {isCurrentUser && (
+                                <span className="ml-1 text-xs">(you)</span>
+                              )}
+                            </span>
                           </div>
-                          <span className="text-sm text-text-primary">
-                            {assignee.username}
-                            {isCurrentUser && (
-                              <span className="ml-1 text-xs text-primary">(you)</span>
-                            )}
-                          </span>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               )}
