@@ -68,7 +68,7 @@ const ProjectBoard: React.FC<ProjectBoardProps> = ({ projects }) => {
     { 
       status: 'onPause' as ProjectStatus,
       title: 'On Pause', 
-      colorClass: 'bg-blue-400'
+      colorClass: 'bg-primary'
     },
     { 
       status: 'completed' as ProjectStatus,

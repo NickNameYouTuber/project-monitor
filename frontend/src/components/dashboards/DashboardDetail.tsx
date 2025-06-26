@@ -427,7 +427,7 @@ const DashboardDetail: React.FC = () => {
                 <div className="text-center mt-8">
                   <button
                     onClick={openProjectModal}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                    className="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-md"
                   >
                     Add First Project
                   </button>

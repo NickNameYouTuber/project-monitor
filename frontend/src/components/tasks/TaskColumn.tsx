@@ -87,7 +87,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
                 ref={provided.innerRef}
                 {...provided.droppableProps}
                 className={`tasks-list p-3 flex-grow overflow-y-auto ${
-                  snapshot.isDraggingOver ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                  snapshot.isDraggingOver ? 'bg-primary/10 dark:bg-primary/20' : ''
                 }`}
                 style={{ minHeight: '100px' }}
               >

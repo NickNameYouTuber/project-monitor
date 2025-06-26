@@ -117,7 +117,7 @@ const AuthScreen: React.FC = () => {
         
         {isLoading && (
           <div className="text-center mt-6">
-            <div className="loading-spinner w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+            <div className="loading-spinner w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
             <p className="text-gray-600 dark:text-gray-300">Authenticating...</p>
           </div>
         )}

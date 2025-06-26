@@ -63,19 +63,19 @@ const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
+              className="flex items-center space-x-2 bg-primary/10 dark:bg-primary/20 px-3 py-2 rounded-lg hover:bg-primary/20 dark:hover:bg-primary/30 transition"
             >
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 {currentUser?.avatar ? (
                   <img src={currentUser.avatar} alt={currentUser.name} className="w-8 h-8 rounded-full" />
                 ) : (
                   <i className="fas fa-user text-white text-sm"></i>
                 )}
               </div>
-              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              <span className="text-sm font-medium text-primary">
                 {currentUser?.name || 'Guest User'}
               </span>
-              <i className="fas fa-chevron-down text-blue-600 dark:text-blue-400 text-xs"></i>
+              <i className="fas fa-chevron-down text-primary text-xs"></i>
             </button>
             
             {/* Dropdown Menu */}
@@ -95,7 +95,7 @@ const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
                   onClick={handleProfileClick}
                   className="w-full text-left px-4 py-2 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center"
                 >
-                  <i className="fas fa-user-circle mr-3 text-blue-500 dark:text-blue-400"></i>
+                  <i className="fas fa-user-circle mr-3 text-primary"></i>
                   Profile Settings
                 </button>
                 <button 
@@ -120,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
           {/* Add Project Button */}
           <button 
             onClick={onAddProject}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
+            className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-lg font-semibold transition duration-200"
           >
             <i className="fas fa-plus mr-2"></i>Add Project
           </button>

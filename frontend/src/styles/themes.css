@@ -2,13 +2,13 @@
 
 :root {
   /* Светлая тема (по умолчанию) */
-  /* Основные цвета */
-  --color-primary: #3b82f6;
-  --primary-rgb: 59, 130, 246;
-  --color-primary-hover: #2563eb; /* Более темный оттенок при наведении */
+  /* Основные цвета - мятные вместо синих */
+  --color-primary: #7AB988;
+  --primary-rgb: 122, 185, 136;
+  --color-primary-hover: #5DA570; /* Более темный оттенок при наведении */
   --color-secondary: #6b7280;
   --secondary-rgb: 107, 114, 128;
-  --color-accent: #8b5cf6;
+  --color-accent: #98C9A3;
   --accent-rgb: 139, 92, 246;
   
   /* Цвета текста */
@@ -34,7 +34,7 @@
   --state-success: #10b981;
   --state-warning: #f59e0b;
   --state-error: #ef4444;
-  --state-info: #3b82f6;
+  --state-info: #7AB988;
   
   /* Состояния (легкий фон) */
   --state-success-light: #d1fae5;
