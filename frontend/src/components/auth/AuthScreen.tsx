@@ -80,8 +80,8 @@ const AuthScreen: React.FC = () => {
     <div className="fixed inset-0 auth-container flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 flex items-center justify-center mx-auto mb-4">
-            <img src="/nit-logo.png" alt="NIT Logo" className="w-20 h-20" />
+          <div className="flex items-center mb-2">
+            <img src="/nit-logo.png" alt="NIT Logo" className="w-20 h-20 mx-auto" />
           </div>
           <p className="text-gray-600 dark:text-gray-300">Эффективное управление проектами и задачами</p>
         </div>
