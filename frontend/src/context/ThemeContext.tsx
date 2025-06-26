@@ -22,8 +22,15 @@ export function useTheme() {
   const [mounted, setMounted] = React.useState(false);
   useEffect(() => setMounted(true), []);
 
+  // Циклическое переключение между тремя темами: light -> dark -> mint -> light
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    if (theme === 'light') {
+      setTheme('dark');
+    } else if (theme === 'dark') {
+      setTheme('mint');
+    } else {
+      setTheme('light');
+    }
   };
 
   return { 
