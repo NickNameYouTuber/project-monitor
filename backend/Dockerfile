@@ -5,6 +5,13 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
+    cmake \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    python3-dev \
+    pkg-config \
+    libgit2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
