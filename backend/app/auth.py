@@ -20,7 +20,10 @@ from .config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, TELEGRAM
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 setup
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token", auto_error=True)
+
+# Optional OAuth2 scheme that doesn't auto-error
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="api/auth/token", auto_error=False)
 
 
 def verify_password(plain_password, hashed_password):
@@ -84,6 +87,26 @@ def get_admin_user(current_user: User = Depends(get_current_user)):
             detail="Not authorized to perform this action"
         )
     return current_user
+
+
+async def get_current_user_optional(token: str = Depends(oauth2_scheme_optional), db: Session = Depends(get_db)):
+    """
+    Similar to get_current_user but doesn't raise an exception if authentication fails.
+    Returns None instead, allowing anonymous access for public resources.
+    """
+    if token is None:
+        return None
+        
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+        token_data = TokenData(username=username)
+        user = db.query(User).filter(User.username == token_data.username).first()
+        return user
+    except (JWTError, HTTPException):
+        return None
 
 
 def parse_telegram_init_data(init_data: str) -> Dict[str, Any]:
