@@ -70,8 +70,8 @@ const TaskComments: React.FC<TaskCommentsProps> = ({
   return (
     <div className="comments-container mt-6">
       <div className="flex justify-between items-center mb-3">
-        <h4 className="text-sm font-bold text-text-secondary">Comments ({comments.length})
-          <span className="text-xs ml-2 text-text-muted">Task #{taskId.substring(0, 6)}</span>
+        <h4 className="text-sm font-bold text-text-secondary">Comments ({Array.isArray(comments) ? comments.length : 0})
+          {taskId && <span className="text-xs ml-2 text-text-muted">Task #{typeof taskId === 'string' ? taskId.substring(0, 6) : 'unknown'}</span>}
         </h4>
         {!showEditor && (
           <button
@@ -97,13 +97,13 @@ const TaskComments: React.FC<TaskCommentsProps> = ({
         </div>
       )}
 
-      {comments.length === 0 && !showEditor ? (
+      {(!Array.isArray(comments) || comments.length === 0) && !showEditor ? (
         <div className="text-center py-6 text-text-muted bg-bg-secondary rounded-lg border border-border-primary">
           No comments yet. Be the first to add one!
         </div>
       ) : (
         <div className="space-y-4">
-          {comments.map((comment) => (
+          {Array.isArray(comments) && comments.map((comment) => (
             <div
               key={comment.id}
               className={`comment bg-bg-secondary rounded-lg overflow-hidden border ${

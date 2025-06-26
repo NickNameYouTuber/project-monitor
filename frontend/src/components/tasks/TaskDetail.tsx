@@ -53,7 +53,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
         setIsLoadingComments(true);
         try {
           const data = await commentsApi.getByTask(task.id, currentUser.token);
-          setComments(data);
+          // Проверяем, что полученные данные - это массив
+          setComments(Array.isArray(data) ? data : []);
         } catch (error) {
           console.error('Error fetching comments:', error);
         } finally {
