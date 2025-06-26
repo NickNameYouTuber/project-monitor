@@ -66,6 +66,11 @@ async def list_files(
         # Initialize git repository
         repo = git.Repo(repo_path)
         
+        # Check if the repository has any commits (is empty)
+        if len(repo.heads) == 0 or len(list(repo.iter_commits())) == 0:
+            # Repository is empty, return empty list (not an error)
+            return []
+        
         # Get the default branch
         branch = repo.active_branch
         
@@ -134,6 +139,14 @@ async def get_file_content(
         
         # Initialize git repository
         repo = git.Repo(repo_path)
+        
+        # Check if the repository has any commits (is empty)
+        if len(repo.heads) == 0 or len(list(repo.iter_commits())) == 0:
+            # Repository is empty, return a friendly message
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="This repository is empty. Add some files to view content."
+            )
         
         # Get the default branch
         branch = repo.active_branch
@@ -209,6 +222,11 @@ async def list_commits(
         # Initialize git repository
         repo = git.Repo(repo_path)
         
+        # Check if the repository has any commits (is empty)
+        if len(repo.heads) == 0 or len(list(repo.iter_commits())) == 0:
+            # Repository is empty, return empty list (not an error)
+            return []
+            
         # Prepare git log command
         git_log_cmd = ["--pretty=format:%H|%an|%ae|%at|%s", f"-{limit}", f"--skip={skip}"]
         
