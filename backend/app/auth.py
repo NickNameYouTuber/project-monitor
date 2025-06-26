@@ -130,7 +130,7 @@ async def get_current_user_optional(request: Request = None, token: str = Depend
                     if user:
                         # Check for valid token
                         token = db.query(PersonalAccessToken).filter(
-                            PersonalAccessToken.user_id == user.id,
+                            PersonalAccessToken.user_id == str(user.id),
                             PersonalAccessToken.token == password,
                             PersonalAccessToken.is_active == True
                         ).first()

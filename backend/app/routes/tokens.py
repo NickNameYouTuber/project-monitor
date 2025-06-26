@@ -33,11 +33,11 @@ def create_token(
     
     # Create token record
     db_token = models.PersonalAccessToken(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         token=token_value,
         name=token_create.name,
         description=token_create.description,
-        user_id=current_user.id,
+        user_id=str(current_user.id),
         expires_at=expires_at,
         is_active=True
     )
