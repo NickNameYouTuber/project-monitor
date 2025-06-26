@@ -51,6 +51,8 @@ const AuthScreen: React.FC = () => {
           type: 'telegram',
           token: data.access_token // Store the JWT token
         };
+        // Store token in localStorage for API requests
+        localStorage.setItem('auth_token', data.access_token);
         login(userData);
       } else {
         // Handle non-OK responses
