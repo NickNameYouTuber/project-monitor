@@ -38,17 +38,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(users.router, prefix="/api/users", tags=["users"])
-app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
-app.include_router(dashboards.router, prefix="/api/dashboards", tags=["dashboards"])
-app.include_router(dashboard_members.router, prefix="/api/dashboards", tags=["dashboard_members"])
+# Регистрация всех роутеров с единым префиксом /api на уровне приложения
+api_prefix = "/api"
 
-# Основные маршруты с префиксом /api для совместимости
-app.include_router(task_columns.router, prefix="/api")
-app.include_router(tasks.router, prefix="/api")
-app.include_router(comments.router, prefix="/api")
+# Регистрируем все роутеры
+app.include_router(auth.router, prefix=f"{api_prefix}/auth", tags=["auth"])
+app.include_router(users.router, prefix=f"{api_prefix}/users", tags=["users"])
+app.include_router(projects.router, prefix=f"{api_prefix}/projects", tags=["projects"])
+app.include_router(dashboards.router, prefix=f"{api_prefix}/dashboards", tags=["dashboards"])
+app.include_router(dashboard_members.router, prefix=f"{api_prefix}/dashboards", tags=["dashboard_members"])
+
+# Роутеры для задач, колонок и комментариев
+app.include_router(task_columns.router, prefix=api_prefix)
+app.include_router(tasks.router, prefix=api_prefix)
+app.include_router(comments.router, prefix=api_prefix)
 
 
 @app.get("/")

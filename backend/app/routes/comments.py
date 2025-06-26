@@ -6,12 +6,11 @@ from typing import List
 from sqlalchemy import and_
 
 router = APIRouter(
-    prefix="/comments",
     tags=["comments"]
 )
 
 
-@router.post("/", response_model=schemas.Comment)
+@router.post("/comments", response_model=schemas.Comment)
 def create_comment(
     comment: schemas.CommentCreate,
     db: Session = Depends(get_db),
@@ -71,7 +70,7 @@ def create_comment(
     return result
 
 
-@router.get("/task/{task_id}", response_model=List[schemas.Comment])
+@router.get("/tasks/{task_id}/comments", response_model=List[schemas.Comment])
 def get_task_comments(
     task_id: str,
     db: Session = Depends(get_db),
@@ -146,7 +145,7 @@ def get_comments_for_task(
     return result
 
 
-@router.put("/{comment_id}", response_model=schemas.Comment)
+@router.put("/comments/{comment_id}", response_model=schemas.Comment)
 def update_comment(
     comment_id: str,
     comment_update: schemas.CommentUpdate,
@@ -183,7 +182,7 @@ def update_comment(
     return result
 
 
-@router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_comment(
     comment_id: str,
     db: Session = Depends(get_db),

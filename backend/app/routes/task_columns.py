@@ -5,7 +5,7 @@ from .. import models, schemas
 from typing import List
 
 router = APIRouter(
-    prefix="/api/task-columns",
+    prefix="/task-columns",
     tags=["task_columns"]
 )
 

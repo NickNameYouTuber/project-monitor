@@ -7,12 +7,11 @@ from .comments import get_comments_for_task
 from sqlalchemy import and_
 
 router = APIRouter(
-    prefix="/tasks",
     tags=["tasks"]
 )
 
 
-@router.post("/", response_model=schemas.Task)
+@router.post("/tasks", response_model=schemas.Task)
 def create_task(
     task: schemas.TaskCreate,
     db: Session = Depends(get_db),
@@ -88,7 +87,7 @@ def create_task(
     return db_task
 
 
-@router.get("/{task_id}", response_model=schemas.Task)
+@router.get("/tasks/{task_id}", response_model=schemas.Task)
 def read_task(
     task_id: str,
     db: Session = Depends(get_db),
@@ -123,7 +122,7 @@ def read_task(
     return task
 
 
-@router.get("/column/{column_id}", response_model=List[schemas.Task])
+@router.get("/tasks/column/{column_id}", response_model=List[schemas.Task])
 def read_column_tasks(
     column_id: str,
     db: Session = Depends(get_db),
@@ -163,7 +162,7 @@ def read_column_tasks(
     return tasks
 
 
-@router.get("/project/{project_id}", response_model=List[schemas.Task])
+@router.get("/tasks/project/{project_id}", response_model=List[schemas.Task])
 def read_project_tasks(
     project_id: str,
     db: Session = Depends(get_db),
@@ -202,7 +201,7 @@ def read_project_tasks(
     return tasks
 
 
-@router.put("/{task_id}", response_model=schemas.Task)
+@router.put("/tasks/{task_id}", response_model=schemas.Task)
 def update_task(
     task_id: str,
     task_update: schemas.TaskUpdate,
@@ -277,7 +276,7 @@ def update_task(
     return task
 
 
-@router.put("/move/{task_id}", response_model=schemas.Task)
+@router.put("/tasks/{task_id}/move", response_model=schemas.Task)
 def move_task(
     task_id: str,
     move_data: schemas.TaskMoveUpdate,
@@ -350,7 +349,7 @@ def move_task(
     return task
 
 
-@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(
     task_id: str,
     db: Session = Depends(get_db),
@@ -389,7 +388,7 @@ def delete_task(
     return None
 
 
-@router.put("/reorder/{column_id}", response_model=List[schemas.Task])
+@router.put("/tasks/column/{column_id}/reorder", response_model=List[schemas.Task])
 def reorder_tasks(
     column_id: str,
     task_ids: List[str],
@@ -448,7 +447,7 @@ def reorder_tasks(
     return updated_tasks
 
 
-@router.get("/{task_id}/comments", response_model=List[schemas.Comment])
+@router.get("/tasks/{task_id}/comments", response_model=List[schemas.Comment])
 def get_task_comments(
     task_id: str,
     db: Session = Depends(get_db),
