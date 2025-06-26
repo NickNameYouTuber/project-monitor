@@ -20,24 +20,45 @@ REPOS_BASE_DIR = os.environ.get("GIT_REPOS_DIR", "/app/git_repos")
 
 def check_repository_access(repository_id: str, user_id: str, db: Session):
     """Check if user has access to the repository"""
-    repository = db.query(Repository).filter(Repository.id == repository_id).first()
-    
-    if not repository:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
-    
-    # Check if user is owner or member
-    has_access = (str(repository.owner_id) == user_id) or \
-                 db.query(RepositoryMember).filter(
-                     RepositoryMember.repository_id == repository_id,
-                     RepositoryMember.user_id == user_id,
-                     RepositoryMember.is_active == True
-                 ).first() is not None
-    
-    if not has_access:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
-                           detail="Not authorized to access this repository")
-    
-    return repository
+    try:
+        # Ensure we're using string comparisons
+        str_repo_id = str(repository_id)
+        str_user_id = str(user_id)
+        
+        repository = db.query(Repository).filter(Repository.id == str_repo_id).first()
+        
+        if not repository:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+        
+        # Debug output
+        print(f"Access check - Repository ID: {str_repo_id}, User ID: {str_user_id}, Owner ID: {repository.owner_id}")
+        print(f"  Comparison: {str(repository.owner_id) == str_user_id}")
+        
+        # Check if user is owner or member, explicitly converting IDs to strings
+        is_owner = str(repository.owner_id) == str_user_id
+        
+        # Check if user is a member
+        member = db.query(RepositoryMember).filter(
+            RepositoryMember.repository_id == str_repo_id,
+            RepositoryMember.user_id == str_user_id,
+            RepositoryMember.is_active == True
+        ).first()
+        
+        has_access = is_owner or member is not None
+        
+        if not has_access:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
+                              detail="Not authorized to access this repository")
+        
+        return repository
+    except HTTPException:
+        # Re-raise HTTP exceptions as is
+        raise
+    except Exception as e:
+        # Log and raise a generic error for any other exception
+        print(f"Error in check_repository_access: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                          detail="Internal server error while checking repository access")
 
 
 def get_repo_path(repository_id: str) -> Path:

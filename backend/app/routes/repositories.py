@@ -113,7 +113,19 @@ async def create_repository(
     db.add(db_repo_member)
     db.commit()
     
-    return db_repository
+    # Convert UUID fields to strings before returning
+    repo_dict = {
+        'id': str(db_repository.id),
+        'owner_id': str(db_repository.owner_id),
+        'name': db_repository.name,
+        'description': db_repository.description,
+        'visibility': db_repository.visibility,
+        'project_id': str(db_repository.project_id) if db_repository.project_id else None,
+        'url': db_repository.url,
+        'created_at': db_repository.created_at,
+        'updated_at': db_repository.updated_at
+    }
+    return schemas.Repository.model_validate(repo_dict)
 
 
 @router.get("/{repository_id}", response_model=schemas.RepositoryDetail)
