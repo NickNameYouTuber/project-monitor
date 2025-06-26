@@ -37,6 +37,15 @@ class GitCommit(BaseModel):
     stats: GitCommitStats
 
 
+class GitContent(BaseModel):
+    name: str
+    path: str
+    content: str
+    encoding: str  # utf-8 or base64
+    size: int
+    binary: bool
+
+
 class GitFileChange(BaseModel):
     path: str
     old_path: Optional[str] = None
