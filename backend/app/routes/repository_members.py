@@ -1,12 +1,13 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 
 from ..database import get_db
 from .. import schemas
 from ..models import Repository, RepositoryMember, RepositoryRole, User
 from ..auth import get_current_active_user
+from ..schemas.user import UserBasic
 
 router = APIRouter()
 
@@ -21,34 +22,71 @@ async def read_repository_members(
     """
     Получить список участников репозитория.
     """
-    # Проверяем существование репозитория
-    repository = db.query(Repository).filter(Repository.id == repository_id).first()
-    if not repository:
+    try:
+        # Проверяем существование репозитория
+        repository = db.query(Repository).filter(Repository.id == repository_id).first()
+        if not repository:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Repository not found"
+            )
+        
+        # Проверяем права доступа
+        has_access = (str(repository.owner_id) == str(current_user.id)) or \
+                    db.query(RepositoryMember).filter(
+                        RepositoryMember.repository_id == repository_id,
+                        RepositoryMember.user_id == current_user.id,
+                        RepositoryMember.is_active == True
+                    ).first() is not None
+        
+        if not has_access:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to access this repository"
+            )
+        
+        # Fetch members with eager loading of user relationship
+        members = db.query(RepositoryMember).options(
+            joinedload(RepositoryMember.user)
+        ).filter(
+            RepositoryMember.repository_id == repository_id,
+            RepositoryMember.is_active == True
+        ).offset(skip).limit(limit).all()
+        
+        # Manually convert each member to a Pydantic model
+        result = []
+        for member in members:
+            # Convert user data to dict with string IDs
+            user_dict = {
+                'id': str(member.user.id),
+                'username': member.user.username,
+                'first_name': member.user.first_name,
+                'last_name': member.user.last_name,
+                'avatar_url': member.user.avatar_url
+            }
+            
+            # Create member dict with string IDs
+            member_dict = {
+                'id': str(member.id),
+                'repository_id': str(member.repository_id),
+                'user_id': str(member.user_id),
+                'role': member.role,
+                'is_active': member.is_active,
+                'created_at': member.created_at,
+                'updated_at': member.updated_at,
+                'user': UserBasic.model_validate(user_dict)
+            }
+            
+            result.append(schemas.RepositoryMemberDetail.model_validate(member_dict))
+        
+        return result
+    
+    except Exception as e:
+        print(f"Error in read_repository_members: {e}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Repository not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
         )
-    
-    # Проверяем права доступа
-    has_access = (repository.owner_id == current_user.id) or \
-                 db.query(RepositoryMember).filter(
-                     RepositoryMember.repository_id == repository_id,
-                     RepositoryMember.user_id == current_user.id,
-                     RepositoryMember.is_active == True
-                 ).first() is not None
-    
-    if not has_access:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this repository"
-        )
-    
-    members = db.query(RepositoryMember).filter(
-        RepositoryMember.repository_id == repository_id,
-        RepositoryMember.is_active == True
-    ).offset(skip).limit(limit).all()
-    
-    return members
 
 
 @router.post("/{repository_id}/members", response_model=schemas.RepositoryMember, status_code=status.HTTP_201_CREATED)
