@@ -1,69 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
-  ListItemText,
-  Chip,
-  CircularProgress,
-  Alert,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Divider
-} from '@mui/material';
-import { 
-  History as HistoryIcon,
-  ArrowRight as ArrowRightIcon,
-  Add as AddIcon,
-  Remove as RemoveIcon,
-  CreateOutlined as CreateIcon
-} from '@mui/icons-material';
+import api from '../../services/api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import api from '../../services/api';
-
-interface GitAuthor {
-  name: string;
-  email: string;
-}
-
-interface GitCommitStats {
-  files_changed: number;
-  insertions: number;
-  deletions: number;
-}
 
 interface GitCommit {
   hash: string;
-  author: GitAuthor;
   message: string;
+  author: string;
   date: string;
-  stats: GitCommitStats;
 }
 
 interface GitFileChange {
-  path: string;
-  old_path: string | null;
+  file_path: string;
   change_type: string;
-  additions: number;
-  deletions: number;
   diff: string;
 }
 
 interface GitCommitDetail {
   hash: string;
-  author: GitAuthor;
-  committer: GitAuthor;
   message: string;
+  author: string;
   date: string;
-  parent_hashes: string[];
-  files: GitFileChange[];
+  changes: GitFileChange[];
 }
 
 interface CommitHistoryProps {
@@ -73,7 +31,7 @@ interface CommitHistoryProps {
 
 const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => {
   const [commits, setCommits] = useState<GitCommit[]>([]);
-  const [selectedCommit, setSelectedCommit] = useState<GitCommitDetail | null>(null);
+  const [selectedCommitDetail, setSelectedCommitDetail] = useState<GitCommitDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [detailLoading, setDetailLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,41 +39,37 @@ const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => 
   const [page, setPage] = useState<number>(0);
 
   useEffect(() => {
-    fetchCommits();
-  }, [repositoryId, path, page]);
-
-  const fetchCommits = async () => {
-    try {
+    const fetchCommits = async () => {
       setLoading(true);
       setError(null);
-      
-      const response = await api.get(`/repositories/${repositoryId}/commits`, {
-        params: { 
-          path,
-          limit: 20,
-          skip: page * 20
-        }
-      });
-      
-      setCommits(response.data);
-    } catch (err) {
-      console.error('Error fetching commits:', err);
-      setError('Failed to load commit history.');
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const response = await api.get(`/repositories/${repositoryId}/commits`, {
+          params: {
+            path: path || '',
+            page,
+            limit: 20,
+          },
+        });
+        setCommits(response.data);
+      } catch (err) {
+        setError('Failed to load commit history. Please try again later.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCommits();
+  }, [repositoryId, path, page]);
 
   const fetchCommitDetail = async (commitHash: string) => {
     try {
       setDetailLoading(true);
-      
-      const response = await api.get(`/repositories/${repositoryId}/commits/${commitHash}`);
-      setSelectedCommit(response.data);
       setDialogOpen(true);
+      const response = await api.get(`/repositories/${repositoryId}/commits/${commitHash}`);
+      setSelectedCommitDetail(response.data);
     } catch (err) {
       console.error('Error fetching commit details:', err);
-      setError('Failed to load commit details.');
     } finally {
       setDetailLoading(false);
     }
@@ -127,225 +81,142 @@ const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => 
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
-    setSelectedCommit(null);
+    setSelectedCommitDetail(null);
   };
 
-  const formatDateTime = (dateString: string): string => {
+  const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
-      return format(date, 'd MMMM yyyy, HH:mm', { locale: ru });
+      return format(date, 'PPP HH:mm', { locale: ru });
     } catch (e) {
       return dateString;
     }
   };
 
-  const formatDiffLines = (diff: string): JSX.Element[] => {
-    if (!diff) return [<span key="empty">No changes</span>];
-    
-    return diff.split('\n').map((line, index) => {
-      let className = '';
-      let icon = null;
-      
-      if (line.startsWith('+')) {
-        className = 'addition';
-        icon = <AddIcon fontSize="small" style={{ color: '#4caf50' }} />;
-      } else if (line.startsWith('-')) {
-        className = 'deletion';
-        icon = <RemoveIcon fontSize="small" style={{ color: '#f44336' }} />;
-      }
-      
-      return (
-        <Box key={index} display="flex" alignItems="center" sx={{
-          bgcolor: className === 'addition' ? 'rgba(76, 175, 80, 0.1)' : 
-                  className === 'deletion' ? 'rgba(244, 67, 54, 0.1)' : 'transparent',
-          py: 0.25,
-          px: 1,
-          fontFamily: 'monospace',
-          fontSize: '0.85rem',
-          whiteSpace: 'pre-wrap',
-          overflowX: 'auto',
-          width: '100%'
-        }}>
-          {icon && <Box mr={1} minWidth="24px">{icon}</Box>}
-          <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{line}</Typography>
-        </Box>
-      );
-    });
-  };
-
-  const renderCommitDialog = () => {
-    if (!selectedCommit) return null;
-    
+  if (loading) {
     return (
-      <Dialog 
-        open={dialogOpen} 
-        onClose={handleCloseDialog}
-        maxWidth="lg"
-        fullWidth
-      >
-        {detailLoading && (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
-          </Box>
-        )}
-        <DialogTitle>
-          <Typography variant="h6" component="div">
-            {selectedCommit.message}
-          </Typography>
-          <Typography variant="subtitle2" color="text.secondary">
-            {selectedCommit.hash.substring(0, 8)}
-          </Typography>
-        </DialogTitle>
-        
-        <DialogContent dividers>
-          <Box mb={3}>
-            <Typography variant="subtitle2">
-              Автор: {selectedCommit.author.name} <Typography component="span" color="text.secondary">({selectedCommit.author.email})</Typography>
-            </Typography>
-            <Typography variant="subtitle2">
-              Дата: {formatDateTime(selectedCommit.date)}
-            </Typography>
-          </Box>
-          
-          <Typography variant="h6" gutterBottom>
-            Изменения ({selectedCommit.files.length} файл(ов))
-          </Typography>
-          
-          {selectedCommit.files.map((file, index) => (
-            <Box key={index} mb={4}>
-              <Box display="flex" alignItems="center" mb={1}>
-                <Chip 
-                  label={file.change_type} 
-                  size="small" 
-                  color={
-                    file.change_type === 'added' ? 'success' :
-                    file.change_type === 'deleted' ? 'error' :
-                    file.change_type === 'renamed' ? 'info' :
-                    'default'
-                  } 
-                  sx={{ mr: 1 }} 
-                />
-                <Typography variant="subtitle2">
-                  {file.path}
-                </Typography>
-                {file.old_path && (
-                  <>
-                    <ArrowRightIcon sx={{ mx: 1 }} />
-                    <Typography variant="subtitle2">
-                      {file.path}
-                    </Typography>
-                  </>
-                )}
-              </Box>
-              
-              <Paper variant="outlined" sx={{ p: 1, maxHeight: '300px', overflow: 'auto' }}>
-                {formatDiffLines(file.diff)}
-              </Paper>
-            </Box>
-          ))}
-        </DialogContent>
-        
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Закрыть</Button>
-        </DialogActions>
-      </Dialog>
+      <div className="flex justify-center my-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
     );
-  };
+  }
 
-  if (loading && commits.length === 0) {
+  if (error) {
     return (
-      <Box display="flex" justifyContent="center" my={4}>
-        <CircularProgress />
-      </Box>
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
+        <span className="block sm:inline">{error}</span>
+      </div>
     );
   }
 
   return (
-    <Paper sx={{ p: 2, height: '100%', overflow: 'auto' }}>
-      <Typography variant="h6" gutterBottom>
-        История коммитов {path ? `(${path})` : ''}
-      </Typography>
-      
-      {error && <Alert severity="error">{error}</Alert>}
-      
-      <List sx={{ bgcolor: 'background.paper' }}>
-        {commits.map((commit, index) => (
-          <React.Fragment key={commit.hash}>
-            <ListItem button onClick={() => handleCommitClick(commit)} alignItems="flex-start">
-              <ListItemIcon>
-                <CreateIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={commit.message}
-                secondary={
-                  <React.Fragment>
-                    <Typography
-                      sx={{ display: 'inline' }}
-                      component="span"
-                      variant="body2"
-                      color="text.primary"
-                    >
-                      {commit.author.name}
-                    </Typography>
-                    {" — "}{formatDateTime(commit.date)}
-                    <Box mt={1} display="flex">
-                      <Chip 
-                        label={`${commit.stats.files_changed} файл(ов)`}
-                        size="small" 
-                        sx={{ mr: 1 }}
-                      />
-                      {commit.stats.insertions > 0 && (
-                        <Chip 
-                          icon={<AddIcon />} 
-                          label={`+${commit.stats.insertions}`}
-                          size="small" 
-                          color="success"
-                          sx={{ mr: 1 }}
-                        />
-                      )}
-                      {commit.stats.deletions > 0 && (
-                        <Chip 
-                          icon={<RemoveIcon />} 
-                          label={`-${commit.stats.deletions}`}
-                          size="small" 
-                          color="error"
-                        />
-                      )}
-                    </Box>
-                  </React.Fragment>
-                }
-              />
-            </ListItem>
-            {index < commits.length - 1 && <Divider variant="inset" component="li" />}
-          </React.Fragment>
-        ))}
-      </List>
-      
-      {commits.length === 20 && (
-        <Box mt={2} display="flex" justifyContent="center">
-          <Button 
-            variant="outlined" 
-            onClick={() => setPage(page + 1)} 
-            startIcon={<HistoryIcon />}
-          >
-            Загрузить более ранние коммиты
-          </Button>
-        </Box>
+    <div className="bg-white shadow rounded-lg p-4 h-full overflow-auto flex flex-col">
+      <h2 className="text-lg font-semibold mb-4">Commit History</h2>
+      {commits.length === 0 ? (
+        <p className="p-2 text-gray-500 text-sm">No commits found</p>
+      ) : (
+        <div className="flex-grow overflow-auto divide-y divide-gray-200 border-b border-gray-200 mb-4">
+          {commits.map((commit) => (
+            <button
+              key={commit.hash}
+              onClick={() => handleCommitClick(commit)}
+              className="w-full text-left py-3 px-2 hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1">
+                <div className="font-medium truncate">{commit.message}</div>
+                <div className="text-xs text-gray-500">{formatDate(commit.date)}</div>
+              </div>
+              <div className="flex items-center text-sm text-gray-600 truncate">
+                <div className="mr-2 w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium">
+                  {commit.author.charAt(0).toUpperCase()}
+                </div>
+                <span className="truncate">{commit.author}</span>
+                <div className="mx-2 text-gray-400">|</div>
+                <span className="text-gray-500 truncate">{commit.hash.substring(0, 7)}</span>
+              </div>
+            </button>
+          ))}
+        </div>
       )}
       
-      {page > 0 && (
-        <Box mt={2} display="flex" justifyContent="center">
-          <Button 
-            variant="text" 
-            onClick={() => setPage(Math.max(0, page - 1))} 
-          >
-            Вернуться к новым коммитам
-          </Button>
-        </Box>
-      )}
+      <div className="mt-auto flex justify-center space-x-2 pt-3">
+        <button
+          onClick={() => setPage(prev => Math.max(0, prev - 1))}
+          disabled={page === 0}
+          className="px-3 py-1 border border-gray-300 rounded enabled:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          onClick={() => setPage(prev => prev + 1)}
+          disabled={commits.length < 20}
+          className="px-3 py-1 border border-gray-300 rounded enabled:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
       
-      {renderCommitDialog()}
-    </Paper>
+      {dialogOpen && selectedCommitDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={handleCloseDialog}>
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            {detailLoading && (
+              <div className="flex justify-center my-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">{selectedCommitDetail.message}</h3>
+              <div className="flex items-center mt-1 text-sm text-gray-600">
+                <div className="mr-2 w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm font-medium">
+                  {selectedCommitDetail.author.charAt(0).toUpperCase()}
+                </div>
+                <span>{selectedCommitDetail.author}</span>
+                <div className="mx-2 text-gray-400">|</div>
+                <span>{formatDate(selectedCommitDetail.date)}</span>
+                <div className="mx-2 text-gray-400">|</div>
+                <span className="font-mono">{selectedCommitDetail.hash.substring(0, 7)}</span>
+              </div>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-auto">
+              {selectedCommitDetail.changes.map((change, index) => (
+                <div key={index} className="mb-6 border-l-4 border-gray-200 pl-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center text-sm truncate">
+                      <span className="truncate font-medium">{change.file_path}</span>
+                      <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${change.change_type === 'added' ? 'bg-green-100 text-green-800' : change.change_type === 'deleted' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>{change.change_type}</span>
+                    </div>
+                  </div>
+                  {change.diff && (
+                    <div className="bg-gray-900 rounded overflow-hidden text-xs font-mono text-white mt-2 max-h-64 overflow-auto">
+                      <pre className="p-2" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
+                        {change.diff.split('\n').map((line, lineIndex) => {
+                          let colorClass = '';
+                          if (line.startsWith('+')) {
+                            colorClass = 'text-green-400';
+                          } else if (line.startsWith('-')) {
+                            colorClass = 'text-red-400';
+                          } else if (line.startsWith('@@')) {
+                            colorClass = 'text-blue-400';
+                          }
+                          return <div key={lineIndex} className={colorClass}>{line}</div>;
+                        })}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-gray-200 flex justify-end">
+              <button onClick={handleCloseDialog} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

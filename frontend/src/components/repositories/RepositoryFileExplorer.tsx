@@ -1,23 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { 
-  Box, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
-  ListItemText, 
-  Paper, 
-  Typography, 
-  Breadcrumbs,
-  Link,
-  CircularProgress,
-  Alert
-} from '@mui/material';
-import { 
-  Folder as FolderIcon, 
-  InsertDriveFile as FileIcon,
-  NavigateNext as NavigateNextIcon 
-} from '@mui/icons-material';
 import api from '../../services/api';
 
 interface GitFile {
@@ -89,19 +71,23 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileS
     ];
 
     return (
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumb">
+      <div className="flex items-center flex-wrap text-sm text-gray-500">
         {breadcrumbs.map((breadcrumb, index) => (
-          <Link
-            key={index}
-            underline="hover"
-            color="inherit"
-            sx={{ cursor: 'pointer' }}
-            onClick={() => navigateToBreadcrumb(breadcrumb.path)}
-          >
-            {breadcrumb.name}
-          </Link>
+          <React.Fragment key={index}>
+            {index > 0 && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mx-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+            <button
+              className="hover:text-blue-600 transition-colors"
+              onClick={() => navigateToBreadcrumb(breadcrumb.path)}
+            >
+              {breadcrumb.name}
+            </button>
+          </React.Fragment>
         ))}
-      </Breadcrumbs>
+      </div>
     );
   };
 
@@ -112,56 +98,61 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileS
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" my={4}>
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center my-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
     );
   }
 
   if (error) {
-    return <Alert severity="error">{error}</Alert>;
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
+        <span className="block sm:inline">{error}</span>
+      </div>
+    );
   }
 
   return (
-    <Paper sx={{ p: 2, height: '100%' }}>
+    <div className="bg-white shadow rounded-lg p-4 h-full overflow-auto">
       {currentPath && (
-        <Box mb={2}>
+        <div className="mb-4">
           {renderBreadcrumbs()}
-        </Box>
+        </div>
       )}
       
-      <List sx={{ bgcolor: 'background.paper' }}>
+      <div className="divide-y divide-gray-200">
         {files.length === 0 ? (
-          <Typography variant="body2" sx={{ p: 2, color: 'text.secondary' }}>
-            This directory is empty
-          </Typography>
+          <p className="p-2 text-gray-500 text-sm">This directory is empty</p>
         ) : (
           files.map((file, index) => (
-            <ListItem button key={index} onClick={() => handleFileClick(file)}>
-              <ListItemIcon>
-                {file.type === 'directory' ? <FolderIcon color="primary" /> : <FileIcon />}
-              </ListItemIcon>
-              <ListItemText 
-                primary={file.name} 
-                secondary={
-                  <React.Fragment>
-                    <Typography
-                      sx={{ display: 'inline' }}
-                      component="span"
-                      variant="body2"
-                      color="text.primary"
-                    >
-                      {file.last_commit.message}
-                    </Typography>
-                    {" — "}{formatDate(file.last_commit.date)}
-                  </React.Fragment>
+            <button 
+              key={index} 
+              onClick={() => handleFileClick(file)}
+              className="w-full flex items-center py-2 px-2 hover:bg-gray-100 text-left"
+            >
+              <div className="mr-2 w-6 h-6 flex-shrink-0">
+                {file.type === 'directory' ? 
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6" />
+                  </svg>
+                  : 
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586A2 2 0 0114.172 4l2.828 2.828A2 2 0 0118 8.414V19a2 2 0 01-2 2z" />
+                  </svg>
                 }
-              />
-            </ListItem>
+              </div>
+              <div className="flex-grow min-w-0">
+                <div className="truncate font-medium">{file.name}</div>
+                <div className="text-sm text-gray-500 truncate">
+                  {file.last_commit.message} — {formatDate(file.last_commit.date)}
+                </div>
+              </div>
+            </button>
           ))
         )}
-      </List>
-    </Paper>
+      </div>
+    </div>
   );
 };
 
