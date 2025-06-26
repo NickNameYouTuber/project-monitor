@@ -98,22 +98,13 @@ async def create_repository(
         db.refresh(db_repository)
     except IntegrityError:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not create repository with the provided data."
-        )
+        raise HTTPException(status_code=400, detail="Repository with this name already exists")
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating repository: {e}")
+        raise HTTPException(status_code=500, detail=f"Error creating repository: {str(e)}")
     
-    # Добавляем владельца как администратора репозитория
-    db_repo_member = RepositoryMember(
-        repository_id=db_repository.id,
-        user_id=current_user.id,
-        role=RepositoryRole.ADMIN
-    )
-    
-    db.add(db_repo_member)
-    db.commit()
-    
-    # Convert UUID fields to strings before returning
+    # Convert to Pydantic model with UUIDs as strings
     repo_dict = {
         'id': str(db_repository.id),
         'owner_id': str(db_repository.owner_id),
@@ -137,67 +128,48 @@ async def read_repository(
     """
     Получить детальную информацию о репозитории по ID.
     """
-    try:
-        # Use joinedload to eager load owner relationship
-        from sqlalchemy.orm import joinedload
+    from sqlalchemy.orm import joinedload
+    
+    # Fetch repository with owner relationship
+    repository = db.query(Repository).options(joinedload(Repository.owner)).filter(Repository.id == repository_id).first()
+    
+    if not repository:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+    
+    # Check if user has access (is owner or member)
+    if str(repository.owner_id) != str(current_user.id):
+        member = db.query(RepositoryMember).filter(
+            RepositoryMember.repository_id == repository_id,
+            RepositoryMember.user_id == current_user.id,
+            RepositoryMember.is_active == True
+        ).first()
         
-        # Convert repository_id to string for comparison
-        repository = db.query(Repository).options(
-            joinedload(Repository.owner)
-        ).filter(Repository.id == repository_id).first()
-        
-        if not repository:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Repository not found"
-            )
-        
-        # Проверяем права доступа
-        has_access = (str(repository.owner_id) == str(current_user.id)) or \
-                    db.query(RepositoryMember).filter(
-                        RepositoryMember.repository_id == repository_id,
-                        RepositoryMember.user_id == current_user.id,
-                        RepositoryMember.is_active == True
-                    ).first() is not None
-        
-        if not has_access:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to access this repository"
-            )
-            
-        # Get owner data separately to avoid UUID issues
-        owner = repository.owner
-        owner_dict = {
-            'id': str(owner.id),
-            'username': owner.username,
-            'first_name': owner.first_name,
-            'last_name': owner.last_name,
-            'avatar_url': owner.avatar_url
+        if not member:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this repository")
+    
+    # Convert to Pydantic model with UUIDs as strings
+    repo_dict = {
+        'id': str(repository.id),
+        'owner_id': str(repository.owner_id),
+        'name': repository.name,
+        'description': repository.description,
+        'visibility': repository.visibility,
+        'project_id': str(repository.project_id) if repository.project_id else None,
+        'url': repository.url,
+        'created_at': repository.created_at,
+        'updated_at': repository.updated_at,
+        'owner': {
+            'id': str(repository.owner.id),
+            'username': repository.owner.username,
+            'email': repository.owner.email,
+            'full_name': repository.owner.full_name,
+            'telegram_id': repository.owner.telegram_id,
+            'is_active': repository.owner.is_active,
+            'is_superuser': repository.owner.is_superuser,
+            'created_at': repository.owner.created_at
         }
-        
-        # Create dictionary with all string IDs
-        repo_dict = {
-            'id': str(repository.id),
-            'owner_id': str(repository.owner_id),
-            'name': repository.name,
-            'description': repository.description,
-            'visibility': repository.visibility,
-            'project_id': str(repository.project_id) if repository.project_id else None,
-            'url': repository.url,
-            'created_at': repository.created_at,
-            'updated_at': repository.updated_at,
-            'owner': UserBasic.model_validate(owner_dict)
-        }
-        
-        return schemas.RepositoryDetail.model_validate(repo_dict)
-        
-    except Exception as e:
-        print(f"Error in read_repository: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error: {str(e)}"
-        )
+    }
+    return schemas.RepositoryDetail.model_validate(repo_dict)
 
 
 @router.put("/{repository_id}", response_model=schemas.Repository)
