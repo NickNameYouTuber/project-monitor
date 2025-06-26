@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments
 import uvicorn
 
 # Create database tables
@@ -12,6 +12,7 @@ models.dashboard.Base.metadata.create_all(bind=engine)
 models.dashboard_member.Base.metadata.create_all(bind=engine)
 models.task_column.Base.metadata.create_all(bind=engine)
 models.task.Base.metadata.create_all(bind=engine)
+models.comment.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Project Monitor API",
@@ -45,6 +46,9 @@ app.include_router(dashboards.router, prefix="/api/dashboards", tags=["dashboard
 app.include_router(dashboard_members.router, prefix="/api/dashboards", tags=["dashboard_members"])
 app.include_router(task_columns.router)
 app.include_router(tasks.router)
+
+# Регистрируем роутер комментариев и создаем дополнительный для пути /api/tasks/{task_id}/comments
+app.include_router(comments.router)
 
 
 @app.get("/")

@@ -3,6 +3,7 @@ from ..dependencies import get_current_user, get_db
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from typing import List
+from .comments import get_comments_for_task
 from sqlalchemy import and_
 
 router = APIRouter(
@@ -445,3 +446,15 @@ def reorder_tasks(
     ).order_by(models.Task.order).all()
     
     return updated_tasks
+
+
+@router.get("/{task_id}/comments", response_model=List[schemas.Comment])
+def get_task_comments(
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Получение комментариев к задаче
+    """
+    return get_comments_for_task(task_id, db, current_user)
