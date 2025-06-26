@@ -168,11 +168,13 @@ async def get_info_refs_handler(repository_id: str, service: str, repository: Re
                 status_code=400
             )
         
-        print(f"Running command: git {service.split('-')[-1]} --stateless-rpc --advertise-refs . in {repo_path}")
+        # Extract the actual git command name without the "git-" prefix
+        command = service[4:] if service.startswith("git-") else service
+        print(f"Running command: git {command} --stateless-rpc --advertise-refs . in {repo_path}")
         
         # Run the appropriate git command
         process = subprocess.Popen(
-            ["git", service.split("-")[-1], "--stateless-rpc", "--advertise-refs", "."],
+            ["git", command, "--stateless-rpc", "--advertise-refs", "."],
             cwd=repo_path,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
