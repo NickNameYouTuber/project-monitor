@@ -142,7 +142,7 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
       setColumns(reorderedColumns);
       
       // API запрос для сохранения изменений
-      await api.taskColumns.reorder(projectId, columnIds, token);
+      await api.taskColumns.reorder(columnIds, token);
       setError(null);
     } catch (err: any) {
       // Если произошла ошибка, нужно откатить состояние

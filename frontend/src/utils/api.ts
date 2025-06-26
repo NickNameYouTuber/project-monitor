@@ -2,23 +2,17 @@
  * API service for making authenticated requests to the backend
  */
 
-// API base URL - should come from environment variables in production
-// Для продакшена используем относительные пути, для разработки - абсолютные
+// Проверка режима работы (продакшен или дев)
+const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+
+// Унифицированный базовый URL для API
+export const API_BASE_URL = isProduction
+  ? '/api' // В продакшене используем относительные пути с префиксом /api
+  : import.meta.env.VITE_API_URL || 'http://localhost:7671'; // В dev-режиме используем абсолютные пути
+
+// Импортируем клиенты API
 import taskColumnsApi from './api/taskColumns';
 import tasksApi from './api/tasks';
-
-// Важно использовать тот же протокол, что и у сайта (для предотвращения Mixed Content)
-// Для продакшена обязательно используем относительный путь
-let API_URL = '';
-
-// Определяем API URL в зависимости от режима
-if (import.meta.env.MODE === 'production') {
-  // Для продакшена используем относительный путь
-  API_URL = '/api';
-} else {
-  // В разработке полный URL
-  API_URL = import.meta.env.VITE_API_URL || 'http://localhost:7671/api';
-}
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -48,7 +42,7 @@ export async function apiRequest(
     headers.Authorization = `Bearer ${options.token}`;
   }
 
-  const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
   // Настройки запроса
   const fetchOptions: RequestInit = {
@@ -240,8 +234,8 @@ export const api = {
     delete(columnId: string, token: string) {
       return taskColumnsApi.delete(columnId, token);
     },
-    reorder(projectId: string, columnIds: string[], token: string) {
-      return taskColumnsApi.reorder(projectId, columnIds, token);
+    reorder(columnIds: string[], token: string) {
+      return taskColumnsApi.reorder(columnIds, token);
     }
   },
   
