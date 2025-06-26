@@ -44,40 +44,42 @@
 
 /* Темная тема */
 .dark {
-  /* Основные цвета */
-  --color-primary: #60a5fa;
-  --primary-rgb: 96, 165, 250;
-  --color-secondary: #9ca3af;
-  --color-accent: #a78bfa;
+  /* Основные цвета - из мятной темы */
+  --color-primary: #98C9A3; /* Основной бренд-цвет */
+  --primary-rgb: 152, 201, 163;
+  --color-secondary: #7AB988; /* Более насыщенный оттенок бренд-цвета */
+  --secondary-rgb: 122, 185, 136;
+  --color-accent: #C0E8C9; /* Более светлый акцентный оттенок */
+  --accent-rgb: 192, 232, 201;
   
-  /* Цвета текста */
+  /* Цвета текста - оставляем оригинальные */
   --text-primary: #f9fafb;
   --text-secondary: #e5e7eb;
   --text-muted: #9ca3af;
   
-  /* Фоны */
-  --bg-primary: #1f2937;
-  --bg-secondary: #242c3f;
-  --bg-card: #374151;
-  --bg-header: #1f2937;
-  --bg-input: #2d3748;
-  --bg-overlay: rgba(0, 0, 0, 0.85); /* Более темное затемнение для модальных окон в темной теме */
+  /* Фоны - из мятной темы */
+  --bg-primary: #101010; /* Основной фон из лого */
+  --bg-secondary: #2A2A2A; /* Второй фон */
+  --bg-card: #1F1F1F; /* Немного светлее основного фона */
+  --bg-header: #101010; /* Основной фон */
+  --bg-input: #2A2A2A; /* Как второй фон */
+  --bg-overlay: rgba(10, 10, 10, 0.85); /* Почти черный оверлей */
   
-  /* Границы */
-  --border-primary: #4b5563;
-  --border-secondary: #6b7280;
+  /* Границы - из мятной темы */
+  --border-primary: #404040; /* Темно-серый для границ */
+  --border-secondary: #5C5C5C; /* Более светлый серый для вторичных границ */
   
-  /* Состояния */
-  --state-success: #34d399;
-  --state-warning: #fbbf24;
-  --state-error: #f87171;
-  --state-info: #60a5fa;
+  /* Состояния - из мятной темы */
+  --state-success: #98C9A3; /* Совпадает с бренд-цветом */
+  --state-warning: #E3B587; /* Мягкий оранжево-коричневый */
+  --state-error: #D98B8B; /* Приглушенный красный */
+  --state-info: #A4D5AE; /* Мятный оттенок */
   
-  /* Состояния (легкий фон) */
-  --state-success-light: rgba(52, 211, 153, 0.2);
-  --state-warning-light: rgba(251, 191, 36, 0.2);
-  --state-error-light: rgba(248, 113, 113, 0.2);
-  --state-info-light: rgba(96, 165, 250, 0.2);
+  /* Состояния (легкий фон) - из мятной темы */
+  --state-success-light: rgba(152, 201, 163, 0.15);
+  --state-warning-light: rgba(227, 181, 135, 0.15);
+  --state-error-light: rgba(217, 139, 139, 0.15);
+  --state-info-light: rgba(164, 213, 174, 0.15);
 }
 
 /* Стили для тонкого скроллбара */
@@ -114,46 +116,4 @@ body {
 /* Overlay for modals */
 .bg-overlay {
   background-color: rgba(0, 0, 0, 0.7); /* Увеличиваю непрозрачность */
-}
-
-/* Третья тема - Mint Dark */
-.mint {
-  /* Основные цвета */
-  --color-primary: #98C9A3; /* Основной бренд-цвет */
-  --primary-rgb: 152, 201, 163;
-  --color-secondary: #7AB988; /* Более насыщенный оттенок бренд-цвета */
-  --secondary-rgb: 122, 185, 136;
-  --color-accent: #C0E8C9; /* Более светлый акцентный оттенок */
-  --accent-rgb: 192, 232, 201;
-  
-  /* Цвета текста */
-  --text-primary: #F5F5F5; /* Почти белый */
-  --text-primary-rgb: 245, 245, 245;
-  --text-secondary: #D4E9D9; /* Светло-зеленовато-белый */
-  --text-secondary-rgb: 212, 233, 217;
-  --text-muted: #ABABAB; /* Нейтральный серый */
-  
-  /* Фоны */
-  --bg-primary: #101010; /* Основной фон из лого */
-  --bg-secondary: #2A2A2A; /* Второй фон */
-  --bg-card: #1F1F1F; /* Немного светлее основного фона */
-  --bg-header: #101010; /* Основной фон */
-  --bg-input: #2A2A2A; /* Как второй фон */
-  --bg-overlay: rgba(10, 10, 10, 0.85); /* Почти черный оверлей */
-  
-  /* Границы */
-  --border-primary: #404040; /* Темно-серый для границ */
-  --border-secondary: #5C5C5C; /* Более светлый серый для вторичных границ */
-  
-  /* Состояния */
-  --state-success: #98C9A3; /* Совпадает с бренд-цветом */
-  --state-warning: #E3B587; /* Мягкий оранжево-коричневый */
-  --state-error: #D98B8B; /* Приглушенный красный */
-  --state-info: #A4D5AE; /* Мятный оттенок вместо синего */
-  
-  /* Состояния (легкий фон) */
-  --state-success-light: rgba(152, 201, 163, 0.15);
-  --state-warning-light: rgba(227, 181, 135, 0.15);
-  --state-error-light: rgba(217, 139, 139, 0.15);
-  --state-info-light: rgba(164, 213, 174, 0.15); /* Мятный оттенок для фона */
 }
