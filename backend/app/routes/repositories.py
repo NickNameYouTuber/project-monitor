@@ -162,10 +162,11 @@ async def read_repository(
             'id': str(repository.owner.id),
             'username': repository.owner.username,
             'email': repository.owner.email,
-            'full_name': repository.owner.full_name,
+            'first_name': repository.owner.first_name,
+            'last_name': repository.owner.last_name,
             'telegram_id': repository.owner.telegram_id,
             'is_active': repository.owner.is_active,
-            'is_superuser': repository.owner.is_superuser,
+            'is_superuser': repository.owner.is_admin,
             'created_at': repository.owner.created_at
         }
     }
