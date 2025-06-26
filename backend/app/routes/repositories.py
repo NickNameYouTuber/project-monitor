@@ -2,7 +2,6 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from uuid import UUID
 
 from ..database import get_db
 from .. import schemas
@@ -15,7 +14,7 @@ router = APIRouter()
 async def read_repositories(
     skip: int = 0, 
     limit: int = 100,
-    project_id: Optional[UUID] = None,
+    project_id: Optional[str] = None,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -89,7 +88,7 @@ async def create_repository(
 
 @router.get("/{repository_id}", response_model=schemas.RepositoryDetail)
 async def read_repository(
-    repository_id: UUID,
+    repository_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -122,7 +121,7 @@ async def read_repository(
 
 @router.put("/{repository_id}", response_model=schemas.Repository)
 async def update_repository(
-    repository_id: UUID,
+    repository_id: str,
     repository_update: schemas.RepositoryUpdate,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -173,7 +172,7 @@ async def update_repository(
 
 @router.delete("/{repository_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_repository(
-    repository_id: UUID,
+    repository_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):

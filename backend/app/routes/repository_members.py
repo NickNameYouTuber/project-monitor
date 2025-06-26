@@ -2,7 +2,6 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from uuid import UUID
 
 from ..database import get_db
 from .. import schemas
@@ -13,7 +12,7 @@ router = APIRouter()
 
 @router.get("/{repository_id}/members", response_model=List[schemas.RepositoryMemberDetail])
 async def read_repository_members(
-    repository_id: UUID,
+    repository_id: str,
     skip: int = 0,
     limit: int = 100,
     current_user: User = Depends(get_current_active_user),
@@ -54,7 +53,7 @@ async def read_repository_members(
 
 @router.post("/{repository_id}/members", response_model=schemas.RepositoryMember, status_code=status.HTTP_201_CREATED)
 async def add_repository_member(
-    repository_id: UUID,
+    repository_id: str,
     member: schemas.RepositoryMemberCreate,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -136,8 +135,8 @@ async def add_repository_member(
 
 @router.put("/{repository_id}/members/{member_id}", response_model=schemas.RepositoryMember)
 async def update_repository_member(
-    repository_id: UUID,
-    member_id: UUID,
+    repository_id: str,
+    member_id: str,
     member_update: schemas.RepositoryMemberUpdate,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -200,8 +199,8 @@ async def update_repository_member(
 
 @router.delete("/{repository_id}/members/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_repository_member(
-    repository_id: UUID,
-    member_id: UUID,
+    repository_id: str,
+    member_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
