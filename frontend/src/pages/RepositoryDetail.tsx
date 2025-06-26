@@ -4,6 +4,7 @@ import api from '../services/api';
 import RepositoryFileExplorer from '../components/repositories/RepositoryFileExplorer';
 import FileViewer from '../components/repositories/FileViewer';
 import CommitHistory from '../components/repositories/CommitHistory';
+import RepositoryCloneInfo from '../components/repositories/RepositoryCloneInfo';
 
 interface Repository {
   id: string;
@@ -41,7 +42,7 @@ const RepositoryDetail: React.FC = () => {
   const [repository, setRepository] = useState<Repository | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'code' | 'commits' | 'members'>('code');
+  const [activeTab, setActiveTab] = useState<'code' | 'commits' | 'members' | 'clone'>('code');
   const [selectedFile, setSelectedFile] = useState<GitFile | null>(null);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ const RepositoryDetail: React.FC = () => {
     fetchRepository();
   }, [repositoryId]);
 
-  const handleTabChange = (tab: 'code' | 'commits' | 'members') => {
+  const handleTabChange = (tab: 'code' | 'commits' | 'members' | 'clone') => {
     setActiveTab(tab);
   };
 
@@ -142,6 +143,12 @@ const RepositoryDetail: React.FC = () => {
           >
             Members
           </button>
+          <button
+            onClick={() => handleTabChange('clone')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 ${activeTab === 'clone' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'} transition-colors`}
+          >
+            Clone
+          </button>
         </nav>
       </div>
 
@@ -164,6 +171,9 @@ const RepositoryDetail: React.FC = () => {
           <div className="bg-white shadow rounded-lg p-6 h-[400px] flex items-center justify-center text-gray-500">
             <p>Members list will be implemented soon.</p>
           </div>
+        )}
+        {activeTab === 'clone' && (
+          <RepositoryCloneInfo repositoryId={repository.id} />
         )}
       </div>
     </div>

@@ -7,4 +7,4 @@ from .task import TaskBase, TaskCreate, TaskUpdate, TaskMoveUpdate, Task, TaskDe
 from .comment import CommentBase, CommentCreate, CommentUpdate, Comment
 from .repository import RepositoryBase, RepositoryCreate, RepositoryUpdate, Repository, RepositoryDetail
 from .repository_member import RepositoryMemberBase, RepositoryMemberCreate, RepositoryMemberUpdate, RepositoryMember, RepositoryMemberDetail
-from .git import GitFile, GitAuthor, GitCommitShort, GitCommit, GitCommitStats, GitFileChange, GitCommitDetail, GitContent
+from .git import GitFile, GitAuthor, GitCommitShort, GitCommit, GitCommitStats, GitFileChange, GitCommitDetail, GitContent, GitCloneInfo

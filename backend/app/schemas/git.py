@@ -24,7 +24,7 @@ class GitCommitShort(BaseModel):
 class GitFile(BaseModel):
     name: str
     path: str
-    is_directory: bool
+    type: str  # "file" or "directory"
     size: Optional[int] = None
     last_commit: Optional[GitCommitShort] = None
 
@@ -46,6 +46,14 @@ class GitContent(BaseModel):
     binary: bool
 
 
+class GitCloneInfo(BaseModel):
+    """Information needed for cloning a repository"""
+    ssh_url: str
+    https_url: str
+    web_url: str
+    clone_instructions: Dict[str, str]  # Different instructions for different methods
+
+
 class GitFileChange(BaseModel):
     path: str
     old_path: Optional[str] = None
@@ -65,18 +73,7 @@ class GitCommitDetail(BaseModel):
     files: List[GitFileChange]
 
 
-class GitFile(BaseModel):
-    name: str
-    path: str
-    type: str  # "file" or "directory"
-    size: Optional[int] = None
-    last_commit: Optional[GitCommitShort] = None
+# GitFile is defined above
 
 
-class GitContent(BaseModel):
-    name: str
-    path: str
-    content: str
-    encoding: str  # "utf-8" for text, "base64" for binary
-    size: int
-    binary: bool
+# GitContent is defined above

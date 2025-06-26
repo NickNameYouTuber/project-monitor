@@ -116,9 +116,20 @@ async def create_repository(
                 repo_path.mkdir(parents=True, exist_ok=True)
             
             # Initialize empty Git repository
-            git.Repo.init(repo_path)
+            repo = git.Repo.init(repo_path)
             
-            print(f"Git repository initialized at {repo_path}")
+            # Create a README.md file with initial content
+            readme_path = repo_path / "README.md"
+            with open(readme_path, "w") as f:
+                f.write(f"# {db_repository.name}\n\n{db_repository.description or 'Repository created with Project Monitor'}\n")
+            
+            # Create initial commit
+            repo.git.add("README.md")
+            repo.git.config("user.email", "system@projectmonitor.com")
+            repo.git.config("user.name", "Project Monitor System")
+            repo.git.commit("-m", "Initial commit with README")
+            
+            print(f"Git repository initialized at {repo_path} with initial commit")
         except Exception as git_err:
             print(f"Warning: Failed to initialize Git repository: {git_err}")
             # Don't fail the whole operation if Git init fails
@@ -331,3 +342,61 @@ async def initialize_git_repository(
     except Exception as e:
         print(f"Error initializing Git repository: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to initialize Git repository: {str(e)}")
+
+
+@router.get("/{repository_id}/clone-info", response_model=schemas.GitCloneInfo)
+async def get_clone_info(
+    repository_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get information needed for cloning a Git repository.
+    Returns SSH and HTTPS URLs along with instructions for cloning.
+    """
+    # Verify repository exists and user has access
+    repository = db.query(Repository).filter(Repository.id == repository_id).first()
+    
+    if not repository:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+    
+    # Check if user has access (is owner or member)
+    if repository.visibility != "public" and str(repository.owner_id) != str(current_user.id):
+        member = db.query(RepositoryMember).filter(
+            RepositoryMember.repository_id == repository_id,
+            RepositoryMember.user_id == current_user.id,
+            RepositoryMember.is_active == True
+        ).first()
+        
+        if not member:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this repository")
+    
+    # Get server URL from environment or use default
+    server_url = os.environ.get("SERVER_URL", "https://projectsmonitor.nicorp.tech")
+    api_base = f"{server_url}/api"
+    
+    # Create clone URLs
+    https_url = f"{api_base}/git/{repository_id}.git"
+    ssh_url = f"git@projectsmonitor.nicorp.tech:{repository_id}.git"
+    web_url = f"{server_url}/repositories/{repository_id}"
+    
+    # Create clone instructions
+    clone_instructions = {
+        "https": f"git clone {https_url}",
+        "ssh": f"git clone {ssh_url}",
+        "setup": (
+            "# Add your SSH key to allow pushing:\n"
+            "1. Generate an SSH key if you don't have one: ssh-keygen -t rsa -b 4096\n"
+            "2. Add your public key to your Project Monitor account\n"
+            "3. Configure Git to use your credentials\n"
+            "   git config --global user.name \"Your Name\"\n"
+            "   git config --global user.email \"your.email@example.com\"\n"
+        )
+    }
+    
+    return {
+        "ssh_url": ssh_url,
+        "https_url": https_url,
+        "web_url": web_url,
+        "clone_instructions": clone_instructions
+    }
