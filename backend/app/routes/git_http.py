@@ -3,14 +3,20 @@ import subprocess
 import re
 import shutil
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, Request, Body, Response, Query
-from typing import Optional
-from fastapi.responses import StreamingResponse, PlainTextResponse
+from fastapi import APIRouter, Request, Depends, HTTPException, status
+from fastapi.responses import Response, PlainTextResponse
 from sqlalchemy.orm import Session
-from starlette.background import BackgroundTask
+from typing import Optional
+import re
+import subprocess
+import os
+from pathlib import Path
+import base64
+import json
 
 from ..database import get_db
 from ..models import Repository, RepositoryMember, User
+from ..models.repository import VisibilityType
 from ..auth import get_current_user_optional
 
 # Get repos base directory from environment (same as in repository_content.py)
@@ -244,7 +250,7 @@ async def upload_pack_handler(repository_id: str, current_user: Optional[User], 
             return PlainTextResponse(content="Repository not found", status_code=404)
 
         # Check access permissions
-        if repository.private and not current_user:
+        if repository.visibility == VisibilityType.PRIVATE and not current_user:
             # Require authentication for private repos
             return PlainTextResponse(
                 content="Authentication required for private repository",
@@ -686,7 +692,7 @@ async def upload_pack(repository_id: str, current_user: Optional[User] = Depends
             return PlainTextResponse(content="Repository not found", status_code=404)
 
         # Check access permissions
-        if repository.private and not current_user:
+        if repository.visibility == VisibilityType.PRIVATE and not current_user:
             # Require authentication for private repos
             return PlainTextResponse(
                 content="Authentication required for private repository",
