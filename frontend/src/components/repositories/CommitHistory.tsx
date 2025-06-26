@@ -183,6 +183,11 @@ const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => 
         maxWidth="lg"
         fullWidth
       >
+        {detailLoading && (
+          <Box display="flex" justifyContent="center" my={4}>
+            <CircularProgress />
+          </Box>
+        )}
         <DialogTitle>
           <Typography variant="h6" component="div">
             {selectedCommit.message}

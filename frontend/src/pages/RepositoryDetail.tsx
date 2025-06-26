@@ -17,7 +17,6 @@ import {
   Code as CodeIcon,
   History as HistoryIcon,
   Group as GroupIcon,
-  Link as LinkIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon
 } from '@mui/icons-material';
