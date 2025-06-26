@@ -35,40 +35,43 @@ const DashboardDetail: React.FC = () => {
       setIsLoading(false);
       return;
     }
-    
+
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
         // Проверка безопасности: dashboardId не может быть undefined здесь
-        if (!dashboardId) throw new Error('Dashboard ID is required');
-        
+        // Повторная проверка для TypeScript и обеспечения типобезопасности
+        if (!dashboardId || !currentUser.token) {
+          throw new Error('Dashboard ID or token is missing');
+        }
+
         // Загружаем информацию о дашборде
-        const dashboardData = await api.dashboards.getOne(dashboardId!, currentUser.token);
-        
+        const dashboardData = await api.dashboards.getOne(dashboardId, currentUser.token);
+
         // Явно запрашиваем проекты для этого дашборда через новый метод API
-        const dashboardProjects = await api.projects.getByDashboard(dashboardId!, currentUser.token);
-        
+        const dashboardProjects = await api.projects.getByDashboard(dashboardId, currentUser.token);
+
         // Обновляем объект дашборда с полученными проектами
         const updatedDashboardData = {
           ...dashboardData,
           projects: dashboardProjects || []
         };
-        
+
         setDashboard(updatedDashboardData as DashboardDetailType);
-        
-        // Загружаем участников дашборда (dashboardId проверен выше)
-        const membersData = await api.dashboards.getMembers(dashboardId!, currentUser.token);
+
+        // Загружаем участников дашборда
+        const membersData = await api.dashboards.getMembers(dashboardId, currentUser.token);
         setMembers(membersData as DashboardMember[]);
-        
+
         setError(null);
-      } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
-        setError('Failed to load dashboard data. Please try again.');
+      } catch (err: any) {
+        console.error('Error loading dashboard data:', err);
+        setError(err.message || 'Failed to load dashboard data');
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchDashboardData();
   }, [currentUser, dashboardId]);
   
@@ -277,54 +280,54 @@ const DashboardDetail: React.FC = () => {
           
           {/* Список участников дашборда - показываем только если showMembersSection = true */}
           {showMembersSection && (
-            <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <div className="mb-8 bg-bg-card rounded-lg shadow overflow-hidden">
               <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">Dashboard Members</h2>
+                <h2 className="text-lg font-medium text-text-primary">Dashboard Members</h2>
                 {dashboard.owner_id === currentUser?.id && (
                   <button
                     onClick={openInviteByTelegramModal}
-                    className="bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-md text-sm"
+                    className="bg-primary hover:bg-primary-hover text-white py-1 px-3 rounded-md text-sm"
                   >
                     Add Member
                   </button>
                 )}
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+                <table className="min-w-full divide-y divide-border-primary">
+            <thead className="bg-bg-secondary">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   User
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Role
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Added
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="bg-bg-card divide-y divide-border-primary">
               {/* Владелец дашборда (всегда показываем первым) */}
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     {dashboard.owner_id === currentUser?.id ? (
-                      <span className="text-gray-900 dark:text-white font-medium">You (Owner)</span>
+                      <span className="text-text-primary font-medium">You (Owner)</span>
                     ) : (
-                      <span className="text-gray-900 dark:text-white">Dashboard Owner</span>
+                      <span className="text-text-primary">Dashboard Owner</span>
                     )}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/20 text-primary">
                     Owner
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                   {new Date(dashboard.created_at).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -340,12 +343,12 @@ const DashboardDetail: React.FC = () => {
                       {member.user?.avatar && (
                         <img className="h-8 w-8 rounded-full mr-2" src={member.user.avatar} alt="" />
                       )}
-                      <span className="text-gray-900 dark:text-white">
+                      <span className="text-text-primary">
                         {member.user?.username || 'Unknown User'}
                         {member.user_id === currentUser?.id && ' (You)'}
                       </span>
                       {member.user?.telegram_id && (
-                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span className="ml-2 text-xs text-text-secondary">
                           Telegram: {member.user.telegram_id}
                         </span>
                       )}
@@ -359,7 +362,7 @@ const DashboardDetail: React.FC = () => {
                       {member.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                     {new Date(member.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
