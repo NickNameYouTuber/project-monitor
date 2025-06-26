@@ -21,6 +21,14 @@ class GitCommitShort(BaseModel):
     author: str
 
 
+class GitFile(BaseModel):
+    name: str
+    path: str
+    is_directory: bool
+    size: Optional[int] = None
+    last_commit: Optional[GitCommitShort] = None
+
+
 class GitCommit(BaseModel):
     hash: str
     author: GitAuthor
