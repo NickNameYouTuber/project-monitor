@@ -1,8 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from starlette.routing import Route, Mount
 from .database import engine
 from . import models
 from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http
+import subprocess
+import os
+from pathlib import Path
 import uvicorn
 
 # Create database tables
@@ -53,8 +59,14 @@ app.include_router(repositories.router, prefix=f"{api_prefix}/repositories", tag
 app.include_router(repository_members.router, prefix=f"{api_prefix}/repositories", tags=["repository_members"])
 app.include_router(repository_content.router, prefix=f"{api_prefix}/repositories", tags=["repository_content"])
 
-# Git HTTP protocol handler - registered directly under /api/git
-app.include_router(git_http.router, prefix=f"{api_prefix}/git", tags=["git"])
+# Catch-all routes for Git HTTP protocol to handle URLs with .git and subpaths
+@app.get("/api/git/{repository_id:path}")
+async def git_catch_all_get(request: Request):
+    return await git_http.handle_git_http_request(request, "GET")
+
+@app.post("/api/git/{repository_id:path}")
+async def git_catch_all_post(request: Request):
+    return await git_http.handle_git_http_request(request, "POST")
 
 # Роутеры для задач, колонок и комментариев
 app.include_router(task_columns.router, prefix=api_prefix)

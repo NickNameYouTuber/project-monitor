@@ -376,7 +376,7 @@ async def get_clone_info(
     api_base = f"{server_url}/api"
     
     # Create clone URLs
-    https_url = f"{api_base}/git/{repository_id}.git"
+    https_url = f"{api_base}/git/{repository_id}.git"  # This is correct for our router structure
     ssh_url = f"git@projectsmonitor.nicorp.tech:{repository_id}.git"
     web_url = f"{server_url}/repositories/{repository_id}"
     
