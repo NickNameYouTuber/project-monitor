@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../utils/AppContext';
 import ThemeToggle from '../ui/ThemeToggle';
+import nitLogo from '../../assets/nit-logo.png';
 
 interface LayoutProps {
   children: ReactNode;
@@ -26,9 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Logo and brand */}
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-text-primary">
-                  NIT
-                </h1>
+                <img src={nitLogo} alt="NIT Logo" className="h-8" />
               </div>
               
               {/* Navigation for desktop */}
