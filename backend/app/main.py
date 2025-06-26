@@ -5,7 +5,7 @@ from fastapi.responses import Response
 from starlette.routing import Route, Mount
 from .database import engine
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens
 import subprocess
 import os
 from pathlib import Path
@@ -21,6 +21,7 @@ models.task.Base.metadata.create_all(bind=engine)
 models.comment.Base.metadata.create_all(bind=engine)
 models.repository.Base.metadata.create_all(bind=engine)
 models.repository_member.Base.metadata.create_all(bind=engine)
+models.token.Base.metadata.create_all(bind=engine)  # Initialize personal access token table
 
 app = FastAPI(
     title="Project Monitor API",
@@ -58,6 +59,7 @@ app.include_router(dashboard_members.router, prefix=f"{api_prefix}/dashboards", 
 app.include_router(repositories.router, prefix=f"{api_prefix}/repositories", tags=["repositories"])
 app.include_router(repository_members.router, prefix=f"{api_prefix}/repositories", tags=["repository_members"])
 app.include_router(repository_content.router, prefix=f"{api_prefix}/repositories", tags=["repository_content"])
+app.include_router(tokens.router, prefix=f"{api_prefix}/tokens", tags=["tokens"])
 
 # Catch-all routes for Git HTTP protocol to handle URLs with .git and subpaths
 @app.get("/api/git/{repository_id:path}")

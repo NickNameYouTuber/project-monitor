@@ -7,3 +7,4 @@ from .task import Task
 from .comment import Comment
 from .repository import Repository, VisibilityType
 from .repository_member import RepositoryMember, RepositoryRole
+from .token import PersonalAccessToken

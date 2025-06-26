@@ -401,19 +401,19 @@ async def handle_git_http_request(request: Request, method: str):
                 content="Not allowed",
                 status_code=405
             )
-            
+
         elif method == "GET" and INFO_REFS_RE.match(path):
             # Handle info/refs (GET with service query param)
             repository_id = INFO_REFS_RE.match(path).group(1)
             query_params = dict(request.query_params)
             service = query_params.get("service")
-            
+
             if not service:
                 return PlainTextResponse(
                     content="Service parameter required",
                     status_code=400
                 )
-                
+
             # Verify service name (git-upload-pack or git-receive-pack)
             if service not in ["git-upload-pack", "git-receive-pack"]:
                 return PlainTextResponse(
@@ -423,7 +423,7 @@ async def handle_git_http_request(request: Request, method: str):
             
             # Get current user (optional)
             try:
-                current_user = await get_current_user_optional(None, db)
+                current_user = await get_current_user_optional(request=request, db=db)
                 user_id = str(current_user.id) if current_user else None
             except Exception:
                 user_id = None
@@ -447,7 +447,7 @@ async def handle_git_http_request(request: Request, method: str):
             
             # Get current user (optional)
             try:
-                current_user = await get_current_user_optional(None, db)
+                current_user = await get_current_user_optional(request=request, db=db)
             except Exception:
                 current_user = None
                 
@@ -459,15 +459,17 @@ async def handle_git_http_request(request: Request, method: str):
             repository_id = RECEIVE_PACK_RE.match(path).group(1)
             body = await request.body()
             
-            # Get current user (required for pushing)
+            # Get current user (required for push)
             try:
-                current_user = await get_current_user_optional(None, db)
+                current_user = await get_current_user_optional(request=request, db=db)
+                if not current_user:
+                    return PlainTextResponse(
+                        content="Authentication required for push",
+                        status_code=401
+                    )
             except Exception:
-                current_user = None
-                
-            if not current_user:
                 return PlainTextResponse(
-                    content="Authentication required for pushing",
+                    content="Authentication failed",
                     status_code=401
                 )
                 

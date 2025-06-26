@@ -2,13 +2,14 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 import hmac
 import hashlib
 import os
 import time
+import base64
 from urllib.parse import parse_qs
 
 from .schemas.user import TokenData
@@ -89,24 +90,60 @@ def get_admin_user(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-async def get_current_user_optional(token: str = Depends(oauth2_scheme_optional), db: Session = Depends(get_db)):
+async def get_current_user_optional(request: Request = None, token: str = Depends(oauth2_scheme_optional), db: Session = Depends(get_db)):
     """
     Similar to get_current_user but doesn't raise an exception if authentication fails.
     Returns None instead, allowing anonymous access for public resources.
+    
+    Also supports HTTP Basic Authentication with personal access tokens for Git operations.
     """
-    if token is None:
-        return None
-        
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            return None
-        token_data = TokenData(username=username)
-        user = db.query(User).filter(User.username == token_data.username).first()
-        return user
-    except (JWTError, HTTPException):
-        return None
+    # First check for JWT token
+    if token is not None:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username: str = payload.get("sub")
+            if username is not None:
+                token_data = TokenData(username=username)
+                user = db.query(User).filter(User.username == token_data.username).first()
+                return user
+        except (JWTError, HTTPException):
+            pass  # Continue with other auth methods
+    
+    # Then check for Basic Authentication (for Git HTTP access)
+    if request and "authorization" in request.headers:
+        auth = request.headers.get("authorization")
+        if auth and auth.lower().startswith("basic "):
+            try:
+                # Decode the Base64 encoded credentials
+                auth_decoded = base64.b64decode(auth[6:]).decode("utf-8")
+                if ":" in auth_decoded:
+                    username, password = auth_decoded.split(":", 1)
+                    
+                    # Check if the password is a valid personal access token
+                    from .models.token import PersonalAccessToken
+                    
+                    # Find the user by email or username
+                    user = db.query(User).filter(
+                        (User.email == username) | (User.username == username)
+                    ).first()
+                    
+                    if user:
+                        # Check for valid token
+                        token = db.query(PersonalAccessToken).filter(
+                            PersonalAccessToken.user_id == user.id,
+                            PersonalAccessToken.token == password,
+                            PersonalAccessToken.is_active == True
+                        ).first()
+                        
+                        # Check if token is expired
+                        if token and (token.expires_at is None or token.expires_at > datetime.utcnow()):
+                            return user
+            except Exception as e:
+                print(f"Error in basic auth: {str(e)}")
+                pass
+    
+    # No valid authentication
+    return None
 
 
 def parse_telegram_init_data(init_data: str) -> Dict[str, Any]:
