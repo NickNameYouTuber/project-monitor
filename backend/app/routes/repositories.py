@@ -96,6 +96,31 @@ async def create_repository(
         db.add(db_repository)
         db.commit()
         db.refresh(db_repository)
+        
+        # After creating in database, initialize the Git repository on the filesystem
+        try:
+            # Import here to avoid circular imports
+            import os
+            import git
+            from pathlib import Path
+            
+            # Get repos base directory from environment (same as in repository_content.py)
+            REPOS_BASE_DIR = os.environ.get("GIT_REPOS_DIR", "/app/git_repos")
+            
+            # Create repository directory
+            repo_path = Path(REPOS_BASE_DIR) / str(db_repository.id)
+            if not repo_path.exists():
+                repo_path.mkdir(parents=True, exist_ok=True)
+            
+            # Initialize empty Git repository
+            git.Repo.init(repo_path)
+            
+            print(f"Git repository initialized at {repo_path}")
+        except Exception as git_err:
+            print(f"Warning: Failed to initialize Git repository: {git_err}")
+            # Don't fail the whole operation if Git init fails
+            # The database entry is still valid
+            
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Repository with this name already exists")
