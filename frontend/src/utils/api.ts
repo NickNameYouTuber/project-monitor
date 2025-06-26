@@ -108,6 +108,8 @@ export const api = {
   projects: {
     getAll: (token: string) => 
       apiRequest('/projects', { requireAuth: true, token }),
+    getByDashboard: (dashboardId: string, token: string) =>
+      apiRequest(`/projects?dashboard_id=${dashboardId}`, { requireAuth: true, token }),
     getOne: (id: string, token: string) => 
       apiRequest(`/projects/${id}`, { requireAuth: true, token }),
     create: (projectData: any, token: string) => 

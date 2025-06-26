@@ -15,6 +15,7 @@ router = APIRouter()
 
 @router.get("/", response_model=List[ProjectResponse])
 async def read_projects(skip: int = 0, limit: int = 100, 
+                       dashboard_id: str = None,
                        current_user: User = Depends(get_current_active_user),
                        db: Session = Depends(get_db)):
     from sqlalchemy import or_
@@ -28,15 +29,24 @@ async def read_projects(skip: int = 0, limit: int = 100,
     
     dashboard_ids = [d[0] for d in dashboards_as_member]
     
-    # Запрос проектов с объединением условий:
-    # 1. Проекты, где пользователь является владельцем
-    # 2. Проекты, связанные с дашбордами, где пользователь является участником
-    projects = db.query(Project).filter(
-        or_(
-            Project.owner_id == current_user.id,
-            Project.dashboard_id.in_(dashboard_ids)
-        )
-    ).offset(skip).limit(limit).all()
+    # Основной запрос
+    query = db.query(Project)
+    
+    # Базовый фильтр доступа: пользователь должен быть владельцем или участником дашборда
+    # с которым связан проект
+    access_filter = or_(
+        Project.owner_id == current_user.id,
+        Project.dashboard_id.in_(dashboard_ids)
+    )
+    
+    query = query.filter(access_filter)
+    
+    # Если указан dashboard_id, дополнительно фильтруем проекты только для этого дашборда
+    if dashboard_id:
+        query = query.filter(Project.dashboard_id == dashboard_id)
+    
+    # Применяем пагинацию
+    projects = query.offset(skip).limit(limit).all()
     
     return projects
 

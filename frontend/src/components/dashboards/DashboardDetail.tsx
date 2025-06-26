@@ -31,18 +31,33 @@ const DashboardDetail: React.FC = () => {
 
   // Загрузка данных дашборда и участников
   useEffect(() => {
+    if (!currentUser?.token || !dashboardId) {
+      setIsLoading(false);
+      return;
+    }
+    
     const fetchDashboardData = async () => {
-      if (!currentUser?.token || !dashboardId) return;
-      
+      setIsLoading(true);
       try {
-        setIsLoading(true);
+        // Проверка безопасности: dashboardId не может быть undefined здесь
+        if (!dashboardId) throw new Error('Dashboard ID is required');
         
         // Загружаем информацию о дашборде
-        const dashboardData = await api.dashboards.getOne(dashboardId, currentUser.token);
-        setDashboard(dashboardData as DashboardDetailType);
+        const dashboardData = await api.dashboards.getOne(dashboardId!, currentUser.token);
         
-        // Загружаем участников дашборда
-        const membersData = await api.dashboards.getMembers(dashboardId, currentUser.token);
+        // Явно запрашиваем проекты для этого дашборда через новый метод API
+        const dashboardProjects = await api.projects.getByDashboard(dashboardId!, currentUser.token);
+        
+        // Обновляем объект дашборда с полученными проектами
+        const updatedDashboardData = {
+          ...dashboardData,
+          projects: dashboardProjects || []
+        };
+        
+        setDashboard(updatedDashboardData as DashboardDetailType);
+        
+        // Загружаем участников дашборда (dashboardId проверен выше)
+        const membersData = await api.dashboards.getMembers(dashboardId!, currentUser.token);
         setMembers(membersData as DashboardMember[]);
         
         setError(null);
