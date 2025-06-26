@@ -1,4 +1,7 @@
-from typing import List, Optional
+import os
+import git
+from pathlib import Path
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -258,21 +261,73 @@ async def delete_repository(
     """
     Удалить репозиторий. Только владелец может удалять репозиторий.
     """
-    db_repository = db.query(Repository).filter(Repository.id == repository_id).first()
-    if not db_repository:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Repository not found"
-        )
+    repository = db.query(Repository).filter(Repository.id == repository_id).first()
     
-    # Только владелец может удалить репозиторий
-    if db_repository.owner_id != current_user.id:
+    if not repository:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+    
+    # Проверяем, что текущий пользователь - владелец
+    if str(repository.owner_id) != str(current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this repository"
         )
     
-    db.delete(db_repository)
+    db.delete(repository)
     db.commit()
     
     return None
+
+
+# Utility endpoint to fix repositories by initializing Git repositories for existing database records
+@router.post("/{repository_id}/initialize_git", response_model=Dict[str, Any])
+async def initialize_git_repository(
+    repository_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Initialize Git repository directory for an existing database record.
+    This is useful for fixing repositories that were created before Git initialization was added.
+    """
+    # Verify repository exists and user has access
+    repository = db.query(Repository).filter(Repository.id == repository_id).first()
+    
+    if not repository:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+    
+    # Check if user has access (is owner or member)
+    if str(repository.owner_id) != str(current_user.id):
+        member = db.query(RepositoryMember).filter(
+            RepositoryMember.repository_id == repository_id,
+            RepositoryMember.user_id == current_user.id,
+            RepositoryMember.is_active == True
+        ).first()
+        
+        if not member:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this repository")
+    
+    # Get repository directory
+    REPOS_BASE_DIR = os.environ.get("GIT_REPOS_DIR", "/app/git_repos")
+    repo_path = Path(REPOS_BASE_DIR) / str(repository_id)
+    
+    try:
+        # Create directory if it doesn't exist
+        if not repo_path.exists():
+            repo_path.mkdir(parents=True, exist_ok=True)
+            
+        # Check if it's already a Git repo
+        is_git_repo = (repo_path / ".git").exists()
+        
+        if not is_git_repo:
+            # Initialize Git repository
+            git.Repo.init(repo_path)
+            message = f"Git repository initialized at {repo_path}"
+        else:
+            message = f"Git repository already exists at {repo_path}"
+        
+        return {"success": True, "message": message, "repository_id": repository_id}
+    
+    except Exception as e:
+        print(f"Error initializing Git repository: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to initialize Git repository: {str(e)}")
