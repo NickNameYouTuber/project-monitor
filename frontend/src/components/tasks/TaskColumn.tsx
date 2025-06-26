@@ -58,7 +58,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
                           setIsEditingColumn(true);
                           setShowColumnMenu(false);
                         }}
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left transition-colors"
+                        className="block px-4 py-2 text-sm text-text-secondary hover:bg-bg-hover w-full text-left transition-colors bg-bg-secondary"
                       >
                         Edit Column
                       </button>
@@ -69,7 +69,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
                           handleDeleteColumn();
                           setShowColumnMenu(false);
                         }}
-                        className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left transition-colors"
+                        className="block px-4 py-2 text-sm text-state-error hover:bg-bg-hover w-full text-left transition-colors bg-bg-secondary"
                       >
                         Delete Column
                       </button>
@@ -113,7 +113,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({ column, tasks }) => {
           <div className="p-3 border-t border-border-primary bg-bg-secondary">
             <button
               onClick={() => setIsAddingTask(true)}
-              className="w-full py-2 px-3 text-text-secondary hover:text-text-primary hover:bg-primary/10 rounded-lg text-sm transition-colors duration-200 border-2 border-dashed border-border-primary"
+              className="w-full py-2 px-3 text-text-secondary hover:text-text-primary hover:bg-primary/10 rounded-lg text-sm transition-colors duration-200 border-2 border-dashed border-border-primary bg-bg-secondary"
             >
               + Add Task
             </button>

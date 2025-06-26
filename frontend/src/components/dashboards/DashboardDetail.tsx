@@ -351,7 +351,7 @@ const DashboardDetail: React.FC = () => {
                     {dashboard.owner_id === currentUser?.id && (
                       <button
                         onClick={() => handleRemoveMember(member.id)}
-                        className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                        className="text-state-error hover:text-state-error px-2 py-1 rounded bg-bg-secondary"
                       >
                         Remove
                       </button>
