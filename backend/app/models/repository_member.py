@@ -1,11 +1,11 @@
 from sqlalchemy import Column, String, ForeignKey, Boolean, DateTime, Enum
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 from enum import Enum as PyEnum
 
 from ..db.base_class import Base
+from ..db.custom_types import GUID
 
 class RepositoryRole(str, PyEnum):
     VIEWER = "viewer"
@@ -15,9 +15,9 @@ class RepositoryRole(str, PyEnum):
 class RepositoryMember(Base):
     __tablename__ = "repository_members"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    repository_id = Column(GUID(), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     role = Column(Enum(RepositoryRole), default=RepositoryRole.VIEWER)
     is_active = Column(Boolean, default=True)
     
