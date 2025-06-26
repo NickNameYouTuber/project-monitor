@@ -102,7 +102,7 @@ const TaskBoard = ({ }: TaskBoardProps) => {
         <Droppable droppableId="board-columns" direction="horizontal" type="column">
           {(provided: DroppableProvided) => (
             <div 
-              className="task-board-content flex overflow-x-auto pb-6 h-full bg-gray-50 dark:bg-gray-900"
+              className="task-board-content flex overflow-x-auto pb-6 h-full"
               ref={provided.innerRef}
               {...provided.droppableProps}
             >
