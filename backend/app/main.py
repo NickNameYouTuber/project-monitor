@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content
 import uvicorn
 
 # Create database tables
@@ -51,6 +51,7 @@ app.include_router(dashboards.router, prefix=f"{api_prefix}/dashboards", tags=["
 app.include_router(dashboard_members.router, prefix=f"{api_prefix}/dashboards", tags=["dashboard_members"])
 app.include_router(repositories.router, prefix=f"{api_prefix}/repositories", tags=["repositories"])
 app.include_router(repository_members.router, prefix=f"{api_prefix}/repositories", tags=["repository_members"])
+app.include_router(repository_content.router, prefix=f"{api_prefix}/repositories", tags=["repository_content"])
 
 # Роутеры для задач, колонок и комментариев
 app.include_router(task_columns.router, prefix=api_prefix)
