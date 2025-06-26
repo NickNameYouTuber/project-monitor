@@ -54,8 +54,8 @@ async def read_repositories(
             print(f"  name={repo.name if repo.name else 'None'} (type={type(repo.name).__name__}), url={repo.url if repo.url else 'None'} (type={type(repo.url).__name__})")
             print(f"  created_at={repo.created_at if repo.created_at else 'None'} (type={type(repo.created_at).__name__}), updated_at={repo.updated_at if repo.updated_at else 'None'} (type={type(repo.updated_at).__name__})")
         
-        # Convert SQLAlchemy models to Pydantic models manually
-        result = [schemas.Repository.from_orm(repo) for repo in repositories]
+        # Convert SQLAlchemy models to Pydantic models manually using Pydantic v2 syntax
+        result = [schemas.Repository.model_validate(repo, from_attributes=True) for repo in repositories]
         return result
     except Exception as e:
         print(f"Error in read_repositories: {e}")
@@ -132,8 +132,8 @@ async def read_repository(
             detail="Not authorized to access this repository"
         )
     
-    # Convert to Pydantic model
-    return schemas.RepositoryDetail.from_orm(repository)
+    # Convert to Pydantic model using Pydantic v2 syntax
+    return schemas.RepositoryDetail.model_validate(repository, from_attributes=True)
 
 
 @router.put("/{repository_id}", response_model=schemas.Repository)

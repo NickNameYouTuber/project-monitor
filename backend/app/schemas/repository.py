@@ -33,11 +33,11 @@ class Repository(RepositoryBase):
     updated_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Расширенная схема с информацией о владельце
 class RepositoryDetail(Repository):
     owner: UserBasic
     
     class Config:
-        orm_mode = True
+        from_attributes = True

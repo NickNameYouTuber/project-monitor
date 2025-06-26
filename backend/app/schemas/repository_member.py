@@ -27,11 +27,11 @@ class RepositoryMember(RepositoryMemberBase):
     updated_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Расширенная схема с информацией о пользователе
 class RepositoryMemberDetail(RepositoryMember):
     user: UserBasic
     
     class Config:
-        orm_mode = True
+        from_attributes = True
