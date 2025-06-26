@@ -93,30 +93,83 @@ async def get_info_refs(
     
     # Get repository path
     repo_path = get_repo_path(repository_id)
-    if not repo_path.exists() or not (repo_path / ".git").exists():
-        # Try to initialize it if it doesn't exist
+    print(f"Checking Git repository at {repo_path}")
+    
+    # Check if it's a Git repository
+    is_git_repo = False
+    
+    # First check if the directory exists
+    if not repo_path.exists():
+        print(f"Repository directory does not exist: {repo_path}")
         try:
-            if not repo_path.exists():
-                repo_path.mkdir(parents=True, exist_ok=True)
-            if not (repo_path / ".git").exists():
-                subprocess.run(["git", "init"], cwd=repo_path)
-                # Create an initial README.md if the repo is empty
-                readme_path = repo_path / "README.md"
-                if not readme_path.exists():
-                    with open(readme_path, "w") as f:
-                        f.write(f"# {repository.name}\n\n{repository.description or 'Repository created with Project Monitor'}\n")
-                    # Make initial commit
-                    subprocess.run(["git", "add", "README.md"], cwd=repo_path)
-                    subprocess.run([
-                        "git", "config", "user.email", "system@projectmonitor.com"
-                    ], cwd=repo_path)
-                    subprocess.run([
-                        "git", "config", "user.name", "Project Monitor System"
-                    ], cwd=repo_path)
-                    subprocess.run([
-                        "git", "commit", "-m", "Initial commit with README"
-                    ], cwd=repo_path)
+            # Create the directory
+            repo_path.mkdir(parents=True, exist_ok=True)
+            print(f"Created repository directory: {repo_path}")
         except Exception as e:
+            print(f"Failed to create repository directory: {e}")
+            return PlainTextResponse(
+                content=f"# Failed to create repository directory: {str(e)}",
+                status_code=500
+            )
+    
+    # Check if it's already a Git repository
+    try:
+        # Use git command to check if it's a git repository
+        result = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], 
+                               cwd=repo_path, 
+                               stdout=subprocess.PIPE, 
+                               stderr=subprocess.PIPE)
+        is_git_repo = result.returncode == 0
+        print(f"Is Git repo check result: {is_git_repo}, returncode: {result.returncode}")
+    except Exception as e:
+        print(f"Error checking if Git repo: {e}")
+        is_git_repo = False
+    
+    # Initialize if not a Git repository
+    if not is_git_repo:
+        print(f"Initializing Git repository at {repo_path}")
+        try:
+            # Initialize Git repository
+            result = subprocess.run(["git", "init"], 
+                                  cwd=repo_path, 
+                                  stdout=subprocess.PIPE, 
+                                  stderr=subprocess.PIPE)
+            if result.returncode != 0:
+                error_msg = result.stderr.decode()
+                print(f"Git init failed: {error_msg}")
+                return PlainTextResponse(
+                    content=f"# Failed to initialize Git repository: {error_msg}",
+                    status_code=500
+                )
+                
+            # Create an initial README.md
+            readme_path = repo_path / "README.md"
+            with open(readme_path, "w") as f:
+                f.write(f"# {repository.name}\n\n{repository.description or 'Repository created with Project Monitor'}\n")
+            
+            # Configure Git user
+            subprocess.run(["git", "config", "user.email", "system@projectmonitor.com"], cwd=repo_path)
+            subprocess.run(["git", "config", "user.name", "Project Monitor System"], cwd=repo_path)
+            
+            # Make initial commit
+            add_result = subprocess.run(["git", "add", "README.md"], 
+                                      cwd=repo_path,
+                                      stdout=subprocess.PIPE, 
+                                      stderr=subprocess.PIPE)
+            if add_result.returncode != 0:
+                print(f"Git add failed: {add_result.stderr.decode()}")
+            
+            commit_result = subprocess.run(["git", "commit", "-m", "Initial commit with README"], 
+                                         cwd=repo_path,
+                                         stdout=subprocess.PIPE, 
+                                         stderr=subprocess.PIPE)
+            if commit_result.returncode != 0:
+                print(f"Git commit failed: {commit_result.stderr.decode()}")
+                
+            print(f"Git repository initialized successfully at {repo_path}")
+            
+        except Exception as e:
+            print(f"Exception initializing Git repository: {e}")
             return PlainTextResponse(
                 content=f"# Failed to initialize repository: {str(e)}",
                 status_code=500
