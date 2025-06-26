@@ -83,8 +83,10 @@ const AuthScreen: React.FC = () => {
           <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <i className="fas fa-tasks text-white text-2xl"></i>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Project Monitor</h1>
-          <p className="text-gray-600 dark:text-gray-300">Track your team projects and personal goals</p>
+          <div className="flex items-center mb-2">
+            <img src="/nit-logo.png" alt="NIT Logo" className="h-12 mr-2" />
+          </div>
+          <p className="text-gray-600 dark:text-gray-300">Эффективное управление проектами и задачами</p>
         </div>
         
         <div className="space-y-6">

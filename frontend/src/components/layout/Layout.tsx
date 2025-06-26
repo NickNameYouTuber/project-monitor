@@ -27,7 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <h1 className="text-xl font-bold text-text-primary">
-                  Project Monitor
+                  NIT
                 </h1>
               </div>
               

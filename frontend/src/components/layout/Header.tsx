@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../../utils/AppContext';
 import ThemeToggle from '../ui/ThemeToggle';
+import nitLogo from '../../assets/nit-logo.png';
 
 interface HeaderProps {
   onAddProject: () => void;
@@ -51,9 +52,8 @@ const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Project Monitor</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">Track your team projects and personal goals</p>
+        <div className="flex items-center">
+          <img src={nitLogo} alt="NitLogo" className="h-10 mr-2" />
         </div>
         <div className="flex items-center space-x-3">
           {/* Theme Toggle Button - новая версия */}
