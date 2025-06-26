@@ -156,7 +156,7 @@ async def read_repository(
         'url': repository.url,
         'created_at': repository.created_at,
         'updated_at': repository.updated_at,
-        'owner': schemas.UserBasic.model_validate({
+        'owner': schemas.User.model_validate({
             'id': str(repository.owner.id),
             'username': repository.owner.username,
             'first_name': repository.owner.first_name,
