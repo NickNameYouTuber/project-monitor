@@ -7,6 +7,7 @@ from ..database import get_db
 from .. import schemas
 from ..models import Repository, RepositoryMember, RepositoryRole, User
 from ..auth import get_current_active_user
+from ..schemas.user import UserBasic
 
 router = APIRouter()
 
@@ -156,7 +157,7 @@ async def read_repository(
         'url': repository.url,
         'created_at': repository.created_at,
         'updated_at': repository.updated_at,
-        'owner': schemas.User.model_validate({
+        'owner': UserBasic.model_validate({
             'id': str(repository.owner.id),
             'username': repository.owner.username,
             'first_name': repository.owner.first_name,
