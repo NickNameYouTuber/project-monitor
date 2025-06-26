@@ -38,6 +38,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 >
                   Dashboards
                 </button>
+                <button 
+                  onClick={() => navigate('/repositories')}
+                  className="px-4 py-2 rounded-md text-sm font-medium text-text-primary bg-bg-card hover:bg-bg-hover transition-colors"
+                >
+                  Git Repositories
+                </button>
               </nav>
             </div>
             
@@ -101,6 +107,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-text-primary bg-bg-card hover:bg-bg-hover"
               >
                 Dashboards
+              </button>
+              
+              <button
+                onClick={() => {
+                  navigate('/repositories');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-text-primary bg-bg-card hover:bg-bg-hover"
+              >
+                Git Repositories
               </button>
               
               {/* Dark mode toggle in mobile menu */}

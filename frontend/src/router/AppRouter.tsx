@@ -6,6 +6,9 @@ import DashboardList from '../components/dashboards/DashboardList';
 import DashboardDetail from '../components/dashboards/DashboardDetail';
 import ProjectTaskBoard from '../components/projects/ProjectTaskBoard';
 import Layout from '../components/layout/Layout';
+import RepositoryList from '../components/repositories/RepositoryList';
+import RepositoryDetail from '../components/repositories/RepositoryDetail';
+import RepositoryCreate from '../components/repositories/RepositoryCreate';
 
 // Protected route component
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
@@ -51,6 +54,44 @@ const AppRouter: React.FC = () => {
               element={
                 <Layout>
                   <ProjectTaskBoard />
+                </Layout>
+              } 
+            />
+          } 
+        />
+
+        {/* Git repositories routes */}
+        <Route 
+          path="/repositories" 
+          element={
+            <ProtectedRoute 
+              element={
+                <Layout>
+                  <RepositoryList />
+                </Layout>
+              } 
+            />
+          } 
+        />
+        <Route 
+          path="/repositories/create" 
+          element={
+            <ProtectedRoute 
+              element={
+                <Layout>
+                  <RepositoryCreate />
+                </Layout>
+              } 
+            />
+          } 
+        />
+        <Route 
+          path="/repositories/:repositoryId" 
+          element={
+            <ProtectedRoute 
+              element={
+                <Layout>
+                  <RepositoryDetail />
                 </Layout>
               } 
             />

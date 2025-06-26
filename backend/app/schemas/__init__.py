@@ -5,3 +5,5 @@ from .dashboard_member import DashboardMemberBase, DashboardMemberCreate, Dashbo
 from .task_column import TaskColumnBase, TaskColumnCreate, TaskColumnUpdate, TaskColumn, TaskColumnDetail
 from .task import TaskBase, TaskCreate, TaskUpdate, TaskMoveUpdate, Task, TaskDetail
 from .comment import CommentBase, CommentCreate, CommentUpdate, Comment
+from .repository import RepositoryBase, RepositoryCreate, RepositoryUpdate, Repository, RepositoryDetail
+from .repository_member import RepositoryMemberBase, RepositoryMemberCreate, RepositoryMemberUpdate, RepositoryMember, RepositoryMemberDetail

@@ -5,3 +5,5 @@ from .dashboard_member import DashboardMember
 from .task_column import TaskColumn
 from .task import Task
 from .comment import Comment
+from .repository import Repository, VisibilityType
+from .repository_member import RepositoryMember, RepositoryRole

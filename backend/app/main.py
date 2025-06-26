@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members
 import uvicorn
 
 # Create database tables
@@ -13,6 +13,8 @@ models.dashboard_member.Base.metadata.create_all(bind=engine)
 models.task_column.Base.metadata.create_all(bind=engine)
 models.task.Base.metadata.create_all(bind=engine)
 models.comment.Base.metadata.create_all(bind=engine)
+models.repository.Base.metadata.create_all(bind=engine)
+models.repository_member.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Project Monitor API",
@@ -47,6 +49,8 @@ app.include_router(users.router, prefix=f"{api_prefix}/users", tags=["users"])
 app.include_router(projects.router, prefix=f"{api_prefix}/projects", tags=["projects"])
 app.include_router(dashboards.router, prefix=f"{api_prefix}/dashboards", tags=["dashboards"])
 app.include_router(dashboard_members.router, prefix=f"{api_prefix}/dashboards", tags=["dashboard_members"])
+app.include_router(repositories.router, prefix=f"{api_prefix}/repositories", tags=["repositories"])
+app.include_router(repository_members.router, prefix=f"{api_prefix}/repositories", tags=["repository_members"])
 
 # Роутеры для задач, колонок и комментариев
 app.include_router(task_columns.router, prefix=api_prefix)

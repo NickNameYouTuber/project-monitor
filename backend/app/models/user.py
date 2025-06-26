@@ -23,3 +23,5 @@ class User(Base):
     # Relationships
     projects = relationship("Project", back_populates="owner")
     dashboards = relationship("Dashboard", back_populates="owner")
+    owned_repositories = relationship("Repository", foreign_keys="[Repository.owner_id]", back_populates="owner")
+    repository_memberships = relationship("RepositoryMember", back_populates="user")

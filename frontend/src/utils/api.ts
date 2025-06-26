@@ -13,6 +13,8 @@ export const API_BASE_URL = isProduction
 // Импортируем клиенты API
 import taskColumnsApi from './api/taskColumns';
 import tasksApi from './api/tasks';
+import repositoriesApi from './api/repositories';
+import repositoryMembersApi from './api/repositoryMembers';
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -243,29 +245,63 @@ export const api = {
   
   // Tasks endpoints
   tasks: {
-    create(taskData: any, token: string) {
+    create: (taskData: any, token: string) => {
       return tasksApi.create(taskData, token);
     },
-    get(taskId: string, token: string) {
+    get: (taskId: string, token: string) => {
       return tasksApi.get(taskId, token);
     },
-    getByColumn(columnId: string, token: string) {
+    getByColumn: (columnId: string, token: string) => {
       return tasksApi.getByColumn(columnId, token);
     },
-    getByProject(projectId: string, token: string) {
+    getByProject: (projectId: string, token: string) => {
       return tasksApi.getByProject(projectId, token);
     },
-    update(taskId: string, updateData: any, token: string) {
+    update: (taskId: string, updateData: any, token: string) => {
       return tasksApi.update(taskId, updateData, token);
     },
-    move(taskId: string, moveData: any, token: string) {
+    move: (taskId: string, moveData: any, token: string) => {
       return tasksApi.move(taskId, moveData, token);
     },
-    delete(taskId: string, token: string) {
+    delete: (taskId: string, token: string) => {
       return tasksApi.delete(taskId, token);
     },
-    reorder(columnId: string, taskIds: string[], token: string) {
+    reorder: (columnId: string, taskIds: string[], token: string) => {
       return tasksApi.reorder(columnId, taskIds, token);
+    }
+  },
+  
+  // Repositories endpoints
+  repositories: {
+    getAll: (token: string, projectId?: string) => {
+      return repositoriesApi.getAll(token, projectId);
+    },
+    getOne: (repositoryId: string, token: string) => {
+      return repositoriesApi.getOne(repositoryId, token);
+    },
+    create: (repositoryData: any, token: string) => {
+      return repositoriesApi.create(repositoryData, token);
+    },
+    update: (repositoryId: string, updateData: any, token: string) => {
+      return repositoriesApi.update(repositoryId, updateData, token);
+    },
+    delete: (repositoryId: string, token: string) => {
+      return repositoriesApi.delete(repositoryId, token);
+    },
+    // Repository members endpoints
+    members: {
+      getByRepository: (repositoryId: string, token: string) => {
+        return repositoryMembersApi.getByRepository(repositoryId, token);
+      },
+      addMember: (repositoryId: string, memberData: any, token: string) => {
+        return repositoryMembersApi.addMember(repositoryId, memberData, token);
+      },
+      updateMember: (repositoryId: string, memberId: string, updateData: any, token: string) => {
+        return repositoryMembersApi.updateMember(repositoryId, memberId, updateData, token);
+      },
+      removeMember: (repositoryId: string, memberId: string, token: string) => {
+        return repositoryMembersApi.removeMember(repositoryId, memberId, token);
+      }
     }
   }
 };
