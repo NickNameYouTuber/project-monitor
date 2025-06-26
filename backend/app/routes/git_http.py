@@ -21,9 +21,9 @@ REPOS_BASE_DIR = os.environ.get("GIT_REPOS_DIR", "/app/git_repos")
 router = APIRouter(redirect_slashes=False)
 
 # Regular expressions for parsing Git HTTP paths
-INFO_REFS_RE = re.compile(r'/git/([^/]+)\.git/info/refs')
-UPLOAD_PACK_RE = re.compile(r'/git/([^/]+)\.git/git-upload-pack')
-RECEIVE_PACK_RE = re.compile(r'/git/([^/]+)\.git/git-receive-pack')
+INFO_REFS_RE = re.compile(r'/api/git/([^/]+)\.git/info/refs')
+UPLOAD_PACK_RE = re.compile(r'/api/git/([^/]+)\.git/git-upload-pack')
+RECEIVE_PACK_RE = re.compile(r'/api/git/([^/]+)\.git/git-receive-pack')
 
 
 def get_repo_path(repository_id: str) -> Path:
