@@ -23,29 +23,43 @@ async def read_repositories(
     Может фильтровать по project_id, если указан.
     """
     from sqlalchemy import or_
+    import json
     
-    # Получаем ID репозиториев, где пользователь является членом
-    member_repos = db.query(RepositoryMember.repository_id).filter(
-        RepositoryMember.user_id == current_user.id,
-        RepositoryMember.is_active == True
-    ).all()
-    
-    repo_ids = [r[0] for r in member_repos]
-    
-    # Базовый фильтр доступа
-    query = db.query(Repository).filter(
-        or_(
-            Repository.owner_id == current_user.id,
-            Repository.id.in_(repo_ids)
+    try:
+        # Получаем ID репозиториев, где пользователь является членом
+        member_repos = db.query(RepositoryMember.repository_id).filter(
+            RepositoryMember.user_id == current_user.id,
+            RepositoryMember.is_active == True
+        ).all()
+        
+        repo_ids = [r[0] for r in member_repos]
+        
+        # Базовый фильтр доступа
+        query = db.query(Repository).filter(
+            or_(
+                Repository.owner_id == current_user.id,
+                Repository.id.in_(repo_ids)
+            )
         )
-    )
-    
-    # Фильтрация по project_id (если указан)
-    if project_id:
-        query = query.filter(Repository.project_id == project_id)
-    
-    repositories = query.offset(skip).limit(limit).all()
-    return repositories
+        
+        # Фильтрация по project_id (если указан)
+        if project_id:
+            query = query.filter(Repository.project_id == project_id)
+        
+        repositories = query.offset(skip).limit(limit).all()
+        
+        # Debug: print repository data
+        for repo in repositories:
+            print(f"Repository debug: id={repo.id}, owner_id={repo.owner_id}, project_id={repo.project_id}")
+            print(f"  name={repo.name}, url={repo.url}")
+            print(f"  created_at={repo.created_at}, updated_at={repo.updated_at}")
+        
+        return repositories
+    except Exception as e:
+        print(f"Error in read_repositories: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.post("/", response_model=schemas.Repository, status_code=status.HTTP_201_CREATED)
