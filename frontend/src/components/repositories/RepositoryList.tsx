@@ -1,14 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../../utils/AppContext';
-import { Repository } from '../../utils/api/repositories';
-import PageHeader from '../common/PageHeader';
+import { api } from '../../utils/api';
+import type { Repository } from '../../utils/api/repositories';
+import PageHeader from '../../components/common/PageHeader';
 
 const RepositoryList: React.FC = () => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { currentUser, api } = useAppContext();
+  const { currentUser } = useAppContext();
 
   // Загрузка списка репозиториев
   const fetchRepositories = useCallback(async () => {
@@ -29,7 +30,7 @@ const RepositoryList: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [api.repositories, currentUser?.token]);
+  }, [currentUser?.token]);
 
   useEffect(() => {
     fetchRepositories();

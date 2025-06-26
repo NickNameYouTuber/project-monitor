@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../utils/AppContext';
-import { RepositoryDetail as RepositoryDetailType } from '../../utils/api/repositories';
-import { RepositoryMemberDetail } from '../../utils/api/repositoryMembers';
-import PageHeader from '../common/PageHeader';
+import { api } from '../../utils/api';
+import type { RepositoryDetail as RepositoryDetailType } from '../../utils/api/repositories';
+import type { RepositoryMemberDetail } from '../../utils/api/repositoryMembers';
+import PageHeader from '../../components/common/PageHeader';
 
 const RepositoryDetail: React.FC = () => {
   const { repositoryId } = useParams<{ repositoryId: string }>();
   const navigate = useNavigate();
-  const { currentUser, api } = useAppContext();
+  const { currentUser } = useAppContext();
   
   const [repository, setRepository] = useState<RepositoryDetailType | null>(null);
   const [members, setMembers] = useState<RepositoryMemberDetail[]>([]);
@@ -41,7 +42,7 @@ const RepositoryDetail: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [api.repositories, currentUser?.token, repositoryId]);
+  }, [currentUser?.token, repositoryId]);
 
   // Загрузка данных при монтировании компонента
   useEffect(() => {
@@ -63,7 +64,7 @@ const RepositoryDetail: React.FC = () => {
       console.error('Error deleting repository:', err);
       alert(`Failed to delete repository: ${err.message || 'Unknown error'}`);
     }
-  }, [api.repositories, currentUser?.token, navigate, repository, repositoryId]);
+  }, [currentUser?.token, navigate, repository, repositoryId]);
 
   // Проверка, является ли текущий пользователь владельцем репозитория
   const isOwner = repository && currentUser && repository.owner_id === currentUser.id;

@@ -1,13 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../utils/AppContext';
-import { RepositoryCreate as RepositoryCreateType } from '../../utils/api/repositories';
+import { api } from '../../utils/api';
+import type { RepositoryCreate as RepositoryCreateType } from '../../utils/api/repositories';
 import { VisibilityType } from '../../utils/api/repositories';
-import PageHeader from '../common/PageHeader';
+import PageHeader from '../../components/common/PageHeader';
 
 const RepositoryCreate: React.FC = () => {
   const navigate = useNavigate();
-  const { currentUser, api } = useAppContext();
+  const { currentUser } = useAppContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -40,7 +41,7 @@ const RepositoryCreate: React.FC = () => {
     };
     
     fetchProjects();
-  }, [api.projects, currentUser?.token]);
+  }, [currentUser?.token]);
 
   // Обработчик изменения полей формы
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -81,7 +82,7 @@ const RepositoryCreate: React.FC = () => {
       setError(err.message || 'Failed to create repository');
       setIsSubmitting(false);
     }
-  }, [api.repositories, currentUser?.token, formData, navigate]);
+  }, [currentUser?.token, formData, navigate]);
 
   return (
     <div className="container mx-auto px-4 py-8">
