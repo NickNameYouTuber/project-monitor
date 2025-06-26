@@ -50,9 +50,9 @@ async def read_repositories(
         
         # Debug: print repository data
         for repo in repositories:
-            print(f"Repository debug: id={repo.id}, owner_id={repo.owner_id}, project_id={repo.project_id}")
-            print(f"  name={repo.name}, url={repo.url}")
-            print(f"  created_at={repo.created_at}, updated_at={repo.updated_at}")
+            print(f"Repository debug: id={repo.id} (type={type(repo.id).__name__}), owner_id={repo.owner_id} (type={type(repo.owner_id).__name__}), project_id={repo.project_id if repo.project_id else 'None'} (type={type(repo.project_id).__name__ if repo.project_id else 'NoneType'})")
+            print(f"  name={repo.name if repo.name else 'None'} (type={type(repo.name).__name__}), url={repo.url if repo.url else 'None'} (type={type(repo.url).__name__})")
+            print(f"  created_at={repo.created_at if repo.created_at else 'None'} (type={type(repo.created_at).__name__}), updated_at={repo.updated_at if repo.updated_at else 'None'} (type={type(repo.updated_at).__name__})")
         
         return repositories
     except Exception as e:
