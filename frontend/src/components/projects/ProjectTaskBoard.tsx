@@ -9,11 +9,16 @@ const ProjectTaskBoard: React.FC = () => {
   const { currentUser, fetchProject, currentProject } = useAppContext();
 
   // Загружаем данные проекта при монтировании компонента
+  // Используем флаг, чтобы избежать бесконечных запросов
+  const [isInitialFetchDone, setIsInitialFetchDone] = React.useState(false);
+  
   useEffect(() => {
-    if (projectId && currentUser?.token) {
+    // Загружаем проект только один раз при инициализации
+    if (projectId && currentUser?.token && !isInitialFetchDone) {
       fetchProject(projectId, currentUser.token);
+      setIsInitialFetchDone(true);
     }
-  }, [projectId, currentUser, fetchProject]);
+  }, [projectId, currentUser?.token, isInitialFetchDone]);
 
   if (!currentProject) {
     return (

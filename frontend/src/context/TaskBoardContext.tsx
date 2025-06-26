@@ -281,13 +281,16 @@ export const TaskBoardProvider: React.FC<TaskBoardProviderProps> = ({ children, 
     }
   }, [token, tasks, projectId, fetchTasks]);
   
-  // Загрузка данных при инициализации
+  // Загрузка данных при инициализации с защитой от дублирования запросов
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
+  
   useEffect(() => {
-    if (projectId && token) {
+    if (projectId && token && isInitialLoad) {
+      setIsInitialLoad(false);
       fetchColumns(projectId);
       fetchTasks(projectId);
     }
-  }, [projectId, fetchColumns, fetchTasks]); // Добавляем функции в зависимости
+  }, [projectId, token]); // Убрали функции из зависимостей, т.к. они создают циклы запросов
   
   const contextValue: TaskBoardContextType = {
     columns,
