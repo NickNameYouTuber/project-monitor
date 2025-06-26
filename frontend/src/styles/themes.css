@@ -5,6 +5,7 @@
   /* Основные цвета */
   --color-primary: #3b82f6;
   --primary-rgb: 59, 130, 246;
+  --color-primary-hover: #2563eb; /* Более темный оттенок при наведении */
   --color-secondary: #6b7280;
   --secondary-rgb: 107, 114, 128;
   --color-accent: #8b5cf6;
@@ -47,6 +48,7 @@
   /* Основные цвета - из мятной темы */
   --color-primary: #98C9A3; /* Основной бренд-цвет */
   --primary-rgb: 152, 201, 163;
+  --color-primary-hover: #7AB988; /* Более темный оттенок при наведении */
   --color-secondary: #7AB988; /* Более насыщенный оттенок бренд-цвета */
   --secondary-rgb: 122, 185, 136;
   --color-accent: #C0E8C9; /* Более светлый акцентный оттенок */

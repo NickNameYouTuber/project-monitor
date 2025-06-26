@@ -253,7 +253,7 @@ const DashboardDetail: React.FC = () => {
               </button>
               <button
                 onClick={openProjectModal}
-                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md"
+                className="bg-primary hover:bg-primary-hover text-white py-2 px-4 rounded-md"
               >
                 Add Project
               </button>
