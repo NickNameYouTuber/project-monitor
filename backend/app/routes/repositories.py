@@ -55,7 +55,20 @@ async def read_repositories(
             print(f"  created_at={repo.created_at if repo.created_at else 'None'} (type={type(repo.created_at).__name__}), updated_at={repo.updated_at if repo.updated_at else 'None'} (type={type(repo.updated_at).__name__})")
         
         # Convert SQLAlchemy models to Pydantic models manually using Pydantic v2 syntax
-        result = [schemas.Repository.model_validate(repo, from_attributes=True) for repo in repositories]
+        result = []
+        for repo in repositories:
+            repo_dict = {
+                'id': str(repo.id),
+                'owner_id': str(repo.owner_id),
+                'name': repo.name,
+                'description': repo.description,
+                'visibility': repo.visibility,
+                'project_id': str(repo.project_id) if repo.project_id else None,
+                'url': repo.url,
+                'created_at': repo.created_at,
+                'updated_at': repo.updated_at
+            }
+            result.append(schemas.Repository.model_validate(repo_dict))
         return result
     except Exception as e:
         print(f"Error in read_repositories: {e}")
@@ -133,7 +146,25 @@ async def read_repository(
         )
     
     # Convert to Pydantic model using Pydantic v2 syntax
-    return schemas.RepositoryDetail.model_validate(repository, from_attributes=True)
+    repo_dict = {
+        'id': str(repository.id),
+        'owner_id': str(repository.owner_id),
+        'name': repository.name,
+        'description': repository.description,
+        'visibility': repository.visibility,
+        'project_id': str(repository.project_id) if repository.project_id else None,
+        'url': repository.url,
+        'created_at': repository.created_at,
+        'updated_at': repository.updated_at,
+        'owner': schemas.UserBasic.model_validate({
+            'id': str(repository.owner.id),
+            'username': repository.owner.username,
+            'first_name': repository.owner.first_name,
+            'last_name': repository.owner.last_name,
+            'avatar_url': repository.owner.avatar_url
+        })
+    }
+    return schemas.RepositoryDetail.model_validate(repo_dict)
 
 
 @router.put("/{repository_id}", response_model=schemas.Repository)
