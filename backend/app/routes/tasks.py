@@ -7,7 +7,7 @@ from .comments import get_comments_for_task
 from sqlalchemy import and_
 
 router = APIRouter(
-    prefix="/api/tasks",
+    prefix="/tasks",
     tags=["tasks"]
 )
 

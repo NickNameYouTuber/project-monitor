@@ -44,11 +44,11 @@ app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(dashboards.router, prefix="/api/dashboards", tags=["dashboards"])
 app.include_router(dashboard_members.router, prefix="/api/dashboards", tags=["dashboard_members"])
-app.include_router(task_columns.router)
-app.include_router(tasks.router)
 
-# Регистрируем роутер комментариев и создаем дополнительный для пути /api/tasks/{task_id}/comments
-app.include_router(comments.router)
+# Основные маршруты с префиксом /api для совместимости
+app.include_router(task_columns.router, prefix="/api")
+app.include_router(tasks.router, prefix="/api")
+app.include_router(comments.router, prefix="/api")
 
 
 @app.get("/")

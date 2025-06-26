@@ -6,7 +6,7 @@ from typing import List
 from sqlalchemy import and_
 
 router = APIRouter(
-    prefix="/api/comments",
+    prefix="/comments",
     tags=["comments"]
 )
 

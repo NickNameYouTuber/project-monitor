@@ -7,5 +7,5 @@ const isProduction = window.location.hostname !== 'localhost' && window.location
 
 // Используем разные базовые URL в зависимости от окружения
 export const API_BASE_URL = isProduction
-  ? '' // В продакшене используем относительные пути
+  ? '/api' // В продакшене используем относительные пути с префиксом /api
   : import.meta.env.VITE_API_URL || 'http://localhost:7671'; // В dev-режиме используем абсолютные пути
