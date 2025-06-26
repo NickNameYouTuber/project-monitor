@@ -26,23 +26,14 @@ class RepositoryUpdate(BaseModel):
 
 # Полная схема репозитория (ответ API)
 class Repository(RepositoryBase):
-    id: Union[UUID4, str]
-    owner_id: Union[UUID4, str]
+    id: str
+    owner_id: str
     url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     
     class Config:
         orm_mode = True
-        
-    @validator('id', 'owner_id', pre=True)
-    def validate_uuid(cls, value):
-        if isinstance(value, str):
-            try:
-                return uuid.UUID(value)
-            except ValueError:
-                pass
-        return value
 
 # Расширенная схема с информацией о владельце
 class RepositoryDetail(Repository):
