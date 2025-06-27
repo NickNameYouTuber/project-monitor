@@ -26,7 +26,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   actionButton
 }) => {
   return (
-    <div className="mb-8">
+    <header className="mb-8">
       <div className="flex justify-between items-start">
         <div>
           {backButton && (
@@ -51,13 +51,14 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             </Link>
           )}
           
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h1>
-          
-          {subtitle && (
-            <div className="mt-1 text-[var(--text-secondary)]">
-              {subtitle}
-            </div>
-          )}
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-2 bg-[var(--bg-card)] p-3 rounded-lg border-l-2 border-[var(--color-primary)]">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h1>
+            {subtitle && (
+              <div className="text-sm text-[var(--text-muted)]">
+                {subtitle}
+              </div>
+            )}
+          </div>
         </div>
         
         {actionButton && (
@@ -74,7 +75,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </Link>
         )}
       </div>
-    </div>
+    </header>
   );
 };
 
