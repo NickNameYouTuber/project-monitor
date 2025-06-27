@@ -49,6 +49,7 @@ def get_repo_path(repository_id: str) -> Path:
 async def list_files(
     repository_id: str,
     path: str = "",
+    branch: Optional[str] = None,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -71,11 +72,21 @@ async def list_files(
             # Repository is empty, return empty list (not an error)
             return []
         
-        # Get the default branch
-        branch = repo.active_branch
+        # Используем запрошенную ветку или берем активную (дефолтную)
+        branch_name = branch
+        
+        if not branch_name:
+            # Если ветка не указана, используем активную ветку
+            branch_name = repo.active_branch.name
+        elif branch_name not in [h.name for h in repo.heads]:
+            # Если указанная ветка не существует
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Branch '{branch_name}' not found"
+            )
         
         # Get the tree at the given path
-        tree = repo.heads[branch.name].commit.tree
+        tree = repo.heads[branch_name].commit.tree
         if path:
             for part in path.split('/'):
                 if part:
@@ -123,6 +134,7 @@ async def list_files(
 async def get_file_content(
     repository_id: str,
     file_path: str,
+    branch: Optional[str] = None,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -148,14 +160,24 @@ async def get_file_content(
                 detail="This repository is empty. Add some files to view content."
             )
         
-        # Get the default branch
-        branch = repo.active_branch
+        # Используем запрошенную ветку или берем активную (дефолтную)
+        branch_name = branch
+        
+        if not branch_name:
+            # Если ветка не указана, используем активную ветку
+            branch_name = repo.active_branch.name
+        elif branch_name not in [h.name for h in repo.heads]:
+            # Если указанная ветка не существует
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Branch '{branch_name}' not found"
+            )
         
         # Try to get file from git
         try:
             # Сначала пробуем получить содержимое как текст
             try:
-                file_content = repo.git.show(f"{branch.name}:{file_path}")
+                file_content = repo.git.show(f"{branch_name}:{file_path}")
                 
                 # Определяем тип файла по расширению и содержимому
                 # Будем считать текстовыми файлы с определенными расширениями + файлы без null-байтов
@@ -205,7 +227,7 @@ async def get_file_content(
             # Получаем бинарное содержимое
             try:
                 # Используем git.execute без GitPython для получения сырых байтов
-                git_cmd = ['git', 'show', f"{branch.name}:{file_path}"]
+                git_cmd = ['git', 'show', f"{branch_name}:{file_path}"]
                 import subprocess
                 result = subprocess.run(
                     git_cmd,
@@ -242,6 +264,82 @@ async def get_file_content(
         print(f"Error getting file content: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                            detail=f"Error getting file content: {str(e)}")
+
+
+@router.get("/{repository_id}/branches", response_model=List[schemas.GitBranch])
+async def list_branches(
+    repository_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get list of branches in repository
+    """
+    try:
+        repository = check_repository_access(repository_id, str(current_user.id), db)
+        repo_path = get_repo_path(repository_id)
+        
+        if not repo_path.exists():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                              detail="Repository directory not found")
+            
+        # Initialize git repository
+        repo = git.Repo(repo_path)
+        
+        # Check if the repository has any commits (is empty)
+        if len(repo.heads) == 0 or len(list(repo.iter_commits())) == 0:
+            # Repository is empty, return empty list (not an error)
+            return []
+        
+        # Определяем имя ветки по умолчанию (может быть master, main или другая)
+        default_branch_name = None
+        try:
+            # Попытка получить имя ветки из конфигурации
+            default_branch_name = repo.git.config('--get', 'init.defaultBranch')
+        except git.GitCommandError:
+            pass
+            
+        # Если не удалось получить из конфигурации, проверяем наличие стандартных веток
+        if not default_branch_name:
+            for branch_name in ['main', 'master']:
+                if branch_name in repo.heads:
+                    default_branch_name = branch_name
+                    break
+        
+        # Если и это не сработало, берем активную ветку
+        if not default_branch_name and repo.active_branch:
+            default_branch_name = repo.active_branch.name
+        
+        # Список веток
+        branches = []
+        for branch in repo.heads:
+            # Получаем последний коммит ветки
+            last_commit = list(repo.iter_commits(branch.name, max_count=1))[0] if branch.commit else None
+            
+            branch_info = {
+                "name": branch.name,
+                "commit_hash": str(branch.commit.hexsha) if branch.commit else None,
+                "is_default": branch.name == default_branch_name,
+            }
+            
+            # Если есть последний коммит, добавляем его данные
+            if last_commit:
+                branch_info["last_commit_date"] = datetime.fromtimestamp(last_commit.committed_date).isoformat()
+                branch_info["last_commit_message"] = last_commit.message
+                
+            branches.append(branch_info)
+        
+        # Сортируем ветки - сначала дефолтная, потом по алфавиту
+        branches.sort(key=lambda x: (0 if x["is_default"] else 1, x["name"]))
+        return branches
+        
+    except git.GitCommandError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                           detail=f"Git command error: {str(e)}")
+    except Exception as e:
+        print(f"Error listing branches: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                           detail=f"Error listing branches: {str(e)}")
 
 
 @router.get("/{repository_id}/commits", response_model=List[schemas.GitCommit])

@@ -46,6 +46,15 @@ class GitContent(BaseModel):
     binary: bool
 
 
+class GitBranch(BaseModel):
+    """Information about a repository branch"""
+    name: str
+    commit_hash: str
+    is_default: bool = False
+    last_commit_date: Optional[str] = None
+    last_commit_message: Optional[str] = None
+
+
 class GitCloneInfo(BaseModel):
     """Information needed for cloning a repository"""
     ssh_url: str

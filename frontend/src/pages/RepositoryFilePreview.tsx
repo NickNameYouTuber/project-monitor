@@ -37,7 +37,9 @@ const RepositoryFilePreview: React.FC<FilePreviewProps> = () => {
                                decodedPath.toLowerCase().endsWith('.markdown');
         setIsMarkdown(isMarkdownFile);
 
-        const response = await api.get(`/repositories/${repositoryId}/content/${decodedPath}`);
+        const response = await api.get(`/repositories/${repositoryId}/content/${decodedPath}`, {
+          params: { branch }
+        });
         
         setFileContent(response.data.content);
       } catch (err) {
