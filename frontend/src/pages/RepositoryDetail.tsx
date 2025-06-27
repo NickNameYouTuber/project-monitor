@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import RepositoryFileExplorer from '../components/repositories/RepositoryFileExplorer';
-import FileViewer from '../components/repositories/FileViewer';
 import CommitHistory from '../components/repositories/CommitHistory';
 import RepositoryCloneInfo from '../components/repositories/RepositoryCloneInfo';
 
@@ -23,19 +22,6 @@ interface Repository {
   updated_at: string;
 }
 
-interface GitFile {
-  name: string;
-  path: string;
-  type: 'file' | 'directory';
-  size: number | null;
-  last_commit: {
-    hash: string;
-    message: string;
-    date: string;
-    author: string;
-  };
-}
-
 const RepositoryDetail: React.FC = () => {
   const { repositoryId } = useParams<{ repositoryId: string }>();
   const navigate = useNavigate();
@@ -43,7 +29,6 @@ const RepositoryDetail: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'code' | 'commits' | 'members' | 'clone'>('code');
-  const [selectedFile, setSelectedFile] = useState<GitFile | null>(null);
 
   useEffect(() => {
     const fetchRepository = async () => {
@@ -66,10 +51,6 @@ const RepositoryDetail: React.FC = () => {
 
   const handleTabChange = (tab: 'code' | 'commits' | 'members' | 'clone') => {
     setActiveTab(tab);
-  };
-
-  const handleFileSelect = (file: GitFile) => {
-    setSelectedFile(file);
   };
 
   const handleBackClick = () => {
@@ -153,19 +134,13 @@ const RepositoryDetail: React.FC = () => {
         {activeTab === 'code' && (
           <div className="space-y-6">
             <div className="bg-[var(--bg-card)] rounded-lg p-4 border-l-4 border-[var(--color-primary-light)]">
-              <RepositoryFileExplorer 
-                onFileSelect={handleFileSelect}
-              />
-              <FileViewer 
-                repositoryId={repository.id} 
-                file={selectedFile} 
-              />
+              <RepositoryFileExplorer />
             </div>
           </div>
         )}
         {activeTab === 'commits' && (
           <div className="bg-[var(--bg-card)] rounded-lg p-4 border-l-4 border-[var(--color-primary-light)]">
-            <CommitHistory repositoryId={repository.id} path={selectedFile?.path || ''} />
+            <CommitHistory repositoryId={repository.id} path="" />
           </div>
         )}
         {activeTab === 'members' && (

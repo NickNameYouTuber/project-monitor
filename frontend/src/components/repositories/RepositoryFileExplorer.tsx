@@ -17,10 +17,10 @@ interface GitFile {
 }
 
 interface RepositoryFileExplorerProps {
-  onFileSelect: (file: GitFile) => void;
+  // Пропсы не требуются для текущей реализации
 }
 
-const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileSelect }) => {
+const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
   const { repositoryId } = useParams<{ repositoryId: string }>();
   const navigate = useNavigate();
   const [files, setFiles] = useState<GitFile[]>([]);
