@@ -39,6 +39,35 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
     fetchFiles(currentPath);
   }, [repositoryId, currentPath, currentBranch]);
   
+  // Добавляем отдельный эффект для загрузки README.md из корня репозитория при первичной загрузке
+  useEffect(() => {
+    if (currentPath === '' && repositoryId) {
+      // Проверяем файлы на наличие README.md
+      const checkForReadme = async () => {
+        try {
+          // Получаем список файлов в корне
+          const response = await api.get(`/repositories/${repositoryId}/files`, {
+            params: { path: '', branch: currentBranch }
+          });
+          
+          // Ищем README.md в списке файлов
+          const readmeFile = response.data.find((file: GitFile) => 
+            file.type === 'file' && 
+            (file.name.toLowerCase() === 'readme.md' || file.name.toLowerCase() === 'readme.markdown')
+          );
+          
+          if (readmeFile) {
+            fetchReadmeContent(readmeFile.path);
+          }
+        } catch (err) {
+          console.error('Error checking for README:', err);
+        }
+      };
+      
+      checkForReadme();
+    }
+  }, [repositoryId, currentBranch]);
+  
   const fetchBranches = async () => {
     try {
       const response = await api.get(`/repositories/${repositoryId}/branches`);
@@ -99,8 +128,11 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
   
   const fetchReadmeContent = async (path: string) => {
     try {
+      // Добавляем проверку на пустой путь (чтобы README из корня показывался)
+      const readmePath = path || 'README.md';
+      
       const response = await api.get(`/repositories/${repositoryId}/file-content`, {
-        params: { path, branch: currentBranch }
+        params: { path: readmePath, branch: currentBranch }
       });
       
       setReadmeContent(response.data.content);
@@ -114,6 +146,7 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
     if (file.type === 'directory') {
       setCurrentPath(file.path);
     } else {
+      // Исправляем навигацию - начинаем URL с / чтобы навигация работала от корня
       navigate(`/repositories/${repositoryId}/file/${encodeURIComponent(file.path)}?branch=${currentBranch}`);
     }
   };
@@ -142,7 +175,7 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
               </svg>
             )}
             <button
-              className="hover:text-[var(--color-primary)] transition-colors"
+              className="bg-[var(--bg-tertiary)] px-2 py-1 rounded hover:text-[var(--color-primary)] hover:bg-[var(--bg-secondary)] transition-colors font-medium"
               onClick={() => navigateToBreadcrumb(breadcrumb.path)}
             >
               {breadcrumb.name}
@@ -181,31 +214,36 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
 
   return (
     <div className="bg-[var(--bg-primary)] rounded-lg overflow-auto">
-      {/* Branch selector */}
-      <div className="p-4 mb-4 flex flex-wrap items-center justify-between border-b border-[var(--border-primary)]">
-        <div className="flex-1 min-w-0">
-          {currentPath && renderBreadcrumbs()}
-        </div>
-        <div className="ml-4 flex-shrink-0">
-          <div className="relative">
-            <select 
-              value={currentBranch}
-              onChange={handleBranchChange}
-              className="appearance-none pl-3 pr-10 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
-              {branches.length > 0 ? (
-                branches.map(branch => (
-                  <option key={branch} value={branch}>{branch}</option>
-                ))
-              ) : (
-                <option value="main">main</option>
-              )}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--text-primary)]">
-              <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
+      {/* Branch selector и breadcrumbs */}
+      <div className="p-4 mb-4 flex flex-wrap items-center border-b border-[var(--border-primary)]">
+        <div className="mr-4 flex-shrink-0">
+          <div className="flex items-center">
+            <div className="mr-2 text-[var(--text-secondary)] font-medium">Ветка:</div>
+            <div className="relative">
+              <select 
+                value={currentBranch}
+                onChange={handleBranchChange}
+                className="appearance-none pl-3 pr-10 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+                {branches.length > 0 ? (
+                  branches.map(branch => (
+                    <option key={branch} value={branch}>{branch}</option>
+                  ))
+                ) : (
+                  <option value="main">main</option>
+                )}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--text-primary)]">
+                <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
             </div>
           </div>
+        </div>
+        <div className="flex-1 min-w-0 ml-2">
+          {currentPath ? renderBreadcrumbs() : (
+            <div className="text-[var(--text-secondary)] font-medium py-2">Корневая директория</div>
+          )}
         </div>
       </div>
       

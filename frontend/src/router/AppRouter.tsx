@@ -9,6 +9,7 @@ import Layout from '../components/layout/Layout';
 import RepositoryList from '../components/repositories/RepositoryList';
 import RepositoryCreate from '../components/repositories/RepositoryCreate';
 import RepositoryDetail from '../pages/RepositoryDetail';
+import RepositoryFilePreview from '../pages/RepositoryFilePreview';
 
 // Protected route component
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
@@ -98,12 +99,12 @@ const AppRouter: React.FC = () => {
           } 
         />
         <Route 
-          path="/repositories/:repositoryId" 
+          path="/repositories/:repositoryId/file/:filePath" 
           element={
             <ProtectedRoute 
               element={
                 <Layout>
-                  <RepositoryDetail />
+                  <RepositoryFilePreview />
                 </Layout>
               } 
             />
