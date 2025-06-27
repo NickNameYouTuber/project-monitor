@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../services/api';
-import ReactMarkdown from 'react-markdown';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-markdown-preview/markdown.css';
 
 interface FilePreviewProps {
   // Компонент может принимать пропсы, но мы используем params из роута
@@ -103,12 +104,18 @@ const RepositoryFilePreview: React.FC<FilePreviewProps> = () => {
           </div>
           <div className="p-4">
             {isMarkdown ? (
-              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)]">
-                <ReactMarkdown>{fileContent || ''}</ReactMarkdown>
+              <div className="markdown-content bg-white dark:bg-gray-800 rounded p-4 shadow">
+                <MDEditor.Markdown 
+                  source={fileContent || ''} 
+                  style={{ 
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-primary)'
+                  }}
+                />
               </div>
             ) : (
-              <pre className="bg-[var(--bg-tertiary)] p-4 rounded text-[var(--text-primary)] overflow-x-auto text-sm font-mono">
-                {fileContent || ''}
+              <pre className="bg-white dark:bg-gray-800 rounded p-4 shadow overflow-x-auto">
+                <code>{fileContent}</code>
               </pre>
             )}
           </div>
