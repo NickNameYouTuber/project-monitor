@@ -4,7 +4,6 @@ import { useAppContext } from '../../utils/AppContext';
 import { api } from '../../utils/api';
 import type { RepositoryCreate as RepositoryCreateType } from '../../utils/api/repositories';
 import { VisibilityType } from '../../utils/api/repositories';
-import PageHeader from '../../components/common/PageHeader';
 
 const RepositoryCreate: React.FC = () => {
   const navigate = useNavigate();
@@ -85,111 +84,124 @@ const RepositoryCreate: React.FC = () => {
   }, [currentUser?.token, formData, navigate]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Create Repository"
-        backButton={{ text: 'Back to Repositories', link: '/repositories' }}
-      />
+    <div className="bg-[var(--bg-primary)] rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 text-[var(--text-primary)]">Create New Repository</h2>
       
-      <div className="bg-bg-secondary rounded-lg shadow p-6 max-w-2xl mx-auto">
-        {error && (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-            <p>{error}</p>
-          </div>
-        )}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Repository Name *</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-[var(--border-primary)] rounded-md bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            placeholder="e.g., my-new-project"
+            required
+          />
+          {error && <p className="text-[var(--state-error)] text-sm mt-1">{error}</p>}
+        </div>
         
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="name" className="block text-text-primary font-medium mb-2">
-              Repository Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-border rounded focus:ring-2 focus:ring-primary focus:border-primary bg-bg-primary text-text-primary"
-              placeholder="my-awesome-repo"
-              required
-            />
+        <div>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-[var(--border-primary)] rounded-md bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            placeholder="A brief description of your repository"
+            rows={3}
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Visibility *</label>
+          <div className="flex items-center space-x-6 mt-2">
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="private"
+                name="visibility"
+                value={VisibilityType.PRIVATE}
+                checked={formData.visibility === VisibilityType.PRIVATE}
+                onChange={handleInputChange}
+                className="text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+              />
+              <label htmlFor="private" className="ml-2 text-sm text-[var(--text-secondary)]">Private</label>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="internal"
+                name="visibility"
+                value={VisibilityType.INTERNAL}
+                checked={formData.visibility === VisibilityType.INTERNAL}
+                onChange={handleInputChange}
+                className="text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+              />
+              <label htmlFor="internal" className="ml-2 text-sm text-[var(--text-secondary)]">Internal</label>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="public"
+                name="visibility"
+                value={VisibilityType.PUBLIC}
+                checked={formData.visibility === VisibilityType.PUBLIC}
+                onChange={handleInputChange}
+                className="text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+              />
+              <label htmlFor="public" className="ml-2 text-sm text-[var(--text-secondary)]">Public</label>
+            </div>
           </div>
-          
-          <div className="mb-4">
-            <label htmlFor="description" className="block text-text-primary font-medium mb-2">
-              Description (optional)
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={3}
-              className="w-full p-2 border border-border rounded focus:ring-2 focus:ring-primary focus:border-primary bg-bg-primary text-text-primary"
-              placeholder="Short description of your repository"
-            />
-          </div>
-          
-          <div className="mb-6">
-            <label htmlFor="visibility" className="block text-text-primary font-medium mb-2">
-              Visibility
-            </label>
-            <select
-              id="visibility"
-              name="visibility"
-              value={formData.visibility}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-border rounded focus:ring-2 focus:ring-primary focus:border-primary bg-bg-primary text-text-primary"
-            >
-              <option value={VisibilityType.PRIVATE}>Private - Only you and people you specify</option>
-              <option value={VisibilityType.INTERNAL}>Internal - All authenticated users</option>
-              <option value={VisibilityType.PUBLIC}>Public - Everyone can see</option>
-            </select>
-          </div>
-          
-          <div className="mb-6">
-            <label htmlFor="project_id" className="block text-text-primary font-medium mb-2">
-              Link to Project (optional)
-            </label>
-            <select
-              id="project_id"
-              name="project_id"
-              value={formData.project_id || ''}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-border rounded focus:ring-2 focus:ring-primary focus:border-primary bg-bg-primary text-text-primary"
-              disabled={isLoadingProjects}
-            >
-              <option value="">Not linked to any project</option>
-              {projects.map(project => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
-            {isLoadingProjects && (
-              <p className="mt-1 text-sm text-text-tertiary">Loading projects...</p>
-            )}
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={() => navigate('/repositories')}
-              className="px-4 py-2 border border-border rounded text-text-primary hover:bg-bg-tertiary"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Creating...' : 'Create Repository'}
-            </button>
-          </div>
-        </form>
-      </div>
+          <p className="text-xs text-[var(--text-muted)] mt-1">
+            {formData.visibility === VisibilityType.PUBLIC ? 
+              'Anyone on the internet can see this repository.' : 
+              formData.visibility === VisibilityType.INTERNAL ? 
+                'All authenticated users can see this repository.' : 
+                'Only you and people you explicitly share access with can see this repository.'}
+          </p>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Link to Project (optional)</label>
+          <select
+            id="project_id"
+            name="project_id"
+            value={formData.project_id || ''}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-[var(--border-primary)] rounded-md bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            disabled={isLoadingProjects}
+          >
+            <option value="">Not linked to any project</option>
+            {projects.map(project => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+          {isLoadingProjects && (
+            <p className="mt-1 text-sm text-[var(--text-tertiary)]">Loading projects...</p>
+          )}
+        </div>
+        
+        <div className="flex justify-end space-x-3 pt-3">
+          <button
+            type="button"
+            onClick={() => navigate('/repositories')}
+            className="px-4 py-2 border border-[var(--border-primary)] rounded-md text-[var(--text-primary)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`px-4 py-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isSubmitting ? 'bg-[var(--color-secondary)] cursor-not-allowed' : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]'}`}
+          >
+            {isSubmitting ? 'Creating...' : 'Create Repository'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

@@ -110,29 +110,29 @@ const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => 
   }
 
   return (
-    <div className="bg-white shadow rounded-lg p-4 h-full overflow-auto flex flex-col">
-      <h2 className="text-lg font-semibold mb-4">Commit History</h2>
+    <div className="bg-[var(--bg-secondary)] shadow rounded-lg p-4 h-full overflow-auto flex flex-col">
+      <h2 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Commit History</h2>
       {commits.length === 0 ? (
-        <p className="p-2 text-gray-500 text-sm">No commits found</p>
+        <p className="p-2 text-gray-500 text-sm text-[var(--text-muted)]">No commits found</p>
       ) : (
-        <div className="flex-grow overflow-auto divide-y divide-gray-200 border-b border-gray-200 mb-4">
+        <div className="flex-grow overflow-auto divide-y divide-[var(--border-primary)] border-b border-[var(--border-primary)] mb-4">
           {commits.map((commit) => (
             <button
               key={commit.hash}
               onClick={() => handleCommitClick(commit)}
-              className="w-full text-left py-3 px-2 hover:bg-gray-100 transition-colors"
+              className="w-full text-left py-3 px-2 hover:bg-[var(--bg-tertiary)] transition-colors"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1">
-                <div className="font-medium truncate">{commit.message}</div>
-                <div className="text-xs text-gray-500">{formatDate(commit.date)}</div>
+                <div className="font-medium truncate text-[var(--text-primary)]">{commit.message}</div>
+                <div className="text-xs text-gray-500 text-[var(--text-muted)]">{formatDate(commit.date)}</div>
               </div>
               <div className="flex items-center text-sm text-gray-600 truncate">
                 <div className="mr-2 w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium">
                   {commit.author.charAt(0).toUpperCase()}
                 </div>
-                <span className="truncate">{commit.author}</span>
+                <span className="truncate text-[var(--text-secondary)]">{commit.author}</span>
                 <div className="mx-2 text-gray-400">|</div>
-                <span className="text-gray-500 truncate">{commit.hash.substring(0, 7)}</span>
+                <span className="text-gray-500 truncate text-[var(--text-muted)]">{commit.hash.substring(0, 7)}</span>
               </div>
             </button>
           ))}
@@ -168,25 +168,25 @@ const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => 
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               </div>
             )}
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">{selectedCommitDetail.message}</h3>
-              <div className="flex items-center mt-1 text-sm text-gray-600">
+            <div className="p-4 border-b border-[var(--border-primary)] flex justify-between items-center bg-[var(--bg-header)]">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">{selectedCommitDetail.message}</h3>
+              <div className="flex items-center mt-1 text-sm text-gray-600 text-[var(--text-muted)]">
                 <div className="mr-2 w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm font-medium">
                   {selectedCommitDetail.author.charAt(0).toUpperCase()}
                 </div>
-                <span>{selectedCommitDetail.author}</span>
+                <span className="text-[var(--text-secondary)]">{selectedCommitDetail.author}</span>
                 <div className="mx-2 text-gray-400">|</div>
-                <span>{formatDate(selectedCommitDetail.date)}</span>
+                <span className="text-gray-500 text-[var(--text-muted)]">{formatDate(selectedCommitDetail.date)}</span>
                 <div className="mx-2 text-gray-400">|</div>
-                <span className="font-mono">{selectedCommitDetail.hash.substring(0, 7)}</span>
+                <span className="font-mono text-[var(--text-muted)]">{selectedCommitDetail.hash.substring(0, 7)}</span>
               </div>
             </div>
             <div className="p-4 max-h-[60vh] overflow-auto">
               {selectedCommitDetail.changes.map((change, index) => (
-                <div key={index} className="mb-6 border-l-4 border-gray-200 pl-3">
+                <div key={index} className="mb-6 border-l-4 border-[var(--border-primary)] pl-3">
                   <div className="mb-2 flex items-center justify-between">
                     <div className="flex items-center text-sm truncate">
-                      <span className="truncate font-medium">{change.file_path}</span>
+                      <span className="truncate font-medium text-[var(--text-primary)]">{change.file_path}</span>
                       <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${change.change_type === 'added' ? 'bg-green-100 text-green-800' : change.change_type === 'deleted' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>{change.change_type}</span>
                     </div>
                   </div>
@@ -210,7 +210,7 @@ const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => 
                 </div>
               ))}
             </div>
-            <div className="p-4 border-t border-gray-200 flex justify-end">
+            <div className="p-4 border-t border-[var(--border-primary)] flex justify-end">
               <button onClick={handleCloseDialog} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">Close</button>
             </div>
           </div>

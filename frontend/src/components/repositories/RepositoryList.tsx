@@ -37,7 +37,7 @@ const RepositoryList: React.FC = () => {
   }, [fetchRepositories]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="bg-[var(--bg-primary)] rounded-lg shadow-md p-6">
       <PageHeader
         title="Git Repositories"
         actionButton={{
@@ -47,55 +47,70 @@ const RepositoryList: React.FC = () => {
       />
       
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="spinner" />
-        </div>
+        <div className="text-center py-12 text-[var(--text-muted)]">Loading repositories...</div>
       ) : error ? (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-          <p>{error}</p>
-          <button 
-            className="mt-2 text-sm underline" 
-            onClick={() => fetchRepositories()}
-          >
-            Try again
-          </button>
+        <div className="text-center py-12 text-[var(--state-error)] bg-[var(--state-error-light)] p-4 rounded-md">
+          {error}
         </div>
       ) : repositories.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-text-secondary mb-4">
-            You don't have any repositories yet.
-          </p>
+        <div className="text-center py-12 border border-dashed border-[var(--border-primary)] rounded-lg bg-[var(--bg-secondary)]">
+          <p className="text-[var(--text-muted)] mb-3">You don&apos;t have any repositories yet.</p>
           <Link 
             to="/repositories/create" 
-            className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded"
+            className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           >
             Create your first repository
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
           {repositories.map((repo) => (
             <Link 
               key={repo.id}
               to={`/repositories/${repo.id}`} 
-              className="bg-bg-secondary rounded-lg shadow-sm border border-border hover:shadow-md transition-shadow p-6"
+              className="border border-[var(--border-primary)] rounded-lg p-4 bg-[var(--bg-secondary)] hover:border-[var(--color-primary)] transition-colors"
             >
-              <h3 className="text-xl font-semibold text-text-primary mb-2">
-                {repo.name}
-              </h3>
-              <p className="text-text-secondary mb-4 line-clamp-2">
-                {repo.description || 'No description provided'}
-              </p>
-              <div className="flex items-center text-sm text-text-tertiary">
-                <span className={`
-                  inline-block rounded-full px-2 py-1 mr-2 text-xs
-                  ${repo.visibility === 'public' ? 'bg-green-100 text-green-800' : 
-                    repo.visibility === 'internal' ? 'bg-yellow-100 text-yellow-800' : 
-                    'bg-red-100 text-red-800'}
-                `}>
-                  {repo.visibility.charAt(0).toUpperCase() + repo.visibility.slice(1)}
-                </span>
-                <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="font-medium text-[var(--text-primary)] hover:underline cursor-pointer">
+                    {repo.name}
+                  </h3>
+                  {repo.description && (
+                    <p className="text-sm text-[var(--text-muted)] line-clamp-2 mt-1">{repo.description}</p>
+                  )}
+                </div>
+                <div className="flex items-center text-xs text-[var(--text-muted)] whitespace-nowrap">
+                  Updated {new Date(repo.updated_at).toLocaleDateString()}
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center text-xs pt-2 border-t border-[var(--border-primary)] mt-2">
+                <div className="flex items-center space-x-4">
+                  <span className="inline-flex items-center text-[var(--text-muted)]">
+                    {repo.visibility === 'public' ? (
+                      <span className="inline-block rounded-full px-2 py-1 mr-2 text-xs bg-green-100 text-green-800">
+                        Public
+                      </span>
+                    ) : repo.visibility === 'internal' ? (
+                      <span className="inline-block rounded-full px-2 py-1 mr-2 text-xs bg-yellow-100 text-yellow-800">
+                        Internal
+                      </span>
+                    ) : (
+                      <span className="inline-block rounded-full px-2 py-1 mr-2 text-xs bg-red-100 text-red-800">
+                        Private
+                      </span>
+                    )}
+                  </span>
+                </div>
+                
+                <div className="flex space-x-3 text-[var(--text-muted)]">
+                  <button
+                    onClick={() => {}}
+                    className="hover:text-[var(--color-primary)] transition-colors"
+                  >
+                    Details
+                  </button>
+                </div>
               </div>
             </Link>
           ))}

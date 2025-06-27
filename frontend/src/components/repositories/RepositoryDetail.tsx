@@ -73,23 +73,23 @@ const RepositoryDetail: React.FC = () => {
   const getMemberRoleBadge = (role: string) => {
     switch(role) {
       case 'admin':
-        return <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">Admin</span>;
+        return <span className="bg-[var(--theme-colors-admin-100)] text-[var(--theme-colors-admin-800)] px-2 py-1 rounded-full text-xs">Admin</span>;
       case 'contributor':
-        return <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Contributor</span>;
+        return <span className="bg-[var(--theme-colors-contributor-100)] text-[var(--theme-colors-contributor-800)] px-2 py-1 rounded-full text-xs">Contributor</span>;
       case 'viewer':
       default:
-        return <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Viewer</span>;
+        return <span className="bg-[var(--theme-colors-viewer-100)] text-[var(--theme-colors-viewer-800)] px-2 py-1 rounded-full text-xs">Viewer</span>;
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 bg-[var(--bg-primary)] text-[var(--text-primary)]">
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="spinner" />
         </div>
       ) : error ? (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+        <div className="bg-[var(--state-error-light)] border-l-4 border-[var(--state-error)] text-[var(--state-error)] p-4 mb-4" role="alert">
           <p>{error}</p>
           <button 
             className="mt-2 text-sm underline" 
@@ -103,12 +103,12 @@ const RepositoryDetail: React.FC = () => {
           <PageHeader
             title={repository.name}
             subtitle={
-              <div className="flex items-center text-sm text-text-tertiary">
+              <div className="flex items-center text-sm text-[var(--text-tertiary)]">
                 <span className={`
                   inline-block rounded-full px-2 py-1 mr-2 text-xs
-                  ${repository.visibility === 'public' ? 'bg-green-100 text-green-800' : 
-                    repository.visibility === 'internal' ? 'bg-yellow-100 text-yellow-800' : 
-                    'bg-red-100 text-red-800'}
+                  ${repository.visibility === 'public' ? 'bg-[var(--color-green-100)] text-[var(--color-green-800)]' : 
+                    repository.visibility === 'internal' ? 'bg-[var(--color-yellow-100)] text-[var(--color-yellow-800)]' : 
+                    'bg-[var(--color-red-100)] text-[var(--color-red-800)]'}
                 `}>
                   {repository.visibility.charAt(0).toUpperCase() + repository.visibility.slice(1)}
                 </span>
@@ -119,27 +119,27 @@ const RepositoryDetail: React.FC = () => {
           />
           
           {repository.description && (
-            <div className="bg-bg-secondary p-4 rounded-lg mb-6">
-              <p className="text-text-primary">{repository.description}</p>
+            <div className="bg-[var(--bg-secondary)] p-4 rounded-lg mb-6">
+              <p className="text-[var(--text-primary)]">{repository.description}</p>
             </div>
           )}
           
-          <div className="mb-6 border-b border-border">
+          <div className="mb-6 border-b border-[var(--border-primary)]">
             <nav className="flex space-x-6">
               <button
-                className={`py-2 px-1 ${activeTab === 'overview' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary'}`}
+                className={`py-2 px-1 ${activeTab === 'overview' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)]'}`}
                 onClick={() => setActiveTab('overview')}
               >
                 Overview
               </button>
               <button
-                className={`py-2 px-1 ${activeTab === 'files' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary'}`}
+                className={`py-2 px-1 ${activeTab === 'files' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)]'}`}
                 onClick={() => setActiveTab('files')}
               >
                 Files
               </button>
               <button
-                className={`py-2 px-1 ${activeTab === 'members' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary'}`}
+                className={`py-2 px-1 ${activeTab === 'members' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)]'}`}
                 onClick={() => setActiveTab('members')}
               >
                 Members
@@ -151,14 +151,14 @@ const RepositoryDetail: React.FC = () => {
           <div className="mb-6">
             {activeTab === 'overview' && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">About this repository</h3>
-                <div className="bg-bg-secondary rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-2 text-[var(--text-primary)]">About this repository</h3>
+                <div className="bg-[var(--bg-secondary)] rounded-lg p-4">
                   {repository.project_id && (
                     <div className="mb-2">
-                      <span className="text-text-secondary">Linked Project: </span>
+                      <span className="text-[var(--text-secondary)]">Linked Project: </span>
                       <Link 
                         to={`/projects/${repository.project_id}/tasks`}
-                        className="text-primary hover:underline"
+                        className="text-[var(--color-primary)] hover:underline"
                       >
                         View Project
                       </Link>
@@ -166,8 +166,8 @@ const RepositoryDetail: React.FC = () => {
                   )}
                   
                   <div className="mb-2">
-                    <span className="text-text-secondary">Clone URL: </span>
-                    <code className="bg-bg-tertiary text-text-primary p-1 rounded">
+                    <span className="text-[var(--text-secondary)]">Clone URL: </span>
+                    <code className="bg-[var(--bg-tertiary)] text-[var(--text-primary)] p-1 rounded">
                       {repository.url || 'Not available yet'}
                     </code>
                   </div>
@@ -177,13 +177,13 @@ const RepositoryDetail: React.FC = () => {
                       <div className="flex space-x-4">
                         <Link 
                           to={`/repositories/${repository.id}/edit`}
-                          className="text-primary hover:underline"
+                          className="text-[var(--color-primary)] hover:underline"
                         >
                           Edit Repository
                         </Link>
                         <button 
                           onClick={handleDeleteRepository}
-                          className="text-red-600 hover:underline"
+                          className="text-[var(--state-error)] hover:underline"
                         >
                           Delete Repository
                         </button>
@@ -195,17 +195,17 @@ const RepositoryDetail: React.FC = () => {
             )}
             
             {activeTab === 'files' && (
-              <div className="bg-bg-secondary rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4">Repository Files</h3>
-                <p className="text-text-secondary">
+              <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Repository Files</h3>
+                <p className="text-[var(--text-secondary)]">
                   File browsing functionality will be available soon.
                 </p>
-                <div className="mt-4 p-4 border border-dashed border-border rounded-lg">
-                  <h4 className="font-medium mb-2">Quick Start</h4>
-                  <p className="text-sm text-text-tertiary mb-2">
+                <div className="mt-4 p-4 border border-dashed border-[var(--border-primary)] rounded-lg">
+                  <h4 className="font-medium mb-2 text-[var(--text-primary)]">Quick Start</h4>
+                  <p className="text-sm text-[var(--text-tertiary)] mb-2">
                     To push an existing repository:
                   </p>
-                  <pre className="bg-bg-tertiary p-3 rounded text-xs overflow-auto">
+                  <pre className="bg-[var(--bg-tertiary)] p-3 rounded text-xs overflow-auto">
 {`git remote add origin ${repository.url || '[REPOSITORY_URL]'}
 git branch -M main
 git push -u origin main`}
@@ -217,10 +217,10 @@ git push -u origin main`}
             {activeTab === 'members' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Repository Members</h3>
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">Repository Members</h3>
                   {isOwner && (
                     <button 
-                      className="px-3 py-2 bg-primary hover:bg-primary-dark text-white rounded text-sm"
+                      className="px-3 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white rounded text-sm"
                       onClick={() => alert('Add member functionality will be available soon.')}
                     >
                       Add Member
@@ -228,36 +228,36 @@ git push -u origin main`}
                   )}
                 </div>
                 
-                <div className="bg-bg-secondary rounded-lg overflow-hidden">
+                <div className="bg-[var(--bg-secondary)] rounded-lg overflow-hidden">
                   {members.length > 0 ? (
-                    <div className="min-w-full divide-y divide-border">
-                      <div className="bg-bg-tertiary">
+                    <div className="min-w-full divide-y divide-[var(--border-primary)]">
+                      <div className="bg-[var(--bg-tertiary)]">
                         <div className="grid grid-cols-12 gap-2 px-6 py-3 text-left">
-                          <div className="col-span-5 text-xs font-medium text-text-tertiary uppercase tracking-wider">User</div>
-                          <div className="col-span-3 text-xs font-medium text-text-tertiary uppercase tracking-wider">Role</div>
-                          <div className="col-span-3 text-xs font-medium text-text-tertiary uppercase tracking-wider">Added</div>
+                          <div className="col-span-5 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">User</div>
+                          <div className="col-span-3 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">Role</div>
+                          <div className="col-span-3 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">Added</div>
                           <div className="col-span-1"></div>
                         </div>
                       </div>
-                      <div className="divide-y divide-border">
+                      <div className="divide-y divide-[var(--border-primary)]">
                         {members.map(member => (
-                          <div key={member.id} className="grid grid-cols-12 gap-2 px-6 py-4 hover:bg-bg-tertiary">
+                          <div key={member.id} className="grid grid-cols-12 gap-2 px-6 py-4 hover:bg-[var(--bg-tertiary)]">
                             <div className="col-span-5 flex items-center">
-                              <span className="text-text-primary">{member.user.username}</span>
+                              <span className="text-[var(--text-primary)]">{member.user.username}</span>
                               {repository.owner_id === member.user_id && (
-                                <span className="ml-2 bg-gray-200 text-gray-800 px-2 py-0.5 rounded-full text-xs">Owner</span>
+                                <span className="ml-2 bg-[var(--color-gray-200)] text-[var(--color-gray-800)] px-2 py-0.5 rounded-full text-xs">Owner</span>
                               )}
                             </div>
                             <div className="col-span-3">
                               {getMemberRoleBadge(member.role)}
                             </div>
-                            <div className="col-span-3 text-text-tertiary text-sm">
+                            <div className="col-span-3 text-[var(--text-tertiary)] text-sm">
                               {new Date(member.created_at).toLocaleDateString()}
                             </div>
                             <div className="col-span-1 flex justify-end">
                               {isOwner && repository.owner_id !== member.user_id && (
                                 <button 
-                                  className="text-red-600 hover:text-red-800"
+                                  className="text-[var(--state-error)] hover:text-[var(--state-error-dark)]"
                                   onClick={() => alert('Remove member functionality will be available soon.')}
                                 >
                                   <span className="sr-only">Remove</span>
@@ -273,7 +273,7 @@ git push -u origin main`}
                     </div>
                   ) : (
                     <div className="p-6 text-center">
-                      <p className="text-text-secondary">No members found.</p>
+                      <p className="text-[var(--text-secondary)]">No members found.</p>
                     </div>
                   )}
                 </div>
@@ -283,10 +283,10 @@ git push -u origin main`}
         </>
       ) : (
         <div className="text-center">
-          <p className="text-text-secondary mb-4">Repository not found</p>
+          <p className="text-[var(--text-secondary)] mb-4">Repository not found</p>
           <Link 
             to="/repositories" 
-            className="text-primary hover:underline"
+            className="text-[var(--color-primary)] hover:underline"
           >
             Back to Repositories
           </Link>
