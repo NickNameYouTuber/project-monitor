@@ -157,16 +157,36 @@ async def get_file_content(
             try:
                 file_content = repo.git.show(f"{branch.name}:{file_path}")
                 
-                # Определяем, является ли файл бинарным
-                is_binary = False
-                try:
-                    if b'\0' in file_content.encode('utf-8'):
-                        is_binary = True
-                    non_printable = sum(1 for c in file_content if not (32 <= ord(c) < 127 or c in '\t\r\n'))
-                    if non_printable / len(file_content) > 0.2:
-                        is_binary = True
-                except UnicodeError:
-                    is_binary = True
+                # Определяем тип файла по расширению и содержимому
+                # Будем считать текстовыми файлы с определенными расширениями + файлы без null-байтов
+                file_extension = os.path.splitext(file_path)[1].lower()
+                
+                # Список расширений, которые точно являются текстовыми файлами, даже с эмодзи
+                text_extensions = {
+                    '.md', '.markdown', '.txt', '.json', '.yml', '.yaml', '.css', '.scss', '.less',
+                    '.js', '.jsx', '.ts', '.tsx', '.html', '.htm', '.xml', '.svg', '.py', '.rb',
+                    '.java', '.c', '.cpp', '.h', '.cs', '.go', '.php', '.sh', '.bash', '.zsh',
+                    '.bat', '.ps1', '.sql', '.ini', '.conf', '.cfg', '.toml', '.rst', '.tex',
+                    '.gitignore', '.env', '.editorconfig', 'dockerfile', '.htaccess'
+                }
+                
+                # Если у файла известное текстовое расширение, сразу считаем его текстовым
+                if file_extension in text_extensions:
+                    is_binary = False
+                else:
+                    # Для файлов с неизвестными расширениями используем только проверку на null-байты
+                    is_binary = False
+                    try:
+                        # Проверка только на null-байты - самый надежный способ определить бинарные файлы
+                        # Эмодзи и другие Unicode-символы не содержат null-байты
+                        if b'\0' in file_content.encode('utf-8', errors='ignore'):
+                            is_binary = True
+                    except Exception:
+                        # Если произошла ошибка при кодировании, не считаем файл бинарным автоматически
+                        # Для MD файлов мы уже решили, что они текстовые
+                        print(f"Unicode encoding error but file might still be text: {str(file_path)}")
+                        # Для маркдаунов и текста не считаем файл бинарным по умолчанию
+                        pass
                     
                 if not is_binary:
                     # Возвращаем текстовое содержимое
