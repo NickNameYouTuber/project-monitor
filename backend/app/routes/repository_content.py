@@ -153,23 +153,52 @@ async def get_file_content(
         
         # Try to get file from git
         try:
-            file_content = repo.git.show(f"{branch.name}:{file_path}")
-            
-            # Determine if binary by checking for null bytes or if >20% is non-printable
-            is_binary = False
+            # Сначала пробуем получить содержимое как текст
             try:
-                if b'\0' in file_content.encode('utf-8'):
-                    is_binary = True
-                non_printable = sum(1 for c in file_content if not (32 <= ord(c) < 127 or c in '\t\r\n'))
-                if non_printable / len(file_content) > 0.2:
-                    is_binary = True
-            except UnicodeError:
-                is_binary = True
+                file_content = repo.git.show(f"{branch.name}:{file_path}")
                 
-            if is_binary:
-                # Return base64 encoded content for binary files
-                binary_content = repo.git.show(f"{branch.name}:{file_path}", binary=True)
+                # Определяем, является ли файл бинарным
+                is_binary = False
+                try:
+                    if b'\0' in file_content.encode('utf-8'):
+                        is_binary = True
+                    non_printable = sum(1 for c in file_content if not (32 <= ord(c) < 127 or c in '\t\r\n'))
+                    if non_printable / len(file_content) > 0.2:
+                        is_binary = True
+                except UnicodeError:
+                    is_binary = True
+                    
+                if not is_binary:
+                    # Возвращаем текстовое содержимое
+                    return {
+                        "name": os.path.basename(file_path),
+                        "path": file_path,
+                        "content": file_content,
+                        "encoding": "utf-8",
+                        "size": len(file_content),
+                        "binary": False
+                    }
+            except Exception as e:
+                print(f"Error getting file as text: {str(e)}")
+                pass  # Если не удалось получить как текст, попробуем как бинарный
+            
+            # Получаем бинарное содержимое
+            try:
+                # Используем git.execute без GitPython для получения сырых байтов
+                git_cmd = ['git', 'show', f"{branch.name}:{file_path}"]
+                import subprocess
+                result = subprocess.run(
+                    git_cmd,
+                    cwd=str(repo_path),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=True
+                )
+                binary_content = result.stdout
+                
+                # Кодируем в base64
                 encoded_content = base64.b64encode(binary_content).decode('ascii')
+                
                 return {
                     "name": os.path.basename(file_path),
                     "path": file_path,
@@ -178,16 +207,12 @@ async def get_file_content(
                     "size": len(binary_content),
                     "binary": True
                 }
-            else:
-                # Return text content
-                return {
-                    "name": os.path.basename(file_path),
-                    "path": file_path,
-                    "content": file_content,
-                    "encoding": "utf-8",
-                    "size": len(file_content),
-                    "binary": False
-                }
+            except subprocess.CalledProcessError as e:
+                print(f"Subprocess error: {e.stderr.decode() if e.stderr else str(e)}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error accessing file: {e.stderr.decode() if e.stderr else str(e)}"
+                )
                 
         except git.GitCommandError as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
