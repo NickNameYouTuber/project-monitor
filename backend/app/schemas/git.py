@@ -31,7 +31,7 @@ class GitFile(BaseModel):
 
 class GitCommit(BaseModel):
     hash: str
-    author: GitAuthor
+    author: Union[GitAuthor, str]  # Может быть либо объектом GitAuthor, либо строкой
     message: str
     date: str
     stats: GitCommitStats
@@ -65,8 +65,8 @@ class GitFileChange(BaseModel):
 
 class GitCommitDetail(BaseModel):
     hash: str
-    author: GitAuthor
-    committer: GitAuthor
+    author: Union[GitAuthor, str]  # Может быть либо объектом GitAuthor, либо строкой
+    committer: Union[GitAuthor, str]  # Может быть либо объектом GitAuthor, либо строкой
     message: str
     date: str
     parent_hashes: List[str]
