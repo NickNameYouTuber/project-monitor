@@ -268,10 +268,7 @@ async def list_commits(
                 # Create commit object
                 commit = {
                     "hash": commit_hash,
-                    "author": {
-                        "name": author_name,
-                        "email": author_email
-                    },
+                    "author": author_name,  # Используем только имя автора как строку
                     "message": subject,
                     "date": datetime.fromtimestamp(int(author_time)).isoformat(),
                     "stats": {
@@ -321,14 +318,8 @@ async def get_commit_detail(
             # Get commit details
             commit_info = {
                 "hash": commit.hexsha,
-                "author": {
-                    "name": commit.author.name,
-                    "email": commit.author.email
-                },
-                "committer": {
-                    "name": commit.committer.name,
-                    "email": commit.committer.email
-                },
+                "author": commit.author.name,  # Используем только имя автора как строку
+                "committer": commit.committer.name,  # Используем только имя коммиттера как строку
                 "message": commit.message,
                 "date": datetime.fromtimestamp(commit.committed_date).isoformat(),
                 "parent_hashes": [parent.hexsha for parent in commit.parents],
