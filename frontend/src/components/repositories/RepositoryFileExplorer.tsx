@@ -57,7 +57,17 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
           );
           
           if (readmeFile) {
-            fetchReadmeContent(readmeFile.path);
+            // Исправляем путь: параметр path должен быть точным именем файла
+            const readmePath = readmeFile.path;
+            try {
+              const fileResponse = await api.get(`/repositories/${repositoryId}/file-content`, {
+                params: { path: readmePath, branch: currentBranch }
+              });
+              setReadmeContent(fileResponse.data.content);
+            } catch (fileErr) {
+              console.error('Error fetching README directly:', fileErr);
+              setReadmeContent(null);
+            }
           }
         } catch (err) {
           console.error('Error checking for README:', err);
@@ -127,12 +137,12 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
   };
   
   const fetchReadmeContent = async (path: string) => {
+    if (!path) return;
+    
     try {
-      // Добавляем проверку на пустой путь (чтобы README из корня показывался)
-      const readmePath = path || 'README.md';
-      
+      // Используем точный путь из параметра
       const response = await api.get(`/repositories/${repositoryId}/file-content`, {
-        params: { path: readmePath, branch: currentBranch }
+        params: { path, branch: currentBranch }
       });
       
       setReadmeContent(response.data.content);
@@ -242,7 +252,7 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
         </div>
         <div className="flex-1 min-w-0 ml-2">
           {currentPath ? renderBreadcrumbs() : (
-            <div className="text-[var(--text-secondary)] font-medium py-2">Корневая директория</div>
+            <div className="text-[var(--text-secondary)] font-medium py-2">Root</div>
           )}
         </div>
       </div>
