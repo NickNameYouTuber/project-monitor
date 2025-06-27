@@ -26,13 +26,13 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   actionButton
 }) => {
   return (
-    <header className="mb-8">
+    <div className="mb-8">
       <div className="flex justify-between items-start">
         <div>
           {backButton && (
             <Link 
               to={backButton.link}
-              className="inline-flex items-center text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] mb-4 bg-[var(--bg-secondary)] px-3 py-2 rounded-lg transition-colors hover:bg-[var(--bg-tertiary)]"
+              className="mt-3 px-4 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-tertiary)] transition-colors flex items-center mb-4"
             >
               <svg 
                 className="w-4 h-4 mr-1" 
@@ -51,14 +51,13 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             </Link>
           )}
           
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-2 bg-[var(--bg-card)] p-3 rounded-lg border-l-2 border-[var(--color-primary)]">
-            <h1 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h1>
-            {subtitle && (
-              <div className="text-sm text-[var(--text-muted)]">
-                {subtitle}
-              </div>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h1>
+          
+          {subtitle && (
+            <div className="mt-1 text-[var(--text-secondary)]">
+              {subtitle}
+            </div>
+          )}
         </div>
         
         {actionButton && (
@@ -75,7 +74,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </Link>
         )}
       </div>
-    </header>
+    </div>
   );
 };
 

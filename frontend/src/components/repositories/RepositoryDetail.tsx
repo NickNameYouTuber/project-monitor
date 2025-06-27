@@ -129,7 +129,7 @@ const RepositoryDetail: React.FC = () => {
             <nav className="flex space-x-2">
               <button
                 className={`py-2 px-4 rounded-t transition-colors ${activeTab === 'overview' 
-                  ? 'bg-[var(--bg-secondary)] border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  ? 'bg-[var(--bg-secondary)] text-[var(--text-primary)]' 
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'}`}
                 onClick={() => setActiveTab('overview')}
               >
@@ -137,7 +137,7 @@ const RepositoryDetail: React.FC = () => {
               </button>
               <button
                 className={`py-2 px-4 rounded-t transition-colors ${activeTab === 'files' 
-                  ? 'bg-[var(--bg-secondary)] border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  ? 'bg-[var(--bg-secondary)] text-[var(--text-primary)]' 
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'}`}
                 onClick={() => setActiveTab('files')}
               >
@@ -145,7 +145,7 @@ const RepositoryDetail: React.FC = () => {
               </button>
               <button
                 className={`py-2 px-4 rounded-t transition-colors ${activeTab === 'members' 
-                  ? 'bg-[var(--bg-secondary)] border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  ? 'bg-[var(--bg-secondary)] text-[var(--text-primary)]' 
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'}`}
                 onClick={() => setActiveTab('members')}
               >
@@ -153,7 +153,7 @@ const RepositoryDetail: React.FC = () => {
               </button>
               <button
                 className={`py-2 px-4 rounded-t transition-colors ${activeTab === 'clone' 
-                  ? 'bg-[var(--bg-secondary)] border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  ? 'bg-[var(--bg-secondary)] text-[var(--text-primary)]' 
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'}`}
                 onClick={() => setActiveTab('clone')}
               >
