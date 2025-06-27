@@ -471,10 +471,46 @@ async def handle_git_http_request(request: Request, method: str):
                 
                 # Импорт функции напрямую вместо использования Depends
                 from ..auth import get_current_user_optional as get_user_func
+                from ..models.token import PersonalAccessToken
+                from ..models import User
+                
+                # Проверяем также аутентификацию по URL (Git может передавать её таким образом)
+                url_credentials = None
+                if not request.headers.get("Authorization") and request.url.username and request.url.password:
+                    print(f"Found credentials in URL: username={request.url.username}, password=***")
+                    # Создаём Basic Auth заголовок из данных URL
+                    credentials = f"{request.url.username}:{request.url.password}"
+                    auth_header = f"Basic {base64.b64encode(credentials.encode()).decode()}"
+                    # Добавляем заголовок в запрос (изменяем копию заголовков)
+                    headers = dict(request.headers)
+                    headers["Authorization"] = auth_header
+                    # Обновляем scope запроса с новыми заголовками
+                    request.scope["headers"] = [(k.lower().encode(), v.encode()) for k, v in headers.items()]
+                    print("Added Authorization header from URL credentials")
                 
                 # Непосредственный вызов функции без Depends
                 current_user = await get_user_func(request=request, token=None, db=db)
                 print("Current user after auth:", current_user.username if current_user else "None")
+                
+                # Если аутентификация через стандартные средства не прошла, но есть данные в URL
+                if not current_user and request.url.username and request.url.password:
+                    print("Trying direct token authentication from URL")
+                    # Ищем пользователя по имени
+                    user = db.query(User).filter(
+                        (User.email == request.url.username) | (User.username == request.url.username)
+                    ).first()
+                    
+                    if user:
+                        # Проверяем токен напрямую
+                        token = db.query(PersonalAccessToken).filter(
+                            PersonalAccessToken.user_id == str(user.id),
+                            PersonalAccessToken.token == request.url.password,
+                            PersonalAccessToken.is_active == True
+                        ).first()
+                        
+                        if token and (token.expires_at is None or token.expires_at > datetime.utcnow()):
+                            print(f"Authenticated via URL credentials as {user.username}")
+                            current_user = user
                 
                 if not current_user:
                     return PlainTextResponse(
@@ -766,8 +802,46 @@ async def git_receive_pack(
     # Получаем пользователя вручную из запроса
     try:
         from ..auth import get_current_user_optional as get_user_func
+        from ..models.token import PersonalAccessToken
+        from ..models import User
+        from datetime import datetime
+        
+        # Проверяем также аутентификацию по URL
+        url_credentials = None
+        if not request.headers.get("Authorization") and request.url.username and request.url.password:
+            print(f"Direct endpoint: Found credentials in URL: username={request.url.username}, password=***")
+            # Создаём Basic Auth заголовок из данных URL
+            credentials = f"{request.url.username}:{request.url.password}"
+            auth_header = f"Basic {base64.b64encode(credentials.encode()).decode()}"
+            # Добавляем заголовок в запрос (изменяем копию заголовков)
+            headers = dict(request.headers)
+            headers["Authorization"] = auth_header
+            # Обновляем scope запроса с новыми заголовками
+            request.scope["headers"] = [(k.lower().encode(), v.encode()) for k, v in headers.items()]
+            print("Direct endpoint: Added Authorization header from URL credentials")
+        
         current_user = await get_user_func(request=request, token=None, db=db)
         print(f"git_receive_pack direct endpoint auth result: {current_user.username if current_user else 'None'}")
+        
+        # Если аутентификация через стандартные средства не прошла, но есть данные в URL
+        if not current_user and request.url.username and request.url.password:
+            print("Direct endpoint: Trying direct token authentication from URL")
+            # Ищем пользователя по имени
+            user = db.query(User).filter(
+                (User.email == request.url.username) | (User.username == request.url.username)
+            ).first()
+            
+            if user:
+                # Проверяем токен напрямую
+                token = db.query(PersonalAccessToken).filter(
+                    PersonalAccessToken.user_id == str(user.id),
+                    PersonalAccessToken.token == request.url.password,
+                    PersonalAccessToken.is_active == True
+                ).first()
+                
+                if token and (token.expires_at is None or token.expires_at > datetime.utcnow()):
+                    print(f"Direct endpoint: Authenticated via URL credentials as {user.username}")
+                    current_user = user
         
         user_id = str(current_user.id) if current_user else None
         if not user_id:
