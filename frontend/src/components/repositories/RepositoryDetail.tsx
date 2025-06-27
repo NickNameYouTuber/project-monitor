@@ -120,33 +120,41 @@ const RepositoryDetail: React.FC = () => {
           />
           
           {repository.description && (
-            <div className="bg-[var(--bg-secondary)] p-4 rounded-lg mb-6">
+            <div className="bg-[var(--bg-card)] p-4 rounded-lg mb-6 border-l-4 border-[var(--color-primary-light)]">
               <p className="text-[var(--text-primary)]">{repository.description}</p>
             </div>
           )}
           
           <div className="mb-6 border-b border-[var(--border-primary)]">
-            <nav className="flex space-x-6">
+            <nav className="flex space-x-2">
               <button
-                className={`py-2 px-1 ${activeTab === 'overview' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                className={`py-2 px-4 rounded-t transition-colors ${activeTab === 'overview' 
+                  ? 'bg-[var(--bg-secondary)] border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'}`}
                 onClick={() => setActiveTab('overview')}
               >
                 Overview
               </button>
               <button
-                className={`py-2 px-1 ${activeTab === 'files' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                className={`py-2 px-4 rounded-t transition-colors ${activeTab === 'files' 
+                  ? 'bg-[var(--bg-secondary)] border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'}`}
                 onClick={() => setActiveTab('files')}
               >
                 Files
               </button>
               <button
-                className={`py-2 px-1 ${activeTab === 'members' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                className={`py-2 px-4 rounded-t transition-colors ${activeTab === 'members' 
+                  ? 'bg-[var(--bg-secondary)] border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'}`}
                 onClick={() => setActiveTab('members')}
               >
                 Members
               </button>
               <button
-                className={`py-2 px-1 ${activeTab === 'clone' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                className={`py-2 px-4 rounded-t transition-colors ${activeTab === 'clone' 
+                  ? 'bg-[var(--bg-secondary)] border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'}`}
                 onClick={() => setActiveTab('clone')}
               >
                 Clone
@@ -158,8 +166,8 @@ const RepositoryDetail: React.FC = () => {
           <div className="mb-6">
             {activeTab === 'overview' && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">About this repository</h3>
-                <div className="bg-[var(--bg-secondary)] rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-2 text-[var(--text-primary)]">About this repository</h3>
+                <div className="bg-[var(--bg-card)] rounded-lg p-4 border-l-2 border-[var(--color-primary)]">
                   {repository.project_id && (
                     <div className="mb-2">
                       <span className="text-[var(--text-secondary)]">Linked Project: </span>

@@ -32,7 +32,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {backButton && (
             <Link 
               to={backButton.link}
-              className="inline-flex items-center text-[var(--text-muted)] hover:text-[var(--color-primary)] mb-2"
+              className="inline-flex items-center bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-tertiary)] py-1 px-2 rounded mb-2 transition-colors"
             >
               <svg 
                 className="h-4 w-4 mr-1" 

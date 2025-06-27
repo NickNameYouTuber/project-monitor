@@ -120,7 +120,7 @@ const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => 
             <button
               key={commit.hash}
               onClick={() => handleCommitClick(commit)}
-              className="w-full text-left py-3 px-2 hover:bg-[var(--bg-secondary)] transition-colors"
+              className="w-full text-left py-3 px-3 bg-[var(--bg-card)] hover:bg-[var(--bg-tertiary)] transition-colors border-l-2 border-transparent hover:border-l-[var(--color-primary)] rounded my-1"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1">
                 <div className="font-medium truncate text-[var(--text-primary)]">{commit.message}</div>

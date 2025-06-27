@@ -128,7 +128,7 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileS
             <button 
               key={index} 
               onClick={() => handleFileClick(file)}
-              className="w-full flex items-center py-2 px-2 hover:bg-[var(--bg-secondary)] text-left"
+              className="w-full flex items-center py-2 px-3 bg-[var(--bg-card)] hover:bg-[var(--bg-tertiary)] text-left rounded my-1 border-l-2 border-transparent hover:border-l-[var(--color-primary)] transition-colors"
             >
               <div className="mr-2 w-6 h-6 flex-shrink-0">
                 {file.type === 'directory' ? 
