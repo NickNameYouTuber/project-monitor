@@ -467,15 +467,25 @@ async def handle_git_http_request(request: Request, method: str):
             
             # Get current user (required for push)
             try:
+                print("Authorization header:", request.headers.get("Authorization"))
+                # Decode basic auth if present
+                auth_header = request.headers.get("Authorization")
+                if auth_header and auth_header.startswith("Basic "):
+                    auth_decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
+                    print("Auth decoded (username part):", auth_decoded.split(":")[0] if ":" in auth_decoded else "No colon in auth")
+                
                 current_user = await get_current_user_optional(request=request, db=db)
+                print("Current user after auth:", current_user.username if current_user else "None")
+                
                 if not current_user:
                     return PlainTextResponse(
-                        content="Authentication required for push",
+                        content="Authentication required for push - no user found",
                         status_code=401
                     )
-            except Exception:
+            except Exception as e:
+                print(f"Exception during authentication: {str(e)}")
                 return PlainTextResponse(
-                    content="Authentication failed",
+                    content=f"Authentication failed: {str(e)}",
                     status_code=401
                 )
                 
@@ -752,7 +762,7 @@ async def git_receive_pack(
     repository_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_optional)
+    current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     """Git HTTP endpoint for receive-pack service (push)"""
     # Check if repository exists and user has access

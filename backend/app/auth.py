@@ -112,12 +112,15 @@ async def get_current_user_optional(request: Request = None, token: str = Depend
     # Then check for Basic Authentication (for Git HTTP access)
     if request and "authorization" in request.headers:
         auth = request.headers.get("authorization")
+        print(f"Authorization header found: {auth[:10]}..." if auth else "No auth")
         if auth and auth.lower().startswith("basic "):
             try:
                 # Decode the Base64 encoded credentials
                 auth_decoded = base64.b64decode(auth[6:]).decode("utf-8")
+                print(f"Auth decoded: username part = '{auth_decoded.split(':')[0]}'" if ":" in auth_decoded else "No colon in auth")
                 if ":" in auth_decoded:
                     username, password = auth_decoded.split(":", 1)
+                    print(f"Trying to authenticate user: '{username}' with password/token of length {len(password)}")
                     
                     # Check if the password is a valid personal access token
                     from .models.token import PersonalAccessToken
@@ -128,6 +131,7 @@ async def get_current_user_optional(request: Request = None, token: str = Depend
                     ).first()
                     
                     if user:
+                        print(f"Found user in database: id={user.id}, username={user.username}")
                         # Check for valid token
                         token = db.query(PersonalAccessToken).filter(
                             PersonalAccessToken.user_id == str(user.id),
@@ -135,9 +139,17 @@ async def get_current_user_optional(request: Request = None, token: str = Depend
                             PersonalAccessToken.is_active == True
                         ).first()
                         
+                        print(f"Token lookup result: {'Found valid token' if token else 'No valid token found'}")
+                        print(f"Token expiration: {'Not set (non-expiring)' if token and token.expires_at is None else str(token.expires_at) if token else 'N/A'}")
+                        
                         # Check if token is expired
                         if token and (token.expires_at is None or token.expires_at > datetime.utcnow()):
+                            print(f"Authenticated successfully as {user.username} using token")
                             return user
+                        else:
+                            print("Token authentication failed: token not found or expired")
+                    else:
+                        print(f"No user found for username/email: {username}")
             except Exception as e:
                 print(f"Error in basic auth: {str(e)}")
                 pass
