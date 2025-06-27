@@ -57,12 +57,10 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
           );
           
           if (readmeFile) {
-            // Исправляем путь: параметр path должен быть точным именем файла
+            // Исправляем путь: используем правильный URL для получения содержимого файла
             const readmePath = readmeFile.path;
             try {
-              const fileResponse = await api.get(`/repositories/${repositoryId}/file-content`, {
-                params: { path: readmePath, branch: currentBranch }
-              });
+              const fileResponse = await api.get(`/repositories/${repositoryId}/content/${readmePath}`);
               setReadmeContent(fileResponse.data.content);
             } catch (fileErr) {
               console.error('Error fetching README directly:', fileErr);
@@ -140,10 +138,8 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
     if (!path) return;
     
     try {
-      // Используем точный путь из параметра
-      const response = await api.get(`/repositories/${repositoryId}/file-content`, {
-        params: { path, branch: currentBranch }
-      });
+      // Используем правильный URL для получения содержимого файла
+      const response = await api.get(`/repositories/${repositoryId}/content/${path}`);
       
       setReadmeContent(response.data.content);
     } catch (err: any) {
