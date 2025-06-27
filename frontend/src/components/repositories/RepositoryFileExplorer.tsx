@@ -239,19 +239,25 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
         </div>
 
         {/* Хлебные крошки */}
-        <div className="flex flex-wrap items-center">
+        <nav className="flex flex-wrap items-center space-x-1">
           {breadcrumbs.map((crumb, index) => (
             <React.Fragment key={crumb.path}>
-              {index > 0 && <span className="mx-2 text-[var(--text-secondary)]">/</span>}
+              {index > 0 && (
+                <>
+                  <svg className="w-4 h-4 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </>
+              )}
               <button
                 onClick={() => navigateToBreadcrumb(crumb.path)}
-                className={`hover:text-[var(--color-primary)] text-[var(--text-primary)] ${index === breadcrumbs.length - 1 ? 'font-semibold' : ''}`}
+                className={`px-1 py-0.5 rounded hover:bg-[var(--bg-hover)] ${index === breadcrumbs.length - 1 ? 'font-medium text-[var(--color-primary)]' : 'text-[var(--text-secondary)]'}`}
               >
                 {crumb.name}
               </button>
             </React.Fragment>
           ))}
-        </div>
+        </nav>
       </div>
 
       {/* Индикатор загрузки */}
@@ -269,30 +275,30 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
               Эта директория пуста
             </p>
           ) : (
-            <div className="divide-y divide-[var(--border-color)]">
+            <div className="grid gap-1">
               {files.map((file) => (
                 <div
                   key={file.path}
-                  className="py-2 px-3 hover:bg-[var(--bg-tertiary)] cursor-pointer rounded transition-colors flex items-center"
+                  className="flex items-center px-3 py-2 rounded hover:bg-[var(--bg-hover)] cursor-pointer transition-colors"
                   onClick={() => handleFileClick(file)}
                 >
-                  <div className="mr-3 text-[var(--text-secondary)]">
+                  <div className="mr-3 text-[var(--color-primary)]">
                     {file.type === 'directory' ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                       </svg>
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     )}
                   </div>
-                  <div>
+                  <div className="flex-grow">
                     <div className="font-medium text-[var(--text-primary)]">{file.name}</div>
                     {file.last_commit && (
                       <div className="text-xs text-[var(--text-secondary)]">
                         {file.last_commit.message && `${file.last_commit.message.substring(0, 50)}${file.last_commit.message.length > 50 ? '...' : ''}`} 
-                        {file.last_commit.date && ` - ${formatDate(file.last_commit.date)}`}
+                        {file.last_commit.date && ` • ${formatDate(file.last_commit.date)}`}
                       </div>
                     )}
                   </div>
@@ -305,14 +311,16 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
 
       {/* README.md display section */}
       {readme && (
-        <div className="mt-4 border-t border-[var(--border-color)] p-4">
-          <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4 flex items-center">
+        <div className="mt-6 border-t border-[var(--border-color)] pt-4 px-4">
+          <div className="flex items-center mb-3 pb-2 border-b border-[var(--border-color-light)]">
             <svg className="w-5 h-5 mr-2 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            README.md
-          </h2>
-          <div className="bg-[var(--bg-tertiary)] rounded p-4">
+            <h2 className="text-lg font-medium text-[var(--text-primary)]">
+              README.md
+            </h2>
+          </div>
+          <div className="markdown-body rounded-md overflow-hidden">
             <MDEditor.Markdown 
               source={readme} 
               style={{ 
