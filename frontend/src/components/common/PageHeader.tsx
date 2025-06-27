@@ -32,7 +32,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {backButton && (
             <Link 
               to={backButton.link}
-              className="inline-flex items-center text-text-tertiary hover:text-primary mb-2"
+              className="inline-flex items-center text-[var(--text-muted)] hover:text-[var(--color-primary)] mb-2"
             >
               <svg 
                 className="h-4 w-4 mr-1" 
@@ -49,10 +49,10 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             </Link>
           )}
           
-          <h1 className="text-2xl font-bold text-text-primary">{title}</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h1>
           
           {subtitle && (
-            <div className="mt-1 text-text-secondary">
+            <div className="mt-1 text-[var(--text-secondary)]">
               {subtitle}
             </div>
           )}
@@ -64,8 +64,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             className={`
               px-4 py-2 rounded font-medium
               ${actionButton.variant === 'secondary' 
-                ? 'border border-border text-text-primary hover:bg-bg-tertiary' 
-                : 'bg-primary hover:bg-primary-dark text-white'}
+                ? 'border border-[var(--border-primary)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]' 
+                : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white'}
             `}
           >
             {actionButton.text}

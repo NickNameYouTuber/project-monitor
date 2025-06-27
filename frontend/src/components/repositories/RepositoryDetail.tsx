@@ -103,7 +103,7 @@ const RepositoryDetail: React.FC = () => {
           <PageHeader
             title={repository.name}
             subtitle={
-              <div className="flex items-center text-sm text-text-tertiary">
+              <div className="flex items-center text-sm text-[var(--text-muted)]">
                 <span className={`
                   inline-block rounded-full px-2 py-1 mr-2 text-xs
                   ${repository.visibility === 'public' ? 'bg-[var(--state-success-light)] text-[var(--state-success)]' : 
