@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import RepositoryFileExplorer from '../components/repositories/RepositoryFileExplorer';
+import FileViewer from '../components/repositories/FileViewer';
 import CommitHistory from '../components/repositories/CommitHistory';
 import RepositoryCloneInfo from '../components/repositories/RepositoryCloneInfo';
 
@@ -22,7 +23,18 @@ interface Repository {
   updated_at: string;
 }
 
-
+interface GitFile {
+  name: string;
+  path: string;
+  type: 'file' | 'directory';
+  size: number | null;
+  last_commit: {
+    hash: string;
+    message: string;
+    date: string;
+    author: string;
+  };
+}
 
 const RepositoryDetail: React.FC = () => {
   const { repositoryId } = useParams<{ repositoryId: string }>();
@@ -31,6 +43,7 @@ const RepositoryDetail: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'code' | 'commits' | 'members' | 'clone'>('code');
+  const [selectedFile, setSelectedFile] = useState<GitFile | null>(null);
 
   useEffect(() => {
     const fetchRepository = async () => {
@@ -55,7 +68,9 @@ const RepositoryDetail: React.FC = () => {
     setActiveTab(tab);
   };
 
-
+  const handleFileSelect = (file: GitFile) => {
+    setSelectedFile(file);
+  };
 
   const handleBackClick = () => {
     navigate('/repositories');
@@ -88,49 +103,46 @@ const RepositoryDetail: React.FC = () => {
   return (
     <div className="container mx-auto p-4 max-w-7xl">
       <div className="mb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
+        <div>
+          <Link
+            to="/repositories"
+            className="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] flex items-center mb-2"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Repositories
+          </Link>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">{repository.name}</h1>
-          <div className="text-sm text-[var(--text-secondary)]">
-            Owned by <span className="font-medium">{repository.owner.username}</span>
-          </div>
+          <p className="text-[var(--text-secondary)]">
+            {repository.description || 'No description provided'} • Owned by <span className="font-medium">{repository.owner.username}</span>
+          </p>
         </div>
-        {repository.description && (
-          <p className="text-[var(--text-primary)] mt-1">{repository.description}</p>
-        )}
-        <button
-          onClick={handleBackClick}
-          className="mt-3 px-4 py-2 bg-[var(--bg-secondary)] text-[var(--color-primary)] rounded-md hover:bg-[var(--bg-tertiary)] transition-colors flex items-center shadow-sm border border-[var(--border-primary)] font-medium"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Repositories
-        </button>
       </div>
 
       <div className="border-b border-[var(--border-primary)] mb-8">
         <nav className="flex" aria-label="Tabs">
           <button
             onClick={() => handleTabChange('code')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 bg-[var(--bg-secondary)] ${activeTab === 'code' ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-semibold' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'} transition-colors rounded-t`}
+            className={`px-4 py-3 text-sm font-medium bg-[var(--bg-secondary)] border-b-2 mr-2 ${activeTab === 'code' ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-semibold' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-primary)]'} transition-colors rounded-t`}
           >
             Code
           </button>
           <button
             onClick={() => handleTabChange('commits')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 bg-[var(--bg-secondary)] ${activeTab === 'commits' ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-semibold' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'} transition-colors rounded-t`}
+            className={`px-4 py-3 text-sm font-medium bg-[var(--bg-secondary)] border-b-2 mr-2 ${activeTab === 'commits' ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-semibold' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-primary)]'} transition-colors rounded-t`}
           >
             Commits
           </button>
           <button
             onClick={() => handleTabChange('members')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 bg-[var(--bg-secondary)] ${activeTab === 'members' ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-semibold' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'} transition-colors rounded-t`}
+            className={`px-4 py-3 text-sm font-medium bg-[var(--bg-secondary)] border-b-2 mr-2 ${activeTab === 'members' ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-semibold' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-primary)]'} transition-colors rounded-t`}
           >
             Members
           </button>
           <button
             onClick={() => handleTabChange('clone')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 bg-[var(--bg-secondary)] ${activeTab === 'clone' ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-semibold' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'} transition-colors rounded-t`}
+            className={`px-4 py-3 text-sm font-medium bg-[var(--bg-secondary)] border-b-2 mr-2 ${activeTab === 'clone' ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-semibold' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-primary)]'} transition-colors rounded-t`}
           >
             Clone
           </button>
@@ -141,13 +153,19 @@ const RepositoryDetail: React.FC = () => {
         {activeTab === 'code' && (
           <div className="space-y-6">
             <div className="bg-[var(--bg-card)] rounded-lg p-4 border-l-4 border-[var(--color-primary-light)]">
-              <RepositoryFileExplorer />
+              <RepositoryFileExplorer 
+                onFileSelect={handleFileSelect}
+              />
+              <FileViewer 
+                repositoryId={repository.id} 
+                file={selectedFile} 
+              />
             </div>
           </div>
         )}
         {activeTab === 'commits' && (
           <div className="bg-[var(--bg-card)] rounded-lg p-4 border-l-4 border-[var(--color-primary-light)]">
-            <CommitHistory repositoryId={repository.id} path={''} />
+            <CommitHistory repositoryId={repository.id} path={selectedFile?.path || ''} />
           </div>
         )}
         {activeTab === 'members' && (
