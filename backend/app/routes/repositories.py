@@ -129,6 +129,9 @@ async def create_repository(
             repo.git.config("user.name", "Project Monitor System")
             repo.git.commit("-m", "Initial commit with README")
             
+            # Configure receive.denyCurrentBranch for new repository
+            repo.git.config("receive.denyCurrentBranch", "updateInstead")
+            
             print(f"Git repository initialized at {repo_path} with initial commit")
         except Exception as git_err:
             print(f"Warning: Failed to initialize Git repository: {git_err}")
@@ -328,14 +331,19 @@ async def initialize_git_repository(
             repo_path.mkdir(parents=True, exist_ok=True)
             
         # Check if it's already a Git repo
-        is_git_repo = (repo_path / ".git").exists()
+        is_git_repo = (repo_path / "HEAD").exists()
         
         if not is_git_repo:
-            # Initialize Git repository
-            git.Repo.init(repo_path)
+            # Initialize Git repository as bare repository
+            git.Repo.init(repo_path, bare=True)
+            repo = git.Repo(repo_path)
+            repo.git.config("receive.denyCurrentBranch", "updateInstead")
             message = f"Git repository initialized at {repo_path}"
         else:
-            message = f"Git repository already exists at {repo_path}"
+            # Configure receive.denyCurrentBranch for existing repository
+            repo = git.Repo(repo_path)
+            repo.git.config("receive.denyCurrentBranch", "updateInstead")
+            message = f"Git repository already exists at {repo_path}, receive.denyCurrentBranch configured"
         
         return {"success": True, "message": message, "repository_id": repository_id}
     
