@@ -43,7 +43,7 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [readme, setReadme] = useState<string | null>(null);
-  const [readmePath, setReadmePath] = useState<string | null>(null);
+  // readmePath удален, так как не используется
   const [branches, setBranches] = useState<GitBranch[]>([]);
   const [currentBranch, setCurrentBranch] = useState<string>("");
   const [loadingBranches, setLoadingBranches] = useState(false);
@@ -121,7 +121,7 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
   };
 
   // Функция для загрузки README.md
-  const loadReadme = async (path: string, files: GitFile[]) => {
+  const loadReadme = async (_path: string, files: GitFile[]) => {
     if (!repositoryId || !currentBranch) return;
     
     const readmeFile = files.find(file => 
@@ -135,15 +135,15 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
           { params: { branch: currentBranch } }
         );
         setReadme(readmeResponse.data.content);
-        setReadmePath(readmeFile.path);
+        // readmePath больше не используется
       } catch (error) {
         console.error("Error loading README:", error);
         setReadme(null);
-        setReadmePath(null);
+        // readmePath больше не используется
       }
     } else {
       setReadme(null);
-      setReadmePath(null);
+      // readmePath больше не используется
     }
   };
 
@@ -270,7 +270,7 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
             </p>
           ) : (
             <div className="divide-y divide-[var(--border-color)]">
-              {files.map((file, index) => (
+              {files.map((file) => (
                 <div
                   key={file.path}
                   className="py-2 px-3 hover:bg-[var(--bg-tertiary)] cursor-pointer rounded transition-colors flex items-center"
