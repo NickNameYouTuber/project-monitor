@@ -213,7 +213,7 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
   return (
     <div className="bg-[var(--bg-card)] rounded-lg shadow-sm overflow-hidden">
       {/* Навигация: хлебные крошки и выбор ветки */}
-      <div className="flex flex-wrap justify-between items-center p-4 border-b border-[var(--border-color)] gap-2">
+      <div className="flex flex-wrap items-center p-4 border-b border-[var(--border-color)] gap-2">
         {/* Селектор ветки */}
         <div className="flex items-center text-sm">
           <label htmlFor="branch-select" className="mr-2 text-[var(--text-secondary)]">
@@ -239,7 +239,7 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
         </div>
 
         {/* Хлебные крошки */}
-        <nav className="flex flex-wrap items-center space-x-1">
+        <nav className="flex flex-grow flex-wrap items-center ml-4">
           {breadcrumbs.map((crumb, index) => (
             <React.Fragment key={crumb.path}>
               {index > 0 && (
@@ -251,7 +251,7 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
               )}
               <button
                 onClick={() => navigateToBreadcrumb(crumb.path)}
-                className={`px-1 py-0.5 rounded hover:bg-[var(--bg-hover)] ${index === breadcrumbs.length - 1 ? 'font-medium text-[var(--color-primary)]' : 'text-[var(--text-secondary)]'}`}
+                className={`${index === breadcrumbs.length - 1 ? 'font-medium text-[var(--color-primary)]' : 'text-[var(--text-secondary)]'}`}
               >
                 {crumb.name}
               </button>
@@ -282,13 +282,13 @@ const RepositoryFileExplorer: React.FC<Props> = ({ repositoryId: propsRepoId, on
                   className="flex items-center px-3 py-2 rounded hover:bg-[var(--bg-hover)] cursor-pointer transition-colors"
                   onClick={() => handleFileClick(file)}
                 >
-                  <div className="mr-3 text-[var(--color-primary)]">
+                  <div className="mr-3">
                     {file.type === 'directory' ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <svg className="w-5 h-5 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                       </svg>
                     ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     )}
