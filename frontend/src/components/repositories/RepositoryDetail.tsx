@@ -5,6 +5,7 @@ import { api } from '../../utils/api';
 import type { RepositoryDetail as RepositoryDetailType } from '../../utils/api/repositories';
 import type { RepositoryMemberDetail } from '../../utils/api/repositoryMembers';
 import PageHeader from '../../components/common/PageHeader';
+import RepositoryCloneInfo from './RepositoryCloneInfo';
 
 const RepositoryDetail: React.FC = () => {
   const { repositoryId } = useParams<{ repositoryId: string }>();
@@ -16,7 +17,7 @@ const RepositoryDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [activeTab, setActiveTab] = useState<'overview' | 'files' | 'members'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'files' | 'members' | 'clone'>('overview');
 
   // Загрузка данных репозитория
   const fetchRepositoryData = useCallback(async () => {
@@ -127,22 +128,28 @@ const RepositoryDetail: React.FC = () => {
           <div className="mb-6 border-b border-[var(--border-primary)]">
             <nav className="flex space-x-6">
               <button
-                className={`py-2 px-1 ${activeTab === 'overview' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)]'}`}
+                className={`py-2 px-1 ${activeTab === 'overview' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
                 onClick={() => setActiveTab('overview')}
               >
                 Overview
               </button>
               <button
-                className={`py-2 px-1 ${activeTab === 'files' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)]'}`}
+                className={`py-2 px-1 ${activeTab === 'files' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
                 onClick={() => setActiveTab('files')}
               >
                 Files
               </button>
               <button
-                className={`py-2 px-1 ${activeTab === 'members' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)]'}`}
+                className={`py-2 px-1 ${activeTab === 'members' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
                 onClick={() => setActiveTab('members')}
               >
                 Members
+              </button>
+              <button
+                className={`py-2 px-1 ${activeTab === 'clone' ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                onClick={() => setActiveTab('clone')}
+              >
+                Clone
               </button>
             </nav>
           </div>
@@ -214,10 +221,17 @@ git push -u origin main`}
               </div>
             )}
             
+            {activeTab === 'clone' && (
+              <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Repository Clone Information</h3>
+                <RepositoryCloneInfo repositoryId={repositoryId || ''} />
+              </div>
+            )}
+            
             {activeTab === 'members' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Repository Members</h3>
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">Repository Members</h3>
                   {isOwner && (
                     <button 
                       className="px-3 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded text-sm"

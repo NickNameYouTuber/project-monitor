@@ -143,7 +143,7 @@ const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => 
         <button
           onClick={() => setPage(prev => Math.max(0, prev - 1))}
           disabled={page === 0}
-          className="px-3 py-1 border border-gray-300 rounded enabled:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-3 py-1 border border-[var(--border-primary)] rounded enabled:hover:bg-[var(--bg-secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[var(--text-primary)]"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -152,7 +152,7 @@ const CommitHistory: React.FC<CommitHistoryProps> = ({ repositoryId, path }) => 
         <button
           onClick={() => setPage(prev => prev + 1)}
           disabled={commits.length < 20}
-          className="px-3 py-1 border border-gray-300 rounded enabled:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-3 py-1 border border-[var(--border-primary)] rounded enabled:hover:bg-[var(--bg-secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[var(--text-primary)]"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

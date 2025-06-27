@@ -175,7 +175,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ repositoryId, file }) => {
         <SyntaxHighlighter 
           language={language} 
           style={vscDarkPlus} 
-          customStyle={{ margin: 0, height: '100%', background: 'rgb(30, 30, 30)' }}
+          customStyle={{ margin: 0, height: '100%', background: 'var(--bg-code)' }}
           showLineNumbers
         >
           {fileContent.content}

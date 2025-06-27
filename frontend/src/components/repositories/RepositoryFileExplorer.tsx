@@ -80,7 +80,7 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileS
               </svg>
             )}
             <button
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-[var(--color-primary)] transition-colors"
               onClick={() => navigateToBreadcrumb(breadcrumb.path)}
             >
               {breadcrumb.name}
@@ -99,7 +99,7 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileS
   if (loading) {
     return (
       <div className="flex justify-center my-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
       </div>
     );
   }
@@ -143,8 +143,8 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileS
                 }
               </div>
               <div className="flex-grow min-w-0">
-                <div className="truncate font-medium">{file.name}</div>
-                <div className="text-sm text-gray-500 truncate">
+                <div className="truncate font-medium text-[var(--text-primary)]">{file.name}</div>
+                <div className="text-sm text-[var(--text-muted)] truncate">
                   {file.last_commit.message} — {formatDate(file.last_commit.date)}
                 </div>
               </div>
