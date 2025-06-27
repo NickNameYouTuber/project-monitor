@@ -210,8 +210,8 @@ const RepositoryDetail: React.FC = () => {
             )}
             
             {activeTab === 'files' && (
-              <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Repository Files</h3>
+              <div className="bg-[var(--bg-card)] rounded-lg p-6 border-l-4 border-[var(--color-primary-light)]">
+                <h3 className="text-lg font-semibold mb-2 text-[var(--text-primary)]">Repository Files</h3>
                 <p className="text-[var(--text-secondary)]">
                   File browsing functionality will be available soon.
                 </p>
@@ -230,8 +230,8 @@ git push -u origin main`}
             )}
             
             {activeTab === 'clone' && (
-              <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Repository Clone Information</h3>
+              <div className="bg-[var(--bg-card)] rounded-lg p-6 border-l-4 border-[var(--color-primary-light)]">
+                <h3 className="text-lg font-semibold mb-2 text-[var(--text-primary)]">Repository Clone Information</h3>
                 <RepositoryCloneInfo repositoryId={repositoryId || ''} />
               </div>
             )}
@@ -250,20 +250,20 @@ git push -u origin main`}
                   )}
                 </div>
                 
-                <div className="bg-[var(--bg-secondary)] rounded-lg overflow-hidden">
+                <div className="bg-[var(--bg-secondary)] rounded-lg overflow-hidden border-l-4 border-[var(--color-primary-light)]">
                   {members.length > 0 ? (
                     <div className="min-w-full divide-y divide-[var(--border-primary)]">
-                      <div className="bg-[var(--bg-card)]">
+                      <div className="bg-[var(--bg-tertiary)] rounded-t">
                         <div className="grid grid-cols-12 gap-2 px-6 py-3 text-left">
-                          <div className="col-span-5 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">User</div>
-                          <div className="col-span-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Role</div>
-                          <div className="col-span-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Added</div>
+                          <div className="col-span-5 text-xs font-medium text-[var(--text-primary)] uppercase tracking-wider">User</div>
+                          <div className="col-span-3 text-xs font-medium text-[var(--text-primary)] uppercase tracking-wider">Role</div>
+                          <div className="col-span-3 text-xs font-medium text-[var(--text-primary)] uppercase tracking-wider">Added</div>
                           <div className="col-span-1"></div>
                         </div>
                       </div>
                       <div className="divide-y divide-[var(--border-primary)]">
                         {members.map(member => (
-                          <div key={member.id} className="grid grid-cols-12 gap-2 px-6 py-4 hover:bg-[var(--bg-card)]">
+                          <div key={member.id} className="grid grid-cols-12 gap-2 px-6 py-4 bg-[var(--bg-card)] hover:bg-[var(--bg-tertiary)] border-l-2 border-transparent hover:border-l-[var(--color-primary)] my-1 rounded transition-colors">
                             <div className="col-span-5 flex items-center">
                               <span className="text-[var(--text-primary)]">{member.user.username}</span>
                               {repository.owner_id === member.user_id && (
