@@ -71,7 +71,7 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileS
     ];
 
     return (
-      <div className="flex items-center flex-wrap text-sm text-[var(--text-muted)]">
+      <div className="flex items-center flex-wrap text-sm text-gray-500">
         {breadcrumbs.map((breadcrumb, index) => (
           <React.Fragment key={index}>
             {index > 0 && (
@@ -80,7 +80,7 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileS
               </svg>
             )}
             <button
-              className="hover:text-[var(--color-primary)] transition-colors"
+              className="hover:text-blue-600 transition-colors"
               onClick={() => navigateToBreadcrumb(breadcrumb.path)}
             >
               {breadcrumb.name}
@@ -99,52 +99,52 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = ({ onFileS
   if (loading) {
     return (
       <div className="flex justify-center my-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-[var(--state-error-light)] border border-[var(--state-error)] text-[var(--state-error)] px-4 py-3 rounded" role="alert">
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
         <span className="block sm:inline">{error}</span>
       </div>
     );
   }
 
   return (
-    <div className="bg-[var(--bg-secondary)] shadow rounded-lg p-4 h-full overflow-auto">
+    <div className="bg-white shadow rounded-lg p-4 h-full overflow-auto">
       {currentPath && (
         <div className="mb-4">
           {renderBreadcrumbs()}
         </div>
       )}
       
-      <div className="divide-y divide-[var(--border-primary)]">
+      <div className="divide-y divide-gray-200">
         {files.length === 0 ? (
-          <p className="p-2 text-[var(--text-muted)] text-sm">This directory is empty</p>
+          <p className="p-2 text-gray-500 text-sm">This directory is empty</p>
         ) : (
           files.map((file, index) => (
             <button 
               key={index} 
               onClick={() => handleFileClick(file)}
-              className="w-full flex items-center py-2 px-2 hover:bg-[var(--bg-hover)] text-left"
+              className="w-full flex items-center py-2 px-2 hover:bg-gray-100 text-left"
             >
               <div className="mr-2 w-6 h-6 flex-shrink-0">
                 {file.type === 'directory' ? 
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6" />
                   </svg>
                   : 
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586A2 2 0 0114.172 4l2.828 2.828A2 2 0 0118 8.414V19a2 2 0 01-2 2z" />
                   </svg>
                 }
               </div>
               <div className="flex-grow min-w-0">
                 <div className="truncate font-medium">{file.name}</div>
-                <div className="text-sm text-[var(--text-muted)] truncate">
+                <div className="text-sm text-gray-500 truncate">
                   {file.last_commit.message} — {formatDate(file.last_commit.date)}
                 </div>
               </div>

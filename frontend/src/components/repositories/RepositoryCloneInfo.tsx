@@ -18,138 +18,119 @@ interface RepositoryCloneInfoProps {
 
 const RepositoryCloneInfo: React.FC<RepositoryCloneInfoProps> = ({ repositoryId }) => {
   const [cloneInfo, setCloneInfo] = useState<CloneInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [notification, setNotification] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'https' | 'ssh' | 'setup'>('https');
+  const [copied, setCopied] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCloneInfo = async () => {
-      if (!repositoryId) {
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
       try {
+        setLoading(true);
         const response = await api.get(`/repositories/${repositoryId}/clone-info`);
         setCloneInfo(response.data);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error fetching clone info:', err);
-        setError(err.message || 'Failed to load clone information');
+        setError('Failed to load repository clone information.');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     fetchCloneInfo();
   }, [repositoryId]);
 
-  const copyToClipboard = (content: string, message: string) => {
-    navigator.clipboard.writeText(content).then(() => {
-      setNotification(message);
-      setTimeout(() => setNotification(null), 2000);
+  const handleTabChange = (tab: 'https' | 'ssh' | 'setup') => {
+    setActiveTab(tab);
+  };
+
+  const handleCopyClick = () => {
+    if (!cloneInfo) return;
+
+    let contentToCopy = '';
+    
+    switch (activeTab) {
+      case 'https':
+        contentToCopy = cloneInfo.clone_instructions.https;
+        break;
+      case 'ssh':
+        contentToCopy = cloneInfo.clone_instructions.ssh;
+        break;
+      case 'setup':
+        contentToCopy = cloneInfo.clone_instructions.setup;
+        break;
+    }
+
+    navigator.clipboard.writeText(contentToCopy).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="bg-[var(--bg-secondary)] rounded-lg p-4 shadow-sm border border-[var(--border-primary)] mb-6">
-        <div className="h-4 bg-[var(--bg-tertiary)] rounded w-1/4 mb-4"></div>
-        <div className="h-10 bg-[var(--bg-tertiary)] rounded mb-2"></div>
+      <div className="bg-white shadow rounded-lg p-6 animate-pulse">
+        <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+        <div className="h-10 bg-gray-200 rounded mb-2"></div>
       </div>
     );
   }
 
   if (error || !cloneInfo) {
     return (
-      <div className="bg-[var(--state-error-light)] rounded-lg p-4 shadow-sm border border-[var(--state-error)] mb-6">
-        <p className="text-[var(--state-error)]">{error || 'Failed to load clone information'}</p>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+        {error || 'Failed to load clone information.'}
       </div>
     );
   }
 
   return (
-    <div className="bg-[var(--bg-secondary)] rounded-lg p-4 shadow-sm border border-[var(--border-primary)] mb-6">
-      <h3 className="text-lg font-medium mb-3 text-[var(--text-primary)]">Clone Repository</h3>
-      <p className="text-[var(--text-muted)] mb-3">Use one of the following methods to clone this repository:</p>
+    <div className="bg-white shadow rounded-lg p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Clone Repository</h3>
       
-      <div className="space-y-4">
-        {/* HTTPS Clone */}
-        <div>
-          <h4 className="font-medium text-[var(--text-primary)] mb-1">Clone with HTTPS</h4>
-          <p className="text-sm text-[var(--text-muted)] mb-1">Use Git or checkout with SVN using the web URL.</p>
-          <div className="flex items-center gap-2">
-            <input 
-              type="text" 
-              readOnly 
-              value={cloneInfo.https_url} 
-              className="flex-grow p-2 bg-[var(--bg-input)] border border-[var(--border-primary)] rounded-md text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            />
-            <button 
-              onClick={() => copyToClipboard(cloneInfo.https_url, 'HTTPS URL copied to clipboard!')}
-              className="px-3 py-2 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-[var(--text-primary)] rounded-md text-sm"
-            >
-              Copy
-            </button>
-          </div>
-          <div className="mt-1 text-xs text-[var(--text-muted)]">{cloneInfo.clone_instructions.https}</div>
-        </div>
-        
-        {/* SSH Clone */}
-        <div>
-          <h4 className="font-medium text-[var(--text-primary)] mb-1">Clone with SSH</h4>
-          <p className="text-sm text-[var(--text-muted)] mb-1">Use a terminal with SSH key authentication.</p>
-          <div className="flex items-center gap-2">
-            <input 
-              type="text" 
-              readOnly 
-              value={cloneInfo.ssh_url} 
-              className="flex-grow p-2 bg-[var(--bg-input)] border border-[var(--border-primary)] rounded-md text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            />
-            <button 
-              onClick={() => copyToClipboard(cloneInfo.ssh_url, 'SSH URL copied to clipboard!')}
-              className="px-3 py-2 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-[var(--text-primary)] rounded-md text-sm"
-            >
-              Copy
-            </button>
-          </div>
-          <div className="mt-1 text-xs text-[var(--text-muted)]">{cloneInfo.clone_instructions.ssh}</div>
-        </div>
-        
-        {/* Web URL */}
-        <div>
-          <h4 className="font-medium text-[var(--text-primary)] mb-1">Open in Browser</h4>
-          <p className="text-sm text-[var(--text-muted)] mb-1">View the repository in your browser.</p>
-          <div className="flex items-center gap-2">
-            <input 
-              type="text" 
-              readOnly 
-              value={cloneInfo.web_url} 
-              className="flex-grow p-2 bg-[var(--bg-input)] border border-[var(--border-primary)] rounded-md text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            />
-            <button 
-              onClick={() => copyToClipboard(cloneInfo.web_url, 'Web URL copied to clipboard!')}
-              className="px-3 py-2 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-[var(--text-primary)] rounded-md text-sm"
-            >
-              Copy
-            </button>
-            <a 
-              href={cloneInfo.web_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="px-3 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-md text-sm"
-            >
-              Open
-            </a>
-          </div>
-        </div>
+      <div className="flex border-b border-gray-200 mb-4">
+        <button
+          onClick={() => handleTabChange('https')}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'https' ? 'text-blue-600 border-b-2 border-blue-500' : 'text-gray-500'}`}
+        >
+          HTTPS
+        </button>
+        <button
+          onClick={() => handleTabChange('ssh')}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'ssh' ? 'text-blue-600 border-b-2 border-blue-500' : 'text-gray-500'}`}
+        >
+          SSH
+        </button>
+        <button
+          onClick={() => handleTabChange('setup')}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'setup' ? 'text-blue-600 border-b-2 border-blue-500' : 'text-gray-500'}`}
+        >
+          Setup Instructions
+        </button>
       </div>
-      
-      {notification && (
-        <div className="mt-3 p-2 bg-[var(--state-success-light)] text-[var(--state-success)] rounded-md text-sm">
-          {notification}
+
+      <div className="relative">
+        <pre className="bg-gray-50 p-4 rounded-lg text-sm text-gray-800 overflow-x-auto whitespace-pre-wrap">
+          {activeTab === 'https' && cloneInfo.clone_instructions.https}
+          {activeTab === 'ssh' && cloneInfo.clone_instructions.ssh}
+          {activeTab === 'setup' && cloneInfo.clone_instructions.setup.split('\\n').join('\n')}
+        </pre>
+        <button
+          onClick={handleCopyClick}
+          className="absolute top-2 right-2 px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200"
+        >
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+
+      {activeTab === 'https' && (
+        <div className="mt-4 text-sm text-gray-500">
+          <p>Use HTTPS to clone without setting up SSH keys. You'll need to enter your username and password each time you push.</p>
+        </div>
+      )}
+      {activeTab === 'ssh' && (
+        <div className="mt-4 text-sm text-gray-500">
+          <p>SSH is recommended for developers who regularly push to the repository. It requires setting up SSH keys but doesn't require entering credentials each time.</p>
         </div>
       )}
     </div>

@@ -73,17 +73,17 @@ const RepositoryDetail: React.FC = () => {
   const getMemberRoleBadge = (role: string) => {
     switch(role) {
       case 'admin':
-        return <span className="bg-[var(--theme-colors-admin-100)] text-[var(--theme-colors-admin-800)] px-2 py-1 rounded-full text-xs">Admin</span>;
+        return <span className="bg-[var(--state-info-light)] text-[var(--state-info)] px-2 py-1 rounded-full text-xs">Admin</span>;
       case 'contributor':
-        return <span className="bg-[var(--theme-colors-contributor-100)] text-[var(--theme-colors-contributor-800)] px-2 py-1 rounded-full text-xs">Contributor</span>;
+        return <span className="bg-[var(--color-accent)] bg-opacity-20 text-[var(--color-accent)] px-2 py-1 rounded-full text-xs">Contributor</span>;
       case 'viewer':
       default:
-        return <span className="bg-[var(--theme-colors-viewer-100)] text-[var(--theme-colors-viewer-800)] px-2 py-1 rounded-full text-xs">Viewer</span>;
+        return <span className="bg-[var(--bg-card)] text-[var(--text-secondary)] px-2 py-1 rounded-full text-xs">Viewer</span>;
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-[var(--bg-primary)] text-[var(--text-primary)]">
+    <div className="container mx-auto px-4 py-8">
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="spinner" />
@@ -92,7 +92,7 @@ const RepositoryDetail: React.FC = () => {
         <div className="bg-[var(--state-error-light)] border-l-4 border-[var(--state-error)] text-[var(--state-error)] p-4 mb-4" role="alert">
           <p>{error}</p>
           <button 
-            className="mt-2 text-sm underline" 
+            className="mt-2 text-sm underline text-[var(--color-primary)]" 
             onClick={() => fetchRepositoryData()}
           >
             Try again
@@ -103,12 +103,12 @@ const RepositoryDetail: React.FC = () => {
           <PageHeader
             title={repository.name}
             subtitle={
-              <div className="flex items-center text-sm text-[var(--text-tertiary)]">
+              <div className="flex items-center text-sm text-text-tertiary">
                 <span className={`
                   inline-block rounded-full px-2 py-1 mr-2 text-xs
-                  ${repository.visibility === 'public' ? 'bg-[var(--color-green-100)] text-[var(--color-green-800)]' : 
-                    repository.visibility === 'internal' ? 'bg-[var(--color-yellow-100)] text-[var(--color-yellow-800)]' : 
-                    'bg-[var(--color-red-100)] text-[var(--color-red-800)]'}
+                  ${repository.visibility === 'public' ? 'bg-[var(--state-success-light)] text-[var(--state-success)]' : 
+                    repository.visibility === 'internal' ? 'bg-[var(--state-warning-light)] text-[var(--state-warning)]' : 
+                    'bg-[var(--state-error-light)] text-[var(--state-error)]'}
                 `}>
                   {repository.visibility.charAt(0).toUpperCase() + repository.visibility.slice(1)}
                 </span>
@@ -151,7 +151,7 @@ const RepositoryDetail: React.FC = () => {
           <div className="mb-6">
             {activeTab === 'overview' && (
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-[var(--text-primary)]">About this repository</h3>
+                <h3 className="text-lg font-semibold mb-2">About this repository</h3>
                 <div className="bg-[var(--bg-secondary)] rounded-lg p-4">
                   {repository.project_id && (
                     <div className="mb-2">
@@ -167,7 +167,7 @@ const RepositoryDetail: React.FC = () => {
                   
                   <div className="mb-2">
                     <span className="text-[var(--text-secondary)]">Clone URL: </span>
-                    <code className="bg-[var(--bg-tertiary)] text-[var(--text-primary)] p-1 rounded">
+                    <code className="bg-[var(--bg-card)] text-[var(--text-primary)] p-1 rounded">
                       {repository.url || 'Not available yet'}
                     </code>
                   </div>
@@ -202,10 +202,10 @@ const RepositoryDetail: React.FC = () => {
                 </p>
                 <div className="mt-4 p-4 border border-dashed border-[var(--border-primary)] rounded-lg">
                   <h4 className="font-medium mb-2 text-[var(--text-primary)]">Quick Start</h4>
-                  <p className="text-sm text-[var(--text-tertiary)] mb-2">
+                  <p className="text-sm text-[var(--text-muted)] mb-2">
                     To push an existing repository:
                   </p>
-                  <pre className="bg-[var(--bg-tertiary)] p-3 rounded text-xs overflow-auto">
+                  <pre className="bg-[var(--bg-card)] p-3 rounded text-xs overflow-auto text-[var(--text-primary)]">
 {`git remote add origin ${repository.url || '[REPOSITORY_URL]'}
 git branch -M main
 git push -u origin main`}
@@ -217,10 +217,10 @@ git push -u origin main`}
             {activeTab === 'members' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">Repository Members</h3>
+                  <h3 className="text-lg font-semibold">Repository Members</h3>
                   {isOwner && (
                     <button 
-                      className="px-3 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white rounded text-sm"
+                      className="px-3 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded text-sm"
                       onClick={() => alert('Add member functionality will be available soon.')}
                     >
                       Add Member
@@ -231,33 +231,33 @@ git push -u origin main`}
                 <div className="bg-[var(--bg-secondary)] rounded-lg overflow-hidden">
                   {members.length > 0 ? (
                     <div className="min-w-full divide-y divide-[var(--border-primary)]">
-                      <div className="bg-[var(--bg-tertiary)]">
+                      <div className="bg-[var(--bg-card)]">
                         <div className="grid grid-cols-12 gap-2 px-6 py-3 text-left">
-                          <div className="col-span-5 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">User</div>
-                          <div className="col-span-3 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">Role</div>
-                          <div className="col-span-3 text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">Added</div>
+                          <div className="col-span-5 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">User</div>
+                          <div className="col-span-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Role</div>
+                          <div className="col-span-3 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Added</div>
                           <div className="col-span-1"></div>
                         </div>
                       </div>
                       <div className="divide-y divide-[var(--border-primary)]">
                         {members.map(member => (
-                          <div key={member.id} className="grid grid-cols-12 gap-2 px-6 py-4 hover:bg-[var(--bg-tertiary)]">
+                          <div key={member.id} className="grid grid-cols-12 gap-2 px-6 py-4 hover:bg-[var(--bg-card)]">
                             <div className="col-span-5 flex items-center">
                               <span className="text-[var(--text-primary)]">{member.user.username}</span>
                               {repository.owner_id === member.user_id && (
-                                <span className="ml-2 bg-[var(--color-gray-200)] text-[var(--color-gray-800)] px-2 py-0.5 rounded-full text-xs">Owner</span>
+                                <span className="ml-2 bg-[var(--state-info-light)] text-[var(--state-info)] px-2 py-0.5 rounded-full text-xs">Owner</span>
                               )}
                             </div>
                             <div className="col-span-3">
                               {getMemberRoleBadge(member.role)}
                             </div>
-                            <div className="col-span-3 text-[var(--text-tertiary)] text-sm">
+                            <div className="col-span-3 text-[var(--text-muted)] text-sm">
                               {new Date(member.created_at).toLocaleDateString()}
                             </div>
                             <div className="col-span-1 flex justify-end">
                               {isOwner && repository.owner_id !== member.user_id && (
                                 <button 
-                                  className="text-[var(--state-error)] hover:text-[var(--state-error-dark)]"
+                                  className="text-[var(--state-error)] hover:text-[var(--state-error)]"
                                   onClick={() => alert('Remove member functionality will be available soon.')}
                                 >
                                   <span className="sr-only">Remove</span>
