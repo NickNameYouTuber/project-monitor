@@ -1,0 +1,94 @@
+/* Стили для адаптивного отображения Markdown в светлой и тёмной темах */
+
+/* Общие стили */
+.wmde-markdown {
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+/* Заголовки */
+.wmde-markdown h1,
+.wmde-markdown h2,
+.wmde-markdown h3,
+.wmde-markdown h4,
+.wmde-markdown h5,
+.wmde-markdown h6 {
+  color: var(--text-primary) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+/* Текст и параграфы */
+.wmde-markdown p {
+  color: var(--text-secondary) !important;
+}
+
+/* Ссылки */
+.wmde-markdown a {
+  color: var(--color-primary) !important;
+}
+
+.wmde-markdown a:hover {
+  color: var(--color-primary-light) !important;
+}
+
+/* Код */
+.wmde-markdown code {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+.wmde-markdown pre {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Блок кода */
+.wmde-markdown-color pre {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Списки */
+.wmde-markdown ul,
+.wmde-markdown ol {
+  color: var(--text-secondary) !important;
+}
+
+/* Цитаты */
+.wmde-markdown blockquote {
+  border-left-color: var(--color-primary-light) !important;
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Горизонтальная линия */
+.wmde-markdown hr {
+  background-color: var(--border-color) !important;
+}
+
+/* Таблицы */
+.wmde-markdown table {
+  border-color: var(--border-color) !important;
+}
+
+.wmde-markdown table tr {
+  background-color: var(--bg-card) !important;
+  border-top-color: var(--border-color) !important;
+}
+
+.wmde-markdown table tr:nth-child(2n) {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.wmde-markdown table th,
+.wmde-markdown table td {
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.wmde-markdown table th {
+  background-color: var(--bg-header) !important;
+}
+
+/* Изображения */
+.wmde-markdown img {
+  background-color: var(--bg-card) !important;
+}

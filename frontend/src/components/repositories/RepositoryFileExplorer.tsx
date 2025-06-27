@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import Markdown from 'react-markdown';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-markdown-preview/markdown.css';
+import '../../styles/markdown-theme.css';
 
 interface GitFile {
   name: string;
@@ -296,7 +298,13 @@ const RepositoryFileExplorer: React.FC<RepositoryFileExplorerProps> = () => {
             README.md
           </h2>
           <div className="prose max-w-none bg-[var(--bg-card)] rounded-lg p-6 border-l-4 border-[var(--color-primary-light)] text-[var(--text-primary)]">
-            <Markdown>{readmeContent}</Markdown>
+            <MDEditor.Markdown 
+              source={readmeContent} 
+              style={{ 
+                backgroundColor: 'transparent',
+                color: 'var(--text-primary)'
+              }}
+            />
           </div>
         </div>
       )}

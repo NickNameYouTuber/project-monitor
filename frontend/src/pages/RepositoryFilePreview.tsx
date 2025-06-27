@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import api from '../services/api';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-markdown-preview/markdown.css';
+import '../styles/markdown-theme.css';
 
 interface FilePreviewProps {
   // Компонент может принимать пропсы, но мы используем params из роута

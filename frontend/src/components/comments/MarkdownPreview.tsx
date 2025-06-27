@@ -1,6 +1,7 @@
 import React from 'react';
 import '@uiw/react-markdown-preview/markdown.css';
 import MDEditor from '@uiw/react-md-editor';
+import '../../styles/markdown-theme.css';
 
 interface MarkdownPreviewProps {
   content: string;
