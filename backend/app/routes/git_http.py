@@ -468,13 +468,12 @@ async def handle_git_http_request(request: Request, method: str):
             # Get current user (required for push)
             try:
                 print("Authorization header:", request.headers.get("Authorization"))
-                # Decode basic auth if present
-                auth_header = request.headers.get("Authorization")
-                if auth_header and auth_header.startswith("Basic "):
-                    auth_decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
-                    print("Auth decoded (username part):", auth_decoded.split(":")[0] if ":" in auth_decoded else "No colon in auth")
                 
-                current_user = await get_current_user_optional(request=request, db=db)
+                # Импорт функции напрямую вместо использования Depends
+                from ..auth import get_current_user_optional as get_user_func
+                
+                # Непосредственный вызов функции без Depends
+                current_user = await get_user_func(request=request, token=None, db=db)
                 print("Current user after auth:", current_user.username if current_user else "None")
                 
                 if not current_user:
@@ -761,14 +760,18 @@ async def upload_pack(repository_id: str, current_user: Optional[User] = Depends
 async def git_receive_pack(
     repository_id: str,
     request: Request,
-    db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    db: Session = Depends(get_db)
 ):
     """Git HTTP endpoint for receive-pack service (push)"""
-    # Check if repository exists and user has access
+    # Получаем пользователя вручную из запроса
     try:
+        from ..auth import get_current_user_optional as get_user_func
+        current_user = await get_user_func(request=request, token=None, db=db)
+        print(f"git_receive_pack direct endpoint auth result: {current_user.username if current_user else 'None'}")
+        
         user_id = str(current_user.id) if current_user else None
         if not user_id:
+            print("Authentication failed for direct git-receive-pack endpoint")
             return PlainTextResponse(
                 content="# Authentication required for pushing to repository",
                 status_code=status.HTTP_401_UNAUTHORIZED
