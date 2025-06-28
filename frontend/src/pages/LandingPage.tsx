@@ -25,31 +25,22 @@ const LandingPage: React.FC = () => {
       {/* Основной контент */}
       <main className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Заголовок с перечеркнутым Global и расшифровкой */}
-        <div className="flex flex-col items-center justify-center mb-16 pt-12">
-          <div className="relative mb-1 text-center">
-            <span className="text-[#616161] text-3xl md:text-4xl relative opacity-70 block mb-[-10px] line-through">
-              Global
+        <div className="flex flex-col items-center justify-center mb-16 pt-8">
+          <div className="relative inline-block mb-2 text-center">
+            <span className="text-[#616161] text-3xl md:text-4xl relative opacity-70 mb-2 block">
+              <span className="line-through">Global</span>
             </span>
+            <span className="text-[#004d40] text-5xl md:text-7xl font-bold leading-none">Neural</span>
+            <span className="text-[#00796b] text-5xl md:text-7xl font-bold leading-none"> Information</span>
+            <span className="text-[#26a69a] text-5xl md:text-7xl font-bold leading-none"> Tracker</span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-center text-[#004d40] flex flex-wrap justify-center gap-x-4 gap-y-2">
-            <span className="relative">
-              <span className="text-[#00796b]">N</span>eural
-            </span>
-            <span>
-              <span className="text-[#00796b]">I</span>nformation
-            </span>
-            <span>
-              <span className="text-[#00796b]">T</span>racker
-            </span>
-          </h1>
-          <p className="mt-6 text-xl md:text-2xl text-[#00695c] text-center max-w-3xl font-medium">
-            Инновационная система управления проектами и кодом с использованием ИИ
-          </p>
-          <div className="mt-8 flex justify-center">
-            <Link to="/login" className="px-8 py-3 bg-gradient-to-r from-[#009688] to-[#00796b] text-white rounded-full font-medium hover:from-[#00897b] hover:to-[#00695c] transition-all duration-300 shadow-lg hover:shadow-xl text-lg transform hover:-translate-y-1">
-              Начать работу
-            </Link>
+          <div className="text-lg text-[#00695c] font-medium max-w-3xl mt-4">Управляйте проектами с помощью ИИ</div>
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
+            <Link to="/login" className="inline-block px-10 py-4 bg-gradient-to-r from-[#009688] to-[#00796b] text-white rounded-full text-lg font-medium hover:from-[#00897b] hover:to-[#00695c] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1">Начать сейчас</Link>
+            <button className="inline-block px-10 py-4 bg-transparent border-2 border-[#009688] text-[#009688] rounded-full text-lg font-medium hover:bg-[#009688]/10 transition-all duration-300">Узнать больше</button>
           </div>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#4db6ac]/20 rounded-full blur-xl"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#26a69a]/20 rounded-full blur-xl"></div>
         </div>
 
         {/* Секция преимуществ */}
