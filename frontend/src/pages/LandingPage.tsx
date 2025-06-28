@@ -11,7 +11,7 @@ const LandingPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#b2ebf2] via-[#4db6ac] to-[#26a69a]">
+    <div className="min-h-screen bg-white">
       {/* Навигация */}
       <nav className="flex justify-between items-center px-6 py-4 bg-white/10 backdrop-blur-md">
         <div className="text-[#4db6ac] text-2xl font-bold">NIT</div>
