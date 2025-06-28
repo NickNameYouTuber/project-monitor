@@ -81,31 +81,31 @@ const AuthScreen: React.FC = () => {
     <div className="min-h-screen bg-white">
       {/* Навигация */}
       <nav className="flex justify-between items-center px-6 py-4 bg-white/10 backdrop-blur-md">
-        <Link to="/" className="text-[#4db6ac] text-2xl font-bold">NIT</Link>
+        <Link to="/" className="text-[#7AB988] text-2xl font-bold">NIT</Link>
       </nav>
 
       {/* Основной контент */}
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4 border border-[#4db6ac]/10">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4 border border-[#7AB988]/10">
           {/* Заголовок */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#004d40] flex flex-wrap justify-center gap-x-2 mb-2">
+            <h1 className="text-3xl font-bold text-[#3A6642] flex flex-wrap justify-center gap-x-2 mb-2">
               <span className="relative">
-                <span className="text-[#4db6ac]">N</span>eural
+                <span className="text-[#7AB988]">N</span>eural
               </span>
               <span>
-                <span className="text-[#4db6ac]">I</span>nformation
+                <span className="text-[#7AB988]">I</span>nformation
               </span>
               <span>
-                <span className="text-[#4db6ac]">T</span>racker
+                <span className="text-[#7AB988]">T</span>racker
               </span>
             </h1>
-            <p className="text-[#00796b] mt-2">Эффективное управление проектами и задачами</p>
+            <p className="text-[#4C8858] mt-2">Эффективное управление проектами и задачами</p>
           </div>
 
           {/* Форма входа */}
-          <div className="bg-white/60 p-6 rounded-xl border border-[#4db6ac]/20 shadow-md">
-            <h2 className="text-[#00796b] text-xl font-semibold mb-4 text-center">Вход в систему</h2>
+          <div className="bg-white/60 p-6 rounded-xl border border-[#7AB988]/20 shadow-md">
+            <h2 className="text-[#4C8858] text-xl font-semibold mb-4 text-center">Вход в систему</h2>
             
             <div className="flex justify-center mb-4">
               <TelegramLoginWidget
@@ -119,22 +119,22 @@ const AuthScreen: React.FC = () => {
 
             {isLoading && (
               <div className="flex justify-center items-center py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#4db6ac]"></div>
-                <span className="ml-3 text-[#00796b]">Аутентификация...</span>
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7AB988]"></div>
+                <span className="ml-3 text-[#4C8858]">Аутентификация...</span>
               </div>
             )}
           </div>
 
           {/* Ссылка для поддержки */}
           <div className="mt-6 text-center text-sm">
-            <span className="text-[#00796b]">
-              Нужна помощь? <a href="#" className="text-[#4db6ac] hover:underline transition-colors">Свяжитесь с поддержкой</a>
+            <span className="text-[#4C8858]">
+              Нужна помощь? <a href="#" className="text-[#7AB988] hover:underline transition-colors">Свяжитесь с поддержкой</a>
             </span>
           </div>
 
           {/* Ссылка на главную */}
           <div className="mt-4 text-center">
-            <Link to="/" className="text-[#26a69a] hover:text-[#4db6ac] text-sm transition-colors">
+            <Link to="/" className="text-[#5DA570] hover:text-[#7AB988] text-sm transition-colors">
               ← Вернуться на главную
             </Link>
           </div>
