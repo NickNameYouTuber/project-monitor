@@ -10,6 +10,7 @@ import RepositoryList from '../components/repositories/RepositoryList';
 import RepositoryCreate from '../components/repositories/RepositoryCreate';
 import RepositoryDetail from '../pages/RepositoryDetail';
 import RepositoryFilePreview from '../pages/RepositoryFilePreview';
+import LandingPage from '../pages/LandingPage';
 
 // Protected route component
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
@@ -25,12 +26,15 @@ const AppRouter: React.FC = () => {
       <Routes>
         {/* Public routes */}
         <Route 
+          path="/" 
+          element={<LandingPage />} 
+        />
+        <Route 
           path="/login" 
           element={currentUser ? <Navigate to="/dashboards" replace /> : <AuthScreen />} 
         />
 
         {/* Protected routes */}
-        <Route path="/" element={<Navigate to="/dashboards" replace />} />
         <Route 
           path="/dashboards" 
           element={
