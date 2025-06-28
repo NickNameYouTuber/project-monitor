@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../utils/AppContext';
 import type { User } from '../../types';
 import TelegramLoginWidget from './TelegramLoginWidget';
+import { Link } from 'react-router-dom';
 
 const AuthScreen: React.FC = () => {
   const { login } = useAppContext();
@@ -72,57 +73,72 @@ const AuthScreen: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
-  // Удалены неиспользуемые функции useTestLogin и handleGuestAuth
 
   // Get bot name from environment variables
   const BOT_NAME = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'ProjectMonitorBot';
 
   return (
-    <div className="fixed inset-0 auth-container flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
-        <div className="text-center mb-8">
-          <div className="flex items-center mb-2">
-            <img src="/nit-logo.png" alt="NIT Logo" className="w-20 h-20 mx-auto" />
+    <div className="min-h-screen bg-white">
+      {/* Навигация */}
+      <nav className="flex justify-between items-center px-6 py-4 bg-white/10 backdrop-blur-md">
+        <Link to="/" className="text-[#4db6ac] text-2xl font-bold">NIT</Link>
+      </nav>
+
+      {/* Основной контент */}
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4 border border-[#4db6ac]/10">
+          {/* Заголовок */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-[#004d40] flex flex-wrap justify-center gap-x-2 mb-2">
+              <span className="relative">
+                <span className="text-[#4db6ac]">N</span>eural
+              </span>
+              <span>
+                <span className="text-[#4db6ac]">I</span>nformation
+              </span>
+              <span>
+                <span className="text-[#4db6ac]">T</span>racker
+              </span>
+            </h1>
+            <p className="text-[#00796b] mt-2">Эффективное управление проектами и задачами</p>
           </div>
-          <p className="text-gray-600 dark:text-gray-300">Эффективное управление проектами и задачами</p>
-        </div>
-        
-        <div className="space-y-6">
-          <div className="flex justify-center">
-            {/* Telegram Login Widget */}
-            <TelegramLoginWidget
-              botName={BOT_NAME}
-              dataOnauth={handleTelegramAuth}
-              buttonSize="large"
-              cornerRadius={10}
-              requestAccess={true}
-            />
-          </div>
-          
-          {/* Guest login temporarily disabled */}
-          {/* <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+
+          {/* Форма входа */}
+          <div className="bg-white/60 p-6 rounded-xl border border-[#4db6ac]/20 shadow-md">
+            <h2 className="text-[#00796b] text-xl font-semibold mb-4 text-center">Вход в систему</h2>
+            
+            <div className="flex justify-center mb-4">
+              <TelegramLoginWidget
+                botName={BOT_NAME}
+                dataOnauth={handleTelegramAuth}
+                buttonSize="large"
+                cornerRadius={10}
+                requestAccess={true}
+              />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">or</span>
-            </div>
+
+            {isLoading && (
+              <div className="flex justify-center items-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#4db6ac]"></div>
+                <span className="ml-3 text-[#00796b]">Аутентификация...</span>
+              </div>
+            )}
           </div>
-          
-          <button 
-            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white px-6 py-4 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-          >
-            Continue as Guest
-          </button> */}
+
+          {/* Ссылка для поддержки */}
+          <div className="mt-6 text-center text-sm">
+            <span className="text-[#00796b]">
+              Нужна помощь? <a href="#" className="text-[#4db6ac] hover:underline transition-colors">Свяжитесь с поддержкой</a>
+            </span>
+          </div>
+
+          {/* Ссылка на главную */}
+          <div className="mt-4 text-center">
+            <Link to="/" className="text-[#26a69a] hover:text-[#4db6ac] text-sm transition-colors">
+              ← Вернуться на главную
+            </Link>
+          </div>
         </div>
-        
-        {isLoading && (
-          <div className="text-center mt-6">
-            <div className="loading-spinner w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-            <p className="text-gray-600 dark:text-gray-300">Authenticating...</p>
-          </div>
-        )}
       </div>
     </div>
   );
