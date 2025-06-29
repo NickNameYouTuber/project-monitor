@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { API_BASE_URL } from './base';
+// Используем жестко закодированный URL, так как process.env не доступен
+const API_BASE_URL = 'http://localhost:8000/api';
 
 export interface TaskBranch {
   repositoryId: string;

@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Task } from '../../utils/api/tasks';
 import type { Comment } from '../../utils/api/comments';
-import type { Repository } from '../../utils/api/repositories';
 import { useTaskBoard } from '../../context/TaskBoardContext';
-import { useAppContext } from '../../AppContext';
+import { useAppContext } from '../../utils/AppContext';
 import TaskForm from './TaskForm';
 import CloseButton from '../ui/CloseButton';
 import TaskComments from '../comments/TaskComments';
 import commentsApi from '../../utils/api/comments';
-import repositoriesApi from '../../utils/api/repositories';
-import taskRepositoryApi from '../../utils/api/taskRepository';
-import CreateBranchModal from '../repository/CreateBranchModal';
 
 interface TaskDetailProps {
   task: Task;
@@ -23,23 +19,17 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
-  const [showCreateBranchModal, setShowCreateBranchModal] = useState(false);
-  const [projectRepositories, setProjectRepositories] = useState<Repository[]>([]);
-  const [isLoadingRepositories, setIsLoadingRepositories] = useState(false);
-  const [selectedRepositoryId, setSelectedRepositoryId] = useState<string | null>(null);
-  const [taskBranches, setTaskBranches] = useState<any[]>([]);
-  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
-  const modalRef = React.useRef<HTMLDivElement | null>(null);
-  
+  const modalRef = useRef<HTMLDivElement | null>(null);
+
   const handleClose = () => {
     setSelectedTask(null);
   };
-  
+
   const handleEdit = () => {
     setIsEditing(true);
     setShowMenu(false);
   };
-  
+
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       await deleteTask(task.id);
@@ -49,7 +39,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   };
 
   const column = columns.find(col => col.id === task.column_id);
-  
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
       handleClose();
@@ -72,49 +62,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       }
     };
 
-    const fetchRepositories = async () => {
-      if (currentUser?.token && task.project_id) {
-        setIsLoadingRepositories(true);
-        try {
-          const data = await repositoriesApi.getByProject(task.project_id, currentUser.token);
-          setProjectRepositories(Array.isArray(data) ? data : []);
-          // Устанавливаем первый репозиторий как выбранный по умолчанию, если он есть
-          if (data.length > 0) {
-            setSelectedRepositoryId(data[0].id);
-          }
-        } catch (error) {
-          console.error('Error fetching repositories:', error);
-          setProjectRepositories([]);
-        } finally {
-          setIsLoadingRepositories(false);
-        }
-      }
-    };
-
-    const fetchTaskBranches = async () => {
-      if (currentUser?.token) {
-        setIsLoadingBranches(true);
-        try {
-          const data = await taskRepositoryApi.getTaskBranches(task.id, currentUser.token);
-          setTaskBranches(Array.isArray(data) ? data : []);
-        } catch (error) {
-          console.error('Error fetching task branches:', error);
-          setTaskBranches([]);
-        } finally {
-          setIsLoadingBranches(false);
-        }
-      }
-    };
-
     fetchComments();
-    fetchRepositories();
-    fetchTaskBranches();
-  }, [task.id, task.project_id, currentUser]);
-  
-  // Обработчики для работы с комментариями
+  }, [task.id, currentUser]);
+
   const handleAddComment = async (content: string) => {
     if (!currentUser?.token) return;
-    
+
     try {
       const newComment = await commentsApi.create(
         { task_id: task.id, content },
@@ -125,14 +78,14 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       console.error('Error adding comment:', error);
     }
   };
-  
+
   const handleUpdateComment = async (commentId: string, content: string) => {
     if (!currentUser?.token) return;
-    
+
     try {
       await commentsApi.update(commentId, { content }, currentUser.token);
-      setComments(prevComments => 
-        prevComments.map(comment => 
+      setComments(prevComments =>
+        prevComments.map(comment =>
           comment.id === commentId ? { ...comment, content, updated_at: new Date().toISOString() } : comment
         )
       );
@@ -140,10 +93,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       console.error('Error updating comment:', error);
     }
   };
-  
+
   const handleDeleteComment = async (commentId: string) => {
     if (!currentUser?.token) return;
-    
+
     try {
       await commentsApi.delete(commentId, currentUser.token);
       setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
@@ -154,7 +107,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
 
   if (isEditing) {
     return (
-      <TaskForm 
+      <TaskForm
         task={task}
         columnId={task.column_id}
         projectId={task.project_id}
@@ -163,11 +116,11 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       />
     );
   }
-  
+
   return (
     <>
       <div className="fixed inset-0 bg-overlay z-40" onClick={handleBackdropClick} />
-      <div 
+      <div
         className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0"
         onClick={handleBackdropClick}
       >
@@ -179,13 +132,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
               </div>
               <div className="flex items-center space-x-2">
                 <div className="relative">
-                  <button 
+                  <button
                     onClick={() => setShowMenu(!showMenu)}
                     className="text-text-muted hover:text-text-secondary p-1 rounded-full transition-colors bg-bg-secondary"
                     aria-label="Task options"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                     </svg>
                   </button>
                   {showMenu && (
@@ -232,32 +185,28 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                   <div className="text-sm text-text-secondary mb-3 font-bold">Assignees</div>
                   <div className="flex flex-wrap gap-2">
                     {(() => {
-                      // Сортируем assignees так, чтобы текущий пользователь был первым
                       let sortedAssignees = [...task.assignees];
-                      const currentUserIndex = currentUser 
+                      const currentUserIndex = currentUser
                         ? sortedAssignees.findIndex(assignee => assignee.id === currentUser.id)
                         : -1;
-                        
+
                       if (currentUserIndex > 0) {
-                        // Извлекаем текущего пользователя
                         const currentUserAssignee = sortedAssignees[currentUserIndex];
-                        // Удаляем его с текущей позиции
                         sortedAssignees.splice(currentUserIndex, 1);
-                        // Вставляем в начало списка
                         sortedAssignees.unshift(currentUserAssignee);
                       }
-                      
+
                       return sortedAssignees.map((assignee) => {
                         const isCurrentUser = currentUser?.id === assignee.id;
                         return (
-                          <div 
-                            key={assignee.id} 
-                            className={`flex items-center rounded-full px-3 py-1 border ${isCurrentUser 
-                              ? 'border-state-success text-state-success bg-bg-card' 
+                          <div
+                            key={assignee.id}
+                            className={`flex items-center rounded-full px-3 py-1 border ${isCurrentUser
+                              ? 'border-state-success text-state-success bg-bg-card'
                               : 'bg-bg-secondary border-border-primary'}`}
                           >
-                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs mr-2 ${isCurrentUser 
-                              ? 'bg-state-success text-white' 
+                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs mr-2 ${isCurrentUser
+                              ? 'bg-state-success text-white'
                               : 'bg-bg-primary text-text-primary'}`}>
                               {assignee.username.charAt(0).toUpperCase()}
                             </div>
@@ -274,87 +223,40 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                   </div>
                 </div>
               )}
-              {/* Блок веток, связанных с задачей */}
-              <div className="mb-6">
-                <div className="text-sm text-text-secondary mb-3 font-bold">Ветки задачи</div>
-                
-                {isLoadingBranches ? (
-                  <div className="bg-bg-secondary rounded-lg p-6 border border-border-primary flex justify-center items-center">
-                    <svg className="animate-spin h-5 w-5 text-primary mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span className="text-text-muted">Загрузка веток...</span>
-                  </div>
-                ) : taskBranches.length > 0 ? (
-                  <div className="bg-bg-secondary rounded-lg p-4 border border-border-primary">
-                    <ul className="space-y-2">
-                      {taskBranches.map(branch => (
-                        <li key={branch.branchName} className="flex items-center justify-between p-2 bg-bg-card rounded-md border border-border-primary">
-                          <div className="flex items-center">
-                            <svg className="w-4 h-4 text-text-secondary mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                            </svg>
-                            <span className="text-text-primary font-medium">{branch.branchName}</span>
-                            <span className="text-xs text-text-muted ml-2">({branch.repositoryName})</span>
-                          </div>
-                          <span className="text-xs text-text-muted">Created: {new Date(branch.created_at).toLocaleDateString()}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      className="mt-3 px-4 py-2 bg-[#7AB988] text-white rounded-md hover:bg-[#5DA570] transition-colors flex items-center"
-                      onClick={() => setShowCreateBranchModal(true)}
-                      disabled={!selectedRepositoryId}
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      Создать новую ветку
-                    </button>
-                  </div>
-                ) : (
-                  <div className="bg-bg-secondary rounded-lg p-6 border border-border-primary text-center">
-                    <div className="flex justify-center mb-4">
-                      <svg className="w-12 h-12 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <p className="text-text-secondary mb-2">К этой задаче пока не привязаны ветки</p>
-                    <button
-                      className="mt-2 px-4 py-2 bg-[#7AB988] text-white rounded-md hover:bg-[#5DA570] transition-colors flex items-center mx-auto"
-                      onClick={() => setShowCreateBranchModal(true)}
-                      disabled={!selectedRepositoryId}
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      Создать ветку для задачи
-                    </button>
-                  </div>
-                )}
-              </div>
-              
               <div className="border-t border-border-primary pt-4 mb-6">
                 <div className="flex justify-between text-sm text-text-muted">
                   <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
                   <span>Updated: {new Date(task.updated_at).toLocaleDateString()}</span>
                 </div>
               </div>
-              
-              {/* Секция комментариев с поддержкой Markdown */}
               {isLoadingComments ? (
                 <div className="text-center py-6 text-text-muted">
                   <div className="flex justify-center items-center">
-                    <svg className="animate-spin h-5 w-5 text-primary mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin h-5 w-5 text-primary mr-2"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Loading comments...
                   </div>
                 </div>
               ) : (
-                <TaskComments 
+                <TaskComments
                   taskId={task.id}
                   comments={comments}
                   onAddComment={handleAddComment}
@@ -366,25 +268,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
           </div>
         </div>
       </div>
-      {/* Модальное окно создания ветки */}
-      {showCreateBranchModal && selectedRepositoryId && (
-        <CreateBranchModal
-          repositoryId={selectedRepositoryId}
-          taskId={task.id}
-          onClose={() => setShowCreateBranchModal(false)}
-          onBranchCreated={() => {
-            // После создания ветки обновляем комментарии и ветки
-            if (currentUser?.token) {
-              commentsApi.getByTask(task.id, currentUser.token).then(data => {
-                setComments(Array.isArray(data) ? data : []);
-              });
-              taskRepositoryApi.getTaskBranches(task.id, currentUser.token).then(data => {
-                setTaskBranches(Array.isArray(data) ? data : []);
-              });
-            }
-          }}
-        />
-      )}
     </>
   );
 };
