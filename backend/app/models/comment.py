@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, ForeignKey, DateTime
+from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from ..database import Base
 import uuid
@@ -12,6 +12,7 @@ class Comment(Base):
     content = Column(Text, nullable=False)
     task_id = Column(String, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    is_system = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
