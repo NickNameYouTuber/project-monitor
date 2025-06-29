@@ -79,7 +79,7 @@ const repositoriesApi = {
   git: {
     // Получить список веток
     getBranches: async (repositoryId: string, token: string) => {
-      const response = await axios.get(`${API_BASE_URL}/repositories/content/${repositoryId}/branches`, {
+      const response = await axios.get(`${API_BASE_URL}/repositories/${repositoryId}/branches`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data as GitBranch[];
@@ -87,7 +87,7 @@ const repositoriesApi = {
     
     // Создать новую ветку
     createBranch: async (repositoryId: string, data: CreateBranchRequest, token: string) => {
-      const response = await axios.post(`${API_BASE_URL}/repositories/content/${repositoryId}/branches`, data, {
+      const response = await axios.post(`${API_BASE_URL}/repositories/${repositoryId}/branches`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
