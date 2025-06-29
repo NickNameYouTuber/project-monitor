@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../utils/AppContext';
-import repositoriesApi, { GitBranch, CreateBranchRequest } from '../../utils/api/repositories';
+import repositoriesApi from '../../utils/api/repositories';
+import type { GitBranch, CreateBranchRequest } from '../../utils/api/repositories';
 
 interface CreateBranchModalProps {
   repositoryId: string;
@@ -73,7 +74,7 @@ const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
         request.task_id = taskId;
       }
       
-      const result = await repositoriesApi.git.createBranch(
+      await repositoriesApi.git.createBranch(
         repositoryId,
         request,
         currentUser.token
