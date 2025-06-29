@@ -23,6 +23,21 @@ export interface Repository {
   updated_at: string;
 }
 
+// Интерфейсы для Git-объектов
+export interface GitBranch {
+  name: string;
+  commit_hash: string;
+  is_default: boolean;
+  last_commit_date?: string;
+  last_commit_message?: string;
+}
+
+export interface CreateBranchRequest {
+  name: string;
+  base_branch?: string;
+  task_id?: string;
+}
+
 export interface RepositoryDetail extends Repository {
   owner: {
     id: string;
@@ -58,6 +73,25 @@ const repositoriesApi = {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
+  },
+  
+  // Git операции
+  git: {
+    // Получить список веток
+    getBranches: async (repositoryId: string, token: string) => {
+      const response = await axios.get(`${API_BASE_URL}/repositories/content/${repositoryId}/branches`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data as GitBranch[];
+    },
+    
+    // Создать новую ветку
+    createBranch: async (repositoryId: string, data: CreateBranchRequest, token: string) => {
+      const response = await axios.post(`${API_BASE_URL}/repositories/content/${repositoryId}/branches`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    },
   },
 
   // Получить конкретный репозиторий

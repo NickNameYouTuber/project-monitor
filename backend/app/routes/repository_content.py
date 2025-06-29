@@ -1,9 +1,9 @@
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import schemas
-from ..models import Repository, RepositoryMember, User
+from ..models import Repository, RepositoryMember, User, Task, Comment
 from ..auth import get_current_active_user
 import os
 import git
@@ -11,6 +11,8 @@ from pathlib import Path
 import base64
 import pygit2
 from datetime import datetime
+from pydantic import BaseModel
+import uuid
 
 router = APIRouter()
 
@@ -341,6 +343,110 @@ async def list_branches(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                            detail=f"Error listing branches: {str(e)}")
 
+
+class CreateBranchRequest(BaseModel):
+    name: str
+    base_branch: Optional[str] = None
+    task_id: Optional[str] = None
+
+@router.post("/{repository_id}/branches")
+async def create_branch(
+    repository_id: str,
+    request: CreateBranchRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new branch in the repository
+    """
+    try:
+        repository = check_repository_access(repository_id, str(current_user.id), db)
+        repo_path = get_repo_path(repository_id)
+        
+        if not repo_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Repository directory not found"
+            )
+            
+        # Initialize git repository
+        repo = git.Repo(repo_path)
+        
+        # Check if the repository has any commits (is empty)
+        if len(repo.heads) == 0 or len(list(repo.iter_commits())) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Repository is empty, cannot create branch"
+            )
+        
+        # Validate that the branch doesn't already exist
+        if request.name in [head.name for head in repo.heads]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Branch '{request.name}' already exists"
+            )
+        
+        # Determine base branch
+        base_branch = request.base_branch
+        if not base_branch:
+            # Use default branch if none specified
+            try:
+                base_branch = repo.git.config('--get', 'init.defaultBranch')
+            except git.GitCommandError:
+                pass
+            
+            if not base_branch or base_branch not in repo.heads:
+                for branch_name in ['main', 'master']:
+                    if branch_name in repo.heads:
+                        base_branch = branch_name
+                        break
+            
+            if not base_branch or base_branch not in repo.heads:
+                if len(repo.heads) > 0:
+                    base_branch = repo.heads[0].name
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="No base branch available"
+                    )
+        
+        # Create the new branch
+        try:
+            repo.git.branch(request.name, base_branch)
+            
+            # If task_id is provided, create a system comment
+            if request.task_id:
+                task = db.query(Task).filter(Task.id == request.task_id).first()
+                if task:
+                    # Create system comment
+                    comment = Comment(
+                        id=str(uuid.uuid4()),
+                        task_id=request.task_id,
+                        user_id=current_user.id,
+                        content=f"🔄 Created branch **{request.name}** from {base_branch}",
+                        is_system=True
+                    )
+                    db.add(comment)
+                    db.commit()
+            
+            return {
+                "name": request.name,
+                "base_branch": base_branch,
+                "success": True
+            }
+                
+        except git.GitCommandError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to create branch: {str(e)}"
+            )
+            
+    except Exception as e:
+        print(f"Error creating branch: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating branch: {str(e)}"
+        )
 
 @router.get("/{repository_id}/commits", response_model=List[schemas.GitCommit])
 async def list_commits(

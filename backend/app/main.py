@@ -5,7 +5,7 @@ from fastapi.responses import Response
 from starlette.routing import Route, Mount
 from .database import engine
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration
 import subprocess
 import os
 from pathlib import Path
@@ -74,6 +74,9 @@ async def git_catch_all_post(request: Request):
 app.include_router(task_columns.router, prefix=api_prefix)
 app.include_router(tasks.router, prefix=api_prefix)
 app.include_router(comments.router, prefix=api_prefix)
+
+# Роутер для интеграции задач с репозиториями
+app.include_router(task_repository_integration.router, prefix=api_prefix)
 
 
 @app.get("/")

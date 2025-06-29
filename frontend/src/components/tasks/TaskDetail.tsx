@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import type { Task } from '../../utils/api/tasks';
 import type { Comment } from '../../utils/api/comments';
+import type { Repository } from '../../utils/api/repositories';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { useAppContext } from '../../utils/AppContext';
 import TaskForm from './TaskForm';
 import CloseButton from '../ui/CloseButton';
 import TaskComments from '../comments/TaskComments';
 import commentsApi from '../../utils/api/comments';
+import repositoriesApi from '../../utils/api/repositories';
+import CreateBranchModal from '../repository/CreateBranchModal';
 
 interface TaskDetailProps {
   task: Task;
@@ -19,6 +22,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [showCreateBranchModal, setShowCreateBranchModal] = useState(false);
+  const [projectRepositories, setProjectRepositories] = useState<Repository[]>([]);
+  const [isLoadingRepositories, setIsLoadingRepositories] = useState(false);
+  const [selectedRepositoryId, setSelectedRepositoryId] = useState<string | null>(null);
   const modalRef = React.useRef<HTMLDivElement | null>(null);
   
   const handleClose = () => {
@@ -65,6 +72,30 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
     
     fetchComments();
   }, [task.id, currentUser?.token]);
+  
+  // Загрузка репозиториев проекта
+  useEffect(() => {
+    const fetchProjectRepositories = async () => {
+      if (currentUser?.token && task.project_id) {
+        setIsLoadingRepositories(true);
+        try {
+          const repositories = await repositoriesApi.getAll(currentUser.token, task.project_id);
+          setProjectRepositories(repositories);
+          
+          // Если есть хотя бы один репозиторий, выбираем его по умолчанию
+          if (repositories.length > 0) {
+            setSelectedRepositoryId(repositories[0].id);
+          }
+        } catch (error) {
+          console.error('Error fetching project repositories:', error);
+        } finally {
+          setIsLoadingRepositories(false);
+        }
+      }
+    };
+    
+    fetchProjectRepositories();
+  }, [task.project_id, currentUser?.token]);
   
   // Обработчики для работы с комментариями
   const handleAddComment = async (content: string) => {
@@ -229,6 +260,58 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                   </div>
                 </div>
               )}
+              {/* Блок репозиториев и создания ветки */}
+              <div className="mb-6">
+                <div className="text-sm text-text-secondary mb-3 font-bold">Связанные репозитории</div>
+                
+                {isLoadingRepositories ? (
+                  <div className="bg-bg-secondary rounded-lg p-6 border border-border-primary flex justify-center items-center">
+                    <svg className="animate-spin h-5 w-5 text-primary mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-text-muted">Загрузка репозиториев...</span>
+                  </div>
+                ) : projectRepositories.length > 0 ? (
+                  <div className="bg-bg-secondary rounded-lg p-4 border border-border-primary">
+                    <div className="mb-4 flex items-center justify-between">
+                      <select
+                        className="flex-grow rounded-md bg-bg-card border border-border-primary text-text-primary px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                        value={selectedRepositoryId || ''}
+                        onChange={(e) => setSelectedRepositoryId(e.target.value)}
+                      >
+                        {projectRepositories.map(repo => (
+                          <option key={repo.id} value={repo.id}>{repo.name}</option>
+                        ))}
+                      </select>
+                      <button
+                        className="ml-3 px-4 py-2 bg-[#7AB988] text-white rounded-md hover:bg-[#5DA570] transition-colors flex items-center"
+                        onClick={() => setShowCreateBranchModal(true)}
+                        disabled={!selectedRepositoryId}
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Создать ветку
+                      </button>
+                    </div>
+                    <div className="text-xs text-text-muted">
+                      При создании ветки будет добавлен системный комментарий, а новые коммиты будут автоматически отслеживаться.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-bg-secondary rounded-lg p-6 border border-border-primary text-center">
+                    <div className="flex justify-center mb-4">
+                      <svg className="w-12 h-12 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-text-secondary mb-2">К этому проекту пока не подключены репозитории</p>
+                    <p className="text-xs text-text-muted">Добавьте репозиторий к проекту для отслеживания веток и коммитов</p>
+                  </div>
+                )}
+              </div>
+              
               <div className="border-t border-border-primary pt-4 mb-6">
                 <div className="flex justify-between text-sm text-text-muted">
                   <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
@@ -260,6 +343,22 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
           </div>
         </div>
       </div>
+      {/* Модальное окно создания ветки */}
+      {showCreateBranchModal && selectedRepositoryId && (
+        <CreateBranchModal
+          repositoryId={selectedRepositoryId}
+          taskId={task.id}
+          onClose={() => setShowCreateBranchModal(false)}
+          onBranchCreated={() => {
+            // После создания ветки обновляем комментарии
+            if (currentUser?.token) {
+              commentsApi.getByTask(task.id, currentUser.token).then(data => {
+                setComments(Array.isArray(data) ? data : []);
+              });
+            }
+          }}
+        />
+      )}
     </>
   );
 };
