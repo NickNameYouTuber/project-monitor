@@ -10,7 +10,7 @@ import os
 from ..database import get_db
 from ..models import Repository, Task, Comment, User
 from ..schemas import git as git_schemas
-from ..routes.auth import get_current_active_user
+from ..auth import get_current_active_user
 from ..routes.repository_content import get_repo_path, check_repository_access
 
 router = APIRouter(
