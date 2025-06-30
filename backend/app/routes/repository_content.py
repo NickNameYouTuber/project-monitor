@@ -453,6 +453,7 @@ async def create_branch(
 async def list_commits(
     repository_id: str,
     path: Optional[str] = None,
+    branch: Optional[str] = None,
     limit: int = 20,
     skip: int = 0,
     current_user: User = Depends(get_current_active_user),
@@ -479,6 +480,10 @@ async def list_commits(
             
         # Prepare git log command
         git_log_cmd = ["--pretty=format:%H|%an|%ae|%at|%s", f"-{limit}", f"--skip={skip}"]
+        
+        # Если указана ветка, добавим её в команду
+        if branch:
+            git_log_cmd.insert(0, branch)
         
         if path:
             git_log_cmd.append("--")
