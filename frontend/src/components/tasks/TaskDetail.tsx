@@ -437,7 +437,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                                     {commits.map((commit) => (
                                       <div key={commit.hash} className="text-xs py-1 border-b border-border-primary last:border-b-0">
                                         <div className="flex items-center">
-                                          <span className="bg-bg-secondary px-1 py-0.5 rounded text-text-muted mr-1">{commit.short_hash.substring(0, 7)}</span>
+                                          <span className="bg-bg-secondary px-1 py-0.5 rounded text-text-muted mr-1">{commit.short_hash ? commit.short_hash.substring(0, 7) : commit.hash ? commit.hash.substring(0, 7) : 'N/A'}</span>
                                           <span className="text-text-primary truncate">{commit.message}</span>
                                         </div>
                                         <div className="text-text-muted mt-0.5">
