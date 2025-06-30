@@ -228,6 +228,8 @@ const WhiteboardCanvas: React.FC<{ projectId?: string }> = ({ projectId }) => {
         scale={scale}
         setScale={setScale}
         saveWhiteboard={saveWhiteboard}
+        selectedElement={elements.find(el => el.id === selectedElementId)}
+        onElementUpdate={(updates) => selectedElementId && updateElement(selectedElementId, updates)}
       />
       <div 
         ref={canvasRef}
@@ -257,6 +259,7 @@ const WhiteboardCanvas: React.FC<{ projectId?: string }> = ({ projectId }) => {
               onUpdate={(updates: Partial<WhiteboardElementData>) => updateElement(element.id, updates)}
               onDelete={() => deleteElement(element.id)}
               createArrow={createArrowWithConnections}
+              currentTool={currentTool}
             />
           ))}
         </div>

@@ -13,6 +13,7 @@ interface WhiteboardElementProps {
     endElementId: string,
     endConnectionPoint: ConnectionPointPosition
   ) => void;
+  currentTool: string;
 }
 
 const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
@@ -22,12 +23,12 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
   onUpdate,
   onDelete,
   createArrow,
+  currentTool,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(element.content || '');
-  const [showConnectionPoints, setShowConnectionPoints] = useState(false);
   const [isCreatingArrow, setIsCreatingArrow] = useState(false);
   const [arrowStartPoint, setArrowStartPoint] = useState<{
     position: ConnectionPointPosition;
@@ -59,9 +60,7 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect();
-    if (element.type !== 'arrow') {
-      setShowConnectionPoints(true);
-    }
+    // Не показываем точки соединения при простом выборе элемента
   };
 
   // Начало перетаскивания
@@ -116,17 +115,18 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
   // Клик по точке соединения
   const handleConnectionPointClick = useCallback(
     (position: ConnectionPointPosition) => {
-      if (!isCreatingArrow) {
-        setIsCreatingArrow(true);
-        setArrowStartPoint({ position, elementId: element.id });
-      } else if (arrowStartPoint && arrowStartPoint.elementId !== element.id) {
-        createArrow(arrowStartPoint.elementId, arrowStartPoint.position, element.id, position);
-        setIsCreatingArrow(false);
-        setArrowStartPoint(null);
-        setShowConnectionPoints(false);
+      if (currentTool === 'arrow') {
+        if (!isCreatingArrow) {
+          setIsCreatingArrow(true);
+          setArrowStartPoint({ position, elementId: element.id });
+        } else if (arrowStartPoint && arrowStartPoint.elementId !== element.id) {
+          createArrow(arrowStartPoint.elementId, arrowStartPoint.position, element.id, position);
+          setIsCreatingArrow(false);
+          setArrowStartPoint(null);
+        }
       }
     },
-    [isCreatingArrow, arrowStartPoint, element.id, createArrow]
+    [isCreatingArrow, arrowStartPoint, element.id, createArrow, currentTool]
   );
 
   // Обработчики mousemove и mouseup для перетаскивания и ресайза
@@ -153,9 +153,6 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
     const handleMouseUp = () => {
       setIsDragging(false);
       setIsResizing(false);
-      if (!isCreatingArrow) {
-        setShowConnectionPoints(false);
-      }
     };
 
     if (isDragging || isResizing) {
@@ -174,6 +171,14 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
       textareaRef.current.focus();
     }
   }, [isEditing]);
+
+  // Отмена создания стрелки при смене инструмента или снятии выделения
+  useEffect(() => {
+    if (currentTool !== 'arrow' || !isSelected) {
+      setIsCreatingArrow(false);
+      setArrowStartPoint(null);
+    }
+  }, [currentTool, isSelected]);
 
   // Рендер содержимого элемента
   const renderElementContent = () => {
@@ -278,8 +283,7 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
       )}
 
       {/* Точки соединения */}
-      {(showConnectionPoints || isCreatingArrow) &&
-        element.type !== 'arrow' &&
+      {isSelected && currentTool === 'arrow' && element.type !== 'arrow' &&
         connectionPoints.map((point) => (
           <div
             key={point.position}
