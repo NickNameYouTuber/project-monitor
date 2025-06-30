@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Task } from '../../utils/api/tasks';
 import type { Comment } from '../../utils/api/comments';
 import type { CommitInfo } from '../../utils/api/repositories';
+import type { TaskBranch } from '../../utils/api/taskRepository';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { useAppContext } from '../../utils/AppContext';
 import TaskForm from './TaskForm';
@@ -32,31 +33,16 @@ interface TaskDetailProps {
   task: Task;
 }
 
-// Интерфейс для ветки задачи
-interface TaskBranch {
-  id: string;
-  task_id: string;
-  repositoryId: string;
-  branchName: string;
-  created_at: string;
-  updated_at: string;
-  repository_name?: string;
-}
-
 const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   const { setSelectedTask, deleteTask, columns } = useTaskBoard();
   const { currentUser } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [branchCommits, setBranchCommits] = useState<CommitInfo[]>([]);
   const [combinedComments, setCombinedComments] = useState<ExtendedComment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
-  const [isLoadingCommits, setIsLoadingCommits] = useState(false);
-  // Нам не нужно хранить все репозитории, только выбранный ID
-  const [isLoadingRepositories, setIsLoadingRepositories] = useState(false);
-  const [selectedRepositoryId, setSelectedRepositoryId] = useState<string | null>(null);
-  const [taskBranches, setTaskBranches] = useState<TaskBranch[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [taskBranches, setTaskBranches] = useState<TaskBranch[]>([]);
+  const [selectedRepositoryId, setSelectedRepositoryId] = useState<string | null>(null);
   const [branchName, setBranchName] = useState('');
   const [branchSuggestions, setBranchSuggestions] = useState<string[]>([]);
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
@@ -93,7 +79,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       if (!currentUser?.token) return;
 
       setIsLoadingComments(true);
-
+      setIsLoadingBranches(true); // Set loading state before fetching
       try {
         // Загружаем комментарии задачи
         const commentsData = await commentsApi.getByTask(task.id, currentUser.token);
@@ -101,13 +87,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
 
         // Загружаем ветки, связанные с задачей
         const branchesData = await taskRepositoryApi.getTaskBranches(task.id, currentUser.token);
-        setTaskBranches(Array.isArray(branchesData) ? branchesData : []);
+        setTaskBranches(branchesData as TaskBranch[]); // Cast to match local type if necessary
 
         // Если есть связанная ветка, загружаем её коммиты
         const taskBranch = Array.isArray(branchesData) && branchesData.length > 0 ? branchesData[0] : null;
 
         if (taskBranch && taskBranch.repositoryId && taskBranch.branchName) {
-          setIsLoadingCommits(true);
           const repoId = taskBranch.repositoryId;
           const branchName = taskBranch.branchName;
 
@@ -116,7 +101,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
           try {
             const commits = await repositoriesApi.git.getCommits(repoId, branchName, currentUser.token, 50);
             console.log(`Получено ${commits.length} коммитов`);
-            setBranchCommits(commits);
 
             // Создаем комбинированный список комментариев и коммитов
             const commitsAsComments: ExtendedComment[] = commits.map(commit => ({
@@ -147,14 +131,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
             setCombinedComments(allComments);
           } catch (error) {
             console.error('Ошибка при загрузке коммитов:', error);
-            setBranchCommits([]);
             setCombinedComments(comments);
-          } finally {
-            setIsLoadingCommits(false);
           }
         } else {
           console.log('Нет привязанной ветки для загрузки коммитов');
-          setBranchCommits([]);
           setCombinedComments(comments);
         }
       } catch (error) {
@@ -162,12 +142,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
         setCombinedComments([]);
       } finally {
         setIsLoadingComments(false);
+        setIsLoadingBranches(false); // Reset loading state after fetching
       }
     };
 
     const fetchRepositories = async () => {
       if (currentUser?.token && task.project_id) {
-        setIsLoadingRepositories(true);
         try {
           const data = await repositoriesApi.getAll(currentUser.token, task.project_id);
           if (Array.isArray(data) && data.length > 0) {
@@ -176,8 +156,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
         } catch (error) {
           console.error('Error fetching repositories:', error);
           setSelectedRepositoryId(null);
-        } finally {
-          setIsLoadingRepositories(false);
         }
       }
     };
@@ -256,7 +234,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       // Если ветка создана, обновляем полный список
       const updatedCommentsData = await commentsApi.getByTask(task.id, currentUser.token);
       const updatedBranchesData = await taskRepositoryApi.getTaskBranches(task.id, currentUser.token);
-      setTaskBranches(Array.isArray(updatedBranchesData) ? updatedBranchesData : []);
+      setTaskBranches(updatedBranchesData as TaskBranch[]); // Cast to match local type if necessary
       const taskBranch = Array.isArray(updatedBranchesData) && updatedBranchesData.length > 0 ? updatedBranchesData[0] : null;
       if (taskBranch && taskBranch.repositoryId && taskBranch.branchName) {
         const updatedCommits = await repositoriesApi.git.getCommits(taskBranch.repositoryId, taskBranch.branchName, currentUser.token, 50);
@@ -286,6 +264,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       }
     } catch (error) {
       console.error('Ошибка при создании или привязке ветки:', error);
+      alert('Не удалось создать или привязать ветку. Пожалуйста, попробуйте еще раз.');
     }
   };
 
@@ -455,7 +434,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
               <div className="mb-6">
                 <div className="text-sm text-text-secondary mb-3 font-bold">Ветка задачи</div>
 
-                {isLoadingBranches || isLoadingRepositories ? (
+                {isLoadingBranches ? (
                   <div className="bg-bg-secondary rounded-lg p-6 border border-border-primary flex justify-center items-center">
                     <svg className="animate-spin h-5 w-5 text-primary mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -471,7 +450,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                           <div key={branch.branchName} className="flex items-center justify-between border border-border-primary rounded-md p-2">
                             <div>
                               <div className="font-medium text-text-primary">{branch.branchName}</div>
-                              <div className="text-xs text-text-muted">Репозиторий: {branch.repository_name}</div>
+                              <div className="text-xs text-text-muted">Репозиторий: {branch.repositoryName}</div>
                               <div className="text-xs text-text-muted">Создана: {new Date(branch.created_at).toLocaleDateString()}</div>
                             </div>
                             <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Активная</div>
