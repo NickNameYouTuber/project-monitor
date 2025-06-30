@@ -358,7 +358,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
               )}
               {/* Блок репозиториев и создания ветки */}
               <div className="mb-6">
-                <div className="text-sm text-text-secondary mb-3 font-bold">Ветки задачи</div>
+                <div className="text-sm text-text-secondary mb-3 font-bold">Ветка задачи</div>
                 
                 {isLoadingBranches || isLoadingRepositories ? (
                   <div className="bg-bg-secondary rounded-lg p-6 border border-border-primary flex justify-center items-center">
@@ -373,13 +373,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                     {taskBranches.length > 0 ? (
                       <div className="space-y-2">
                         {taskBranches.map(branch => (
-                          <div key={branch.branchName} className="flex items-center justify-between border border-border-primary rounded-md p-2">
+                          <div key={branch.branch_name || branch.branchName} className="flex items-center justify-between border border-border-primary rounded-md p-2">
                             <div>
-                              <div className="font-medium text-text-primary">{branch.branchName}</div>
-                              <div className="text-xs text-text-muted">Репозиторий: {branch.repositoryName}</div>
+                              <div className="font-medium text-text-primary">{branch.branch_name || branch.branchName}</div>
+                              <div className="text-xs text-text-muted">Репозиторий: {branch.repository_name || branch.repositoryName}</div>
                               <div className="text-xs text-text-muted">Создана: {new Date(branch.created_at).toLocaleDateString()}</div>
                             </div>
-                            <div className="text-xs text-text-muted">Активная</div>
+                            <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Активная</div>
                           </div>
                         ))}
                       </div>
@@ -387,45 +387,47 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                       <div className="mb-3 text-center text-text-muted">К задаче пока не привязаны ветки</div>
                     )}
                     
-                    <div className="relative mt-2">
-                      <div className="flex space-x-2">
-                        <div className="flex-grow relative">
-                          <input
-                            type="text"
-                            value={branchName}
-                            onChange={handleBranchNameChange}
-                            placeholder="Введите имя ветки"
-                            className="w-full rounded-md bg-bg-card border border-border-primary text-text-primary px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                          />
-                          {branchSuggestions.length > 0 && (
-                            <div className="absolute z-10 w-full mt-1 bg-bg-card border border-border-primary rounded-md shadow-lg max-h-60 overflow-auto">
-                              {branchSuggestions.map((suggestion, index) => (
-                                <div
-                                  key={index}
-                                  className="px-3 py-2 hover:bg-bg-secondary cursor-pointer text-text-primary"
-                                  onClick={() => {
-                                    setBranchName(suggestion);
-                                    setBranchSuggestions([]);
-                                  }}
-                                >
-                                  {suggestion}
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                    {taskBranches.length === 0 && (
+                      <div className="relative mt-2">
+                        <div className="flex space-x-2">
+                          <div className="flex-grow relative">
+                            <input
+                              type="text"
+                              value={branchName}
+                              onChange={handleBranchNameChange}
+                              placeholder="Введите имя ветки"
+                              className="w-full rounded-md bg-bg-card border border-border-primary text-text-primary px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                            {branchSuggestions.length > 0 && (
+                              <div className="absolute z-10 w-full mt-1 bg-bg-card border border-border-primary rounded-md shadow-lg max-h-60 overflow-auto">
+                                {branchSuggestions.map((suggestion, index) => (
+                                  <div
+                                    key={index}
+                                    className="px-3 py-2 hover:bg-bg-secondary cursor-pointer text-text-primary"
+                                    onClick={() => {
+                                      setBranchName(suggestion);
+                                      setBranchSuggestions([]);
+                                    }}
+                                  >
+                                    {suggestion}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            className="px-4 py-2 bg-[#7AB988] text-white rounded-md hover:bg-[#5DA570] transition-colors flex items-center whitespace-nowrap"
+                            onClick={handleCreateOrAttachBranch}
+                            disabled={!selectedRepositoryId || !branchName.trim()}
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                            Привязать
+                          </button>
                         </div>
-                        <button
-                          className="px-4 py-2 bg-[#7AB988] text-white rounded-md hover:bg-[#5DA570] transition-colors flex items-center whitespace-nowrap"
-                          onClick={handleCreateOrAttachBranch}
-                          disabled={!selectedRepositoryId || !branchName.trim()}
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                          Привязать
-                        </button>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
