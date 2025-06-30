@@ -5,6 +5,7 @@ from ..database import get_db
 from .. import schemas
 from ..models import Repository, RepositoryMember, User, Task, Comment
 from ..auth import get_current_active_user
+from .task_repository_integration import get_task_related_branches
 import os
 import git
 from pathlib import Path
@@ -13,6 +14,16 @@ import pygit2
 from datetime import datetime
 from pydantic import BaseModel
 import uuid
+import re
+
+class CommitNotification(BaseModel):
+    repository_id: str
+    branch: str
+    commit_hash: str
+    short_hash: Optional[str] = None
+    message: str
+    author: str
+    date: str
 
 router = APIRouter()
 
