@@ -474,7 +474,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                               <div className="text-xs text-text-muted">Репозиторий: {branch.repository_name || branch.repositoryName}</div>
                               <div className="text-xs text-text-muted">Создана: {new Date(branch.created_at).toLocaleDateString()}</div>
                             </div>
-                            <button onClick={() => setShowCreateBranchModal(true)} className="text-xs bg-blue-500 text-white hover:bg-blue-600 px-2 py-1 rounded transition-colors">Сменить ветку</button>
+                            <button 
+                              onClick={() => setShowCreateBranchModal(true)} 
+                              className="text-xs bg-primary text-white hover:bg-primary-dark px-3 py-1.5 rounded transition-colors"
+                            >
+                              Сменить ветку
+                            </button>
                           </div>
                         ))}
                       </div>

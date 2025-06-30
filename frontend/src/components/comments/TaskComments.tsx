@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import type { Comment } from '../../utils/api/comments';
+import type { Comment as ApiComment } from '../../utils/api/comments';
+
+// Расширяем тип Comment для поддержки системных комментариев
+interface Comment extends ApiComment {
+  is_system?: boolean;
+  username: string;
+}
 import MarkdownEditor from './MarkdownEditor';
 import MarkdownPreview from './MarkdownPreview';
 import { useAppContext } from '../../utils/AppContext';
@@ -103,67 +109,79 @@ const TaskComments: React.FC<TaskCommentsProps> = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {Array.isArray(comments) && comments.map((comment) => (
-            <div
-              key={comment.id}
-              className={`comment bg-bg-secondary rounded-lg overflow-hidden border ${
-                currentUser?.id === comment.user_id ? 'border-primary/30' : 'border-border-primary'
-              }`}
-            >
-              <div className="comment-header flex justify-between items-center px-4 py-2 bg-bg-secondary/50 border-b border-border-primary">
-                <div className="flex items-center">
-                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white mr-2">
-                    {comment.username.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-medium text-text-primary">
-                      {comment.username}
-                      {currentUser?.id === comment.user_id && (
-                        <span className="ml-2 text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-                          You
-                        </span>
-                      )}
+          {Array.isArray(comments) && comments.map((comment) => {
+            // Системный комментарий (коммит)
+            if (comment.is_system) {
+              return (
+                <div key={comment.id} className="py-3 px-1 border-t border-border-primary/30">
+                  <div className="text-sm text-text-secondary">{comment.content}</div>
+                </div>
+              );
+            }
+            
+            // Обычный комментарий
+            return (
+              <div
+                key={comment.id}
+                className={`comment bg-bg-secondary rounded-lg overflow-hidden border ${
+                  currentUser?.id === comment.user_id ? 'border-primary/30' : 'border-border-primary'
+                }`}
+              >
+                <div className="comment-header flex justify-between items-center px-4 py-2 bg-bg-secondary/50 border-b border-border-primary">
+                  <div className="flex items-center">
+                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white mr-2">
+                      {comment.username.charAt(0).toUpperCase()}
                     </div>
-                    <div className="text-xs text-text-muted">{formatDate(comment.created_at)}</div>
+                    <div>
+                      <div className="font-medium text-text-primary">
+                        {comment.username}
+                        {currentUser?.id === comment.user_id && (
+                          <span className="ml-2 text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                            You
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-text-muted">{formatDate(comment.created_at)}</div>
+                    </div>
                   </div>
+                  
+                  {currentUser?.id === comment.user_id && (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setEditingComment(comment.id)}
+                        className="text-text-muted hover:text-primary p-1 rounded transition-colors bg-bg-secondary"
+                        disabled={editingComment === comment.id}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="text-text-muted hover:text-state-error p-1 rounded transition-colors bg-bg-secondary"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
                 
-                {currentUser?.id === comment.user_id && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setEditingComment(comment.id)}
-                      className="text-text-muted hover:text-primary p-1 rounded transition-colors bg-bg-secondary"
-                      disabled={editingComment === comment.id}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteComment(comment.id)}
-                      className="text-text-muted hover:text-state-error p-1 rounded transition-colors bg-bg-secondary"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
+                <div className="comment-body p-4">
+                  {editingComment === comment.id ? (
+                    <MarkdownEditor
+                      initialValue={comment.content}
+                      onSave={(content) => handleUpdateComment(comment.id, content)}
+                      onCancel={() => setEditingComment(null)}
+                    />
+                  ) : (
+                    <MarkdownPreview content={comment.content} />
+                  )}
+                </div>
               </div>
-              
-              <div className="comment-body p-4">
-                {editingComment === comment.id ? (
-                  <MarkdownEditor
-                    initialValue={comment.content}
-                    onSave={(content) => handleUpdateComment(comment.id, content)}
-                    onCancel={() => setEditingComment(null)}
-                  />
-                ) : (
-                  <MarkdownPreview content={comment.content} />
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
