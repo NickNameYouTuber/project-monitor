@@ -112,6 +112,13 @@ const WhiteboardCanvas: React.FC<{ projectId?: string }> = ({ projectId }) => {
 
   // Добавление нового элемента на доску
   const addElement = useCallback((type: WhiteboardElementType) => {
+    // Не создаем новую стрелку, когда тип "arrow", так как стрелки создаются только через точки соединения
+    if (type === 'arrow') {
+      // Просто активируем инструмент стрелка без создания объекта
+      setCurrentTool('arrow');
+      return;
+    }
+    
     const newElement: WhiteboardElementData = {
       id: `element-${Date.now()}`,
       type,
@@ -142,8 +149,21 @@ const WhiteboardCanvas: React.FC<{ projectId?: string }> = ({ projectId }) => {
   }, [elements]);
 
   // Создание новой стрелки с соединениями
+  // Создается только при выбранном инструменте "arrow" и при клике на точки соединения
   const createArrowWithConnections = useCallback((startElementId: string, startConnectionPoint: ConnectionPointPosition, 
                                    endElementId: string, endConnectionPoint: ConnectionPointPosition) => {
+    // Дополнительная проверка, что выбран именно инструмент стрелка
+    if (currentTool !== 'arrow') {
+      console.log('Инструмент стрелка не выбран, стрелка не будет создана');
+      return;
+    }
+    
+    // Проверка, что соединяются два разных элемента
+    if (startElementId === endElementId) {
+      console.log('Нельзя создать стрелку, соединяющую элемент с самим собой');
+      return;
+    }
+    
     const newArrow: WhiteboardElementData = {
       id: `arrow-${Date.now()}`,
       type: 'arrow',
@@ -164,9 +184,10 @@ const WhiteboardCanvas: React.FC<{ projectId?: string }> = ({ projectId }) => {
       arrowStyle: 'straight'
     };
     
-    setElements(prevElements => [...prevElements, newArrow]);
-    // Здесь должен быть вызов API для сохранения новой стрелки
-  }, [elements]);
+    console.log('Создана стрелка между', startElementId, 'и', endElementId);
+    setElements([...elements, newArrow]);
+    setSelectedElementId(newArrow.id);
+  }, [elements, currentTool]); // Здесь должен быть вызов API для сохранения новой стрелки
 
   // Удаление элемента
   const deleteElement = useCallback((id: string) => {

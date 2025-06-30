@@ -24,14 +24,14 @@ const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
 }) => {
   const tools = [
     { id: 'select', icon: '🖱️', label: 'Выбрать' },
-    { id: 'pan', icon: '✋', label: 'Перемещение' }
+    { id: 'pan', icon: '✋', label: 'Перемещение' },
+    { id: 'arrow', icon: '➡️', label: 'Стрелка' }
   ];
 
   const elements = [
     { id: 'sticky' as WhiteboardElementType, icon: '📝', label: 'Стикер' },
     { id: 'text' as WhiteboardElementType, icon: 'T', label: 'Текст' },
     { id: 'shape' as WhiteboardElementType, icon: '⬜', label: 'Фигура' },
-    { id: 'arrow' as WhiteboardElementType, icon: '➡️', label: 'Стрелка' },
     { id: 'image' as WhiteboardElementType, icon: '🖼️', label: 'Картинка' }
   ];
 
@@ -189,7 +189,10 @@ const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
                   ? 'bg-primary text-white'
                   : 'bg-bg-secondary hover:bg-bg-hover'
               }`}
-              onClick={() => setCurrentTool(tool.id)}
+              onClick={() => {
+                // Просто переключаем инструмент без создания новых объектов
+                setCurrentTool(tool.id);
+              }}
               title={tool.label}
             >
               <span className="text-lg">{tool.icon}</span>

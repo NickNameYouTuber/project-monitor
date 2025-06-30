@@ -117,10 +117,16 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
     (position: ConnectionPointPosition) => {
       if (currentTool === 'arrow') {
         if (!isCreatingArrow) {
+          // Начало создания стрелки - запоминаем начальную точку
           setIsCreatingArrow(true);
           setArrowStartPoint({ position, elementId: element.id });
         } else if (arrowStartPoint && arrowStartPoint.elementId !== element.id) {
+          // Завершение создания стрелки - создаем стрелку между двумя выбранными точками
           createArrow(arrowStartPoint.elementId, arrowStartPoint.position, element.id, position);
+          setIsCreatingArrow(false);
+          setArrowStartPoint(null);
+        } else if (arrowStartPoint && arrowStartPoint.elementId === element.id) {
+          // Если пользователь кликнул на точку того же самого элемента, отменяем создание
           setIsCreatingArrow(false);
           setArrowStartPoint(null);
         }
