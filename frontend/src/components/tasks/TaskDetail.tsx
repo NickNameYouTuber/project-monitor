@@ -412,8 +412,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                   <div className="flex flex-wrap gap-2">
                     {(() => {
                       let sortedAssignees = [...task.assignees];
-                      const currentUserIndex = currentUser_delta_0currentUser
-                        ? sortedAssignees.findIndex(assignee => assignee.id === currentUser.id)
+                      const currentUserIndex = currentUser
+                        ? sortedAssignees.findIndex(assignee => assignee.id === currentUser?.id)
                         : -1;
 
                       if (currentUserIndex > 0) {
