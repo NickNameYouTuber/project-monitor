@@ -57,14 +57,35 @@ async def create_project(project: ProjectCreate,
                         db: Session = Depends(get_db)):
     # Validate dashboard_id if provided
     if project.dashboard_id:
-        dashboard = db.query(Dashboard).filter(
-            Dashboard.id == project.dashboard_id,
-            Dashboard.owner_id == current_user.id
-        ).first()
+        from ..models.dashboard_member import DashboardMember
+        
+        # Сначала проверяем существование дашборда
+        dashboard = db.query(Dashboard).filter(Dashboard.id == project.dashboard_id).first()
+        
         if not dashboard:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Dashboard not found or you don't have access to it"
+                detail="Dashboard not found"
+            )
+            
+        # Проверяем, является ли пользователь владельцем
+        is_owner = str(dashboard.owner_id) == str(current_user.id)
+        
+        # Если не владелец, проверяем участника
+        is_member = False
+        if not is_owner:
+            dashboard_member = db.query(DashboardMember).filter(
+                DashboardMember.dashboard_id == project.dashboard_id,
+                DashboardMember.user_id == current_user.id,
+                DashboardMember.is_active == True
+            ).first()
+            is_member = dashboard_member is not None
+        
+        # Если не владелец и не участник, отказываем в доступе
+        if not (is_owner or is_member):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to create projects in this dashboard"
             )
     
     # Create new project

@@ -42,13 +42,19 @@ const ProjectColumn: React.FC<ProjectColumnProps> = ({
             style={{ minHeight: '100px' }}
             data-status={status}
           >
-            {columnProjects.map((project, index) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                index={index}
-              />
-            ))}
+            {columnProjects.length > 0 ? (
+              columnProjects.map((project, index) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  index={index}
+                />
+              ))
+            ) : (
+              <div className="py-6 text-center text-text-muted text-sm">
+                No projects yet
+              </div>
+            )}
             {provided.placeholder}
           </div>
         )}
