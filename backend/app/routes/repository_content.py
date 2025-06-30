@@ -5,7 +5,6 @@ from ..database import get_db
 from .. import schemas
 from ..models import Repository, RepositoryMember, User, Task, Comment
 from ..auth import get_current_active_user
-from .task_repository_integration import get_task_related_branches
 import os
 import git
 from pathlib import Path
@@ -584,23 +583,18 @@ async def process_commit_notification(
         repo = db.query(Repository).filter(Repository.id == commit_data.repository_id).first()
         if not repo:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
-            
-        # Ищем задачи, связанные с этой веткой
-        tasks_with_branch = []
-        tasks = db.query(Task).all()
         
-        for task in tasks:
-            # Получаем ветки задачи
-            branches = await get_task_related_branches(task.id, current_user, db)
-            
-            # Проверяем, связана ли задача с веткой из коммита
-            for branch in branches:
-                branch_name = branch.get("branch_name", "") or branch.get("branchName", "")
-                repo_id = branch.get("repository_id", "") or branch.get("repositoryId", "")
-                
-                if branch_name == commit_data.branch and repo_id == commit_data.repository_id:
-                    tasks_with_branch.append(task)
-                    break
+        # Находим задачи, у которых есть комментарии с информацией о ветке
+        branch_comments = db.query(Comment).filter(
+            Comment.is_system == True,
+            (Comment.content.like(f"%**{commit_data.branch}**%") | 
+             Comment.content.like(f"%{commit_data.branch} from%") | 
+             Comment.content.like(f"%Привязана ветка {commit_data.branch}%"))
+        ).all()
+        
+        # Получаем ID задач из найденных комментариев
+        task_ids = set(comment.task_id for comment in branch_comments)
+        tasks_with_branch = db.query(Task).filter(Task.id.in_(task_ids)).all()
         
         # Если нашлись задачи, связанные с этой веткой
         if tasks_with_branch:
