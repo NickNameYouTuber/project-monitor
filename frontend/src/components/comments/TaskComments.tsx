@@ -113,8 +113,8 @@ const TaskComments: React.FC<TaskCommentsProps> = ({
             // Системный комментарий (коммит)
             if (comment.is_system) {
               return (
-                <div key={comment.id} className="py-3 px-1 border-t border-border-primary/30">
-                  <div className="text-sm text-text-secondary">{comment.content}</div>
+                <div key={comment.id} className="py-3 px-1">
+                  <div className="text-sm text-text-secondary whitespace-pre-line">{comment.content}</div>
                 </div>
               );
             }

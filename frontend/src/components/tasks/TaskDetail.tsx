@@ -476,7 +476,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                             </div>
                             <button 
                               onClick={() => setShowCreateBranchModal(true)} 
-                              className="text-xs bg-primary text-white hover:bg-primary-dark px-3 py-1.5 rounded transition-colors"
+                              className="text-xs bg-primary text-white hover:bg-primary-dark px-4 py-1.5 rounded transition-colors"
                             >
                               Сменить ветку
                             </button>
