@@ -216,9 +216,14 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
     }
   };
 
+  // Эффект для загрузки всех данных при первом рендере или изменении id задачи
   useEffect(() => {
+    console.log('Загружаем данные для задачи:', task.id);
     loadAllData();
-
+  }, [task.id, task.project_id, currentUser?.token]);
+  
+  // Отдельный эффект для загрузки списка доступных веток при выборе репозитория
+  useEffect(() => {
     const fetchAvailableBranches = async () => {
       if (currentUser?.token && selectedRepositoryId) {
         try {
@@ -234,7 +239,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
     if (selectedRepositoryId) {
       fetchAvailableBranches();
     }
-  }, [task.id, task.project_id, currentUser?.token, selectedRepositoryId, taskBranches]);
+  }, [selectedRepositoryId, currentUser?.token]);
 
   const handleBranchNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
