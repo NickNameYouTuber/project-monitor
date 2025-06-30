@@ -90,7 +90,7 @@ const LandingPage: React.FC = () => {
         </div>
 
         {/* Демонстрационный скриншот */}
-        <div className="flex flex-col items-center mb-24 relative">
+        <div className="flex flex-col items-center mb-24 relative hidden">
           <h3 className="text-2xl md:text-3xl font-bold text-[#3A6642] mb-8 relative after:absolute after:content-[''] after:w-16 after:h-1 after:bg-[#7AB988] after:-bottom-2 after:left-1/2 after:-translate-x-1/2">
             Взгляните на NIT в действии
           </h3>
