@@ -1,7 +1,6 @@
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Body, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 from ..database import get_db
 from .. import schemas
 from ..models import Repository, RepositoryMember, User, Task, Comment
@@ -579,118 +578,41 @@ async def process_commit_notification(
 ):
     """Обработка уведомления о новом коммите и создание системного комментария в связанной задаче"""
     
-    print(f"[DEBUG] Получено уведомление о коммите в ветке {commit_data.branch} репозитория {commit_data.repository_id}")
-    print(f"[DEBUG] Данные коммита: {commit_data}")
-    
     try:
         # Проверяем доступ к репозиторию
         repo = db.query(Repository).filter(Repository.id == commit_data.repository_id).first()
         if not repo:
-            print(f"[ERROR] Репозиторий не найден: {commit_data.repository_id}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
         
-        print(f"[DEBUG] Репозиторий найден: {repo.name} (ID: {repo.id})")
-        
-        # Находим задачи, связанные с этой веткой через системные комментарии
-        print(f"[DEBUG] Ищем комментарии с упоминанием ветки {commit_data.branch}...")
-        
-        # Шаблоны для поиска упоминаний ветки в комментариях
-        branch_patterns = [
-            f"%Created branch {commit_data.branch} from%",
-            f"%Created branch **{commit_data.branch}** from%",
-            f"%Привязана ветка {commit_data.branch}%",
-            f"%branch **{commit_data.branch}**%"
-        ]
-        
-        # Создаем запрос с несколькими условиями
-        query = db.query(Comment).filter(Comment.is_system == True)
-        
-        # Добавляем условия OR для каждого шаблона
-        or_conditions = [Comment.content.like(pattern) for pattern in branch_patterns]
-        query = query.filter(or_(*or_conditions))
-        
-        branch_comments = query.all()
-        print(f"[DEBUG] Найдено {len(branch_comments)} комментариев с упоминанием ветки")
-        
-        # Выводим найденные комментарии для отладки
-        for i, comment in enumerate(branch_comments):
-            print(f"[DEBUG] Комментарий {i+1}: task_id={comment.task_id}, content={comment.content[:50]}...")
+        # Находим задачи, у которых есть комментарии с информацией о ветке
+        branch_comments = db.query(Comment).filter(
+            Comment.is_system == True,
+            (Comment.content.like(f"%**{commit_data.branch}**%") | 
+             Comment.content.like(f"%{commit_data.branch} from%") | 
+             Comment.content.like(f"%Привязана ветка {commit_data.branch}%"))
+        ).all()
         
         # Получаем ID задач из найденных комментариев
         task_ids = set(comment.task_id for comment in branch_comments)
-        print(f"[DEBUG] ID задач с веткой {commit_data.branch}: {task_ids}")
-        
         tasks_with_branch = db.query(Task).filter(Task.id.in_(task_ids)).all()
-        print(f"[DEBUG] Найдено {len(tasks_with_branch)} задач с веткой {commit_data.branch}")
         
         # Если нашлись задачи, связанные с этой веткой
         if tasks_with_branch:
-            print(f"[DEBUG] Создаем комментарии о коммите в {len(tasks_with_branch)} задачах")
             short_hash = commit_data.short_hash or (commit_data.commit_hash[:8] if commit_data.commit_hash else "")
-            print(f"[DEBUG] Короткий хэш коммита: {short_hash}")
-            
-            created_comments = []
             
             # Для каждой задачи создаем системный комментарий о коммите
             for task in tasks_with_branch:
-                print(f"[DEBUG] Создаем комментарий для задачи {task.id} - {task.title}")
-                
-                # Преобразуем строку даты коммита в datetime объект для сортировки
-                try:
-                    # Пробуем разные форматы даты
-                    commit_date = None
-                    date_str = commit_data.date
-                    print(f"[DEBUG] Пытаемся преобразовать дату коммита: {date_str}")
-                    
-                    for date_format in ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%a %b %d %H:%M:%S %Y", "%d-%m-%Y %H:%M:%S"]:
-                        try:
-                            commit_date = datetime.strptime(date_str, date_format)
-                            print(f"[DEBUG] Дата успешно преобразована с форматом {date_format}: {commit_date}")
-                            break
-                        except Exception as e:
-                            print(f"[DEBUG] Неудачная попытка преобразования даты с форматом {date_format}: {str(e)}")
-                            pass
-                    
-                    # Если не удалось распарсить, используем текущее время
-                    if not commit_date:
-                        commit_date = datetime.now()
-                        print(f"[DEBUG] Не удалось преобразовать дату, используем текущее время: {commit_date}")
-                except Exception as e:
-                    commit_date = datetime.now()
-                    print(f"[DEBUG] Ошибка при обработке даты: {str(e)}. Используем текущее время: {commit_date}")
-                
-                # Создаем контент комментария
-                content = f"💻 Новый коммит в ветке **{commit_data.branch}**\n\n**{short_hash}**: {commit_data.message}\n\nАвтор: {commit_data.author} • {commit_data.date}"
-                print(f"[DEBUG] Контент комментария: {content[:50]}...")
-                
-                # Создаем и добавляем комментарий
                 comment = Comment(
                     id=str(uuid.uuid4()),
                     task_id=task.id,
                     user_id=current_user.id,
-                    content=content,
-                    is_system=True,
-                    created_at=commit_date  # Используем дату коммита для правильной сортировки
+                    content=f"💻 Новый коммит в ветке **{commit_data.branch}**\n\n**{short_hash}**: {commit_data.message}\n\nАвтор: {commit_data.author} • {commit_data.date}",
+                    is_system=True
                 )
-                
-                try:
-                    db.add(comment)
-                    created_comments.append({"task_id": task.id, "comment_id": comment.id})
-                    print(f"[DEBUG] Комментарий добавлен в сессию: {comment.id}")
-                except Exception as e:
-                    print(f"[ERROR] Ошибка при добавлении комментария: {str(e)}")
+                db.add(comment)
             
-            # Сохраняем все изменения в БД
-            try:
-                db.commit()
-                print(f"[DEBUG] Успешно сохранены {len(created_comments)} комментариев в БД")
-            except Exception as e:
-                print(f"[ERROR] Ошибка при сохранении комментариев в БД: {str(e)}")
-                db.rollback()
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                detail=f"Ошибка при сохранении комментариев: {str(e)}")
-            
-            return {"status": "success", "tasks_updated": len(tasks_with_branch), "comments": created_comments}
+            db.commit()
+            return {"status": "success", "tasks_updated": len(tasks_with_branch)}
         
         return {"status": "success", "tasks_updated": 0, "message": "No tasks associated with this branch"}
         
