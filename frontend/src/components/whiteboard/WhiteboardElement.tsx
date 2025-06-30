@@ -67,6 +67,13 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
   const handleDragStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    
+    // Если выбран инструмент стрелка, игнорируем перетаскивание
+    if (currentTool === 'arrow') {
+      console.log('Перетаскивание заблокировано в режиме стрелки');
+      return;
+    }
+    
     setIsDragging(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY };
     originalPositionRef.current = { ...element.position };
@@ -76,6 +83,13 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
   const handleResizeStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    
+    // Если выбран инструмент стрелка, игнорируем изменение размера
+    if (currentTool === 'arrow') {
+      console.log('Изменение размера заблокировано в режиме стрелки');
+      return;
+    }
+    
     setIsResizing(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY };
     resizeStartRef.current = { ...element.size };
