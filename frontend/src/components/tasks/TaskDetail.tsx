@@ -83,8 +83,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
     const safeCommits = commits || [];
     const commitItems: UnifiedTimelineItem[] = safeCommits.map(commit => ({
       id: commit.hash || `commit-${Math.random().toString(36).substring(2, 11)}`,
-      content: `💻 Коммит: **${commit.short_hash || commit.hash?.substring(0, 7)}**: ${commit.message}
-
+      content: `Коммит: ${commit.short_hash || commit.hash?.substring(0, 7)}: ${commit.message}
 Автор: ${commit.author} • ${new Date(commit.date).toLocaleString()}`,
       created_at: commit.date || commit.created_at || new Date().toISOString(),
       is_system: true,
@@ -475,7 +474,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                               <div className="text-xs text-text-muted">Репозиторий: {branch.repository_name || branch.repositoryName}</div>
                               <div className="text-xs text-text-muted">Создана: {new Date(branch.created_at).toLocaleDateString()}</div>
                             </div>
-                            <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Активная</div>
+                            <button onClick={() => setShowCreateBranchModal(true)} className="text-xs bg-blue-500 text-white hover:bg-blue-600 px-2 py-1 rounded transition-colors">Сменить ветку</button>
                           </div>
                         ))}
                       </div>
@@ -544,7 +543,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                 </div>
               ) : (
                 <div className="task-comments">
-                  <h3 className="task-section-title">Комментарии и история</h3>
                   <TaskComments
                     taskId={task.id}
                     comments={timelineItems.length > 0 ? timelineItems.map(item => ({
