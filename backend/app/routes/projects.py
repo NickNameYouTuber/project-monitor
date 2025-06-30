@@ -89,17 +89,37 @@ async def create_project(project: ProjectCreate,
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def read_project(project_id: str,
-                      current_user: User = Depends(get_current_active_user),
-                      db: Session = Depends(get_db)):
-    project = db.query(Project).filter(
-        Project.id == project_id,
-        Project.owner_id == current_user.id
-    ).first()
+                       current_user: User = Depends(get_current_active_user),
+                       db: Session = Depends(get_db)):
+    from sqlalchemy import or_
+    from ..models.dashboard_member import DashboardMember
+    
+    # Сначала проверяем существование проекта
+    project = db.query(Project).filter(Project.id == project_id).first()
     
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    return project
+    # Проверяем, является ли пользователь владельцем
+    if str(project.owner_id) == str(current_user.id):
+        return project
+    
+    # Если пользователь не владелец, проверяем, является ли он участником дашборда
+    if project.dashboard_id:
+        dashboard_member = db.query(DashboardMember).filter(
+            DashboardMember.dashboard_id == project.dashboard_id,
+            DashboardMember.user_id == current_user.id,
+            DashboardMember.is_active == True
+        ).first()
+        
+        if dashboard_member:
+            return project
+    
+    # Если дошли до этого места, значит пользователь не имеет доступа
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You don't have permission to access this project"
+    )
 
 
 @router.put("/{project_id}", response_model=ProjectResponse)
@@ -107,14 +127,31 @@ async def update_project(project_id: str,
                          project_update: ProjectUpdate,
                          current_user: User = Depends(get_current_active_user),
                          db: Session = Depends(get_db)):
-    # Get the project
-    db_project = db.query(Project).filter(
-        Project.id == project_id,
-        Project.owner_id == current_user.id
-    ).first()
+    from ..models.dashboard_member import DashboardMember
+    
+    # Сначала проверяем существование проекта
+    db_project = db.query(Project).filter(Project.id == project_id).first()
     
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
+        
+    # Проверяем права доступа
+    is_owner = str(db_project.owner_id) == str(current_user.id)
+    is_member = False
+    
+    if db_project.dashboard_id:
+        dashboard_member = db.query(DashboardMember).filter(
+            DashboardMember.dashboard_id == db_project.dashboard_id,
+            DashboardMember.user_id == current_user.id,
+            DashboardMember.is_active == True
+        ).first()
+        is_member = dashboard_member is not None
+    
+    if not (is_owner or is_member):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to modify this project"
+        )
     
     # Update project fields
     if project_update.name is not None:
@@ -158,14 +195,31 @@ async def update_project(project_id: str,
 async def delete_project(project_id: str,
                         current_user: User = Depends(get_current_active_user),
                         db: Session = Depends(get_db)):
-    # Get the project
-    db_project = db.query(Project).filter(
-        Project.id == project_id,
-        Project.owner_id == current_user.id
-    ).first()
+    from ..models.dashboard_member import DashboardMember
+    
+    # Сначала проверяем существование проекта
+    db_project = db.query(Project).filter(Project.id == project_id).first()
     
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
+        
+    # Проверяем права доступа
+    is_owner = str(db_project.owner_id) == str(current_user.id)
+    is_member = False
+    
+    if db_project.dashboard_id:
+        dashboard_member = db.query(DashboardMember).filter(
+            DashboardMember.dashboard_id == db_project.dashboard_id,
+            DashboardMember.user_id == current_user.id,
+            DashboardMember.is_active == True
+        ).first()
+        is_member = dashboard_member is not None
+    
+    if not (is_owner or is_member):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to delete this project"
+        )
     
     # Delete the project
     db.delete(db_project)
@@ -184,14 +238,31 @@ async def update_project_status(project_id: str,
                               status_update: StatusUpdateRequest,
                               current_user: User = Depends(get_current_active_user),
                               db: Session = Depends(get_db)):
-    # Get the project
-    db_project = db.query(Project).filter(
-        Project.id == project_id,
-        Project.owner_id == current_user.id
-    ).first()
+    from ..models.dashboard_member import DashboardMember
+    
+    # Сначала проверяем существование проекта
+    db_project = db.query(Project).filter(Project.id == project_id).first()
     
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
+        
+    # Проверяем права доступа
+    is_owner = str(db_project.owner_id) == str(current_user.id)
+    is_member = False
+    
+    if db_project.dashboard_id:
+        dashboard_member = db.query(DashboardMember).filter(
+            DashboardMember.dashboard_id == db_project.dashboard_id,
+            DashboardMember.user_id == current_user.id,
+            DashboardMember.is_active == True
+        ).first()
+        is_member = dashboard_member is not None
+    
+    if not (is_owner or is_member):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to modify this project"
+        )
     
     # Validate status value
     try:
@@ -229,23 +300,55 @@ class ReorderRequest(BaseModel):
 async def reorder_projects(reorder_data: ReorderRequest,
                           current_user: User = Depends(get_current_active_user),
                           db: Session = Depends(get_db)):
-    # Get the dragged project
-    dragged_project = db.query(Project).filter(
-        Project.id == reorder_data.projectId,
-        Project.owner_id == current_user.id
-    ).first()
+    from ..models.dashboard_member import DashboardMember
+    
+    # Сначала загружаем проекты без проверки прав доступа
+    dragged_project = db.query(Project).filter(Project.id == reorder_data.projectId).first()
     
     if dragged_project is None:
         raise HTTPException(status_code=404, detail="Dragged project not found")
     
-    # Get the target project
-    target_project = db.query(Project).filter(
-        Project.id == reorder_data.targetProjectId,
-        Project.owner_id == current_user.id
-    ).first()
+    # Проверяем права доступа к перетаскиваемому проекту
+    is_owner = str(dragged_project.owner_id) == str(current_user.id)
+    is_member = False
+    
+    if dragged_project.dashboard_id:
+        dashboard_member = db.query(DashboardMember).filter(
+            DashboardMember.dashboard_id == dragged_project.dashboard_id,
+            DashboardMember.user_id == current_user.id,
+            DashboardMember.is_active == True
+        ).first()
+        is_member = dashboard_member is not None
+    
+    if not (is_owner or is_member):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to modify this project"
+        )
+    
+    # Загружаем целевой проект
+    target_project = db.query(Project).filter(Project.id == reorder_data.targetProjectId).first()
     
     if target_project is None:
         raise HTTPException(status_code=404, detail="Target project not found")
+        
+    # Проверяем права доступа к целевому проекту
+    is_target_owner = str(target_project.owner_id) == str(current_user.id)
+    is_target_member = False
+    
+    if target_project.dashboard_id:
+        target_dashboard_member = db.query(DashboardMember).filter(
+            DashboardMember.dashboard_id == target_project.dashboard_id,
+            DashboardMember.user_id == current_user.id,
+            DashboardMember.is_active == True
+        ).first()
+        is_target_member = target_dashboard_member is not None
+    
+    if not (is_target_owner or is_target_member):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to modify the target project"
+        )
     
     # Get all projects in the target status column
     projects_same_status = db.query(Project).filter(

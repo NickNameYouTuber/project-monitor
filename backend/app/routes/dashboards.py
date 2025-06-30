@@ -15,8 +15,24 @@ router = APIRouter()
 async def read_dashboards(skip: int = 0, limit: int = 100,
                         current_user: User = Depends(get_current_active_user),
                         db: Session = Depends(get_db)):
-    dashboards = db.query(Dashboard).filter(Dashboard.owner_id == current_user.id)\
-                .offset(skip).limit(limit).all()
+    from sqlalchemy import or_
+    from ..models.dashboard_member import DashboardMember
+    
+    # Получаем ID дашбордов, в которых пользователь является участником
+    dashboards_as_member = db.query(DashboardMember.dashboard_id).filter(
+        DashboardMember.user_id == current_user.id,
+        DashboardMember.is_active == True
+    ).all()
+    dashboard_ids = [d[0] for d in dashboards_as_member]
+    
+    # Запрос на дашборды, где пользователь либо владелец, либо участник
+    dashboards = db.query(Dashboard).filter(
+        or_(
+            Dashboard.owner_id == current_user.id,
+            Dashboard.id.in_(dashboard_ids)
+        )
+    ).offset(skip).limit(limit).all()
+    
     return dashboards
 
 
@@ -43,15 +59,33 @@ async def create_dashboard(dashboard: DashboardCreate,
 async def read_dashboard(dashboard_id: str,
                         current_user: User = Depends(get_current_active_user),
                         db: Session = Depends(get_db)):
-    dashboard = db.query(Dashboard).filter(
-        Dashboard.id == dashboard_id,
-        Dashboard.owner_id == current_user.id
-    ).first()
+    from ..models.dashboard_member import DashboardMember
+    
+    # Сначала проверяем существование дашборда
+    dashboard = db.query(Dashboard).filter(Dashboard.id == dashboard_id).first()
     
     if dashboard is None:
         raise HTTPException(status_code=404, detail="Dashboard not found")
     
-    return dashboard
+    # Проверяем, является ли пользователь владельцем
+    if str(dashboard.owner_id) == str(current_user.id):
+        return dashboard
+    
+    # Если не владелец, проверяем членство
+    dashboard_member = db.query(DashboardMember).filter(
+        DashboardMember.dashboard_id == dashboard_id,
+        DashboardMember.user_id == current_user.id,
+        DashboardMember.is_active == True
+    ).first()
+    
+    if dashboard_member:
+        return dashboard
+    
+    # Если не владелец и не участник, отказываем в доступе
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You don't have permission to access this dashboard"
+    )
 
 
 @router.put("/{dashboard_id}", response_model=DashboardResponse)
