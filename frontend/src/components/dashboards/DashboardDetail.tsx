@@ -394,53 +394,10 @@ const DashboardDetail: React.FC = () => {
           {/* Проекты дашборда со столбцами статусов */}
           <div className="mt-8">
             <h2 className="text-lg font-medium text-text-primary mb-4">Projects</h2>
-            {dashboard.projects.length > 0 ? (
-              <ProjectBoard 
-                projects={dashboard.projects} 
-              />
-            ) : (
-              <div className="px-4 py-8 bg-bg-card rounded-lg shadow">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {/* Столбец "In Plans" */}
-                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
-                    <h3 className="text-md font-semibold text-text-primary mb-4">In Plans</h3>
-                    <div className="text-center py-10">
-                      <p className="text-gray-500 dark:text-gray-400 mb-4">No projects yet</p>
-                    </div>
-                  </div>
-                  
-                  {/* Столбец "In Progress" */}
-                  <div className="bg-bg-secondary p-4 rounded-md">
-                    <h3 className="text-md font-semibold text-text-primary mb-4">In Progress</h3>
-                    <div className="text-center py-10">
-                      <p className="text-text-secondary mb-4">No projects yet</p>
-                    </div>
-                  </div>
-                  
-                  {/* Столбец "On Testing" */}
-                  <div className="bg-bg-secondary p-4 rounded-md">
-                    <h3 className="text-md font-semibold text-text-primary mb-4">On Testing</h3>
-                    <div className="text-center py-10">
-                      <p className="text-text-secondary mb-4">No projects yet</p>
-                    </div>
-                  </div>
-                  
-                  {/* Столбец "On Pause" */}
-                  <div className="bg-bg-secondary p-4 rounded-md">
-                    <h3 className="text-md font-semibold text-text-primary mb-4">On Pause</h3>
-                    <div className="text-center py-10">
-                      <p className="text-text-secondary mb-4">No projects yet</p>
-                    </div>
-                  </div>
-                  
-                  {/* Столбец "Completed" */}
-                  <div className="bg-bg-secondary p-4 rounded-md">
-                    <h3 className="text-md font-semibold text-text-primary mb-4">Completed</h3>
-                    <div className="text-center py-10">
-                      <p className="text-text-secondary mb-4">No projects yet</p>
-                    </div>
-                  </div>
-                </div>
+            <ProjectBoard 
+              projects={dashboard.projects} 
+            />
+          </div>
                 
                 <div className="text-center mt-8">
                   <button
