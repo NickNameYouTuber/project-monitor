@@ -77,75 +77,50 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   useEffect(() => {
     const fetchCommentsAndCommits = async () => {
       if (!currentUser?.token) return;
-
       setIsLoadingComments(true);
-      setIsLoadingBranches(true); // Set loading state before fetching
+      setIsLoadingBranches(true);
       try {
-        // Загружаем комментарии задачи
         const commentsData = await commentsApi.getByTask(task.id, currentUser.token);
         const comments = Array.isArray(commentsData) ? commentsData : [];
-
-        // Загружаем ветки, связанные с задачей
         const branchesData = await taskRepositoryApi.getTaskBranches(task.id, currentUser.token);
-        setTaskBranches(branchesData as TaskBranch[]); // Cast to match local type if necessary
-
-        // Если есть связанная ветка, загружаем её коммиты
+        console.log('Fetched branches data:', branchesData); // Debugging log for branch data
+        setTaskBranches(branchesData as TaskBranch[]);
         const taskBranch = Array.isArray(branchesData) && branchesData.length > 0 ? branchesData[0] : null;
-
         if (taskBranch && taskBranch.repositoryId && taskBranch.branchName) {
-          const repoId = taskBranch.repositoryId;
-          const branchName = taskBranch.branchName;
-
-          console.log(`Загружаем коммиты для ветки ${branchName} из репозитория ${repoId}`);
-
-          try {
-            const commits = await repositoriesApi.git.getCommits(repoId, branchName, currentUser.token, 50);
-            console.log(`Получено ${commits.length} коммитов`);
-
-            // Создаем комбинированный список комментариев и коммитов
-            const commitsAsComments: ExtendedComment[] = commits.map(commit => ({
-              id: `commit-${commit.hash}`,
-              task_id: task.id,
-              user_id: commit.author_email,
-              content: `💻 Коммит **${commit.short_hash}**: ${commit.message}\n\nАвтор: ${commit.author} • ${commit.date}`,
-              created_at: new Date(commit.date).toISOString(),
-              updated_at: new Date(commit.date).toISOString(),
-              user: {
-                id: commit.author_email,
-                username: commit.author,
-                email: commit.author_email,
-                is_active: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              } as User,
-              is_system: true,
-              isCommit: true,
-              commitInfo: commit
-            } as unknown as ExtendedComment));
-
-            // Объединяем и сортируем по дате
-            const allComments = [...comments, ...commitsAsComments].sort((a, b) => {
-              return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-            });
-
-            setCombinedComments(allComments);
-          } catch (error) {
-            console.error('Ошибка при загрузке коммитов:', error);
-            setCombinedComments(comments);
-          }
+          console.log('Fetching commits for branch:', taskBranch.branchName); // Debugging log for commit fetch
+          const commits = await repositoriesApi.git.getCommits(taskBranch.repositoryId, taskBranch.branchName, currentUser.token, 50);
+          const commitsAsComments = commits.map(commit => ({
+            id: `commit-${commit.hash}`,
+            task_id: task.id,
+            user_id: commit.author_email,
+            content: `💻 Коммит **${commit.short_hash}**: ${commit.message}\n\nАвтор: ${commit.author} • ${commit.date}`,
+            created_at: new Date(commit.date).toISOString(),
+            updated_at: new Date(commit.date).toISOString(),
+            user: {
+              id: commit.author_email,
+              username: commit.author,
+              email: commit.author_email,
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            } as User,
+            is_system: true,
+            isCommit: true,
+            commitInfo: commit
+          } as unknown as ExtendedComment));
+          const allComments = [...comments, ...commitsAsComments].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          setCombinedComments(allComments);
         } else {
-          console.log('Нет привязанной ветки для загрузки коммитов');
+          console.log('No attached branch found for task'); // Debugging log for no branch case
           setCombinedComments(comments);
         }
       } catch (error) {
-        console.error('Ошибка при загрузке комментариев:', error);
-        setCombinedComments([]);
+        console.error('Error loading data:', error);
       } finally {
         setIsLoadingComments(false);
-        setIsLoadingBranches(false); // Reset loading state after fetching
+        setIsLoadingBranches(false);
       }
     };
-
     const fetchRepositories = async () => {
       if (currentUser?.token && task.project_id) {
         try {
@@ -449,8 +424,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                         {taskBranches.map(branch => (
                           <div key={branch.branchName} className="flex items-center justify-between border border-border-primary rounded-md p-2">
                             <div>
-                              <div className="font-medium text-text-primary">{branch.branchName}</div>
-                              <div className="text-xs text-text-muted">Репозиторий: {branch.repositoryName}</div>
+                              <div className="font-medium text-text-primary">{branch.branchName || 'No branch name'}</div>
+                              <div className="text-xs text-text-muted">Репозиторий: {branch.repositoryName || 'Unknown repository'}</div>
                               <div className="text-xs text-text-muted">Создана: {new Date(branch.created_at).toLocaleDateString()}</div>
                             </div>
                             <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Активная</div>
