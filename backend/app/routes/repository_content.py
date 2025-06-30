@@ -602,12 +602,30 @@ async def process_commit_notification(
             
             # Для каждой задачи создаем системный комментарий о коммите
             for task in tasks_with_branch:
+                # Преобразуем строку даты коммита в datetime объект для сортировки
+                try:
+                    # Пробуем разные форматы даты
+                    commit_date = None
+                    for date_format in ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%a %b %d %H:%M:%S %Y"]:
+                        try:
+                            commit_date = datetime.strptime(commit_data.date, date_format)
+                            break
+                        except:
+                            pass
+                    
+                    # Если не удалось распарсить, используем текущее время
+                    if not commit_date:
+                        commit_date = datetime.now()
+                except:
+                    commit_date = datetime.now()
+                
                 comment = Comment(
                     id=str(uuid.uuid4()),
                     task_id=task.id,
                     user_id=current_user.id,
                     content=f"💻 Новый коммит в ветке **{commit_data.branch}**\n\n**{short_hash}**: {commit_data.message}\n\nАвтор: {commit_data.author} • {commit_data.date}",
-                    is_system=True
+                    is_system=True,
+                    created_at=commit_date  # Используем дату коммита для правильной сортировки
                 )
                 db.add(comment)
             
