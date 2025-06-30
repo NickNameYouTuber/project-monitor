@@ -1,5 +1,48 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import type { WhiteboardElementData, ConnectionPointPosition } from '../../types/whiteboard';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+
+// Используем определения типов напрямую, если модуль не найден
+type ConnectionPointPosition = 'top' | 'right' | 'bottom' | 'left' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+interface Position {
+  x: number;
+  y: number;
+}
+
+interface Size {
+  width: number;
+  height: number;
+}
+
+interface ArrowConnection {
+  elementId: string;
+  connectionPoint: ConnectionPointPosition;
+}
+
+interface WhiteboardElementData {
+  id: string;
+  type: string;
+  position: Position;
+  size: Size;
+  content?: string;
+  color?: string;
+  startElementId?: string;
+  endElementId?: string;
+  startConnection?: ArrowConnection;
+  endConnection?: ArrowConnection;
+  strokeWidth?: string;
+  arrowStyle?: string;
+  shapeType?: string;
+  zIndex?: number;
+  rotation?: number;
+  imageUrl?: string;
+}
+
+import './WhiteboardElement.css';
+
+interface ArrowStartPoint {
+  position: ConnectionPointPosition;
+  elementId: string;
+}
 
 interface WhiteboardElementProps {
   element: WhiteboardElementData;
@@ -13,6 +56,11 @@ interface WhiteboardElementProps {
     endElementId: string,
     endConnectionPoint: ConnectionPointPosition
   ) => void;
+  startArrowCreation: (elementId: string, connectionPoint: ConnectionPointPosition) => void;
+  cancelArrowCreation: () => void;
+  isCreatingArrow: boolean;
+  arrowStartPoint: ArrowStartPoint | null;
+  arrowStartElementId: string | null;
   currentTool: string;
 }
 
@@ -23,17 +71,20 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
   onUpdate,
   onDelete,
   createArrow,
+  startArrowCreation,
+  cancelArrowCreation,
+  isCreatingArrow,
+  arrowStartPoint,
+  arrowStartElementId,
   currentTool,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(element.content || '');
-  const [isCreatingArrow, setIsCreatingArrow] = useState(false);
-  const [arrowStartPoint, setArrowStartPoint] = useState<{
-    position: ConnectionPointPosition;
-    elementId: string;
-  } | null>(null);
+  // Теперь используем пропсы вместо локального состояния
+  // Локальная переменная для визуализации только внутри элемента
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
 
   const dragStartRef = useRef({ x: 0, y: 0 });
   const originalPositionRef = useRef({ x: 0, y: 0 });
@@ -131,22 +182,23 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
     (position: ConnectionPointPosition) => {
       if (currentTool === 'arrow') {
         if (!isCreatingArrow) {
-          // Начало создания стрелки - запоминаем начальную точку
-          setIsCreatingArrow(true);
-          setArrowStartPoint({ position, elementId: element.id });
+          // Если не в процессе создания стрелки - начинаем создание
+          startArrowCreation(element.id, position);
         } else if (arrowStartPoint && arrowStartPoint.elementId !== element.id) {
-          // Завершение создания стрелки - создаем стрелку между двумя выбранными точками
-          createArrow(arrowStartPoint.elementId, arrowStartPoint.position, element.id, position);
-          setIsCreatingArrow(false);
-          setArrowStartPoint(null);
-        } else if (arrowStartPoint && arrowStartPoint.elementId === element.id) {
-          // Если пользователь кликнул на точку того же самого элемента, отменяем создание
-          setIsCreatingArrow(false);
-          setArrowStartPoint(null);
+          // Если в процессе создания и кликнули на другой элемент - создаем стрелку
+          createArrow(
+            arrowStartPoint.elementId, 
+            arrowStartPoint.position, 
+            element.id, 
+            position
+          );
+        } else if (arrowStartPoint && arrowStartElementId && arrowStartElementId === element.id && arrowStartPoint.position === position) {
+          // Если кликнули на ту же точку начала - отменяем создание
+          cancelArrowCreation();
         }
       }
     },
-    [isCreatingArrow, arrowStartPoint, element.id, createArrow, currentTool]
+    [currentTool, isCreatingArrow, arrowStartPoint, arrowStartElementId, element.id, startArrowCreation, createArrow, cancelArrowCreation]
   );
 
   // Обработчики mousemove и mouseup для перетаскивания и ресайза
@@ -167,6 +219,17 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
             height: Math.max(50, resizeStartRef.current.height + dy),
           },
         });
+      } 
+      
+      // Отслеживаем позицию мыши для локальной визуализации в элементе
+      if (isCreatingArrow && arrowStartElementId && arrowStartElementId === element.id) {
+        const rect = elementRef.current?.getBoundingClientRect();
+        if (rect) {
+          setMousePosition({
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+          });
+        }
       }
     };
 
@@ -175,7 +238,7 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
       setIsResizing(false);
     };
 
-    if (isDragging || isResizing) {
+    if (isDragging || isResizing || (isCreatingArrow && arrowStartElementId === element.id)) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       return () => {
@@ -183,7 +246,8 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, isCreatingArrow, onUpdate]);
+    return undefined; // Добавлена явная функция очистки
+  }, [isDragging, isResizing, isCreatingArrow, arrowStartElementId, element.id, onUpdate]);
 
   // Автофокус на textarea при входе в режим редактирования
   useEffect(() => {
@@ -192,13 +256,12 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
     }
   }, [isEditing]);
 
-  // Отмена создания стрелки при смене инструмента или снятии выделения
+  // Эффект для отмены создания стрелки при смене инструмента или снятии выделения
   useEffect(() => {
-    if (currentTool !== 'arrow' || !isSelected) {
-      setIsCreatingArrow(false);
-      setArrowStartPoint(null);
+    if (isCreatingArrow && arrowStartElementId === element.id && currentTool !== 'arrow') {
+      cancelArrowCreation();
     }
-  }, [currentTool, isSelected]);
+  }, [currentTool, isCreatingArrow, arrowStartElementId, element.id, cancelArrowCreation]);
 
   // Рендер содержимого элемента
   const renderElementContent = () => {
@@ -302,8 +365,8 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
         </>
       )}
 
-      {/* Точки соединения */}
-      {isSelected && currentTool === 'arrow' && element.type !== 'arrow' &&
+      {/* Точки соединения - показываем на всех элементах при режиме стрелки */}
+      {currentTool === 'arrow' && element.type !== 'arrow' &&
         connectionPoints.map((point) => (
           <div
             key={point.position}
@@ -326,6 +389,34 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
             }}
           />
         ))}
+        
+      {/* Визуализация создаваемой стрелки */}
+      {isCreatingArrow && arrowStartElementId === element.id && arrowStartPoint && mousePosition && (
+        <svg 
+          className="absolute top-0 left-0 w-full h-full pointer-events-none" 
+          style={{ zIndex: 1000 }}
+        >
+          {connectionPoints.map(point => {
+            if (arrowStartPoint && point.position === arrowStartPoint.position) {
+              const startX = point.coordinates.x;
+              const startY = point.coordinates.y;
+              return (
+                <line 
+                  key="creating-arrow"
+                  x1={startX} 
+                  y1={startY} 
+                  x2={mousePosition.x} 
+                  y2={mousePosition.y}
+                  stroke="#007bff" 
+                  strokeWidth="2" 
+                  strokeDasharray="5,5" 
+                />
+              );
+            }
+            return null;
+          })}
+        </svg>
+      )}
     </div>
   );
 };
