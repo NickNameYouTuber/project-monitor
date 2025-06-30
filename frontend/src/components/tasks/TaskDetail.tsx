@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Task } from '../../utils/api/tasks';
 import type { Comment } from '../../utils/api/comments';
+import type { CommitInfo } from '../../utils/api/repositories';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { useAppContext } from '../../utils/AppContext';
 import TaskForm from './TaskForm';
@@ -30,6 +31,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   const [branchName, setBranchName] = useState('');
   const [branchSuggestions, setBranchSuggestions] = useState<string[]>([]);
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
+  const [commits, setCommits] = useState<CommitInfo[]>([]);
+  const [isLoadingCommits, setIsLoadingCommits] = useState(false);
   const [showCreateBranchModal, setShowCreateBranchModal] = useState(false);
   const modalRef = React.useRef<HTMLDivElement | null>(null);
   
@@ -92,11 +95,17 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
     };
     
     const fetchTaskBranches = async () => {
-      if (currentUser?.token) {
+      if (currentUser?.token && task.id) {
         setIsLoadingBranches(true);
         try {
           const data = await taskRepositoryApi.getTaskBranches(task.id, currentUser.token);
-          setTaskBranches(Array.isArray(data) ? data : []);
+          const branchesData = Array.isArray(data) ? data : [];
+          setTaskBranches(branchesData);
+          
+          // Если есть ветка, загрузим её коммиты
+          if (branchesData.length > 0) {
+            fetchBranchCommits(branchesData[0]);
+          }
         } catch (error) {
           console.error('Error fetching task branches:', error);
           setTaskBranches([]);
@@ -127,6 +136,32 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       fetchAvailableBranches();
     }
   }, [task.id, task.project_id, currentUser?.token, selectedRepositoryId]);
+  
+  // Загрузка коммитов ветки
+  const fetchBranchCommits = async (branch: any) => {
+    if (!currentUser?.token || !branch.repository_id && !branch.repositoryId) return;
+    
+    const repoId = branch.repository_id || branch.repositoryId;
+    const branchName = branch.branch_name || branch.branchName;
+    
+    if (!repoId || !branchName) return;
+    
+    setIsLoadingCommits(true);
+    try {
+      const commitsData = await repositoriesApi.git.getCommits(
+        repoId,
+        branchName,
+        currentUser.token,
+        5 // Ограничиваем последними 5 коммитами
+      );
+      setCommits(commitsData);
+    } catch (error) {
+      console.error('Error fetching branch commits:', error);
+      setCommits([]);
+    } finally {
+      setIsLoadingCommits(false);
+    }
+  };
   
   // Обрабатываем ввод имени ветки и показываем подсказки
   const handleBranchNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -373,13 +408,51 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                     {taskBranches.length > 0 ? (
                       <div className="space-y-2">
                         {taskBranches.map(branch => (
-                          <div key={branch.branch_name || branch.branchName} className="flex items-center justify-between border border-border-primary rounded-md p-2">
-                            <div>
-                              <div className="font-medium text-text-primary">{branch.branch_name || branch.branchName}</div>
-                              <div className="text-xs text-text-muted">Репозиторий: {branch.repository_name || branch.repositoryName}</div>
-                              <div className="text-xs text-text-muted">Создана: {new Date(branch.created_at).toLocaleDateString()}</div>
+                          <div key={branch.branch_name || branch.branchName} className="border border-border-primary rounded-md p-2">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <div className="font-medium text-text-primary">{branch.branch_name || branch.branchName}</div>
+                                <div className="text-xs text-text-muted">Репозиторий: {branch.repository_name || branch.repositoryName}</div>
+                                <div className="text-xs text-text-muted">Создана: {new Date(branch.created_at).toLocaleDateString()}</div>
+                              </div>
+                              <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Активная</div>
                             </div>
-                            <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Активная</div>
+                            
+                            {/* Список коммитов */}
+                            {isLoadingCommits ? (
+                              <div className="mt-2 p-2 bg-bg-card rounded text-center">
+                                <div className="flex justify-center items-center">
+                                  <svg className="animate-spin h-4 w-4 text-primary mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  <span className="text-sm text-text-muted">Загрузка коммитов...</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-2">
+                                <div className="text-xs font-medium border-b border-border-primary pb-1 mb-1">Последние коммиты:</div>
+                                {commits.length > 0 ? (
+                                  <div className="max-h-32 overflow-auto">
+                                    {commits.map((commit) => (
+                                      <div key={commit.hash} className="text-xs py-1 border-b border-border-primary last:border-b-0">
+                                        <div className="flex items-center">
+                                          <span className="bg-bg-secondary px-1 py-0.5 rounded text-text-muted mr-1">{commit.short_hash.substring(0, 7)}</span>
+                                          <span className="text-text-primary truncate">{commit.message}</span>
+                                        </div>
+                                        <div className="text-text-muted mt-0.5">
+                                          <span>{commit.author}</span> &bull; <span>{new Date(commit.date).toLocaleString()}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-2 text-xs text-text-muted italic">
+                                    Нет коммитов в этой ветке
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

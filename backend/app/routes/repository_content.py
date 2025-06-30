@@ -518,7 +518,9 @@ async def list_commits(
                 # Create commit object
                 commit = {
                     "hash": commit_hash,
-                    "author": author_name,  # Используем только имя автора как строку
+                    "short_hash": commit_hash[:8],  # Добавляем короткий хэш для фронтенда
+                    "author": author_name,
+                    "author_email": author_email,  # Добавляем емейл автора
                     "message": subject,
                     "date": datetime.fromtimestamp(int(author_time)).isoformat(),
                     "stats": {

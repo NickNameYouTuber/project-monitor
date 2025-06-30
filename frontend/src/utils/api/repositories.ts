@@ -32,6 +32,15 @@ export interface GitBranch {
   last_commit_message?: string;
 }
 
+export interface CommitInfo {
+  hash: string;
+  short_hash: string;
+  author: string;
+  author_email: string;
+  date: string;
+  message: string;
+}
+
 export interface CreateBranchRequest {
   name: string;
   base_branch?: string;
@@ -91,6 +100,17 @@ const repositoriesApi = {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
+    },
+    
+    // Получить коммиты ветки
+    getCommits: async (repositoryId: string, branchName: string, token: string, limit: number = 10) => {
+      const response = await axios.get(
+        `${API_BASE_URL}/repositories/${repositoryId}/commits?branch=${encodeURIComponent(branchName)}&limit=${limit}`, 
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      return response.data as CommitInfo[];
     },
   },
 
