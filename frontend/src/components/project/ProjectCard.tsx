@@ -38,6 +38,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
+                  navigate(`/projects/${project.id}/whiteboard`);
+                }} 
+                className="p-1.5 rounded bg-bg-secondary text-text-secondary hover:bg-primary/10 hover:text-primary transition"
+                title="Open whiteboard"
+              >
+                <i className="fas fa-edit text-sm"></i>
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
                   navigate(`/projects/${project.id}/tasks`);
                 }} 
                 className="p-1.5 rounded bg-bg-secondary text-text-secondary hover:bg-primary/10 hover:text-primary transition"

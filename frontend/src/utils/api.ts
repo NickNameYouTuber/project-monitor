@@ -15,6 +15,7 @@ import taskColumnsApi from './api/taskColumns';
 import tasksApi from './api/tasks';
 import repositoriesApi from './api/repositories';
 import repositoryMembersApi from './api/repositoryMembers';
+import whiteboardsApi from './api/whiteboards';
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -302,6 +303,28 @@ export const api = {
       removeMember: (repositoryId: string, memberId: string, token: string) => {
         return repositoryMembersApi.removeMember(repositoryId, memberId, token);
       }
+    }
+  },
+  
+  // Whiteboards endpoints
+  whiteboards: {
+    getAll: (projectId: string, token: string) => {
+      return whiteboardsApi.getAll(projectId, token);
+    },
+    getOne: (whiteboardId: string, token: string) => {
+      return whiteboardsApi.getOne(whiteboardId, token);
+    },
+    create: (projectId: string, whiteboardData: any, token: string) => {
+      return whiteboardsApi.create(projectId, whiteboardData, token);
+    },
+    update: (whiteboardId: string, whiteboardData: any, token: string) => {
+      return whiteboardsApi.update(whiteboardId, whiteboardData, token);
+    },
+    delete: (whiteboardId: string, token: string) => {
+      return whiteboardsApi.delete(whiteboardId, token);
+    },
+    uploadImage: (whiteboardId: string, file: File, token: string) => {
+      return whiteboardsApi.uploadImage(whiteboardId, file, token);
     }
   }
 };

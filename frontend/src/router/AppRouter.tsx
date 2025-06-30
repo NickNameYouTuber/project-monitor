@@ -10,6 +10,7 @@ import RepositoryList from '../components/repositories/RepositoryList';
 import RepositoryCreate from '../components/repositories/RepositoryCreate';
 import RepositoryDetail from '../pages/RepositoryDetail';
 import RepositoryFilePreview from '../pages/RepositoryFilePreview';
+import WhiteboardPage from '../pages/WhiteboardPage';
 import LandingPage from '../pages/LandingPage';
 
 // Protected route component
@@ -59,6 +60,20 @@ const AppRouter: React.FC = () => {
               element={
                 <Layout>
                   <ProjectTaskBoard />
+                </Layout>
+              } 
+            />
+          } 
+        />
+        
+        {/* Whiteboard routes */}
+        <Route 
+          path="/projects/:projectId/whiteboard" 
+          element={
+            <ProtectedRoute 
+              element={
+                <Layout>
+                  <WhiteboardPage />
                 </Layout>
               } 
             />

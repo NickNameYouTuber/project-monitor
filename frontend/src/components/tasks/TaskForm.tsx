@@ -24,7 +24,7 @@ interface TaskFormProps {
 
 const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose, mode }) => {
   const { addTask, updateTask, columns } = useTaskBoard();
-  const { users, fetchUsers, currentUser, getDashboardMembers, currentProject, projects } = useAppContext();
+  const { users, fetchUsers, currentUser, fetchDashboardMembers, currentProject, projects } = useAppContext();
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>(
@@ -64,7 +64,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
           if (project?.dashboard_id) dashboardId = project.dashboard_id;
         }
         if (dashboardId) {
-          const members = await getDashboardMembers(dashboardId);
+          const members = await fetchDashboardMembers(dashboardId);
           setProjectMembers(members);
         }
       } catch (err) {
@@ -72,7 +72,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, columnId, projectId, onClose,
       }
     };
     fetchData();
-  }, [projectId, currentUser?.token, fetchUsers, getDashboardMembers, currentProject, projects]);
+  }, [projectId, currentUser?.token, fetchUsers, fetchDashboardMembers, currentProject, projects]);
   
   useEffect(() => {
     let usersList = [...users];

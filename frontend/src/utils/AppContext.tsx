@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Project, ProjectStatus, User, Dashboard, DashboardMember } from '../types';
+import type { WhiteboardData } from '../types/whiteboard';
 import { loadProjects, loadTeamMembers, saveProjects, saveTeamMembers } from './storage';
 import { useTheme as useNextTheme } from '../context/ThemeContext';
 import { api } from './api';
@@ -33,14 +34,22 @@ interface AppContextType {
   // Dashboard state
   dashboards: Dashboard[];
   loadDashboards: () => Promise<Dashboard[]>;
-  getDashboard: (id: string) => Promise<any>;
+  getDashboard: (id: string) => Promise<Dashboard>;
   createDashboard: (data: {name: string, description?: string}) => Promise<Dashboard>;
   deleteDashboard: (id: string) => Promise<void>;
   
   // Dashboard members state
-  getDashboardMembers: (dashboardId: string) => Promise<DashboardMember[]>;
-  inviteUserByTelegramId: (dashboardId: string, telegramId: number, role?: string) => Promise<void>;
-  removeDashboardMember: (dashboardId: string, memberId: string) => Promise<void>;
+  dashboardMembers: DashboardMember[];
+  fetchDashboardMembers: (dashboardId: string) => Promise<DashboardMember[]>;
+  addDashboardMember: (dashboardId: string, userId: string, role?: string) => Promise<void>;
+  removeDashboardMember: (dashboardId: string, userId: string) => Promise<void>;
+  
+  // Whiteboard state
+  currentWhiteboard: WhiteboardData | null;
+  fetchWhiteboard: (projectId: string) => Promise<WhiteboardData | null>;
+  createWhiteboard: (projectId: string, data: Partial<WhiteboardData>) => Promise<WhiteboardData | null>;
+  updateWhiteboard: (whiteboardId: string, data: Partial<WhiteboardData>) => Promise<WhiteboardData | null>;
+  uploadWhiteboardImage: (whiteboardId: string, file: File) => Promise<{ url: string } | null>;
   
   // Theme state
   isDarkMode: boolean | string | undefined;
@@ -61,6 +70,10 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const { theme, setTheme: setNextTheme } = useNextTheme();
   const [isDarkMode, setIsDarkMode] = useState<boolean | string | undefined>(theme);
   
+  // Whiteboard state
+  const [currentWhiteboard, setCurrentWhiteboard] = useState<WhiteboardData | null>(null);
+  const [dashboardMembers, setDashboardMembers] = useState<DashboardMember[]>([]);
+
   // Load data when user changes
   useEffect(() => {
     const fetchData = async () => {
@@ -417,6 +430,102 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   };
 
   // Функции для работы с участниками дашборда
+  const fetchDashboardMembers = async (dashboardId: string): Promise<DashboardMember[]> => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      const members = await api.dashboards.getMembers(dashboardId, currentUser.token);
+      setDashboardMembers(members as DashboardMember[]);
+      return members as DashboardMember[];
+    } catch (error) {
+      console.error(`Error fetching dashboard members for ${dashboardId}:`, error);
+      throw error;
+    }
+  };
+
+  const addDashboardMember = async (dashboardId: string, userId: string, role?: string): Promise<void> => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      await api.dashboards.addMember(dashboardId, { user_id: userId, role: role || 'member' }, currentUser.token);
+      await fetchDashboardMembers(dashboardId);
+    } catch (error) {
+      console.error(`Error adding member to dashboard ${dashboardId}:`, error);
+      throw error;
+    }
+  };
+
+  const removeDashboardMember = async (dashboardId: string, userId: string): Promise<void> => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      await api.dashboards.removeMember(dashboardId, userId, currentUser.token);
+      setDashboardMembers(dashboardMembers.filter(member => member.user_id !== userId));
+    } catch (error) {
+      console.error(`Error removing member from dashboard ${dashboardId}:`, error);
+      throw error;
+    }
+  };
+  
+  // Функции для работы с интерактивной доской
+  const fetchWhiteboard = async (projectId: string): Promise<WhiteboardData | null> => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      const whiteboard = await api.whiteboards.getOne(projectId, currentUser.token);
+      setCurrentWhiteboard(whiteboard as WhiteboardData);
+      return whiteboard as WhiteboardData;
+    } catch (error) {
+      console.error(`Error fetching whiteboard for project ${projectId}:`, error);
+      return null;
+    }
+  };
+
+  const createWhiteboard = async (projectId: string, data: Partial<WhiteboardData>): Promise<WhiteboardData | null> => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      const whiteboard = await api.whiteboards.create(projectId, data, currentUser.token);
+      setCurrentWhiteboard(whiteboard as WhiteboardData);
+      return whiteboard as WhiteboardData;
+    } catch (error) {
+      console.error(`Error creating whiteboard for project ${projectId}:`, error);
+      return null;
+    }
+  };
+
+  const updateWhiteboard = async (whiteboardId: string, data: Partial<WhiteboardData>): Promise<WhiteboardData | null> => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      const whiteboard = await api.whiteboards.update(whiteboardId, data, currentUser.token);
+      setCurrentWhiteboard(whiteboard as WhiteboardData);
+      return whiteboard as WhiteboardData;
+    } catch (error) {
+      console.error(`Error updating whiteboard ${whiteboardId}:`, error);
+      return null;
+    }
+  };
+
+  const uploadWhiteboardImage = async (whiteboardId: string, file: File): Promise<{ url: string } | null> => {
+    if (!currentUser?.token) {
+      throw new Error('User not authenticated');
+    }
+    try {
+      const result = await api.whiteboards.uploadImage(whiteboardId, file, currentUser.token);
+      return result as { url: string };
+    } catch (error) {
+      console.error(`Error uploading image for whiteboard ${whiteboardId}:`, error);
+      return null;
+    }
+  };
+  
   // Fetch a single project by ID
   const fetchProject = async (projectId: string, token: string): Promise<Project | null> => {
     try {
@@ -439,42 +548,7 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     }
   };
 
-  const getDashboardMembers = async (dashboardId: string): Promise<DashboardMember[]> => {
-    if (!currentUser?.token) {
-      throw new Error('User not authenticated');
-    }
-    try {
-      const members = await api.dashboards.getMembers(dashboardId, currentUser.token);
-      return members as DashboardMember[];
-    } catch (error) {
-      console.error(`Error getting dashboard members for ${dashboardId}:`, error);
-      throw error;
-    }
-  };
-  
-  const inviteUserByTelegramId = async (dashboardId: string, telegramId: number, role: string = 'viewer') => {
-    if (!currentUser?.token) {
-      throw new Error('User not authenticated');
-    }
-    try {
-      await api.dashboards.inviteByTelegram(dashboardId, { telegram_id: telegramId, role }, currentUser.token);
-    } catch (error) {
-      console.error(`Error inviting user to dashboard ${dashboardId}:`, error);
-      throw error;
-    }
-  };
-  
-  const removeDashboardMember = async (dashboardId: string, memberId: string) => {
-    if (!currentUser?.token) {
-      throw new Error('User not authenticated');
-    }
-    try {
-      await api.dashboards.removeMember(dashboardId, memberId, currentUser.token);
-    } catch (error) {
-      console.error(`Error removing member from dashboard ${dashboardId}:`, error);
-      throw error;
-    }
-  };
+  // Старые функции работы с участниками дашбордов были удалены, так как они были заменены на новые версии
 
   return (
     <AppContext.Provider
@@ -500,9 +574,15 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
         getDashboard,
         createDashboard,
         deleteDashboard,
-        getDashboardMembers,
-        inviteUserByTelegramId,
+        dashboardMembers,
+        fetchDashboardMembers,
+        addDashboardMember,
         removeDashboardMember,
+        currentWhiteboard,
+        fetchWhiteboard,
+        createWhiteboard,
+        updateWhiteboard,
+        uploadWhiteboardImage,
         isDarkMode,
         toggleTheme,
       }}
