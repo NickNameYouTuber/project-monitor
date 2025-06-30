@@ -1,53 +1,15 @@
-import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import WhiteboardElement from './WhiteboardElement';
 import WhiteboardToolbar from './WhiteboardToolbar';
 import './WhiteboardCanvas.css';
-
-// Временное определение типов напрямую в качестве замены импорта
-type WhiteboardElementType = string;
-type ConnectionPointPosition = 'top' | 'right' | 'bottom' | 'left' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-
-interface Position {
-  x: number;
-  y: number;
-}
-
-interface Size {
-  width: number;
-  height: number;
-}
-
-interface ArrowConnection {
-  elementId: string;
-  connectionPoint: ConnectionPointPosition;
-}
-
-interface WhiteboardElementData {
-  id: string;
-  type: WhiteboardElementType;
-  position: Position;
-  size: Size;
-  content?: string;
-  color?: string;
-  startElementId?: string;
-  endElementId?: string;
-  startConnection?: ArrowConnection;
-  endConnection?: ArrowConnection;
-  strokeWidth?: string;
-  arrowStyle?: string;
-  shapeType?: string;
-  zIndex?: number;
-  rotation?: number;
-  imageUrl?: string;
-}
+import type { WhiteboardElementType, ConnectionPointPosition, Position, WhiteboardElementData } from '../../types/whiteboard';
 
 interface WhiteboardCanvasProps {
   projectId?: string;
 }
 
 const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ projectId }) => {
-  const { whiteboard_id } = useParams();
+  // const { whiteboard_id } = useParams(); // Временно не используется
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [elements, setElements] = useState<WhiteboardElementData[]>([]);
@@ -163,12 +125,12 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ projectId }) => {
     setSelectedElementId(newElement.id);
   }, [elements, position]);
 
-  const updateElement = useCallback((id: string, updates: Partial<WhiteboardElementData>) => {
+  const updateElement = useCallback((id: string, updates: Partial<{ [K in keyof WhiteboardElementData]: WhiteboardElementData[K] }>) => {
     setElements(prevElements =>
       prevElements.map(el => (el.id === id ? { ...el, ...updates } : el))
     );
     // Здесь должен быть вызов API для сохранения изменений
-  }, [elements]);
+  }, []);
 
   const createArrow = useCallback((startElementId: string, startConnectionPoint: ConnectionPointPosition, 
                              endElementId: string, endConnectionPoint: ConnectionPointPosition) => {
@@ -270,8 +232,13 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ projectId }) => {
         scale={scale}
         setScale={setScale}
         saveWhiteboard={saveWhiteboard}
-        selectedElement={elements.find(el => el.id === selectedElementId)}
-        onElementUpdate={(updates) => selectedElementId && updateElement(selectedElementId, updates)}
+        selectedElement={selectedElementId ? elements.find(el => el.id === selectedElementId) || null : null}
+        onElementUpdate={(updates) => {
+          if (selectedElementId) {
+            const typedUpdates = updates as Partial<{ [K in keyof WhiteboardElementData]: WhiteboardElementData[K] }>;
+            updateElement(selectedElementId, typedUpdates);
+          }
+        }}
       />
 
       <div 
@@ -291,7 +258,10 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ projectId }) => {
             element={element}
             isSelected={element.id === selectedElementId}
             onSelect={() => setSelectedElementId(element.id)}
-            onUpdate={(updates) => updateElement(element.id, updates)}
+            onUpdate={(updates) => {
+              const typedUpdates = updates as Partial<{ [K in keyof WhiteboardElementData]: WhiteboardElementData[K] }>;
+              updateElement(element.id, typedUpdates);
+            }}
             onDelete={() => deleteElement(element.id)}
             createArrow={createArrow}
             startArrowCreation={startArrowCreation}
@@ -337,8 +307,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ projectId }) => {
                     key="creating-arrow"
                     x1={startX} 
                     y1={startY} 
-                    x2={creatingArrowState.mousePosition.x} 
-                    y2={creatingArrowState.mousePosition.y}
+                    x2={creatingArrowState.mousePosition?.x || 0} 
+                    y2={creatingArrowState.mousePosition?.y || 0}
                     stroke="#007bff" 
                     strokeWidth="2" 
                     strokeDasharray="5,5" 
