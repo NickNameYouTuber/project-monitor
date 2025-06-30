@@ -252,27 +252,99 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ projectId }) => {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-        {elements.map(element => (
-          <WhiteboardElement
-            key={element.id}
-            element={element}
-            isSelected={element.id === selectedElementId}
-            onSelect={() => setSelectedElementId(element.id)}
-            onUpdate={(updates) => {
-              const typedUpdates = updates as Partial<{ [K in keyof WhiteboardElementData]: WhiteboardElementData[K] }>;
-              updateElement(element.id, typedUpdates);
-            }}
-            onDelete={() => deleteElement(element.id)}
-            createArrow={createArrow}
-            startArrowCreation={startArrowCreation}
-            cancelArrowCreation={cancelArrowCreation}
-            isCreatingArrow={creatingArrowState.isCreating}
-            arrowStartPoint={creatingArrowState.startConnectionPoint ? 
-              { elementId: creatingArrowState.startElementId!, position: creatingArrowState.startConnectionPoint } : null}
-            arrowStartElementId={creatingArrowState.startElementId}
-            currentTool={currentTool}
-          />
-        ))}
+        {/* Отображение стрелок */}
+        <svg className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{ zIndex: 1000 }}>
+          {elements
+            .filter(element => element.type === 'arrow' && element.startElementId && element.endElementId)
+            .map(arrow => {
+              // Находим связанные элементы
+              const startElement = elements.find(el => el.id === arrow.startElementId);
+              const endElement = elements.find(el => el.id === arrow.endElementId);
+              
+              if (!startElement || !endElement || !arrow.startConnection || !arrow.endConnection) {
+                return null;
+              }
+              
+              // Вычисляем координаты точек подключения
+              const getConnectionPoint = (element: WhiteboardElementData, connectionPosition: ConnectionPointPosition) => {
+                const { position, size } = element;
+                
+                switch(connectionPosition) {
+                  case 'top': return { x: position.x + size.width / 2, y: position.y };
+                  case 'top-right': return { x: position.x + size.width, y: position.y };
+                  case 'right': return { x: position.x + size.width, y: position.y + size.height / 2 };
+                  case 'bottom-right': return { x: position.x + size.width, y: position.y + size.height };
+                  case 'bottom': return { x: position.x + size.width / 2, y: position.y + size.height };
+                  case 'bottom-left': return { x: position.x, y: position.y + size.height };
+                  case 'left': return { x: position.x, y: position.y + size.height / 2 };
+                  case 'top-left': return { x: position.x, y: position.y };
+                  default: return { x: position.x, y: position.y };
+                }
+              };
+
+              const startPoint = getConnectionPoint(startElement, arrow.startConnection.connectionPoint);
+              const endPoint = getConnectionPoint(endElement, arrow.endConnection.connectionPoint);
+              
+              // Добавляем стрелку на конец линии
+              const angle = Math.atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x);
+              
+              return (
+                <g key={arrow.id} className={selectedElementId === arrow.id ? 'selected-arrow' : ''}>
+                  <line 
+                    x1={startPoint.x}
+                    y1={startPoint.y}
+                    x2={endPoint.x}
+                    y2={endPoint.y}
+                    stroke={arrow.color || '#333333'}
+                    strokeWidth={arrow.strokeWidth || '2'}
+                    markerEnd="url(#arrowhead)"
+                    onClick={() => setSelectedElementId(arrow.id)}
+                    style={{ cursor: 'pointer' }}
+                    pointerEvents="stroke"
+                  />
+                  
+                  <polygon 
+                    points={`0,-3 0,3 9,0`}
+                    transform={`translate(${endPoint.x}, ${endPoint.y}) rotate(${angle * 180 / Math.PI})`}
+                    fill={arrow.color || '#333333'}
+                  />
+                </g>
+              );
+            })}
+            <defs>
+              <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+                refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" />
+              </marker>
+            </defs>
+        </svg>
+        
+        {elements.map(element => {
+          // Не отображаем элементы стрелок как WhiteboardElement
+          if (element.type === 'arrow') return null;
+          
+          return (
+            <WhiteboardElement
+              key={element.id}
+              element={element}
+              isSelected={element.id === selectedElementId}
+              onSelect={() => setSelectedElementId(element.id)}
+              onUpdate={(updates) => {
+                const typedUpdates = updates as Partial<{ [K in keyof WhiteboardElementData]: WhiteboardElementData[K] }>;
+                updateElement(element.id, typedUpdates);
+              }}
+              onDelete={() => deleteElement(element.id)}
+              createArrow={createArrow}
+              startArrowCreation={startArrowCreation}
+              cancelArrowCreation={cancelArrowCreation}
+              isCreatingArrow={creatingArrowState.isCreating}
+              arrowStartPoint={creatingArrowState.startConnectionPoint ? 
+                { elementId: creatingArrowState.startElementId!, position: creatingArrowState.startConnectionPoint } : null}
+              arrowStartElementId={creatingArrowState.startElementId}
+              currentTool={currentTool}
+            />
+          );
+        })}
         
         {/* Визуализация перетаскиваемой стрелки поверх всего холста */}
         {creatingArrowState.isCreating && creatingArrowState.mousePosition !== null && (
