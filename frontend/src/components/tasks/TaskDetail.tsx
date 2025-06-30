@@ -27,6 +27,9 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   const [selectedRepositoryId, setSelectedRepositoryId] = useState<string | null>(null);
   const [taskBranches, setTaskBranches] = useState<any[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [branchName, setBranchName] = useState('');
+  const [branchSuggestions, setBranchSuggestions] = useState<string[]>([]);
+  const [availableBranches, setAvailableBranches] = useState<string[]>([]);
   const [showCreateBranchModal, setShowCreateBranchModal] = useState(false);
   const modalRef = React.useRef<HTMLDivElement | null>(null);
   
@@ -106,7 +109,90 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
     fetchComments();
     fetchRepositories();
     fetchTaskBranches();
-  }, [task.id, task.project_id, currentUser?.token]);
+    
+    // Загружаем доступные ветки из репозитория
+    const fetchAvailableBranches = async () => {
+      if (currentUser?.token && selectedRepositoryId) {
+        try {
+          const branches = await repositoriesApi.git.getBranches(selectedRepositoryId, currentUser.token);
+          setAvailableBranches(branches.map(branch => branch.name));
+        } catch (error) {
+          console.error('Error fetching available branches:', error);
+          setAvailableBranches([]);
+        }
+      }
+    };
+    
+    if (selectedRepositoryId) {
+      fetchAvailableBranches();
+    }
+  }, [task.id, task.project_id, currentUser?.token, selectedRepositoryId]);
+  
+  // Обрабатываем ввод имени ветки и показываем подсказки
+  const handleBranchNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setBranchName(value);
+    
+    if (value.trim() === '') {
+      setBranchSuggestions([]);
+      return;
+    }
+    
+    // Фильтруем доступные ветки по введенному тексту
+    const suggestions = availableBranches.filter(branch => 
+      branch.toLowerCase().includes(value.toLowerCase())
+    );
+    
+    setBranchSuggestions(suggestions);
+  };
+  
+  // Создаем или привязываем ветку
+  const handleCreateOrAttachBranch = async () => {
+    if (!currentUser?.token || !selectedRepositoryId || !branchName.trim()) return;
+    
+    try {
+      // Проверяем, существует ли такая ветка
+      const branchExists = availableBranches.includes(branchName);
+      
+      if (branchExists) {
+        // Если ветка существует, привязываем её к задаче
+        // Здесь должен быть API-вызов для привязки существующей ветки
+        // Пока просто создадим системный комментарий
+        await commentsApi.create(
+          { 
+            task_id: task.id, 
+            content: `🔄 Привязана ветка **${branchName}**`,
+            is_system: true 
+          },
+          currentUser.token
+        );
+      } else {
+        // Если ветки нет, создаем новую через API
+        await repositoriesApi.git.createBranch(
+          selectedRepositoryId, 
+          {
+            name: branchName,
+            task_id: task.id
+          }, 
+          currentUser.token
+        );
+      }
+      
+      // Обновляем комментарии и ветки
+      const commentsData = await commentsApi.getByTask(task.id, currentUser.token);
+      setComments(Array.isArray(commentsData) ? commentsData : []);
+      
+      const branchesData = await taskRepositoryApi.getTaskBranches(task.id, currentUser.token);
+      setTaskBranches(Array.isArray(branchesData) ? branchesData : []);
+      
+      // Сбрасываем поле ввода
+      setBranchName('');
+      setBranchSuggestions([]);
+    } catch (error) {
+      console.error('Error creating/attaching branch:', error);
+      alert('Не удалось создать или привязать ветку. Пожалуйста, попробуйте еще раз.');
+    }
+  };
   
   const handleAddComment = async (content: string) => {
     if (!currentUser?.token) return;
@@ -282,44 +368,63 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
                     </svg>
                     <span className="text-text-muted">Загрузка веток...</span>
                   </div>
-                ) : taskBranches.length > 0 ? (
-                  <div className="bg-bg-secondary rounded-lg p-4 border border-border-primary">
-                    {taskBranches.map(branch => (
-                      <div key={branch.branchName} className="mb-2 flex items-center justify-between border border-border-primary rounded-md p-2">
-                        <div>
-                          <div className="font-medium text-text-primary">{branch.branchName}</div>
-                          <div className="text-xs text-text-muted">Репозиторий: {branch.repositoryName}</div>
-                          <div className="text-xs text-text-muted">Создана: {new Date(branch.created_at).toLocaleDateString()}</div>
-                        </div>
-                        <div className="text-xs text-text-muted">Активная</div>
-                      </div>
-                    ))}
-                    <button
-                      className="mt-2 w-full px-4 py-2 bg-[#7AB988] text-white rounded-md hover:bg-[#5DA570] transition-colors flex items-center justify-center"
-                      onClick={() => setShowCreateBranchModal(true)}
-                      disabled={!selectedRepositoryId}
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      Создать ещё одну ветку
-                    </button>
-                  </div>
                 ) : (
                   <div className="bg-bg-secondary rounded-lg p-4 border border-border-primary">
-                    <div className="mb-4 text-center text-text-muted">К задаче пока не привязаны ветки</div>
-                    <button
-                      className="w-full px-4 py-2 bg-[#7AB988] text-white rounded-md hover:bg-[#5DA570] transition-colors flex items-center justify-center"
-                      onClick={() => setShowCreateBranchModal(true)}
-                      disabled={!selectedRepositoryId}
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      Создать ветку
-                    </button>
-                    <div className="text-xs text-text-muted mt-2 text-center">
-                      При создании ветки будет добавлен системный комментарий, а новые коммиты будут автоматически отслеживаться.
+                    {taskBranches.length > 0 ? (
+                      <div className="space-y-2">
+                        {taskBranches.map(branch => (
+                          <div key={branch.branchName} className="flex items-center justify-between border border-border-primary rounded-md p-2">
+                            <div>
+                              <div className="font-medium text-text-primary">{branch.branchName}</div>
+                              <div className="text-xs text-text-muted">Репозиторий: {branch.repositoryName}</div>
+                              <div className="text-xs text-text-muted">Создана: {new Date(branch.created_at).toLocaleDateString()}</div>
+                            </div>
+                            <div className="text-xs text-text-muted">Активная</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mb-3 text-center text-text-muted">К задаче пока не привязаны ветки</div>
+                    )}
+                    
+                    <div className="relative mt-2">
+                      <div className="flex space-x-2">
+                        <div className="flex-grow relative">
+                          <input
+                            type="text"
+                            value={branchName}
+                            onChange={handleBranchNameChange}
+                            placeholder="Введите имя ветки"
+                            className="w-full rounded-md bg-bg-card border border-border-primary text-text-primary px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          {branchSuggestions.length > 0 && (
+                            <div className="absolute z-10 w-full mt-1 bg-bg-card border border-border-primary rounded-md shadow-lg max-h-60 overflow-auto">
+                              {branchSuggestions.map((suggestion, index) => (
+                                <div
+                                  key={index}
+                                  className="px-3 py-2 hover:bg-bg-secondary cursor-pointer text-text-primary"
+                                  onClick={() => {
+                                    setBranchName(suggestion);
+                                    setBranchSuggestions([]);
+                                  }}
+                                >
+                                  {suggestion}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          className="px-4 py-2 bg-[#7AB988] text-white rounded-md hover:bg-[#5DA570] transition-colors flex items-center whitespace-nowrap"
+                          onClick={handleCreateOrAttachBranch}
+                          disabled={!selectedRepositoryId || !branchName.trim()}
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                          Привязать
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

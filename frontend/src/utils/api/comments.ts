@@ -14,6 +14,7 @@ export interface Comment {
 export interface CommentCreate {
   task_id: string;
   content: string;
+  is_system?: boolean;
 }
 
 export interface CommentUpdate {
