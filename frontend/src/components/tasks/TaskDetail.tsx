@@ -78,15 +78,21 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
   };
 
   const mergeCommentsAndCommits = (comments: Comment[], commits?: any[]) => {
+    console.log('Объединение комментариев и коммитов:', { comments: comments.length, commits: commits?.length || 0 });
+    
     const safeCommits = commits || [];
     const commitItems: UnifiedTimelineItem[] = safeCommits.map(commit => ({
-      id: commit.hash,
-      content: `💻 Коммит: **${commit.short_hash}**: ${commit.message}\n\nАвтор: ${commit.author} • ${commit.date}`,
-      created_at: commit.date,
+      id: commit.hash || `commit-${Math.random().toString(36).substring(2, 11)}`,
+      content: `💻 Коммит: **${commit.short_hash || commit.hash?.substring(0, 7)}**: ${commit.message}
+
+Автор: ${commit.author} • ${new Date(commit.date).toLocaleString()}`,
+      created_at: commit.date || commit.created_at || new Date().toISOString(),
       is_system: true,
       type: 'commit',
-      commit_hash: commit.hash
+      commit_hash: commit.hash || '',
+      user_id: commit.author || 'Git Commit'
     }));
+    
     const commentItems: UnifiedTimelineItem[] = comments.map(comment => ({
       id: comment.id,
       content: comment.content,
@@ -96,13 +102,20 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       type: 'comment',
       task_id: comment.task_id
     }));
-    const merged = [...commentItems, ...commitItems].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    
+    const merged = [...commentItems, ...commitItems].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    
+    console.log('Итоговый объединенный список элементов для отображения:', merged.length);
     setTimelineItems(merged);
+    setIsLoadingComments(false);
     return merged;
   };
 
   const fetchComments = async (): Promise<Comment[]> => {
     if (!currentUser?.token) return [];
+    setIsLoadingComments(true);
     try {
       const data = await commentsApi.getByTask(task.id, currentUser.token);
       return Array.isArray(data) ? data : [];
@@ -152,7 +165,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
 
   const fetchBranchCommits = async (branchesData: any[]): Promise<any[]> => {
     if (!currentUser?.token || branchesData.length === 0) return [];
-    const activeBranch = branchesData[0];
+    const activeBranch = branchesData[0]; // Берем первую ветку (обычно привязана только одна)
     if (!activeBranch) return [];
     const repositoryId = activeBranch.repository_id || activeBranch.repositoryId;
     const branchName = activeBranch.branch_name || activeBranch.branchName;
@@ -161,6 +174,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
 
     try {
       const commitData = await repositoriesApi.git.getCommits(repositoryId, branchName, currentUser.token, 50);
+      console.log('Получены коммиты ветки:', commitData);
       return Array.isArray(commitData) ? commitData : [];
     } catch (error) {
       console.error('Error fetching branch commits:', error);
@@ -168,17 +182,38 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
     }
   };
 
+
+
   const loadAllData = async () => {
-    const commentsData = await fetchComments();
-    setComments(commentsData);
-    const branchesData = await fetchTaskBranches();
-    if (branchesData.length > 0) {
-      const commitsData = await fetchBranchCommits(branchesData);
-      mergeCommentsAndCommits(commentsData, commitsData);
-    } else {
-      mergeCommentsAndCommits(commentsData, []);
+    try {
+      // Загружаем все данные последовательно для обеспечения правильного порядка
+      const commentsData = await fetchComments();
+      console.log('Загружены комментарии:', commentsData.length);
+      setComments(commentsData);
+      
+      // Загружаем ветки и затем коммиты, если есть привязанная ветка
+      const branchesData = await fetchTaskBranches();
+      console.log('Загружены ветки:', branchesData.length);
+      
+      if (branchesData.length > 0) {
+        console.log('Есть привязанная ветка, загружаем коммиты');
+        const commitsData = await fetchBranchCommits(branchesData);
+        console.log('Объединяем комментарии и коммиты');
+        mergeCommentsAndCommits(commentsData, commitsData);
+      } else {
+        console.log('Нет привязанной ветки, показываем только комментарии');
+        mergeCommentsAndCommits(commentsData, []);
+      }
+      
+      // Загружаем репозитории для других частей компонента
+      await fetchRepositories();
+    } catch (error) {
+      console.error('Ошибка при загрузке данных:', error);
+      // В случае ошибки все равно показываем комментарии, если они загружены
+      if (comments.length > 0) {
+        mergeCommentsAndCommits(comments, []);
+      }
     }
-    await fetchRepositories();
   };
 
   useEffect(() => {
@@ -243,7 +278,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task }) => {
       }
 
       const commentsData = await commentsApi.getByTask(task.id, currentUser.token);
-      set cakesetComments(Array.isArray(commentsData) ? commentsData : []);
+      setComments(Array.isArray(commentsData) ? commentsData : []);
 
       const branchesData = await taskRepositoryApi.getTaskBranches(task.id, currentUser.token);
       setTaskBranches(Array.isArray(branchesData) ? branchesData : []);
