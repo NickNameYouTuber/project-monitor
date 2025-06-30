@@ -44,7 +44,8 @@ def check_repository_access(repository_id: str, user_id: str, db: Session):
 
 def get_repo_path(repository_id: str) -> Path:
     """Get file path to the git repository"""
-    return Path(REPOS_BASE_DIR) / repository_id
+    # Преобразуем repository_id в строку, чтобы избежать проблем с UUID
+    return Path(REPOS_BASE_DIR) / str(repository_id)
 
 
 @router.get("/{repository_id}/files", response_model=List[schemas.GitFile])
