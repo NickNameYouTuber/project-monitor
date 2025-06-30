@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, Request
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import schemas
@@ -499,44 +499,124 @@ async def list_commits(
                 continue
                 
             parts = log.split('|')
-            if len(parts) >= 5:
+            if len(parts) == 5:
                 commit_hash, author_name, author_email, author_time, subject = parts
                 
-                # Get stats (files changed, insertions, deletions)
-                stats = repo.git.show("--stat", "--oneline", commit_hash).split('\n')
-                stats_line = stats[-2] if len(stats) >= 2 else ""
+                # Get stats for the commit using git show
+                stats_output = repo.git.show(commit_hash, "--stat", "--format=").strip()
+                stats = {}
                 
-                files_changed = 0
-                insertions = 0
-                deletions = 0
-                
-                if stats_line:
-                    stats_parts = stats_line.split(',')
-                    for part in stats_parts:
-                        if "file" in part:
-                            files_changed = int(part.strip().split()[0])
-                        elif "insertion" in part:
-                            insertions = int(part.strip().split()[0])
-                        elif "deletion" in part:
-                            deletions = int(part.strip().split()[0])
-                
-                # Create commit object
-                commit = {
-                    "hash": commit_hash,
-                    "short_hash": commit_hash[:8],  # Добавляем короткий хэш для фронтенда
-                    "author": author_name,
-                    "author_email": author_email,  # Добавляем емейл автора
-                    "message": subject,
-                    "date": datetime.fromtimestamp(int(author_time)).isoformat(),
-                    "stats": {
+                # Parse the stats output
+                if stats_output:
+                    lines = stats_output.split('\n')
+                    files_changed = len([l for l in lines if ' | ' in l])
+                    
+                    # Try to get the insertion/deletion counts
+                    summary_line = lines[-1] if lines else ""
+                    insertions = 0
+                    deletions = 0
+                    
+                    if "insertion" in summary_line:
+                        try:
+                            insertions_part = summary_line.split("insertion")[0]
+                            insertions = int(insertions_part.split(",")[-1].strip())
+                        except:
+                            pass
+                    
+                    if "deletion" in summary_line:
+                        try:
+                            if "insertion" in summary_line:
+                                deletions_part = summary_line.split("insertion")[1].split("deletion")[0]
+                            else:
+                                deletions_part = summary_line.split("deletion")[0]
+                            deletions = int(deletions_part.split(",")[-1].strip())
+                        except:
+                            pass
+                    
+                    stats = {
                         "files_changed": files_changed,
                         "insertions": insertions,
                         "deletions": deletions
                     }
+                
+                commit = {
+                    "hash": commit_hash,
+                    "short_hash": commit_hash[:8],
+                    "author": author_name,
+                    "author_email": author_email,
+                    "message": subject,
+                    "date": datetime.fromtimestamp(int(author_time)).isoformat(),
+                    "stats": stats
                 }
                 commits.append(commit)
                 
         return commits
+        
+    except git.GitCommandError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                          detail=f"Git command error: {str(e)}")
+                          
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                          detail=f"Error fetching commits: {str(e)}")
+
+@router.post("/webhook/commit")
+async def process_commit_notification(
+    commit_data: CommitNotification,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Обработка уведомления о новом коммите и создание системного комментария в связанной задаче"""
+    
+    try:
+        # Проверяем доступ к репозиторию
+        repo = db.query(Repository).filter(Repository.id == commit_data.repository_id).first()
+        if not repo:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+            
+        # Ищем задачи, связанные с этой веткой
+        tasks_with_branch = []
+        tasks = db.query(Task).all()
+        
+        for task in tasks:
+            # Получаем ветки задачи
+            branches = await get_task_related_branches(task.id, current_user, db)
+            
+            # Проверяем, связана ли задача с веткой из коммита
+            for branch in branches:
+                branch_name = branch.get("branch_name", "") or branch.get("branchName", "")
+                repo_id = branch.get("repository_id", "") or branch.get("repositoryId", "")
+                
+                if branch_name == commit_data.branch and repo_id == commit_data.repository_id:
+                    tasks_with_branch.append(task)
+                    break
+        
+        # Если нашлись задачи, связанные с этой веткой
+        if tasks_with_branch:
+            short_hash = commit_data.short_hash or (commit_data.commit_hash[:8] if commit_data.commit_hash else "")
+            
+            # Для каждой задачи создаем системный комментарий о коммите
+            for task in tasks_with_branch:
+                comment = Comment(
+                    id=str(uuid.uuid4()),
+                    task_id=task.id,
+                    user_id=current_user.id,
+                    content=f"💻 Новый коммит в ветке **{commit_data.branch}**\n\n**{short_hash}**: {commit_data.message}\n\nАвтор: {commit_data.author} • {commit_data.date}",
+                    is_system=True
+                )
+                db.add(comment)
+            
+            db.commit()
+            return {"status": "success", "tasks_updated": len(tasks_with_branch)}
+        
+        return {"status": "success", "tasks_updated": 0, "message": "No tasks associated with this branch"}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process commit notification: {str(e)}"
+        )
         
     except git.GitCommandError as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
