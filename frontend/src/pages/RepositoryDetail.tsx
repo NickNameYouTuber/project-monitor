@@ -4,6 +4,7 @@ import api from '../services/api';
 import RepositoryFileExplorer from '../components/repositories/RepositoryFileExplorer';
 import CommitHistory from '../components/repositories/CommitHistory';
 import RepositoryCloneInfo from '../components/repositories/RepositoryCloneInfo';
+import RepositorySettings from '../components/repositories/RepositorySettings';
 
 interface Repository {
   id: string;
@@ -28,7 +29,7 @@ const RepositoryDetail: React.FC = () => {
   const [repository, setRepository] = useState<Repository | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'code' | 'commits' | 'members' | 'clone'>('code');
+  const [activeTab, setActiveTab] = useState<'code' | 'commits' | 'members' | 'clone' | 'settings'>('code');
 
   useEffect(() => {
     const fetchRepository = async () => {
@@ -49,7 +50,7 @@ const RepositoryDetail: React.FC = () => {
     fetchRepository();
   }, [repositoryId]);
 
-  const handleTabChange = (tab: 'code' | 'commits' | 'members' | 'clone') => {
+  const handleTabChange = (tab: 'code' | 'commits' | 'members' | 'clone' | 'settings') => {
     setActiveTab(tab);
   };
 
@@ -127,6 +128,12 @@ const RepositoryDetail: React.FC = () => {
           >
             Clone
           </button>
+          <button
+            onClick={() => handleTabChange('settings')}
+            className={`px-4 py-3 text-sm font-medium bg-[var(--bg-secondary)] border-b-2 mr-2 ${activeTab === 'settings' ? 'text-[var(--color-primary)] border-[var(--color-primary)] font-semibold' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-primary)]'} transition-colors rounded-t`}
+          >
+            Settings
+          </button>
         </nav>
       </div>
 
@@ -151,6 +158,11 @@ const RepositoryDetail: React.FC = () => {
         {activeTab === 'clone' && (
           <div className="bg-[var(--bg-card)] rounded-lg p-4 border-l-4 border-[var(--color-primary-light)]">
             <RepositoryCloneInfo repositoryId={repository.id} />
+          </div>
+        )}
+        {activeTab === 'settings' && (
+          <div className="bg-[var(--bg-card)] rounded-lg p-6 border-l-4 border-[var(--color-primary-light)]">
+            <RepositorySettings repository={repository} />
           </div>
         )}
       </div>

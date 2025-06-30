@@ -17,5 +17,5 @@ class Comment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    task = relationship("Task", backref="comments")
+    task = relationship("Task", back_populates="comments")
     user = relationship("User", backref="comments")

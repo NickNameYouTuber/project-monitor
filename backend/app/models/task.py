@@ -29,6 +29,7 @@ class Task(Base):
     # Relationships
     column = relationship("TaskColumn", back_populates="tasks")
     project = relationship("Project")
+    comments = relationship("Comment", back_populates="task", cascade="all, delete-orphan")
     
     # Многие-ко-многим с пользователями (исполнители)
     assignees = relationship("User", secondary=task_assignees, backref="assigned_tasks")
