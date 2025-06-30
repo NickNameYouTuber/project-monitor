@@ -35,22 +35,35 @@ async def get_task_related_branches(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
         
         # Получаем комментарии задачи, которые содержат информацию о ветках
+        # Ищем и созданные, и привязанные ветки
         branch_comments = db.query(Comment).filter(
             Comment.task_id == task_id,
             Comment.is_system == True,
-            Comment.content.like("%Created branch%")
+            # Ищем комментарии о создании или привязке ветки
+            (Comment.content.like("%Created branch%") | Comment.content.like("%Привязана ветка%"))
         ).all()
         
         result = []
         
         # Извлекаем информацию о ветках из комментариев
         for comment in branch_comments:
-            # Ищем название ветки в формате "Created branch **branch_name** from base_branch"
             content = comment.content
             try:
                 # Парсим название ветки из комментария
-                branch_name = content.split("**")[1]
-                base_branch = content.split("from ")[1]
+                if "**" in content:
+                    # Для формата с маркдауном: **branch_name**
+                    branch_name = content.split("**")[1]
+                else:
+                    # Для формата без маркдауна: branch_name from base_branch
+                    if "Created branch" in content:
+                        branch_name = content.replace("Created branch ", "").split(" from ")[0]
+                    elif "Привязана ветка" in content:
+                        branch_name = content.replace("🔄 Привязана ветка ", "").split(" ")[0]
+                
+                # Устанавливаем base_branch, если есть
+                base_branch = "master"  # по умолчанию
+                if "from " in content:
+                    base_branch = content.split("from ")[1]
                 
                 # Получаем информацию о репозитории
                 project_id = task.project_id
