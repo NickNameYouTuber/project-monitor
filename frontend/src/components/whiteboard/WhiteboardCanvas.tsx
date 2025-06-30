@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppContext } from '../../utils/AppContext';
-import WhiteboardElement from './WhiteboardElement';
-import WhiteboardToolbar from './WhiteboardToolbar';
+import {WhiteboardElement} from './index';
+import {WhiteboardToolbar} from './index';
 import type { 
   WhiteboardElementType, 
   WhiteboardElementData,
-  Position 
+  Position,
+  ConnectionPointPosition 
 } from '../../types/whiteboard';
 
 const WhiteboardCanvas: React.FC<{ projectId?: string }> = ({ projectId }) => {
@@ -132,11 +133,39 @@ const WhiteboardCanvas: React.FC<{ projectId?: string }> = ({ projectId }) => {
     setSelectedElementId(newElement.id);
   }, [elements, position]);
 
-  // Обновление свойств элемента
+  // Обновление элемента
   const updateElement = useCallback((id: string, updates: Partial<WhiteboardElementData>) => {
-    setElements(elements.map(el => 
-      el.id === id ? { ...el, ...updates } : el
-    ));
+    setElements(prevElements =>
+      prevElements.map(el => (el.id === id ? { ...el, ...updates } : el))
+    );
+    // Здесь должен быть вызов API для сохранения изменений
+  }, [elements]);
+
+  // Создание новой стрелки с соединениями
+  const createArrowWithConnections = useCallback((startElementId: string, startConnectionPoint: ConnectionPointPosition, 
+                                   endElementId: string, endConnectionPoint: ConnectionPointPosition) => {
+    const newArrow: WhiteboardElementData = {
+      id: `arrow-${Date.now()}`,
+      type: 'arrow',
+      position: { x: 0, y: 0 }, // Позиция будет рассчитываться динамически
+      size: { width: 100, height: 1 }, // Размер будет рассчитываться динамически
+      startElementId,
+      endElementId,
+      startConnection: {
+        elementId: startElementId,
+        connectionPoint: startConnectionPoint
+      },
+      endConnection: {
+        elementId: endElementId,
+        connectionPoint: endConnectionPoint
+      },
+      color: '#000000',
+      strokeWidth: '2px',
+      arrowStyle: 'straight'
+    };
+    
+    setElements(prevElements => [...prevElements, newArrow]);
+    // Здесь должен быть вызов API для сохранения новой стрелки
   }, [elements]);
 
   // Удаление элемента
@@ -204,8 +233,7 @@ const WhiteboardCanvas: React.FC<{ projectId?: string }> = ({ projectId }) => {
         ref={canvasRef}
         className="flex-1 overflow-hidden bg-bg-secondary relative cursor-grab"
         style={{ 
-          backgroundImage: "linear-gradient(#ddd 1px, transparent 1px), linear-gradient(90deg, #ddd 1px, transparent 1px)",
-          backgroundSize: `${20 * scale}px ${20 * scale}px`
+          backgroundColor: "#f9f9f9"
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -226,8 +254,9 @@ const WhiteboardCanvas: React.FC<{ projectId?: string }> = ({ projectId }) => {
               element={element}
               isSelected={selectedElementId === element.id}
               onSelect={() => setSelectedElementId(element.id)}
-              onUpdate={(updates) => updateElement(element.id, updates)}
+              onUpdate={(updates: Partial<WhiteboardElementData>) => updateElement(element.id, updates)}
               onDelete={() => deleteElement(element.id)}
+              createArrow={createArrowWithConnections}
             />
           ))}
         </div>

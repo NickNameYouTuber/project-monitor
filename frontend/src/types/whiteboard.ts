@@ -1,21 +1,7 @@
-// Типы для интерактивной доски (Miro)
+// Типы для интерактивной доски
 
-export type WhiteboardElementType = 'text' | 'sticky' | 'shape' | 'arrow' | 'image';
-export type ShapeType = 'rectangle' | 'circle' | 'diamond';
-
-// Основная структура данных доски
-export interface WhiteboardData {
-  id: string;
-  project_id: string;
-  name: string;
-  description?: string;
-  elements: WhiteboardElementData[];
-  created_at: string;
-  updated_at: string;
-  created_by: string;
-  background_color?: string;
-  background_image?: string;
-}
+export type WhiteboardElementType = 'text' | 'sticky' | 'shape' | 'arrow' | 'image' | 'group';
+export type ShapeType = 'rectangle' | 'circle' | 'triangle' | 'diamond' | 'hexagon';
 
 export interface Position {
   x: number;
@@ -25,6 +11,26 @@ export interface Position {
 export interface Size {
   width: number;
   height: number;
+}
+
+// Точки соединения стрелок
+export type ConnectionPointPosition = 'top' | 'top-right' | 'right' | 'bottom-right' | 'bottom' | 'bottom-left' | 'left' | 'top-left';
+
+export interface ConnectionPoint {
+  position: ConnectionPointPosition;
+  coordinates: Position;
+}
+
+export interface ArrowConnection {
+  elementId: string;
+  connectionPoint: ConnectionPointPosition;
+}
+
+// Основная структура данных доски
+
+export interface ArrowConnection {
+  elementId: string;
+  connectionPoint: ConnectionPointPosition;
 }
 
 export interface WhiteboardElementData {
@@ -37,14 +43,22 @@ export interface WhiteboardElementData {
   zIndex?: number;
   rotation?: number;
   
+  // Для текста и стикеров
+  fontSize?: string;
+  
   // Для стрелок
   startElementId?: string;
   endElementId?: string;
   startPoint?: Position;
   endPoint?: Position;
+  startConnection?: ArrowConnection;
+  endConnection?: ArrowConnection;
+  strokeWidth?: string;
+  arrowStyle?: 'straight' | 'curved';
   
   // Для фигур
   shapeType?: ShapeType;
+  borderWidth?: string;
   
   // Для изображений
   imageUrl?: string;

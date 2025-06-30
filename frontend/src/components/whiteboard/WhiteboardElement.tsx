@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import type { WhiteboardElementData } from '../../types/whiteboard';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import type { WhiteboardElementData, ConnectionPointPosition } from '../../types/whiteboard';
 
 interface WhiteboardElementProps {
   element: WhiteboardElementData;
@@ -7,6 +7,12 @@ interface WhiteboardElementProps {
   onSelect: () => void;
   onUpdate: (updates: Partial<WhiteboardElementData>) => void;
   onDelete: () => void;
+  createArrow: (
+    startElementId: string,
+    startConnectionPoint: ConnectionPointPosition,
+    endElementId: string,
+    endConnectionPoint: ConnectionPointPosition
+  ) => void;
 }
 
 const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
@@ -15,24 +21,50 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
   onSelect,
   onUpdate,
   onDelete,
+  createArrow,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(element.content || '');
+  const [showConnectionPoints, setShowConnectionPoints] = useState(false);
+  const [isCreatingArrow, setIsCreatingArrow] = useState(false);
+  const [arrowStartPoint, setArrowStartPoint] = useState<{
+    position: ConnectionPointPosition;
+    elementId: string;
+  } | null>(null);
+
   const dragStartRef = useRef({ x: 0, y: 0 });
   const originalPositionRef = useRef({ x: 0, y: 0 });
   const resizeStartRef = useRef({ width: 0, height: 0 });
   const elementRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Обработка клика для выбора элемента
+  // Вычисляем точки соединения для элемента
+  const connectionPoints = useMemo(() => {
+    const { width, height } = element.size;
+    return [
+      { position: 'top' as ConnectionPointPosition, coordinates: { x: width / 2, y: 0 } },
+      { position: 'top-right' as ConnectionPointPosition, coordinates: { x: width, y: 0 } },
+      { position: 'right' as ConnectionPointPosition, coordinates: { x: width, y: height / 2 } },
+      { position: 'bottom-right' as ConnectionPointPosition, coordinates: { x: width, y: height } },
+      { position: 'bottom' as ConnectionPointPosition, coordinates: { x: width / 2, y: height } },
+      { position: 'bottom-left' as ConnectionPointPosition, coordinates: { x: 0, y: height } },
+      { position: 'left' as ConnectionPointPosition, coordinates: { x: 0, y: height / 2 } },
+      { position: 'top-left' as ConnectionPointPosition, coordinates: { x: 0, y: 0 } },
+    ];
+  }, [element.size.width, element.size.height]);
+
+  // Выбор элемента
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect();
+    if (element.type !== 'arrow') {
+      setShowConnectionPoints(true);
+    }
   };
 
-  // Обработка начала перетаскивания
+  // Начало перетаскивания
   const handleDragStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -41,7 +73,7 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
     originalPositionRef.current = { ...element.position };
   };
 
-  // Обработка начала изменения размера
+  // Начало ресайза
   const handleResizeStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -50,7 +82,7 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
     resizeStartRef.current = { ...element.size };
   };
 
-  // Обработка двойного клика для редактирования
+  // Двойной клик для включения режима редактирования
   const handleDoubleClick = (e: React.MouseEvent) => {
     if (element.type === 'text' || element.type === 'sticky') {
       e.stopPropagation();
@@ -59,48 +91,61 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
     }
   };
 
-  // Обработка изменения содержимого
+  // Обновление текста при редактировании
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditContent(e.target.value);
   };
 
-  // Сохранение изменений после редактирования
-  const handleBlur = () => {
+  // Завершение редактирования
+  const finishEditing = () => {
     setIsEditing(false);
     onUpdate({ content: editContent });
   };
 
-  // Обработка нажатия клавиш при редактировании
+  const handleBlur = () => {
+    finishEditing();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && e.shiftKey === false) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      setIsEditing(false);
-      onUpdate({ content: editContent });
+      finishEditing();
     }
   };
 
-  // Настройка обработчиков перемещения и изменения размера
+  // Клик по точке соединения
+  const handleConnectionPointClick = useCallback(
+    (position: ConnectionPointPosition) => {
+      if (!isCreatingArrow) {
+        setIsCreatingArrow(true);
+        setArrowStartPoint({ position, elementId: element.id });
+      } else if (arrowStartPoint && arrowStartPoint.elementId !== element.id) {
+        createArrow(arrowStartPoint.elementId, arrowStartPoint.position, element.id, position);
+        setIsCreatingArrow(false);
+        setArrowStartPoint(null);
+        setShowConnectionPoints(false);
+      }
+    },
+    [isCreatingArrow, arrowStartPoint, element.id, createArrow]
+  );
+
+  // Обработчики mousemove и mouseup для перетаскивания и ресайза
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
         const dx = e.clientX - dragStartRef.current.x;
         const dy = e.clientY - dragStartRef.current.y;
-
         onUpdate({
-          position: {
-            x: originalPositionRef.current.x + dx,
-            y: originalPositionRef.current.y + dy
-          }
+          position: { x: originalPositionRef.current.x + dx, y: originalPositionRef.current.y + dy },
         });
       } else if (isResizing) {
         const dx = e.clientX - dragStartRef.current.x;
         const dy = e.clientY - dragStartRef.current.y;
-
         onUpdate({
           size: {
             width: Math.max(50, resizeStartRef.current.width + dx),
-            height: Math.max(50, resizeStartRef.current.height + dy)
-          }
+            height: Math.max(50, resizeStartRef.current.height + dy),
+          },
         });
       }
     };
@@ -108,27 +153,29 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
     const handleMouseUp = () => {
       setIsDragging(false);
       setIsResizing(false);
+      if (!isCreatingArrow) {
+        setShowConnectionPoints(false);
+      }
     };
 
     if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
     }
+  }, [isDragging, isResizing, isCreatingArrow, onUpdate]);
 
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, isResizing, onUpdate]);
-
-  // Фокус на textarea при входе в режим редактирования
+  // Автофокус на textarea при входе в режим редактирования
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
     }
   }, [isEditing]);
 
-  // Отрисовка разных типов элементов
+  // Рендер содержимого элемента
   const renderElementContent = () => {
     if (isEditing && (element.type === 'text' || element.type === 'sticky')) {
       return (
@@ -139,78 +186,56 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
           onChange={handleContentChange}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          style={{ backgroundColor: 'transparent' }}
         />
       );
     }
 
     switch (element.type) {
       case 'text':
-        return (
-          <div className="p-2 whitespace-pre-wrap text-text-primary">
-            {element.content}
-          </div>
-        );
+        return <div className="p-2 whitespace-pre-wrap text-text-primary">{element.content}</div>;
       case 'sticky':
-        return (
-          <div className="p-2 whitespace-pre-wrap text-text-primary font-medium">
-            {element.content}
-          </div>
-        );
+        return <div className="p-2 whitespace-pre-wrap text-text-primary font-medium">{element.content}</div>;
       case 'shape':
         if (element.shapeType === 'rectangle') {
           return <div className="w-full h-full" />;
-        } else if (element.shapeType === 'circle') {
+        }
+        if (element.shapeType === 'circle') {
           return <div className="w-full h-full rounded-full" />;
-        } else if (element.shapeType === 'diamond') {
+        }
+        if (element.shapeType === 'diamond') {
           return (
             <div
               className="w-full h-full"
-              style={{
-                clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
-              }}
+              style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}
             />
           );
         }
         return null;
       case 'image':
-        return (
-          <img
-            src={element.imageUrl}
-            alt="Uploaded"
-            className="w-full h-full object-contain"
-          />
-        );
+        return <img src={element.imageUrl} alt="Uploaded" className="w-full h-full object-contain" />;
       default:
         return null;
     }
   };
 
-  // Расчет стилей для элемента
+  // Стили для обёртки элемента
   const getElementStyle = () => {
-    const baseStyle = {
-      left: `${element.position.x}px`,
-      top: `${element.position.y}px`,
-      width: `${element.size.width}px`,
-      height: `${element.size.height}px`,
-      backgroundColor: element.color,
-      zIndex: element.zIndex || 1,
+    const base: React.CSSProperties = {
+      left: element.position.x,
+      top: element.position.y,
+      width: element.size.width,
+      height: element.size.height,
+      backgroundColor: element.type === 'text' ? 'transparent' : element.color,
+      zIndex: element.zIndex ?? 1,
       transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
     };
-
     if (element.type === 'sticky') {
       return {
-        ...baseStyle,
+        ...base,
         boxShadow: '0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)',
       };
-    } else if (element.type === 'text') {
-      return {
-        ...baseStyle,
-        backgroundColor: 'transparent',
-      };
     }
-
-    return baseStyle;
+    return base;
   };
 
   return (
@@ -228,6 +253,7 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
 
       {isSelected && (
         <>
+          {/* Угловые маркеры */}
           <div className="absolute -top-1 -left-1 w-2 h-2 bg-primary" />
           <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary" />
           <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-primary" />
@@ -236,10 +262,9 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
             onMouseDown={handleResizeStart}
           />
 
-          <div 
-            className="absolute -top-8 right-0 bg-bg-card p-1 rounded flex shadow-md"
-          >
-            <button 
+          {/* Кнопка удаления */}
+          <div className="absolute -top-8 right-0 bg-bg-card p-1 rounded flex shadow-md">
+            <button
               className="text-xs bg-state-error text-white px-2 py-1 rounded hover:bg-red-600"
               onClick={(e) => {
                 e.stopPropagation();
@@ -251,6 +276,32 @@ const WhiteboardElement: React.FC<WhiteboardElementProps> = ({
           </div>
         </>
       )}
+
+      {/* Точки соединения */}
+      {(showConnectionPoints || isCreatingArrow) &&
+        element.type !== 'arrow' &&
+        connectionPoints.map((point) => (
+          <div
+            key={point.position}
+            className={`absolute w-3 h-3 rounded-full cursor-pointer ${
+              isCreatingArrow &&
+              arrowStartPoint &&
+              arrowStartPoint.elementId === element.id &&
+              arrowStartPoint.position === point.position
+                ? 'bg-state-success'
+                : 'bg-primary hover:bg-state-info'
+            }`}
+            style={{
+              left: point.coordinates.x - 6,
+              top: point.coordinates.y - 6,
+              zIndex: 1000,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleConnectionPointClick(point.position);
+            }}
+          />
+        ))}
     </div>
   );
 };
