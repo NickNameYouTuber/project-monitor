@@ -26,6 +26,7 @@ import {
   ActionIcon,
   Box
 } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { 
   IconAlertCircle, 
   IconPlus, 
@@ -46,12 +47,13 @@ const DashboardDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [isProjectModalOpen, setProjectModalOpen] = useState(false);
-  const [isInviteByTelegramModalOpen, setInviteByTelegramModalOpen] = useState(false);
+  const [projectModalOpened, projectModalHandlers] = useDisclosure(false);
+  const [inviteModalOpened, inviteModalHandlers] = useDisclosure(false);
+  const [showMembersSection, { toggle: toggleMembersSection }] = useDisclosure(false);
+
   const [usernameSearch, setUsernameSearch] = useState('');
   const [telegramId, setTelegramId] = useState('');
   const [memberRole, setMemberRole] = useState<'viewer' | 'editor' | 'admin'>('viewer');
-  const [showMembersSection, setShowMembersSection] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<{id: string, username: string, telegram_id: number}>>([]);
   const [selectedUser, setSelectedUser] = useState<{id: string, username: string, telegram_id: number} | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -123,11 +125,8 @@ const DashboardDetail: React.FC = () => {
     }
   }, [projects, dashboard, dashboardId]);
 
-  const openProjectModal = () => setProjectModalOpen(true);
-  const closeProjectModal = () => setProjectModalOpen(false);
-  const openInviteByTelegramModal = () => setInviteByTelegramModalOpen(true);
   const closeInviteByTelegramModal = () => {
-    setInviteByTelegramModalOpen(false);
+    inviteModalHandlers.close();
     setUsernameSearch('');
     setTelegramId('');
     setMemberRole('viewer');
@@ -248,7 +247,7 @@ const DashboardDetail: React.FC = () => {
   }
 
   return (
-    <Container size="lg" py="md">
+    <Container size="lg" py="xl">
       <Group justify="space-between" mb="xl">
         <Stack gap="xs">
           <Title order={2}>{dashboard.name}</Title>
@@ -261,14 +260,14 @@ const DashboardDetail: React.FC = () => {
           <Button
             variant="light"
             color="gray"
-            onClick={() => setShowMembersSection(!showMembersSection)}
+            onClick={toggleMembersSection}
             leftSection={<IconUsers size={16} />}
           >
             Members
           </Button>
           <Button
             color="green"
-            onClick={openProjectModal}
+            onClick={projectModalHandlers.open}
             leftSection={<IconPlus size={16} />}
           >
             Add Project
@@ -283,7 +282,7 @@ const DashboardDetail: React.FC = () => {
             <Title order={4}>Dashboard Members</Title>
             <Button 
               size="sm" 
-              onClick={openInviteByTelegramModal}
+              onClick={inviteModalHandlers.open}
               leftSection={<IconPlus size={14} />}
               variant="light" 
               color="green"
@@ -337,22 +336,22 @@ const DashboardDetail: React.FC = () => {
       </Collapse>
 
       {/* Projects Section */}
-      <Box>
+      <Box mb="xl">
         <ProjectBoard projects={dashboard.projects} />
       </Box>
 
       {/* Project Modal */}
-      {isProjectModalOpen && (
+      {projectModalOpened && (
         <ProjectModal
-          isOpen={isProjectModalOpen}
-          onClose={closeProjectModal}
+          isOpen={projectModalOpened}
+          onClose={projectModalHandlers.close}
           dashboardId={dashboardId!}
         />
       )}
 
       {/* Invite by Telegram Modal */}
       <Modal
-        opened={isInviteByTelegramModalOpen}
+        opened={inviteModalOpened}
         onClose={closeInviteByTelegramModal}
         title="Invite User by Telegram"
         centered
@@ -401,7 +400,7 @@ const DashboardDetail: React.FC = () => {
                       withBorder 
                       p="sm" 
                       radius="md"
-                      className="cursor-pointer hover:bg-gray-50"
+                      style={{ cursor: 'pointer' }}
                       onClick={() => selectUser(user)}
                     >
                       <Group>
@@ -451,7 +450,7 @@ const DashboardDetail: React.FC = () => {
               />
 
               <Group justify="flex-end" mt="md">
-                <Button variant="light" onClick={closeInviteByTelegramModal}>
+                <Button variant="outline" onClick={closeInviteByTelegramModal}>
                   Cancel
                 </Button>
                 <Button 

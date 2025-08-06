@@ -18,6 +18,7 @@ import {
   Group,
   Stack
 } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
 
 const DashboardList: React.FC = () => {
@@ -25,7 +26,7 @@ const DashboardList: React.FC = () => {
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [opened, { open, close }] = useDisclosure(false);
   const [newDashboardName, setNewDashboardName] = useState('');
   const [newDashboardDescription, setNewDashboardDescription] = useState('');
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ const DashboardList: React.FC = () => {
       }, currentUser.token);
       
       setDashboards([...dashboards, newDashboard as Dashboard]);
-      setShowCreateModal(false);
+      close();
       setNewDashboardName('');
       setNewDashboardDescription('');
     } catch (err) {
@@ -75,11 +76,11 @@ const DashboardList: React.FC = () => {
   };
 
   return (
-    <Container size="lg" py="md">
+    <Container size="lg" py="xl">
       <Group justify="space-between" mb="xl">
         <Title order={2}>Your Dashboards</Title>
         <Button 
-          onClick={() => setShowCreateModal(true)}
+          onClick={open}
           leftSection={<IconPlus size={16} />}
           color="green"
         >
@@ -139,8 +140,8 @@ const DashboardList: React.FC = () => {
       
       {/* Create dashboard modal */}
       <Modal
-        opened={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        opened={opened}
+        onClose={close}
         title="Create New Dashboard"
         centered
         overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
@@ -162,7 +163,7 @@ const DashboardList: React.FC = () => {
             minRows={4}
           />
           <Group justify="flex-end" mt="md">
-            <Button variant="light" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+            <Button variant="outline" onClick={close}>Cancel</Button>
             <Button 
               color="green" 
               onClick={handleCreateDashboard}

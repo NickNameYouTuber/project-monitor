@@ -1,12 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
-// Импортируем наши темы
 import './styles/themes.css'
 import App from './App.tsx'
 import { ThemeProvider } from './context/ThemeContext'
 import { MantineProvider, createTheme } from '@mantine/core'
 import '@mantine/core/styles.css'
+import { useLocalStorage } from '@mantine/hooks'
 
 // Создаем тему для Mantine
 const theme = createTheme({
@@ -27,12 +27,38 @@ const theme = createTheme({
   }
 });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <MantineProvider theme={theme}>
+// Компонент обертка для настройки темы
+const ThemeWrapper = ({ children }: { children: React.ReactNode }) => {
+  const [colorScheme] = useLocalStorage<'light' | 'dark'>({
+    key: 'mantine-color-scheme',
+    defaultValue: 'light',
+  });
+
+  return (
+    <MantineProvider 
+      theme={{ 
+        ...theme, 
+        components: {
+          Paper: {
+            defaultProps: {
+              p: 'md',
+            },
+          },
+        }
+      }} 
+      forceColorScheme={colorScheme}
+    >
       <ThemeProvider>
-        <App />
+        {children}
       </ThemeProvider>
     </MantineProvider>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ThemeWrapper>
+      <App />
+    </ThemeWrapper>
   </React.StrictMode>,
 )
