@@ -9,8 +9,8 @@ import {
   Button, 
   Group, 
   Stack,
+  Text
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -26,7 +26,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
   const [assignee, setAssignee] = useState('Team');
   const [priority, setPriority] = useState<ProjectPriority>('medium');
   const [status, setStatus] = useState<ProjectStatus>('inPlans');
-  const [opened, { close }] = useDisclosure(false);
 
   // Reset form when modal is opened
   useEffect(() => {
@@ -87,7 +86,20 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
   ];
 
   return (
-    <Modal opened={opened} onClose={close} title="Authentication" centered>
+    <Modal
+      opened={isOpen}
+      onClose={onClose}
+      title={<Text fw={600} size="lg" c="green">Add New Project</Text>}
+      centered
+      size="md"
+      closeOnClickOutside={true}
+      closeOnEscape={true}
+      withCloseButton
+      transitionProps={{ transition: 'fade', duration: 200 }}
+      overlayProps={{ opacity: 0.55, blur: 3 }}
+      portalProps={{ target: document.body }}
+      radius="md"
+    >
       <form onSubmit={handleSubmit}>
         <Stack>
           <TextInput

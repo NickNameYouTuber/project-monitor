@@ -378,6 +378,7 @@ const DashboardDetail: React.FC = () => {
           color: "#000"
         }}
         transitionProps={{ transition: 'fade', duration: 200 }}
+        portalProps={{ target: document.body }}
       >
         <Stack>
           {error && (

@@ -189,6 +189,7 @@ const DashboardList: React.FC = () => {
         }}
         radius="md"
         transitionProps={{ transition: 'fade', duration: 200 }}
+        portalProps={{ target: document.body }}
       >
         <Stack gap="md">
           <TextInput
