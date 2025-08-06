@@ -178,27 +178,17 @@ const DashboardList: React.FC = () => {
           </Text>
         }
         centered
+        closeOnClickOutside={true}
+        closeOnEscape={true}
+        withCloseButton
         size="md"
         overlayProps={{ 
           backgroundOpacity: 0.55, 
-          blur: 3 
+          blur: 3,
+          color: "#000"
         }}
         radius="md"
-        padding="md"
-        zIndex={1000}
-        xOffset={0}
-        yOffset={0}
-        styles={{
-          inner: {
-            padding: '20px',
-          },
-          body: {
-            padding: '16px',
-          },
-          header: {
-            marginBottom: '8px',
-          }
-        }}
+        transitionProps={{ transition: 'fade', duration: 200 }}
       >
         <Stack gap="md">
           <TextInput

@@ -59,19 +59,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
     onClose();
   };
 
-  // Стили для модального окна
-  const modalStyles = {
-    inner: {
-      padding: '20px',
-    },
-    body: {
-      padding: '16px',
-    },
-    header: {
-      marginBottom: '8px',
-    }
-  };
-
   // Создаем данные для селектов
   const priorityData = [
     { value: 'high', label: 'High' },
@@ -107,14 +94,16 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
       }
       centered
       size="md"
-      padding="md"
-      zIndex={1000}
+      closeOnClickOutside={true}
+      closeOnEscape={true}
+      withCloseButton
       overlayProps={{ 
         backgroundOpacity: 0.55, 
-        blur: 3 
+        blur: 3,
+        color: "#000" 
       }}
       radius="md"
-      styles={modalStyles}
+      transitionProps={{ transition: 'fade', duration: 200 }}
     >
       <form onSubmit={handleSubmit}>
         <Stack>

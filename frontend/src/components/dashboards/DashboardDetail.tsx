@@ -250,19 +250,6 @@ const DashboardDetail: React.FC = () => {
     );
   }
 
-  // Определяем кастомные модальные стили
-  const modalStyles = {
-    inner: {
-      padding: '20px',
-    },
-    body: {
-      padding: '16px',
-    },
-    header: {
-      marginBottom: '8px',
-    }
-  };
-
   return (
     <Container size="lg" py="xl">
       <Paper withBorder shadow="sm" p="xl" radius="md" mb="xl">
@@ -382,11 +369,15 @@ const DashboardDetail: React.FC = () => {
         centered
         size="md"
         radius="md"
-        padding="md"
-        zIndex={1000}
-        xOffset={0}
-        yOffset={0}
-        styles={modalStyles}
+        closeOnClickOutside={true}
+        closeOnEscape={true}
+        withCloseButton
+        overlayProps={{ 
+          backgroundOpacity: 0.55, 
+          blur: 3,
+          color: "#000"
+        }}
+        transitionProps={{ transition: 'fade', duration: 200 }}
       >
         <Stack>
           {error && (
