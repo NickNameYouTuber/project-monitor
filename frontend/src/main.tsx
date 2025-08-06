@@ -3,12 +3,12 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import './styles/themes.css'
 import App from './App.tsx'
-import { MantineProvider, createTheme, MantineColorScheme } from '@mantine/core'
+import { MantineProvider, createTheme } from '@mantine/core'
 import '@mantine/core/styles.css'
 
 // Создаем контекст для темы
 interface ThemeContextType {
-  colorScheme: MantineColorScheme;
+  colorScheme: 'light' | 'dark';
   toggleColorScheme: () => void;
 }
 
@@ -50,9 +50,9 @@ const theme = createTheme({
 
 // Компонент обертка для настройки темы
 const ThemeWrapper = ({ children }: { children: React.ReactNode }) => {
-  const [colorScheme, setColorScheme] = useState<MantineColorScheme>(() => {
+  const [colorScheme, setColorScheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('mantine-color-scheme');
-    return (saved as MantineColorScheme) || 'light';
+    return (saved === 'dark' || saved === 'light') ? saved : 'light';
   });
 
   const toggleColorScheme = () => {
