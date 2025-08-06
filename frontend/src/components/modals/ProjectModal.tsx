@@ -96,7 +96,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
           closeOnEscape={true}
           withCloseButton
           transitionProps={{ transition: 'fade', duration: 200 }}
-          overlayProps={{ opacity: 0.55, blur: 3 }}
+          overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
           radius="md"
       >
         <form onSubmit={handleSubmit}>
