@@ -34,7 +34,9 @@ import {
   IconSearch, 
   IconX, 
   IconTrash, 
-  IconChevronLeft 
+  IconChevronLeft,
+  IconChevronDown,
+  IconChevronUp
 } from '@tabler/icons-react';
 
 const DashboardDetail: React.FC = () => {
@@ -198,6 +200,7 @@ const DashboardDetail: React.FC = () => {
       <Container py="xl">
         <Stack align="center" justify="center" h="60vh">
           <Loader color="green" size="xl" />
+          <Text c="dimmed">Loading dashboard...</Text>
         </Stack>
       </Container>
     );
@@ -211,6 +214,7 @@ const DashboardDetail: React.FC = () => {
           title="Error" 
           color="red"
           variant="filled"
+          radius="md"
         >
           <Stack>
             <Text>{error}</Text>
@@ -233,7 +237,7 @@ const DashboardDetail: React.FC = () => {
     return (
       <Container py="xl">
         <Paper p="xl" withBorder shadow="md" radius="md" ta="center">
-          <Text size="lg" mb="md">Dashboard not found</Text>
+          <Text size="lg" mb="md" c="dimmed">Dashboard not found</Text>
           <Button 
             color="green" 
             onClick={() => navigate('/dashboards')}
@@ -248,92 +252,96 @@ const DashboardDetail: React.FC = () => {
 
   return (
     <Container size="lg" py="xl">
-      <Group justify="space-between" mb="xl">
-        <Stack gap="xs">
-          <Title order={2}>{dashboard.name}</Title>
-          {dashboard.description && (
-            <Text c="dimmed" size="sm">{dashboard.description}</Text>
-          )}
-        </Stack>
-        
-        <Group>
-          <Button
-            variant="light"
-            color="gray"
-            onClick={toggleMembersSection}
-            leftSection={<IconUsers size={16} />}
-          >
-            Members
-          </Button>
-          <Button
-            color="green"
-            onClick={projectModalHandlers.open}
-            leftSection={<IconPlus size={16} />}
-          >
-            Add Project
-          </Button>
-        </Group>
-      </Group>
-
-      {/* Members Section */}
-      <Collapse in={showMembersSection}>
-        <Paper withBorder p="md" radius="md" mb="xl">
-          <Group justify="space-between" mb="md">
-            <Title order={4}>Dashboard Members</Title>
-            <Button 
-              size="sm" 
-              onClick={inviteModalHandlers.open}
-              leftSection={<IconPlus size={14} />}
-              variant="light" 
+      <Paper withBorder shadow="sm" p="xl" radius="md" mb="xl">
+        <Group justify="space-between" mb="xl">
+          <Stack gap="xs">
+            <Title order={2} c="green">{dashboard.name}</Title>
+            {dashboard.description && (
+              <Text c="dimmed" size="sm">{dashboard.description}</Text>
+            )}
+          </Stack>
+          
+          <Group>
+            <Button
+              variant="light"
               color="green"
+              onClick={toggleMembersSection}
+              leftSection={<IconUsers size={16} />}
+              rightSection={showMembersSection ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
             >
-              Add Member
+              Members ({members.length})
+            </Button>
+            <Button
+              color="green"
+              onClick={projectModalHandlers.open}
+              leftSection={<IconPlus size={16} />}
+              variant="filled"
+            >
+              Add Project
             </Button>
           </Group>
-          
-          {members.length === 0 ? (
-            <Text c="dimmed" ta="center" py="md">No members yet.</Text>
-          ) : (
-            <Stack>
-              {members.map(member => (
-                <Card key={member.id} withBorder shadow="xs" p="sm" radius="md">
-                  <Group justify="space-between">
-                    <Group>
-                      <Avatar 
-                        src={member.user?.avatar} 
-                        alt={member.user?.username || 'User'}
-                        radius="xl"
-                        color="green"
-                      >
-                        {member.user?.username?.charAt(0) || 'U'}
-                      </Avatar>
-                      <Stack gap={0}>
-                        <Text fw={500}>{member.user?.username || 'Unknown'}</Text>
-                        <Badge size="sm" color={
-                          member.role === 'admin' ? 'blue' : 
-                          member.role === 'editor' ? 'green' : 'gray'
-                        }>
-                          {member.role}
-                        </Badge>
-                      </Stack>
+        </Group>
+
+        {/* Members Section */}
+        <Collapse in={showMembersSection}>
+          <Paper withBorder p="md" radius="md" mb="xl" bg="var(--mantine-color-gray-0)">
+            <Group justify="space-between" mb="md">
+              <Title order={4} c="green">Dashboard Members</Title>
+              <Button 
+                size="sm" 
+                onClick={inviteModalHandlers.open}
+                leftSection={<IconPlus size={14} />}
+                variant="light" 
+                color="green"
+              >
+                Add Member
+              </Button>
+            </Group>
+            
+            {members.length === 0 ? (
+              <Text c="dimmed" ta="center" py="md">No members yet.</Text>
+            ) : (
+              <Stack>
+                {members.map(member => (
+                  <Card key={member.id} withBorder shadow="xs" p="sm" radius="md">
+                    <Group justify="space-between">
+                      <Group>
+                        <Avatar 
+                          src={member.user?.avatar} 
+                          alt={member.user?.username || 'User'}
+                          radius="xl"
+                          color="green"
+                        >
+                          {member.user?.username?.charAt(0) || 'U'}
+                        </Avatar>
+                        <Stack gap={0}>
+                          <Text fw={500}>{member.user?.username || 'Unknown'}</Text>
+                          <Badge size="sm" color={
+                            member.role === 'admin' ? 'blue' : 
+                            member.role === 'editor' ? 'green' : 'gray'
+                          }>
+                            {member.role}
+                          </Badge>
+                        </Stack>
+                      </Group>
+                      {member.id !== dashboard.owner_id && (
+                        <ActionIcon 
+                          color="red" 
+                          variant="subtle" 
+                          onClick={() => handleRemoveMember(member.id)}
+                          title="Remove member"
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      )}
                     </Group>
-                    {member.id !== dashboard.owner_id && (
-                      <ActionIcon 
-                        color="red" 
-                        variant="subtle" 
-                        onClick={() => handleRemoveMember(member.id)}
-                        title="Remove member"
-                      >
-                        <IconTrash size={16} />
-                      </ActionIcon>
-                    )}
-                  </Group>
-                </Card>
-              ))}
-            </Stack>
-          )}
-        </Paper>
-      </Collapse>
+                  </Card>
+                ))}
+              </Stack>
+            )}
+          </Paper>
+        </Collapse>
+      </Paper>
 
       {/* Projects Section */}
       <Box mb="xl">
@@ -353,9 +361,15 @@ const DashboardDetail: React.FC = () => {
       <Modal
         opened={inviteModalOpened}
         onClose={closeInviteByTelegramModal}
-        title="Invite User by Telegram"
+        title={
+          <Text fw={600} size="lg" c="green">
+            Invite User by Telegram
+          </Text>
+        }
         centered
         size="md"
+        radius="md"
+        shadow="xl"
       >
         <Stack>
           {error && (
@@ -380,12 +394,14 @@ const DashboardDetail: React.FC = () => {
                   value={usernameSearch}
                   onChange={(e) => setUsernameSearch(e.target.value)}
                   style={{ flex: 1 }}
+                  radius="md"
                 />
                 <Button 
                   onClick={handleSearchUsers} 
                   leftSection={<IconSearch size={16} />}
                   loading={isSearching}
                   color="green"
+                  radius="md"
                 >
                   Search
                 </Button>
@@ -402,6 +418,7 @@ const DashboardDetail: React.FC = () => {
                       radius="md"
                       style={{ cursor: 'pointer' }}
                       onClick={() => selectUser(user)}
+                      className="hover:bg-gray-50"
                     >
                       <Group>
                         <Avatar radius="xl" color="green">
@@ -436,6 +453,7 @@ const DashboardDetail: React.FC = () => {
                 value={telegramId}
                 onChange={(e) => setTelegramId(e.target.value)}
                 required
+                radius="md"
               />
 
               <Select
@@ -447,15 +465,18 @@ const DashboardDetail: React.FC = () => {
                   { value: 'editor', label: 'Editor (can edit content)' },
                   { value: 'admin', label: 'Admin (full access)' }
                 ]}
+                radius="md"
               />
 
               <Group justify="flex-end" mt="md">
-                <Button variant="outline" onClick={closeInviteByTelegramModal}>
+                <Button variant="outline" onClick={closeInviteByTelegramModal} radius="md">
                   Cancel
                 </Button>
                 <Button 
                   color="green" 
                   onClick={handleInviteByTelegram}
+                  radius="md"
+                  variant="filled"
                 >
                   Invite
                 </Button>

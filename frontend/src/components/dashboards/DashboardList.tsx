@@ -16,10 +16,12 @@ import {
   TextInput,
   Textarea, 
   Group,
-  Stack
+  Stack,
+  Card,
+  Badge
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
+import { IconAlertCircle, IconPlus, IconCalendar } from '@tabler/icons-react';
 
 const DashboardList: React.FC = () => {
   const { currentUser } = useAppContext();
@@ -78,11 +80,12 @@ const DashboardList: React.FC = () => {
   return (
     <Container size="lg" py="xl">
       <Group justify="space-between" mb="xl">
-        <Title order={2}>Your Dashboards</Title>
+        <Title order={2} c="green">Your Dashboards</Title>
         <Button 
           onClick={open}
           leftSection={<IconPlus size={16} />}
           color="green"
+          variant="filled"
         >
           Create Dashboard
         </Button>
@@ -96,6 +99,8 @@ const DashboardList: React.FC = () => {
           color="red"
           mb="lg"
           variant="light"
+          withCloseButton
+          onClose={() => setError(null)}
         >
           {error}
         </Alert>
@@ -105,34 +110,54 @@ const DashboardList: React.FC = () => {
       {isLoading ? (
         <Stack align="center" py="xl">
           <Loader size="lg" color="green" />
+          <Text c="dimmed">Loading dashboards...</Text>
         </Stack>
       ) : (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
           {dashboards.length === 0 ? (
-            <Paper p="xl" withBorder ta="center" w="100%" style={{ gridColumn: '1 / -1' }}>
-              <Text c="dimmed">You don't have any dashboards yet. Create one to get started!</Text>
+            <Paper p="xl" withBorder ta="center" w="100%" style={{ gridColumn: '1 / -1' }} radius="md" shadow="sm">
+              <Text c="dimmed" size="lg" mb="md">You don't have any dashboards yet.</Text>
+              <Text c="dimmed" size="sm">Create your first dashboard to get started!</Text>
             </Paper>
           ) : (
             dashboards.map((dashboard) => (
-              <Paper
+              <Card
                 key={dashboard.id}
                 withBorder
-                p="lg"
-                radius="md"
-                onClick={() => handleDashboardClick(dashboard.id)}
-                style={{ cursor: 'pointer' }}
                 shadow="sm"
-                ta="left"
-                className="hover:shadow-md transition-shadow duration-200"
+                radius="md"
+                p="lg"
+                onClick={() => handleDashboardClick(dashboard.id)}
+                style={{ 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                className="hover:shadow-lg"
               >
-                <Title order={4} mb="xs">{dashboard.name}</Title>
-                {dashboard.description && (
-                  <Text c="dimmed" size="sm" mb="md">{dashboard.description}</Text>
-                )}
-                <Text size="xs" c="dimmed">
-                  Created: {new Date(dashboard.created_at).toLocaleDateString()}
-                </Text>
-              </Paper>
+                <Stack gap="md">
+                  <Group justify="space-between" align="flex-start">
+                    <Title order={4} c="green" lineClamp={2}>
+                      {dashboard.name}
+                    </Title>
+                    <Badge color="green" variant="light" size="sm">
+                      Active
+                    </Badge>
+                  </Group>
+                  
+                  {dashboard.description && (
+                    <Text c="dimmed" size="sm" lineClamp={3}>
+                      {dashboard.description}
+                    </Text>
+                  )}
+                  
+                  <Group gap="xs" mt="auto">
+                    <IconCalendar size={14} />
+                    <Text size="xs" c="dimmed">
+                      Created: {new Date(dashboard.created_at).toLocaleDateString()}
+                    </Text>
+                  </Group>
+                </Stack>
+              </Card>
             ))
           )}
         </SimpleGrid>
@@ -141,12 +166,27 @@ const DashboardList: React.FC = () => {
       {/* Create dashboard modal */}
       <Modal
         opened={opened}
-        onClose={close}
-        title="Create New Dashboard"
+        onClose={() => {
+          close();
+          setNewDashboardName('');
+          setNewDashboardDescription('');
+          setError(null);
+        }}
+        title={
+          <Text fw={600} size="lg" c="green">
+            Create New Dashboard
+          </Text>
+        }
         centered
-        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+        size="md"
+        overlayProps={{ 
+          backgroundOpacity: 0.55, 
+          blur: 3 
+        }}
+        radius="md"
+        shadow="xl"
       >
-        <Stack>
+        <Stack gap="md">
           <TextInput
             label="Dashboard Name"
             placeholder="Enter dashboard name"
@@ -154,6 +194,8 @@ const DashboardList: React.FC = () => {
             onChange={(e) => setNewDashboardName(e.target.value)}
             required
             data-autofocus
+            radius="md"
+            size="md"
           />
           <Textarea
             label="Description"
@@ -161,15 +203,44 @@ const DashboardList: React.FC = () => {
             value={newDashboardDescription}
             onChange={(e) => setNewDashboardDescription(e.target.value)}
             minRows={4}
+            radius="md"
+            size="md"
           />
+          
+          {error && (
+            <Alert 
+              icon={<IconAlertCircle size={16} />} 
+              title="Error" 
+              color="red"
+              variant="light"
+              withCloseButton
+              onClose={() => setError(null)}
+            >
+              {error}
+            </Alert>
+          )}
+          
           <Group justify="flex-end" mt="md">
-            <Button variant="outline" onClick={close}>Cancel</Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                close();
+                setNewDashboardName('');
+                setNewDashboardDescription('');
+                setError(null);
+              }}
+              radius="md"
+            >
+              Cancel
+            </Button>
             <Button 
               color="green" 
               onClick={handleCreateDashboard}
               disabled={!newDashboardName.trim()}
+              radius="md"
+              variant="filled"
             >
-              Create
+              Create Dashboard
             </Button>
           </Group>
         </Stack>

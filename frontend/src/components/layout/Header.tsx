@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAppContext } from '../../utils/AppContext';
+import { useTheme } from '../../main';
 import { 
-  AppShell,
+  Paper,
   Group, 
   Avatar, 
   Text, 
@@ -9,7 +10,6 @@ import {
   Button,
   UnstyledButton,
   Container,
-  useMantineColorScheme,
   ActionIcon,
   Image,
   Box
@@ -30,12 +30,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
   const { currentUser, logout } = useAppContext();
-  const { colorScheme, setColorScheme } = useMantineColorScheme();
-
-  // Toggle dark/light mode
-  const toggleColorScheme = () => {
-    setColorScheme(colorScheme === 'dark' ? 'light' : 'dark');
-  };
+  const { colorScheme, toggleColorScheme } = useTheme();
 
   // Handle profile button click
   const handleProfileClick = () => {
@@ -58,21 +53,22 @@ const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
   };
 
   return (
-    <AppShell.Header p="md">
-      <Container size="lg" h="100%">
+    <Paper withBorder shadow="sm" p="md" mb="xl" radius="md">
+      <Container size="lg">
         <Group justify="space-between" h="100%">
           <Group>
             <Image src={nitLogo} alt="NitLogo" width={40} height={40} />
-            <Text fw={700} size="lg">Project Monitor</Text>
+            <Text fw={700} size="lg" c="green">Project Monitor</Text>
           </Group>
           
           <Group>
             {/* Theme Toggle Button */}
             <ActionIcon 
-              variant="default" 
+              variant="light" 
               onClick={toggleColorScheme} 
               radius="md"
               size="lg"
+              color="green"
               aria-label="Toggle color scheme"
             >
               {colorScheme === 'dark' ? (
@@ -85,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
             {/* User Menu */}
             <Menu position="bottom-end" shadow="md" width={220}>
               <Menu.Target>
-                <UnstyledButton>
+                <UnstyledButton p="xs" style={{ borderRadius: '8px' }}>
                   <Group gap="xs">
                     <Avatar 
                       src={currentUser?.avatar} 
@@ -146,7 +142,7 @@ const Header: React.FC<HeaderProps> = ({ onAddProject }) => {
           </Group>
         </Group>
       </Container>
-    </AppShell.Header>
+    </Paper>
   );
 };
 

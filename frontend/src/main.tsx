@@ -1,12 +1,26 @@
-import React from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import './styles/themes.css'
 import App from './App.tsx'
-import { ThemeProvider } from './context/ThemeContext'
-import { MantineProvider, createTheme } from '@mantine/core'
+import { MantineProvider, createTheme, MantineColorScheme } from '@mantine/core'
 import '@mantine/core/styles.css'
-import { useLocalStorage } from '@mantine/hooks'
+
+// Создаем контекст для темы
+interface ThemeContextType {
+  colorScheme: MantineColorScheme;
+  toggleColorScheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within ThemeProvider');
+  }
+  return context;
+};
 
 // Создаем тему для Mantine
 const theme = createTheme({
@@ -24,34 +38,42 @@ const theme = createTheme({
       '#243C2C', // 8
       '#1B2E21'  // 9
     ]
+  },
+  components: {
+    Paper: {
+      defaultProps: {
+        p: 'md',
+      },
+    },
   }
 });
 
 // Компонент обертка для настройки темы
 const ThemeWrapper = ({ children }: { children: React.ReactNode }) => {
-  const [colorScheme] = useLocalStorage<'light' | 'dark'>({
-    key: 'mantine-color-scheme',
-    defaultValue: 'light',
+  const [colorScheme, setColorScheme] = useState<MantineColorScheme>(() => {
+    const saved = localStorage.getItem('mantine-color-scheme');
+    return (saved as MantineColorScheme) || 'light';
   });
 
+  const toggleColorScheme = () => {
+    const newScheme = colorScheme === 'dark' ? 'light' : 'dark';
+    setColorScheme(newScheme);
+    localStorage.setItem('mantine-color-scheme', newScheme);
+  };
+
+  useEffect(() => {
+    localStorage.setItem('mantine-color-scheme', colorScheme);
+  }, [colorScheme]);
+
   return (
-    <MantineProvider 
-      theme={{ 
-        ...theme, 
-        components: {
-          Paper: {
-            defaultProps: {
-              p: 'md',
-            },
-          },
-        }
-      }} 
-      forceColorScheme={colorScheme}
-    >
-      <ThemeProvider>
+    <ThemeContext.Provider value={{ colorScheme, toggleColorScheme }}>
+      <MantineProvider 
+        theme={theme}
+        forceColorScheme={colorScheme}
+      >
         {children}
-      </ThemeProvider>
-    </MantineProvider>
+      </MantineProvider>
+    </ThemeContext.Provider>
   );
 };
 
@@ -61,4 +83,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <App />
     </ThemeWrapper>
   </React.StrictMode>,
-)
+);
