@@ -11,6 +11,7 @@ import {
   Stack,
   Title
 } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
   const [assignee, setAssignee] = useState('Team');
   const [priority, setPriority] = useState<ProjectPriority>('medium');
   const [status, setStatus] = useState<ProjectStatus>('inPlans');
+  const [opened, { open, close }] = useDisclosure(false);
 
   // Reset form when modal is opened
   useEffect(() => {
