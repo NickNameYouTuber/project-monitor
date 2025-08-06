@@ -86,25 +86,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
   ];
 
   return (
-    <Modal
-      opened={isOpen}
-      onClose={onClose}
-      title={
-        <Title order={4} c="green">Add New Project</Title>
-      }
-      centered
-      size="md"
-      closeOnClickOutside={true}
-      closeOnEscape={true}
-      withCloseButton
-      overlayProps={{ 
-        backgroundOpacity: 0.55, 
-        blur: 3,
-        color: "#000" 
-      }}
-      radius="md"
-      transitionProps={{ transition: 'fade', duration: 200 }}
-    >
+    <Modal opened={opened} onClose={close} title="Authentication" centered>
       <form onSubmit={handleSubmit}>
         <Stack>
           <TextInput
