@@ -301,15 +301,15 @@ const DashboardDetail: React.FC = () => {
                   <Group justify="space-between">
                     <Group>
                       <Avatar 
-                        src={member.avatar_url} 
-                        alt={member.username}
+                        src={member.user?.avatar} 
+                        alt={member.user?.username || 'User'}
                         radius="xl"
                         color="green"
                       >
-                        {member.username?.charAt(0) || 'U'}
+                        {member.user?.username?.charAt(0) || 'U'}
                       </Avatar>
                       <Stack gap={0}>
-                        <Text fw={500}>{member.username || 'Unknown'}</Text>
+                        <Text fw={500}>{member.user?.username || 'Unknown'}</Text>
                         <Badge size="sm" color={
                           member.role === 'admin' ? 'blue' : 
                           member.role === 'editor' ? 'green' : 'gray'
@@ -338,12 +338,13 @@ const DashboardDetail: React.FC = () => {
 
       {/* Projects Section */}
       <Box>
-        <ProjectBoard projects={dashboard.projects} dashboardId={dashboardId} />
+        <ProjectBoard projects={dashboard.projects} />
       </Box>
 
       {/* Project Modal */}
       {isProjectModalOpen && (
         <ProjectModal
+          isOpen={isProjectModalOpen}
           onClose={closeProjectModal}
           dashboardId={dashboardId!}
         />
