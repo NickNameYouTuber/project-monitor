@@ -3,6 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../utils/AppContext';
 import { api } from '../../utils/api';
 import type { Dashboard } from '../../types';
+import { 
+  Title, 
+  Button, 
+  Container, 
+  SimpleGrid, 
+  Paper, 
+  Text, 
+  Loader, 
+  Alert, 
+  Modal, 
+  TextInput,
+  Textarea, 
+  Group,
+  Stack
+} from '@mantine/core';
+import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
 
 const DashboardList: React.FC = () => {
   const { currentUser } = useAppContext();
@@ -59,120 +75,105 @@ const DashboardList: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-text-primary">Your Dashboards</h1>
-        <button
+    <Container size="lg" py="md">
+      <Group justify="space-between" mb="xl">
+        <Title order={2}>Your Dashboards</Title>
+        <Button 
           onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md"
+          leftSection={<IconPlus size={16} />}
+          color="green"
         >
           Create Dashboard
-        </button>
-      </div>
+        </Button>
+      </Group>
       
       {/* Error message */}
       {error && (
-        <div className="bg-state-error-light border-l-4 border-state-error p-4 my-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-state-error" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-state-error">{error}</p>
-            </div>
-          </div>
-        </div>
+        <Alert 
+          icon={<IconAlertCircle size={16} />} 
+          title="Error" 
+          color="red"
+          mb="lg"
+          variant="light"
+        >
+          {error}
+        </Alert>
       )}
       
       {/* Loading state */}
       {isLoading ? (
-        <div className="flex justify-center py-10">
-          <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        </div>
+        <Stack align="center" py="xl">
+          <Loader size="lg" color="green" />
+        </Stack>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
           {dashboards.length === 0 ? (
-            <div className="col-span-full text-center py-10">
-              <p className="text-text-secondary">You don't have any dashboards yet. Create one to get started!</p>
-            </div>
+            <Paper p="xl" withBorder ta="center" w="100%" style={{ gridColumn: '1 / -1' }}>
+              <Text c="dimmed">You don't have any dashboards yet. Create one to get started!</Text>
+            </Paper>
           ) : (
             dashboards.map((dashboard) => (
-              <div
+              <Paper
                 key={dashboard.id}
+                withBorder
+                p="lg"
+                radius="md"
                 onClick={() => handleDashboardClick(dashboard.id)}
-                className="bg-bg-card rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer p-6"
+                style={{ cursor: 'pointer' }}
+                shadow="sm"
+                ta="left"
+                className="hover:shadow-md transition-shadow duration-200"
               >
-                <h3 className="text-lg font-semibold text-text-primary">{dashboard.name}</h3>
+                <Title order={4} mb="xs">{dashboard.name}</Title>
                 {dashboard.description && (
-                  <p className="text-text-secondary mt-1">{dashboard.description}</p>
+                  <Text c="dimmed" size="sm" mb="md">{dashboard.description}</Text>
                 )}
-                <p className="text-sm text-text-muted mt-3">
+                <Text size="xs" c="dimmed">
                   Created: {new Date(dashboard.created_at).toLocaleDateString()}
-                </p>
-              </div>
+                </Text>
+              </Paper>
             ))
           )}
-        </div>
+        </SimpleGrid>
       )}
       
       {/* Create dashboard modal */}
-      {showCreateModal && (
-        <div 
-          className="fixed inset-0 bg-overlay z-50 flex items-center justify-center"
-          onClick={(e) => {
-            // Закрытие при клике вне модального окна
-            if (e.target === e.currentTarget) setShowCreateModal(false);
-          }}
-        >
-          <div className="flex items-center justify-center min-h-screen p-4 w-full">
-            <div className="bg-bg-card rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-xl font-semibold text-text-primary mb-4">Create New Dashboard</h3>
-              <div className="mb-4">
-                <label className="block text-text-secondary text-sm font-bold mb-2">Dashboard Name</label>
-                <input
-                  type="text"
-                  value={newDashboardName}
-                  onChange={(e) => setNewDashboardName(e.target.value)}
-                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:border-primary bg-bg-secondary text-text-primary"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-text-secondary text-sm font-bold mb-2">Description</label>
-                <textarea
-                  value={newDashboardDescription}
-                  onChange={(e) => setNewDashboardDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:border-primary bg-bg-secondary text-text-primary h-24"
-                />
-              </div>
-              <div className="flex justify-end space-x-3">
-                <button 
-                  type="button" 
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded bg-bg-secondary text-text-secondary hover:bg-bg-hover hover:text-text-primary transition"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleCreateDashboard}
-                  disabled={!newDashboardName.trim()}
-                  className={`bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg transition ${
-                    !newDashboardName.trim() ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  Create
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <Modal
+        opened={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Dashboard"
+        centered
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+      >
+        <Stack>
+          <TextInput
+            label="Dashboard Name"
+            placeholder="Enter dashboard name"
+            value={newDashboardName}
+            onChange={(e) => setNewDashboardName(e.target.value)}
+            required
+            data-autofocus
+          />
+          <Textarea
+            label="Description"
+            placeholder="Enter dashboard description (optional)"
+            value={newDashboardDescription}
+            onChange={(e) => setNewDashboardDescription(e.target.value)}
+            minRows={4}
+          />
+          <Group justify="flex-end" mt="md">
+            <Button variant="light" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+            <Button 
+              color="green" 
+              onClick={handleCreateDashboard}
+              disabled={!newDashboardName.trim()}
+            >
+              Create
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </Container>
   );
 };
 

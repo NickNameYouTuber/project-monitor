@@ -3,6 +3,22 @@ import { useAppContext } from '../../utils/AppContext';
 import type { User } from '../../types';
 import TelegramLoginWidget from './TelegramLoginWidget';
 import { Link } from 'react-router-dom';
+import { 
+  Container, 
+  Title, 
+  Text, 
+  Paper, 
+  Loader, 
+  Group, 
+  Anchor, 
+  Button, 
+  Stack,
+  Box,
+  AppShell,
+  Divider,
+  Center
+} from '@mantine/core';
+import { IconArrowLeft, IconHelp } from '@tabler/icons-react';
 
 const AuthScreen: React.FC = () => {
   const { login } = useAppContext();
@@ -78,69 +94,79 @@ const AuthScreen: React.FC = () => {
   const BOT_NAME = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'ProjectMonitorBot';
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Навигация */}
-      <nav className="flex justify-between items-center px-6 py-4 bg-white/10 backdrop-blur-md">
-        <Link to="/" className="text-[#7AB988] text-2xl font-bold">NIT</Link>
-      </nav>
+    <AppShell header={{ height: 60 }}>
+      <AppShell.Header bg="green.4" c="white">
+        <Container size="lg">
+          <Group py="md" justify="space-between">
+            <Anchor component={Link} to="/" fw={700} fz="lg" c="white">
+              NIT
+            </Anchor>
+          </Group>
+        </Container>
+      </AppShell.Header>
 
-      {/* Основной контент */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4 border border-[#7AB988]/10">
-          {/* Заголовок */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#3A6642] flex flex-wrap justify-center gap-x-2 mb-2">
-              <span className="relative">
-                <span className="text-[#7AB988]">N</span>eural
-              </span>
-              <span>
-                <span className="text-[#7AB988]">I</span>nformation
-              </span>
-              <span>
-                <span className="text-[#7AB988]">T</span>racker
-              </span>
-            </h1>
-            <p className="text-[#4C8858] mt-2">Эффективное управление проектами и задачами</p>
-          </div>
+      <AppShell.Main bg="gray.0">
+        <Container py="xl" size="xs">
+          <Paper radius="md" p="xl" withBorder shadow="md">
+            <Stack align="center" gap="md" mb="md">
+              <Title order={1} ta="center">
+                <Text span c="green.3">N</Text>
+                <Text span c="green.3">I</Text>
+                <Text span c="green.3">T</Text>
+              </Title>
+              <Text c="dimmed" size="sm" ta="center">
+                Эффективное управление проектами и задачами
+              </Text>
+            </Stack>
 
-          {/* Форма входа */}
-          <div className="bg-white/60 p-6 rounded-xl border border-[#7AB988]/20 shadow-md">
-            <h2 className="text-[#4C8858] text-xl font-semibold mb-4 text-center">Вход в систему</h2>
-            
-            <div className="flex justify-center mb-4">
-              <TelegramLoginWidget
-                botName={BOT_NAME}
-                dataOnauth={handleTelegramAuth}
-                buttonSize="large"
-                cornerRadius={10}
-                requestAccess={true}
-              />
-            </div>
+            <Paper p="md" withBorder radius="md" mb="md">
+              <Stack align="center">
+                <Title order={3} size="h4" c="green.6" mb="md">
+                  Вход в систему
+                </Title>
+                <Box mb="md" pos="relative">
+                  <TelegramLoginWidget
+                    botName={BOT_NAME}
+                    dataOnauth={handleTelegramAuth}
+                    buttonSize="large"
+                    cornerRadius={10}
+                    requestAccess={true}
+                  />
+                  
+                  {isLoading && (
+                    <Center style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.8)' }}>
+                      <Loader color="green" />
+                    </Center>
+                  )}
+                </Box>
+              </Stack>
+            </Paper>
 
-            {isLoading && (
-              <div className="flex justify-center items-center py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#7AB988]"></div>
-                <span className="ml-3 text-[#4C8858]">Аутентификация...</span>
-              </div>
-            )}
-          </div>
+            <Divider my="md" />
 
-          {/* Ссылка для поддержки */}
-          <div className="mt-6 text-center text-sm">
-            <span className="text-[#4C8858]">
-              Нужна помощь? <a href="#" className="text-[#7AB988] hover:underline transition-colors">Свяжитесь с поддержкой</a>
-            </span>
-          </div>
+            <Stack align="center" gap="xs">
+              <Group gap="xs" justify="center">
+                <IconHelp size={14} color="var(--mantine-color-dimmed)" />
+                <Text size="sm" c="dimmed">
+                  Нужна помощь? <Anchor href="#" c="green.5">Свяжитесь с поддержкой</Anchor>
+                </Text>
+              </Group>
 
-          {/* Ссылка на главную */}
-          <div className="mt-4 text-center">
-            <Link to="/" className="text-[#5DA570] hover:text-[#7AB988] text-sm transition-colors">
-              ← Вернуться на главную
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
+              <Button 
+                component={Link} 
+                to="/" 
+                variant="subtle" 
+                color="green" 
+                size="sm" 
+                leftSection={<IconArrowLeft size={16} />}
+              >
+                Вернуться на главную
+              </Button>
+            </Stack>
+          </Paper>
+        </Container>
+      </AppShell.Main>
+    </AppShell>
   );
 };
 

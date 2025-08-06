@@ -29,6 +29,11 @@ app = FastAPI(
     version="1.0.0",
 )
 
+"""
+Main FastAPI application instance with metadata configuration.
+Serves as the central entry point for the Project Monitor API.
+"""
+
 # CORS configuration
 origins = [
     "http://localhost:5173",     # Frontend dev server
@@ -47,6 +52,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+"""
+Configures Cross-Origin Resource Sharing (CORS) middleware to allow:
+- Specified frontend origins
+- Credential sharing
+- All HTTP methods and headers
+"""
+
 # Регистрация всех роутеров с единым префиксом /api на уровне приложения
 api_prefix = "/api"
 
@@ -64,10 +76,32 @@ app.include_router(tokens.router, prefix=f"{api_prefix}/tokens", tags=["tokens"]
 # Catch-all routes for Git HTTP protocol to handle URLs with .git and subpaths
 @app.get("/api/git/{repository_id:path}")
 async def git_catch_all_get(request: Request):
+    """
+    Handles Git HTTP GET requests for repository operations.
+    
+    Delegates request processing to the git_http module's handler.
+    
+    Args:
+        request (Request): Incoming HTTP request object
+        
+    Returns:
+        Response: Result from git_http handler
+    """
     return await git_http.handle_git_http_request(request, "GET")
 
 @app.post("/api/git/{repository_id:path}")
 async def git_catch_all_post(request: Request):
+    """
+    Handles Git HTTP POST requests for repository operations.
+    
+    Delegates request processing to the git_http module's handler.
+    
+    Args:
+        request (Request): Incoming HTTP request object
+        
+    Returns:
+        Response: Result from git_http handler
+    """
     return await git_http.handle_git_http_request(request, "POST")
 
 # Роутеры для задач, колонок и комментариев
@@ -81,8 +115,21 @@ app.include_router(task_repository_integration.router, prefix=api_prefix)
 
 @app.get("/")
 def read_root():
+    """
+    Root endpoint for the API.
+    
+    Returns a welcome message to confirm API availability.
+    
+    Returns:
+        dict: Welcome message with status information
+    """
     return {"message": "Welcome to the Project Monitor API"}
 
 
 if __name__ == "__main__":
+    """
+    Development server entry point.
+    
+    Starts the Uvicorn ASGI server with auto-reload enabled for development purposes.
+    """
     uvicorn.run("app.main:app", host="0.0.0.0", port=7671, reload=True)

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { Box } from '@mantine/core';
 
 interface TelegramLoginWidgetProps {
   botName: string; 
@@ -75,7 +76,9 @@ const TelegramLoginWidget: React.FC<TelegramLoginWidgetProps> = ({
     };
   }, [botName, buttonSize, cornerRadius, requestAccess, usePic, dataOnauth]);
 
-  return <div ref={containerRef} className="telegram-login-widget"></div>;
+  return (
+    <Box ref={containerRef} ta="center" />
+  );
 };
 
 export default TelegramLoginWidget;

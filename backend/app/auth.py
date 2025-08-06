@@ -19,25 +19,70 @@ from .config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, TELEGRAM
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+"""
+CryptContext instance configured for secure password hashing using bcrypt algorithm.
+Automatically handles password verification and hash migration.
+"""
 
 # OAuth2 setup
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token", auto_error=True)
+"""
+Standard OAuth2 password bearer scheme that requires valid tokens.
+Raises authentication errors automatically when invalid tokens are provided.
+"""
 
 # Optional OAuth2 scheme that doesn't auto-error
 oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="api/auth/token", auto_error=False)
+"""
+OAuth2 password bearer scheme that allows optional authentication.
+Does not automatically raise errors for missing/invalid tokens.
+"""
 
 
 def verify_password(plain_password, hashed_password):
+    """
+    Verify a plain text password against a stored hash.
+    
+    Args:
+        plain_password (str): Password entered by user
+        hashed_password (str): Hashed password from database
+        
+    Returns:
+        bool: True if passwords match, False otherwise
+    """
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password):
+    """
+    Generate a secure hash for a plaintext password.
+    
+    Args:
+        password (str): Plaintext password to hash
+        
+    Returns:
+        str: Securely hashed password suitable for storage
+    """
     return pwd_context.hash(password)
 
 
 def authenticate_user(db: Session, username: str, password: str):
+    """
+    Verify user credentials against database records.
+    
+    Args:
+        db (Session): Database session
+        username (str): User-provided username
+        password (str): User-provided password
+        
+    Returns:
+        User: Authenticated user object if credentials are valid
+        bool: False if authentication fails
+    """
     user = db.query(User).filter(User.username == username).first()
     if not user:
+        return False
+    if not
         return False
     if not verify_password(password, user.hashed_password):
         return False

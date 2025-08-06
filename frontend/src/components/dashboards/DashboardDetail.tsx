@@ -5,7 +5,36 @@ import { api } from '../../utils/api';
 import type { DashboardDetail as DashboardDetailType, DashboardMember } from '../../types';
 import ProjectBoard from '../project/ProjectBoard';
 import ProjectModal from '../modals/ProjectModal';
-import CloseButton from '../ui/CloseButton';
+import { 
+  Container,
+  Paper,
+  Title,
+  Text,
+  Button,
+  Group,
+  Loader,
+  Alert,
+  Stack,
+  Card,
+  Badge,
+  Collapse,
+  Modal,
+  TextInput,
+  Select,
+  Divider,
+  Avatar,
+  ActionIcon,
+  Box
+} from '@mantine/core';
+import { 
+  IconAlertCircle, 
+  IconPlus, 
+  IconUsers, 
+  IconSearch, 
+  IconX, 
+  IconTrash, 
+  IconChevronLeft 
+} from '@tabler/icons-react';
 
 const DashboardDetail: React.FC = () => {
   const { dashboardId } = useParams<{ dashboardId: string }>();
@@ -167,313 +196,275 @@ const DashboardDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-10">
-        <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-      </div>
+      <Container py="xl">
+        <Stack align="center" justify="center" h="60vh">
+          <Loader color="green" size="xl" />
+        </Stack>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-state-error/10 border-l-4 border-state-error p-4 my-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-state-error" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-state-error">{error}</p>
-            <button
+      <Container py="xl">
+        <Alert 
+          icon={<IconAlertCircle size={16} />} 
+          title="Error" 
+          color="red"
+          variant="filled"
+        >
+          <Stack>
+            <Text>{error}</Text>
+            <Button 
+              variant="white" 
+              color="red" 
               onClick={() => navigate('/dashboards')}
-              className="text-sm text-state-error hover:text-state-error/80 font-medium mt-2"
+              leftSection={<IconChevronLeft size={16} />}
+              size="xs"
             >
               Back to Dashboards
-            </button>
-          </div>
-        </div>
-      </div>
+            </Button>
+          </Stack>
+        </Alert>
+      </Container>
     );
   }
 
   if (!dashboard) {
     return (
-      <div className="text-center py-10">
-        <p className="text-text-secondary">Dashboard not found</p>
-        <button
-          onClick={() => navigate('/dashboards')}
-          className="text-primary hover:text-primary/80 font-medium mt-4"
-        >
-          Back to Dashboards
-        </button>
-      </div>
+      <Container py="xl">
+        <Paper p="xl" withBorder shadow="md" radius="md" ta="center">
+          <Text size="lg" mb="md">Dashboard not found</Text>
+          <Button 
+            color="green" 
+            onClick={() => navigate('/dashboards')}
+            leftSection={<IconChevronLeft size={16} />}
+          >
+            Back to Dashboards
+          </Button>
+        </Paper>
+      </Container>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{dashboard.name}</h1>
+    <Container size="lg" py="md">
+      <Group justify="space-between" mb="xl">
+        <Stack gap="xs">
+          <Title order={2}>{dashboard.name}</Title>
           {dashboard.description && (
-            <p className="text-gray-600 dark:text-gray-400">{dashboard.description}</p>
+            <Text c="dimmed" size="sm">{dashboard.description}</Text>
           )}
-        </div>
-        <div className="flex space-x-2">
-          <button
+        </Stack>
+        
+        <Group>
+          <Button
+            variant="light"
+            color="gray"
             onClick={() => setShowMembersSection(!showMembersSection)}
-            className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-2 px-4 rounded-md"
+            leftSection={<IconUsers size={16} />}
           >
             Members
-          </button>
-          <button
+          </Button>
+          <Button
+            color="green"
             onClick={openProjectModal}
-            className="bg-primary hover:bg-primary-hover text-white py-2 px-4 rounded-md"
+            leftSection={<IconPlus size={16} />}
           >
             Add Project
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Group>
+      </Group>
 
-      {showMembersSection && (
-        <div className="mb-8 bg-bg-card rounded-lg shadow overflow-hidden">
-          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-            <h2 className="text-lg font-medium text-text-primary">Dashboard Members</h2>
-            {dashboard.owner_id === currentUser?.id && (
-              <button
-                onClick={openInviteByTelegramModal}
-                className="bg-primary hover:bg-primary-hover text-white py-1 px-3 rounded-md text-sm"
-              >
-                Add Member
-              </button>
-            )}
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border-primary">
-              <thead className="bg-bg-secondary">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Added</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-bg-card divide-y divide-border-primary">
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-text-primary font-medium">
-                      {dashboard.owner_id === currentUser?.id ? 'You (Owner)' : 'Dashboard Owner'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary/20 text-primary">
-                      Owner
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
-                    {new Date(dashboard.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"></td>
-                </tr>
+      {/* Members Section */}
+      <Collapse in={showMembersSection}>
+        <Paper withBorder p="md" radius="md" mb="xl">
+          <Group justify="space-between" mb="md">
+            <Title order={4}>Dashboard Members</Title>
+            <Button 
+              size="sm" 
+              onClick={openInviteByTelegramModal}
+              leftSection={<IconPlus size={14} />}
+              variant="light" 
+              color="green"
+            >
+              Add Member
+            </Button>
+          </Group>
+          
+          {members.length === 0 ? (
+            <Text c="dimmed" ta="center" py="md">No members yet.</Text>
+          ) : (
+            <Stack>
+              {members.map(member => (
+                <Card key={member.id} withBorder shadow="xs" p="sm" radius="md">
+                  <Group justify="space-between">
+                    <Group>
+                      <Avatar 
+                        src={member.avatar_url} 
+                        alt={member.username}
+                        radius="xl"
+                        color="green"
+                      >
+                        {member.username?.charAt(0) || 'U'}
+                      </Avatar>
+                      <Stack gap={0}>
+                        <Text fw={500}>{member.username || 'Unknown'}</Text>
+                        <Badge size="sm" color={
+                          member.role === 'admin' ? 'blue' : 
+                          member.role === 'editor' ? 'green' : 'gray'
+                        }>
+                          {member.role}
+                        </Badge>
+                      </Stack>
+                    </Group>
+                    {member.id !== dashboard.owner_id && (
+                      <ActionIcon 
+                        color="red" 
+                        variant="subtle" 
+                        onClick={() => handleRemoveMember(member.id)}
+                        title="Remove member"
+                      >
+                        <IconTrash size={16} />
+                      </ActionIcon>
+                    )}
+                  </Group>
+                </Card>
+              ))}
+            </Stack>
+          )}
+        </Paper>
+      </Collapse>
 
-                {members.map(member => (
-                  <tr key={member.id}>
-                    <td className="px-6 py-4 whitespace-nowrap flex items-center">
-                      {member.user?.avatar && (
-                        <img className="h-8 w-8 rounded-full mr-2" src={member.user.avatar} alt="" />
-                      )}
-                      <span className="text-text-primary">
-                        {member.user?.username || 'Unknown User'}
-                        {member.user_id === currentUser?.id && ' (You)'}
-                      </span>
-                      {member.user?.telegram_id && (
-                        <span className="ml-2 text-xs text-text-muted">
-                          Telegram: {member.user.telegram_id}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        member.role === 'admin'
-                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                          : member.role === 'editor'
-                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                          : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      }`}>
-                        {member.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
-                      {new Date(member.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      {dashboard.owner_id === currentUser?.id && (
-                        <button
-                          onClick={() => handleRemoveMember(member.id)}
-                          className="text-state-error hover:text-state-error px-2 py-1 rounded bg-bg-secondary"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+      {/* Projects Section */}
+      <Box>
+        <ProjectBoard projects={dashboard.projects} dashboardId={dashboardId} />
+      </Box>
 
-                {members.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-center text-text-secondary">
-                      No additional members
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      {/* Project Modal */}
+      {isProjectModalOpen && (
+        <ProjectModal
+          onClose={closeProjectModal}
+          dashboardId={dashboardId!}
+        />
       )}
 
-      <div className="mt-8">
-        <h2 className="text-lg font-medium text-text-primary mb-4">Projects</h2>
-        <ProjectBoard projects={dashboard.projects} />
-      </div>
+      {/* Invite by Telegram Modal */}
+      <Modal
+        opened={isInviteByTelegramModalOpen}
+        onClose={closeInviteByTelegramModal}
+        title="Invite User by Telegram"
+        centered
+        size="md"
+      >
+        <Stack>
+          {error && (
+            <Alert 
+              icon={<IconAlertCircle size={16} />} 
+              title="Error" 
+              color="red" 
+              variant="light"
+              withCloseButton
+              onClose={() => setError(null)}
+            >
+              {error}
+            </Alert>
+          )}
 
-      <div className="text-center mt-8">
-        <button
-          onClick={openProjectModal}
-          className="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-md"
-        >
-          Add Project
-        </button>
-      </div>
+          {!selectedUser ? (
+            <>
+              <Group align="flex-end">
+                <TextInput
+                  label="Search by Username"
+                  placeholder="Enter username"
+                  value={usernameSearch}
+                  onChange={(e) => setUsernameSearch(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <Button 
+                  onClick={handleSearchUsers} 
+                  leftSection={<IconSearch size={16} />}
+                  loading={isSearching}
+                  color="green"
+                >
+                  Search
+                </Button>
+              </Group>
 
-      <ProjectModal
-        isOpen={isProjectModalOpen}
-        onClose={closeProjectModal}
-        dashboardId={dashboardId!}
-        dashboardMembers={members}
-      />
+              {searchResults.length > 0 && (
+                <Stack mt="sm">
+                  <Text fw={500} size="sm">Search Results:</Text>
+                  {searchResults.map(user => (
+                    <Card 
+                      key={user.id} 
+                      withBorder 
+                      p="sm" 
+                      radius="md"
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => selectUser(user)}
+                    >
+                      <Group>
+                        <Avatar radius="xl" color="green">
+                          {user.username?.charAt(0) || 'U'}
+                        </Avatar>
+                        <Text>{user.username}</Text>
+                      </Group>
+                    </Card>
+                  ))}
+                </Stack>
+              )}
+            </>
+          ) : (
+            <>
+              <Group justify="space-between">
+                <Group>
+                  <Avatar radius="xl" color="green">
+                    {selectedUser.username?.charAt(0) || 'U'}
+                  </Avatar>
+                  <Text>{selectedUser.username}</Text>
+                </Group>
+                <ActionIcon onClick={() => setSelectedUser(null)}>
+                  <IconX size={16} />
+                </ActionIcon>
+              </Group>
 
-      {isInviteByTelegramModalOpen && (
-        <>
-          {/* backdrop */}
-          <div
-            className="fixed inset-0 bg-overlay z-40"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) closeInviteByTelegramModal();
-            }}
-          ></div>
+              <Divider my="md" />
 
-          {/* modal */}
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) closeInviteByTelegramModal();
-            }}
-          >
-            <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
-              <div className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
-                <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
-                  <h3 className="text-lg sm:text-xl font-semibold text-text-primary">Invite User</h3>
-                  <CloseButton onClick={closeInviteByTelegramModal} />
-                </div>
-                <div className="p-4 sm:p-6">
-                  <div className="mb-4">
-                    <label className="block text-text-secondary text-sm font-bold mb-2">Search by Username</label>
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                      <input
-                        type="text"
-                        value={usernameSearch}
-                        onChange={(e) => setUsernameSearch(e.target.value)}
-                        placeholder="Enter username"
-                        className="w-full sm:flex-1 px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
-                      />
-                      <button
-                        onClick={handleSearchUsers}
-                        disabled={!usernameSearch.trim() || isSearching}
-                        className={`w-full sm:w-auto px-4 py-2 rounded-lg ${
-                          !usernameSearch.trim() || isSearching
-                            ? 'bg-bg-disabled cursor-not-allowed text-text-muted'
-                            : 'bg-primary hover:bg-primary-hover transition-colors text-white'
-                        }`}
-                      >
-                        {isSearching ? 'Searching...' : 'Search'}
-                      </button>
-                    </div>
-                    <p className="mt-1 text-sm text-text-muted">
-                      User must have logged in to the app with Telegram at least once
-                    </p>
-                  </div>
+              <TextInput
+                label="Telegram ID"
+                placeholder="Enter Telegram ID"
+                value={telegramId}
+                onChange={(e) => setTelegramId(e.target.value)}
+                required
+              />
 
-                  {searchResults.length > 0 && (
-                    <div className="mb-4 max-h-40 overflow-y-auto border border-border-primary rounded-lg">
-                      {searchResults.map(user => (
-                        <div
-                          key={user.id}
-                          className="p-2 hover:bg-primary/10 cursor-pointer flex justify-between items-center border-b last:border-b-0 border-border-primary"
-                          onClick={() => selectUser(user)}
-                        >
-                          <span className="text-text-primary font-medium">{user.username}</span>
-                          <span className="text-xs text-text-muted">ID: {user.telegram_id}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              <Select
+                label="Role"
+                value={memberRole}
+                onChange={(value) => setMemberRole(value as 'viewer' | 'editor' | 'admin')}
+                data={[
+                  { value: 'viewer', label: 'Viewer (can only view)' },
+                  { value: 'editor', label: 'Editor (can edit content)' },
+                  { value: 'admin', label: 'Admin (full access)' }
+                ]}
+              />
 
-                {selectedUser && (
-                  <div className="p-4 sm:p-6 pt-0">
-                    <div className="mb-4 p-3 bg-bg-secondary rounded-lg border border-border-primary">
-                      <p className="text-text-primary font-medium">
-                        Selected user: {selectedUser.username}
-                      </p>
-                      <p className="text-sm text-text-muted">
-                        Telegram ID: {selectedUser.telegram_id}
-                      </p>
-                    </div>
-
-                    <input type="hidden" value={telegramId} />
-                    <div className="mb-4">
-                      <label className="block text-text-secondary text-sm font-bold mb-2">Role</label>
-                      <select
-                        value={memberRole}
-                        onChange={(e) => setMemberRole(e.target.value as any)}
-                        className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
-                      >
-                        <option value="viewer">Viewer</option>
-                        <option value="editor">Editor</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-
-                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-2 space-y-reverse sm:space-y-0 sm:space-x-3 mt-4">
-                      <button
-                        type="button"
-                        onClick={closeInviteByTelegramModal}
-                        className="px-4 py-2 rounded-lg bg-bg-secondary text-text-secondary hover:bg-bg-hover transition w-full sm:w-auto"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleInviteByTelegram}
-                        disabled={!telegramId.trim() || !selectedUser}
-                        className={`bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg transition w-full sm:w-auto mb-2 sm:mb-0 ${
-                          !telegramId.trim() || !selectedUser ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        Invite
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+              <Group justify="flex-end" mt="md">
+                <Button variant="light" onClick={closeInviteByTelegramModal}>
+                  Cancel
+                </Button>
+                <Button 
+                  color="green" 
+                  onClick={handleInviteByTelegram}
+                >
+                  Invite
+                </Button>
+              </Group>
+            </>
+          )}
+        </Stack>
+      </Modal>
+    </Container>
   );
 };
 
