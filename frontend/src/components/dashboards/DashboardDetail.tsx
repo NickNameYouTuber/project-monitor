@@ -24,7 +24,7 @@ import {
   Divider,
   Avatar,
   ActionIcon,
-  Box
+  Box,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { 
@@ -250,6 +250,19 @@ const DashboardDetail: React.FC = () => {
     );
   }
 
+  // Определяем кастомные модальные стили
+  const modalStyles = {
+    inner: {
+      padding: '20px',
+    },
+    body: {
+      padding: '16px',
+    },
+    header: {
+      marginBottom: '8px',
+    }
+  };
+
   return (
     <Container size="lg" py="xl">
       <Paper withBorder shadow="sm" p="xl" radius="md" mb="xl">
@@ -369,7 +382,11 @@ const DashboardDetail: React.FC = () => {
         centered
         size="md"
         radius="md"
-        shadow="xl"
+        padding="md"
+        zIndex={1000}
+        xOffset={0}
+        yOffset={0}
+        styles={modalStyles}
       >
         <Stack>
           {error && (

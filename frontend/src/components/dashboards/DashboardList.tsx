@@ -18,7 +18,7 @@ import {
   Group,
   Stack,
   Card,
-  Badge
+  Badge,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconAlertCircle, IconPlus, IconCalendar } from '@tabler/icons-react';
@@ -184,7 +184,21 @@ const DashboardList: React.FC = () => {
           blur: 3 
         }}
         radius="md"
-        shadow="xl"
+        padding="md"
+        zIndex={1000}
+        xOffset={0}
+        yOffset={0}
+        styles={{
+          inner: {
+            padding: '20px',
+          },
+          body: {
+            padding: '16px',
+          },
+          header: {
+            marginBottom: '8px',
+          }
+        }}
       >
         <Stack gap="md">
           <TextInput

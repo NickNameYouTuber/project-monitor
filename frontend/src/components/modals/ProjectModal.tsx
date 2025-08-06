@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../utils/AppContext';
 import type { ProjectStatus, ProjectPriority, DashboardMember } from '../../types';
-import CloseButton from '../ui/CloseButton';
+import { 
+  Modal, 
+  TextInput, 
+  Textarea, 
+  Select, 
+  Button, 
+  Group, 
+  Stack,
+  Title
+} from '@mantine/core';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -50,120 +59,127 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, dashboardI
     onClose();
   };
 
-  // Close modal when clicking outside
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
+  // Стили для модального окна
+  const modalStyles = {
+    inner: {
+      padding: '20px',
+    },
+    body: {
+      padding: '16px',
+    },
+    header: {
+      marginBottom: '8px',
     }
   };
 
-  if (!isOpen) return null;
+  // Создаем данные для селектов
+  const priorityData = [
+    { value: 'high', label: 'High' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'low', label: 'Low' }
+  ];
+
+  const statusData = [
+    { value: 'inPlans', label: 'In Plans' },
+    { value: 'inProgress', label: 'In Progress' },
+    { value: 'onPause', label: 'On Pause' },
+    { value: 'completed', label: 'Completed' }
+  ];
+
+  // Создаем данные для assignee
+  const assigneeData = [
+    { value: 'Team', label: 'Team' },
+    ...(currentUser?.username ? [{ value: currentUser.username, label: 'You' }] : []),
+    ...dashboardMembers
+      .filter(member => member.user && member.user.username !== currentUser?.username)
+      .map(member => ({ 
+        value: member.user!.username, 
+        label: member.user!.username 
+      }))
+  ];
 
   return (
-    <>
-      {/* Полупрозрачный фон (модальная подложка) */}
-      <div
-        className="fixed inset-0 bg-overlay z-40"
-        onClick={handleBackdropClick}
-      />
-      {/* Модальное окно */}
-      <div 
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0"
-        onClick={handleBackdropClick}
-      >
-      <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
-        <div className="bg-bg-card rounded-lg shadow-xl overflow-hidden w-full">
-          <div className="px-4 py-3 sm:px-6 border-b border-border-primary flex justify-between items-center">
-            <h3 className="text-lg sm:text-xl font-semibold text-text-primary">Add New Project</h3>
-            <CloseButton onClick={onClose} />
-          </div>
-          <div className="p-4 sm:p-6">
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block text-text-secondary text-sm font-bold mb-2">Project Name</label>
-              <input 
-                type="text" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary" 
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-text-secondary text-sm font-bold mb-2">Description</label>
-              <textarea 
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary h-24" 
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-text-secondary text-sm font-bold mb-2">Assigned To</label>
-              <select 
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
-              >
-                <option value="Team">Team</option>
-                {currentUser?.username && (
-                  <option value={currentUser.username}>You</option>
-                )}
-                {dashboardMembers.map(member => (
-                  member.user && member.user.username !== currentUser?.username && (
-                    <option key={member.user.username} value={member.user.username}>
-                      {member.user.username}
-                    </option>
-                  )
-                ))}
-              </select>
-            </div>
-            <div className="mb-4">
-              <label className="block text-text-secondary text-sm font-bold mb-2">Priority</label>
-              <select 
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as ProjectPriority)}
-                className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
-              >
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-            <div className="mb-4">
-              <label className="block text-text-secondary text-sm font-bold mb-2">Status</label>
-              <select 
-                value={status}
-                onChange={(e) => setStatus(e.target.value as ProjectStatus)}
-                className="w-full px-3 py-2 border border-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-bg-secondary text-text-primary"
-              >
-                <option value="inPlans">In Plans</option>
-                <option value="inProgress">In Progress</option>
-                <option value="onPause">On Pause</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-2 space-y-reverse sm:space-y-0 sm:space-x-3 mt-4">
-              <button 
-                type="button" 
-                onClick={onClose}
-                className="px-4 py-2 rounded-lg bg-bg-secondary text-text-secondary hover:bg-bg-hover transition w-full sm:w-auto"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                className="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg transition w-full sm:w-auto mb-2 sm:mb-0"
-              >
-                Add Project
-              </button>
-            </div>
-          </form>
-          </div>
-        </div>
-      </div>
-    </div>
-    </>
+    <Modal
+      opened={isOpen}
+      onClose={onClose}
+      title={
+        <Title order={4} c="green">Add New Project</Title>
+      }
+      centered
+      size="md"
+      padding="md"
+      zIndex={1000}
+      overlayProps={{ 
+        backgroundOpacity: 0.55, 
+        blur: 3 
+      }}
+      radius="md"
+      styles={modalStyles}
+    >
+      <form onSubmit={handleSubmit}>
+        <Stack>
+          <TextInput
+            label="Project Name"
+            placeholder="Enter project name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            data-autofocus
+            radius="md"
+          />
+          <Textarea
+            label="Description"
+            placeholder="Enter project description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            minRows={4}
+            radius="md"
+            required
+          />
+          <Select
+            label="Assigned To"
+            placeholder="Select assignee"
+            data={assigneeData}
+            value={assignee}
+            onChange={(value) => setAssignee(value || 'Team')}
+            radius="md"
+          />
+          <Select
+            label="Priority"
+            placeholder="Select priority"
+            data={priorityData}
+            value={priority}
+            onChange={(value) => setPriority(value as ProjectPriority || 'medium')}
+            radius="md"
+          />
+          <Select
+            label="Status"
+            placeholder="Select status"
+            data={statusData}
+            value={status}
+            onChange={(value) => setStatus(value as ProjectStatus || 'inPlans')}
+            radius="md"
+          />
+          <Group justify="flex-end" mt="md">
+            <Button 
+              variant="outline" 
+              onClick={onClose}
+              radius="md"
+            >
+              Cancel
+            </Button>
+            <Button 
+              color="green" 
+              type="submit"
+              radius="md"
+              variant="filled"
+            >
+              Add Project
+            </Button>
+          </Group>
+        </Stack>
+      </form>
+    </Modal>
   );
 };
 
