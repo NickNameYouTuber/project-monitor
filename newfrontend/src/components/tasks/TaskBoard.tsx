@@ -51,8 +51,8 @@ const TaskBoard = () => {
             <div className="flex overflow-x-auto pb-6 h-full" ref={provided.innerRef} {...provided.droppableProps}>
               {columns
                 .sort((a, b) => a.order - b.order)
-                .map((column) => (
-                  <TaskColumn key={column.id} column={column} tasks={tasks.filter((t) => t.column_id === column.id).sort((a, b) => a.order - b.order)} />
+                .map((column, i) => (
+                  <TaskColumn key={column.id} column={column} tasks={tasks.filter((t) => t.column_id === column.id).sort((a, b) => a.order - b.order)} index={i} />
                 ))}
               {provided.placeholder}
             </div>

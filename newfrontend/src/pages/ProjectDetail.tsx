@@ -4,6 +4,7 @@ import { AppShell, Button, Group, Loader, NavLink, Stack, Text, Title } from '@m
 import { fetchProject, type Project } from '../api/projects';
 import { TaskBoardProvider } from '../context/TaskBoardContext';
 import TaskBoard from '../components/tasks/TaskBoard';
+import ProjectRepositories from '../components/repositories/ProjectRepositories';
 
 function ProjectDetail() {
   const { projectId } = useParams();
@@ -75,7 +76,7 @@ function ProjectDetail() {
             <Text>Здесь будет вайтборд проекта</Text>
           )}
           {active === 'repositories' && (
-            <Text>Здесь будет список репозиториев проекта</Text>
+            projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>
           )}
           {active === 'settings' && (
             <Text>Настройки проекта</Text>
