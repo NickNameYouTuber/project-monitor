@@ -46,6 +46,10 @@ function ProjectDetail() {
     <AppShell navbar={{ width: 220, breakpoint: 'sm' }} padding="md">
       <AppShell.Navbar p="md">
         <Stack>
+          <div>
+            <Title order={4} mb={4}>{project.name}</Title>
+            {project.description && <Text size="sm" c="dimmed">{project.description}</Text>}
+          </div>
           <NavLink label="Доска задач" active={active === 'tasks'} onClick={() => setActive('tasks')} />
           <NavLink label="Вайтборд" active={active === 'whiteboard'} onClick={() => setActive('whiteboard')} />
           <NavLink label="Репозитории" active={active === 'repositories'} onClick={() => setActive('repositories')} />
@@ -58,12 +62,7 @@ function ProjectDetail() {
 
       <AppShell.Main>
         <Stack>
-          <Group justify="space-between" align="center">
-            <div>
-              <Title order={2}>{project.name}</Title>
-              {project.description && <Text c="dimmed">{project.description}</Text>}
-            </div>
-          </Group>
+          {/* Заголовок перенесён в левую панель */}
 
           {active === 'tasks' && projectId && (
             <TaskBoardProvider projectId={projectId}>
