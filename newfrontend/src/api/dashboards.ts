@@ -22,3 +22,8 @@ export async function createDashboard(payload: CreateDashboardRequest): Promise<
   return data;
 }
 
+export async function fetchDashboard(dashboardId: string): Promise<Dashboard> {
+  const { data } = await apiClient.get<Dashboard>(`/dashboards/${dashboardId}`);
+  return data;
+}
+

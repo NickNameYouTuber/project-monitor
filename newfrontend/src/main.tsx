@@ -10,6 +10,7 @@ import './index.css';
 import App from './App';
 import Login from './pages/Login';
 import Dashboards from './pages/Dashboards';
+import DashboardDetail from './pages/DashboardDetail';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 const theme = createTheme({});
@@ -38,6 +39,7 @@ createRoot(document.getElementById('root')!).render(
             <Route element={<App />}>
               <Route index element={<Navigate to="/dashboards" replace />} />
               <Route path="/dashboards" element={<Dashboards />} />
+              <Route path="/dashboards/:dashboardId" element={<DashboardDetail />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/dashboards" replace />} />
