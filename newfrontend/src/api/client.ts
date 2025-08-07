@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { getAccessToken, clearAccessToken } from '../utils/auth';
 
-const baseURL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:7671/api';
+// Use absolute API URL in dev, relative /api in production behind Nginx proxy
+const baseURL = (import.meta as any).env?.VITE_API_URL || '/api';
 
 export const apiClient = axios.create({
   baseURL,

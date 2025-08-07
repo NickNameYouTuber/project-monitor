@@ -11,7 +11,7 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const from = location.state?.from?.pathname || '/dashboards';
-  const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:7671/api';
+  const API_URL = (import.meta as any).env?.VITE_API_URL || '/api';
   const BOT_NAME = (import.meta as any).env?.VITE_TELEGRAM_BOT_NAME || 'ProjectMonitorBot';
 
   const handleTelegramAuth = async (telegramUser: TelegramUser) => {
