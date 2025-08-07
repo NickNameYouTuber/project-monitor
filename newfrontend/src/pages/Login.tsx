@@ -11,7 +11,6 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const from = location.state?.from?.pathname || '/dashboards';
-  const API_URL = (import.meta as any).env?.VITE_API_URL || '/api';
   const BOT_NAME = (import.meta as any).env?.VITE_TELEGRAM_BOT_NAME || 'NIProjectMonitorBot';
 
   const handleTelegramAuth = async (telegramUser: TelegramUser) => {
@@ -27,7 +26,7 @@ function Login() {
         auth_date: telegramUser.auth_date,
         hash: telegramUser.hash,
       };
-      const { data } = await apiClient.post(`${API_URL}/auth/telegram`, authData, {
+      const { data } = await apiClient.post('/auth/telegram', authData, {
         headers: { 'Content-Type': 'application/json' },
       });
       setAccessToken(data.access_token);
