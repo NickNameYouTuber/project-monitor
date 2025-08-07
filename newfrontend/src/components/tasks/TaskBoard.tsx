@@ -1,83 +1,83 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Card, Group, Loader, Stack, Text, Title } from '@mantine/core';
-import { fetchProjectColumns, fetchProjectTasks, type Task, type TaskColumn } from '../../api/taskBoard';
+import { useState } from 'react';
+import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import type { DropResult, DroppableProvided } from '@hello-pangea/dnd';
+import { useTaskBoard } from '../../context/TaskBoardContext';
+import TaskColumn from './TaskColumn';
+import TaskColumnForm from './TaskColumnForm';
 
-interface TaskBoardProps {
-  projectId: string;
-}
+export default function TaskBoard() {
+  const {
+    columns,
+    tasks,
+    reorderTasksInColumn,
+    moveTask,
+    reorderColumns,
+    loading,
+  } = useTaskBoard();
 
-export default function TaskBoard({ projectId }: TaskBoardProps) {
-  const [columns, setColumns] = useState<TaskColumn[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isAddingColumn, setIsAddingColumn] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      setLoading(true);
-      try {
-        const [c, t] = await Promise.all([
-          fetchProjectColumns(projectId),
-          fetchProjectTasks(projectId),
-        ]);
-        if (mounted) {
-          setColumns(c);
-          setTasks(t);
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
+  const handleDragEnd = async (result: DropResult) => {
+    const { source, destination, type, draggableId } = result;
+    if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
+      return;
     }
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, [projectId]);
 
-  const tasksByColumn = useMemo(() => {
-    const map: Record<string, Task[]> = {};
-    for (const column of columns) map[column.id] = [];
-    for (const task of tasks) {
-      if (!map[task.column_id]) map[task.column_id] = [];
-      map[task.column_id].push(task);
+    if (type === 'column') {
+      const newColumnOrder = Array.from(columns.map((c) => c.id));
+      newColumnOrder.splice(source.index, 1);
+      newColumnOrder.splice(destination.index, 0, draggableId);
+      await reorderColumns(newColumnOrder);
+      return;
     }
-    for (const key of Object.keys(map)) map[key].sort((a, b) => a.order - b.order);
-    return map;
-  }, [columns, tasks]);
+
+    // moving task
+    if (source.droppableId === destination.droppableId) {
+      const ordered = tasks
+        .filter((t) => t.column_id === source.droppableId)
+        .sort((a, b) => a.order - b.order)
+        .map((t) => t.id);
+      const [removed] = ordered.splice(source.index, 1);
+      ordered.splice(destination.index, 0, removed);
+      await reorderTasksInColumn(source.droppableId, ordered);
+    } else {
+      await moveTask(draggableId, destination.droppableId, destination.index);
+    }
+  };
 
   if (loading) {
-    return (
-      <Group justify="center" mt="xl">
-        <Loader />
-      </Group>
-    );
+    return <div className="p-4">Загрузка...</div>;
   }
 
   return (
-    <Stack>
-      <Title order={4}>Доска задач</Title>
-      <div style={{ overflowX: 'auto' }}>
-        <Group wrap="nowrap" align="flex-start">
-          {columns
-            .sort((a, b) => a.order - b.order)
-            .map((column) => (
-              <Card key={column.id} withBorder shadow="sm" padding="md" style={{ minWidth: 300 }}>
-                <Text fw={600}>{column.name}</Text>
-                <Stack mt="sm">
-                  {tasksByColumn[column.id]?.map((task) => (
-                    <Card key={task.id} withBorder padding="sm">
-                      <Text fw={500}>{task.title}</Text>
-                      {task.description && (
-                        <Text c="dimmed" size="sm">{task.description}</Text>
-                      )}
-                    </Card>
-                  ))}
-                </Stack>
-              </Card>
-            ))}
-        </Group>
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Доска задач</h2>
+        <button onClick={() => setIsAddingColumn(true)} className="px-3 py-2 bg-blue-600 text-white rounded">
+          Добавить колонку
+        </button>
       </div>
-    </Stack>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="board-columns" direction="horizontal" type="column">
+          {(provided: DroppableProvided) => (
+            <div className="flex gap-3 overflow-x-auto pb-4" ref={provided.innerRef} {...provided.droppableProps}>
+              {columns
+                .sort((a, b) => a.order - b.order)
+                .map((column, index) => (
+                  <TaskColumn
+                    key={column.id}
+                    column={column}
+                    tasks={tasks.filter((t) => t.column_id === column.id).sort((a, b) => a.order - b.order)}
+                    index={index}
+                  />
+                ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+      {isAddingColumn && <TaskColumnForm onClose={() => setIsAddingColumn(false)} />}
+    </div>
   );
 }
 
