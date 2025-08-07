@@ -11,7 +11,7 @@ interface TelegramLoginWidgetProps {
   dataOnauth: (user: TelegramUser) => void;
 }
 
-interface TelegramUser {
+export interface TelegramUser {
   id: number;
   first_name: string;
   last_name?: string;
