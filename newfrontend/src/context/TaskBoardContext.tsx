@@ -6,6 +6,7 @@ import type { TaskColumn } from '../api/taskColumns';
 import { createTaskColumn, deleteTaskColumn, getProjectTaskColumns, reorderTaskColumns, updateTaskColumn } from '../api/taskColumns';
 
 interface TaskBoardContextType {
+  projectId: string;
   columns: TaskColumn[];
   tasks: Task[];
   loading: boolean;
@@ -212,6 +213,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
   return (
     <TaskBoardContext.Provider
       value={{
+        projectId,
         columns,
         tasks,
         loading,

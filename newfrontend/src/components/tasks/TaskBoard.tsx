@@ -6,7 +6,7 @@ import TaskColumn from './TaskColumn';
 import TaskColumnForm from './TaskColumnForm';
 
 const TaskBoard = () => {
-  const { columns, tasks, reorderTasks, moveTask, loading } = useTaskBoard();
+  const { columns, tasks, reorderTasks, moveTask, loading, projectId } = useTaskBoard();
   const [isAddingColumn, setIsAddingColumn] = useState(false);
 
   const handleDragEnd = (result: any) => {
@@ -57,7 +57,11 @@ const TaskBoard = () => {
           )}
         </Droppable>
       </DragDropContext>
-      <TaskColumnForm projectId="" opened={isAddingColumn} onClose={() => setIsAddingColumn(false)} />
+      {/* Без внешней обводки у контейнера */}
+      {/* Модалка добавления колонки */}
+      {projectId && (
+        <TaskColumnForm projectId={projectId} opened={isAddingColumn} onClose={() => setIsAddingColumn(false)} />
+      )}
     </div>
   );
 };
