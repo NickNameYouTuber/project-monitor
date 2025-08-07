@@ -1,30 +1,31 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { Task } from '../api/tasks';
-import { createTask, fetchProjectTasks, moveTask, reorderTasks, updateTask, deleteTask } from '../api/tasks';
+import { createTask, deleteTask, getProjectTasks, moveTask as apiMoveTask, reorderColumnTasks, updateTask } from '../api/tasks';
 import type { TaskColumn } from '../api/taskColumns';
-import { createTaskColumn, deleteTaskColumn, fetchProjectColumns, reorderTaskColumns, updateTaskColumn } from '../api/taskColumns';
+import { createTaskColumn, deleteTaskColumn, getProjectTaskColumns, reorderTaskColumns, updateTaskColumn } from '../api/taskColumns';
 
-interface TaskBoardContextValue {
-  projectId: string;
+interface TaskBoardContextType {
   columns: TaskColumn[];
   tasks: Task[];
   loading: boolean;
   error: string | null;
   selectedTask: Task | null;
+  fetchColumns: (projectId: string) => Promise<void>;
+  addColumn: (columnData: { name: string; project_id: string }) => Promise<TaskColumn | undefined>;
+  updateColumn: (columnId: string, updateData: { name?: string; order?: number }) => Promise<TaskColumn | undefined>;
+  deleteColumn: (columnId: string) => Promise<void>;
+  reorderColumns: (projectId: string, columnIds: string[]) => Promise<void>;
+  fetchTasks: (projectId: string) => Promise<void>;
+  addTask: (taskData: { title: string; description?: string; column_id: string; project_id: string }) => Promise<Task | undefined>;
+  updateTask: (taskId: string, updateData: { title?: string; description?: string; column_id?: string; order?: number }) => Promise<Task | undefined>;
+  moveTask: (taskId: string, moveData: { column_id: string; order: number }) => Promise<Task | undefined>;
+  deleteTask: (taskId: string) => Promise<void>;
+  reorderTasks: (columnId: string, taskIds: string[]) => Promise<void>;
   setSelectedTask: (task: Task | null) => void;
-  refresh: () => Promise<void>;
-  addColumn: (name: string) => Promise<void>;
-  updateColumnName: (columnId: string, name: string) => Promise<void>;
-  removeColumn: (columnId: string) => Promise<void>;
-  reorderColumns: (orderedColumnIds: string[]) => Promise<void>;
-  addTask: (columnId: string, title: string, description?: string) => Promise<void>;
-  updateTask: (taskId: string, data: Partial<Pick<Task, 'title' | 'description'>>) => Promise<void>;
-  removeTask: (taskId: string) => Promise<void>;
-  moveTask: (taskId: string, toColumnId: string, order: number) => Promise<void>;
-  reorderTasksInColumn: (columnId: string, orderedTaskIds: string[]) => Promise<void>;
 }
 
-const TaskBoardContext = createContext<TaskBoardContextValue | undefined>(undefined);
+const TaskBoardContext = createContext<TaskBoardContextType | null>(null);
 
 export function useTaskBoard() {
   const ctx = useContext(TaskBoardContext);
@@ -32,89 +33,207 @@ export function useTaskBoard() {
   return ctx;
 }
 
-export function TaskBoardProvider({ projectId, children }: { projectId: string; children: React.ReactNode }) {
+export function TaskBoardProvider({ children, projectId }: { children: ReactNode; projectId: string }) {
   const [columns, setColumns] = useState<TaskColumn[]>([]);
-  const [tasksState, setTasksState] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  const refresh = async () => {
-    setLoading(true);
+  const fetchColumns = useCallback(async (pid: string) => {
     try {
-      const [cols, t] = await Promise.all([
-        fetchProjectColumns(projectId),
-        fetchProjectTasks(projectId),
-      ]);
-      setColumns(cols);
-      setTasksState(t);
+      setLoading(true);
+      const data = await getProjectTaskColumns(pid);
+      setColumns(data.sort((a, b) => a.order - b.order));
       setError(null);
     } catch (e: any) {
-      setError(e?.message || 'Failed to load task board');
+      setError(e?.message || 'Failed to load columns');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    if (projectId) refresh();
-  }, [projectId]);
+  const addColumn = useCallback(async (columnData: { name: string; project_id: string }) => {
+    try {
+      setLoading(true);
+      const newColumn = await createTaskColumn(columnData);
+      setColumns((prev) => [...prev, newColumn].sort((a, b) => a.order - b.order));
+      setError(null);
+      return newColumn;
+    } catch (e: any) {
+      setError(e?.message || 'Failed to add column');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const value = useMemo<TaskBoardContextValue>(() => ({
-    projectId,
-    columns,
-    tasks: tasksState,
-    loading,
-    error,
-    selectedTask,
-    setSelectedTask,
-    refresh,
-    addColumn: async (name: string) => {
-      const created = await createTaskColumn({ name, project_id: projectId });
-      setColumns((prev) => [...prev, created]);
-    },
-    updateColumnName: async (columnId: string, name: string) => {
-      const updated = await updateTaskColumn(columnId, { name });
+  const updateColumn = useCallback(async (columnId: string, updateData: { name?: string; order?: number }) => {
+    try {
+      setLoading(true);
+      const updated = await updateTaskColumn(columnId, updateData);
       setColumns((prev) => prev.map((c) => (c.id === columnId ? updated : c)));
-    },
-    removeColumn: async (columnId: string) => {
+      setError(null);
+      return updated;
+    } catch (e: any) {
+      setError(e?.message || 'Failed to update column');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteColumn = useCallback(async (columnId: string) => {
+    try {
+      setLoading(true);
       await deleteTaskColumn(columnId);
       setColumns((prev) => prev.filter((c) => c.id !== columnId));
-      setTasksState((prev) => prev.filter((t) => t.column_id !== columnId));
-    },
-    reorderColumns: async (orderedColumnIds: string[]) => {
-      const updated = await reorderTaskColumns(projectId, orderedColumnIds);
-      setColumns(updated);
-    },
-    addTask: async (columnId: string, title: string, description?: string) => {
-      const order = tasksState.filter((t) => t.column_id === columnId).length;
-      const created = await createTask({ title, description, column_id: columnId, project_id: projectId, order });
-      setTasksState((prev) => [...prev, created]);
-    },
-    updateTask: async (taskId: string, data) => {
-      const cleaned = { ...data } as any;
-      if (cleaned.description === null) delete cleaned.description;
-      const updated = await updateTask(taskId, cleaned);
-      setTasksState((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
-    },
-    removeTask: async (taskId: string) => {
-      await deleteTask(taskId);
-      setTasksState((prev) => prev.filter((t) => t.id !== taskId));
-    },
-    moveTask: async (taskId: string, toColumnId: string, order: number) => {
-      const updated = await moveTask(taskId, { column_id: toColumnId, order });
-      setTasksState((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
-    },
-    reorderTasksInColumn: async (columnId: string, orderedTaskIds: string[]) => {
-      const updated = await reorderTasks(columnId, orderedTaskIds);
-      setTasksState((prev) => {
-        const others = prev.filter((t) => t.column_id !== columnId);
-        return [...others, ...updated];
-      });
-    },
-  }), [projectId, columns, tasksState, loading, error, selectedTask]);
+      setTasks((prev) => prev.filter((t) => t.column_id !== columnId));
+      setError(null);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to delete column');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  return <TaskBoardContext.Provider value={value}>{children}</TaskBoardContext.Provider>;
+  const reorderColumns = useCallback(async (pid: string, columnIds: string[]) => {
+    try {
+      setLoading(true);
+      const reordered = columnIds
+        .map((id, index) => {
+          const col = columns.find((c) => c.id === id);
+          return col ? { ...col, order: index } : null;
+        })
+        .filter(Boolean) as TaskColumn[];
+      setColumns(reordered);
+      await reorderTaskColumns(pid, columnIds);
+      setError(null);
+    } catch (e: any) {
+      await fetchColumns(pid);
+      setError(e?.message || 'Failed to reorder columns');
+    } finally {
+      setLoading(false);
+    }
+  }, [columns, fetchColumns]);
+
+  const fetchTasks = useCallback(async (pid: string) => {
+    try {
+      setLoading(true);
+      const data = await getProjectTasks(pid);
+      setTasks(data.sort((a, b) => a.order - b.order));
+      setError(null);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load tasks');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const addTask = useCallback(async (taskData: { title: string; description?: string; column_id: string; project_id: string }) => {
+    try {
+      setLoading(true);
+      const newTask = await createTask(taskData);
+      setTasks((prev) => [...prev, newTask]);
+      setError(null);
+      return newTask;
+    } catch (e: any) {
+      setError(e?.message || 'Failed to add task');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateTaskFn = useCallback(async (taskId: string, updateData: { title?: string; description?: string; column_id?: string; order?: number }) => {
+    try {
+      setLoading(true);
+      const updated = await updateTask(taskId, updateData);
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
+      if (selectedTask?.id === taskId) setSelectedTask(updated);
+      setError(null);
+      return updated;
+    } catch (e: any) {
+      setError(e?.message || 'Failed to update task');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedTask]);
+
+  const moveTaskFn = useCallback(async (taskId: string, moveData: { column_id: string; order: number }) => {
+    try {
+      setLoading(true);
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, column_id: moveData.column_id, order: moveData.order } : t)));
+      const updated = await apiMoveTask(taskId, moveData);
+      setError(null);
+      return updated;
+    } catch (e: any) {
+      if (projectId) await fetchTasks(projectId);
+      setError(e?.message || 'Failed to move task');
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, fetchTasks]);
+
+  const deleteTaskFn = useCallback(async (taskId: string) => {
+    try {
+      setLoading(true);
+      await deleteTask(taskId);
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      if (selectedTask?.id === taskId) setSelectedTask(null);
+      setError(null);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to delete task');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedTask]);
+
+  const reorderTasks = useCallback(async (columnId: string, taskIds: string[]) => {
+    try {
+      setLoading(true);
+      setTasks((prev) =>
+        prev.map((t) => (t.column_id === columnId ? { ...t, order: taskIds.indexOf(t.id) } : t))
+      );
+      await reorderColumnTasks(columnId, taskIds);
+      setError(null);
+    } catch (e: any) {
+      if (projectId) await fetchTasks(projectId);
+      setError(e?.message || 'Failed to reorder tasks');
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, fetchTasks]);
+
+  useEffect(() => {
+    if (projectId) {
+      fetchColumns(projectId);
+      fetchTasks(projectId);
+    }
+  }, [projectId, fetchColumns, fetchTasks]);
+
+  return (
+    <TaskBoardContext.Provider
+      value={{
+        columns,
+        tasks,
+        loading,
+        error,
+        selectedTask,
+        fetchColumns,
+        addColumn,
+        updateColumn,
+        deleteColumn,
+        reorderColumns: (pid, ids) => reorderColumns(pid, ids),
+        fetchTasks,
+        addTask,
+        updateTask: updateTaskFn,
+        moveTask: moveTaskFn,
+        deleteTask: deleteTaskFn,
+        reorderTasks,
+        setSelectedTask,
+      }}
+    >
+      {children}
+    </TaskBoardContext.Provider>
+  );
 }
 
 

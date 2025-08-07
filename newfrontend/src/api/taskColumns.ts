@@ -18,13 +18,13 @@ export interface TaskColumnUpdate {
   order?: number;
 }
 
-export async function fetchProjectColumns(projectId: string): Promise<TaskColumn[]> {
-  const { data } = await apiClient.get<TaskColumn[]>(`/task-columns/project/${projectId}`);
+export async function createTaskColumn(payload: TaskColumnCreate): Promise<TaskColumn> {
+  const { data } = await apiClient.post<TaskColumn>('/task-columns/', payload);
   return data;
 }
 
-export async function createTaskColumn(payload: TaskColumnCreate): Promise<TaskColumn> {
-  const { data } = await apiClient.post<TaskColumn>('/task-columns', payload);
+export async function getProjectTaskColumns(projectId: string): Promise<TaskColumn[]> {
+  const { data } = await apiClient.get<TaskColumn[]>(`/task-columns/project/${projectId}`);
   return data;
 }
 

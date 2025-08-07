@@ -1,50 +1,30 @@
-import { useState } from 'react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
-import type { Task } from '../../api/tasks';
+import { Card, Group, Stack, Text, Button } from '@mantine/core';
 import type { TaskColumn as TaskColumnType } from '../../api/taskColumns';
-import { useTaskBoard } from '../../context/TaskBoardContext';
+import type { Task } from '../../api/tasks';
 import TaskCard from './TaskCard';
-import TaskForm from './TaskForm';
 
-export default function TaskColumn({ column, tasks, index }: { column: TaskColumnType; tasks: Task[]; index: number }) {
-  const { removeColumn, addTask } = useTaskBoard();
-  const [isAdding, setIsAdding] = useState(false);
-
+export default function TaskColumn({ column, tasks }: { column: TaskColumnType; tasks: Task[] }) {
   return (
-    <Draggable draggableId={column.id} index={index}>
+    <Draggable draggableId={column.id} index={column.order}>
       {(provided: any) => (
-        <div ref={provided.innerRef} {...provided.draggableProps} className="min-w-[280px]">
-          <div className="flex justify-between items-center mb-2" {...provided.dragHandleProps}>
-            <h3 className="font-semibold">{column.name}</h3>
-            <div className="flex gap-1">
-              <button className="text-sm px-2 py-1 bg-gray-200 rounded" onClick={() => setIsAdding(true)}>
-                + Задача
-              </button>
-              <button className="text-sm px-2 py-1 bg-gray-200 rounded" onClick={() => removeColumn(column.id)}>
-                Удалить
-              </button>
-            </div>
-          </div>
-          <Droppable droppableId={column.id} type="task">
-            {(dropProvided: any) => (
-              <div ref={dropProvided.innerRef} {...dropProvided.droppableProps} className="bg-gray-50 rounded p-2 min-h-[120px]">
-                {tasks.map((task, i) => (
-                  <TaskCard key={task.id} task={task} index={i} />
-                ))}
-                {dropProvided.placeholder}
-              </div>
-            )}
-          </Droppable>
-
-          {isAdding && (
-            <TaskForm
-              onClose={() => setIsAdding(false)}
-              onSubmit={async (title, description) => {
-                await addTask(column.id, title, description);
-                setIsAdding(false);
-              }}
-            />
-          )}
+        <div ref={provided.innerRef} {...provided.draggableProps} className="min-w-[280px] mr-4">
+          <Card withBorder padding="sm" shadow="xs">
+            <Group justify="space-between" {...provided.dragHandleProps}>
+              <Text fw={600}>{column.name}</Text>
+              <Button size="xs" variant="light">+ Задача</Button>
+            </Group>
+            <Droppable droppableId={column.id} type="task">
+              {(dropProvided: any) => (
+                <Stack ref={dropProvided.innerRef} {...dropProvided.droppableProps} mt="sm">
+                  {tasks.map((t, index) => (
+                    <TaskCard key={t.id} task={t} index={index} />
+                  ))}
+                  {dropProvided.placeholder}
+                </Stack>
+              )}
+            </Droppable>
+          </Card>
         </div>
       )}
     </Draggable>
