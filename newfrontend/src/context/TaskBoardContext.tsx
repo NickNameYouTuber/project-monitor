@@ -96,7 +96,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     }
   }, []);
 
-  const reorderColumns = useCallback(async (pid: string, columnIds: string[]) => {
+  const reorderColumnsFn = useCallback(async (pid: string, columnIds: string[]) => {
     try {
       setLoading(true);
       const reordered = columnIds
@@ -223,7 +223,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
         addColumn,
         updateColumn,
         deleteColumn,
-        reorderColumns: (pid, ids) => reorderColumns(pid, ids),
+        reorderColumns: (pid, ids) => reorderColumnsFn(pid, ids),
         fetchTasks,
         addTask,
         updateTask: updateTaskFn,

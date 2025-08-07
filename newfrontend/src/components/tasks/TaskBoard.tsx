@@ -6,7 +6,7 @@ import TaskColumn from './TaskColumn';
 import TaskColumnForm from './TaskColumnForm';
 
 const TaskBoard = () => {
-  const { columns, tasks, reorderTasks, moveTask, loading, projectId } = useTaskBoard();
+  const { columns, tasks, reorderTasks, moveTask, loading, projectId, reorderColumns } = useTaskBoard();
   const [isAddingColumn, setIsAddingColumn] = useState(false);
 
   const handleDragEnd = (result: any) => {
@@ -16,7 +16,9 @@ const TaskBoard = () => {
       const newColumnOrder = Array.from(columns.map((col) => col.id));
       newColumnOrder.splice(source.index, 1);
       newColumnOrder.splice(destination.index, 0, draggableId);
-      // Для упрощения: если понадобится — добавим projectId в контекст и вызовем reorderColumns(projectId, newColumnOrder)
+      if (projectId) {
+        void reorderColumns(projectId, newColumnOrder);
+      }
       return;
     }
     if (source.droppableId === destination.droppableId) {

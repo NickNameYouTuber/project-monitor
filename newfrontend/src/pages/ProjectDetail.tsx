@@ -9,7 +9,7 @@ function ProjectDetail() {
   const { projectId } = useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState<'tasks' | 'whiteboard' | 'settings'>('tasks');
+  const [active, setActive] = useState<'tasks' | 'whiteboard' | 'repositories' | 'settings'>('tasks');
 
   useEffect(() => {
     let mounted = true;
@@ -47,6 +47,7 @@ function ProjectDetail() {
         <Stack>
           <NavLink label="Доска задач" active={active === 'tasks'} onClick={() => setActive('tasks')} />
           <NavLink label="Вайтборд" active={active === 'whiteboard'} onClick={() => setActive('whiteboard')} />
+          <NavLink label="Репозитории" active={active === 'repositories'} onClick={() => setActive('repositories')} />
           <NavLink label="Настройки" active={active === 'settings'} onClick={() => setActive('settings')} />
           <Button component={Link} to={`/dashboards/${project.dashboard_id || ''}`} variant="light">
             Назад к дашборду
@@ -65,13 +66,16 @@ function ProjectDetail() {
 
           {active === 'tasks' && projectId && (
             <TaskBoardProvider projectId={projectId}>
-              <div className="rounded-lg border p-2">
+              <div className="rounded-lg p-2">
                 <TaskBoard />
               </div>
             </TaskBoardProvider>
           )}
           {active === 'whiteboard' && (
             <Text>Здесь будет вайтборд проекта</Text>
+          )}
+          {active === 'repositories' && (
+            <Text>Здесь будет список репозиториев проекта</Text>
           )}
           {active === 'settings' && (
             <Text>Настройки проекта</Text>
