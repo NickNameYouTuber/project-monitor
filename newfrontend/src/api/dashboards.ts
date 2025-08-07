@@ -12,3 +12,13 @@ export async function fetchDashboards(): Promise<Dashboard[]> {
   return data;
 }
 
+export interface CreateDashboardRequest {
+  name: string;
+  description?: string;
+}
+
+export async function createDashboard(payload: CreateDashboardRequest): Promise<Dashboard> {
+  const { data } = await apiClient.post<Dashboard>('/dashboards', payload);
+  return data;
+}
+

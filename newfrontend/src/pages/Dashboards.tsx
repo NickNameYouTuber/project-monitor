@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Grid, Group, Loader, Stack, Text } from '@mantine/core';
-import ProjectModal from '../components/modals/ProjectModal';
-import { fetchDashboards, type Dashboard } from '../api/dashboards';
+import { Button, Card, Grid, Group, Loader, Modal, Stack, Text, TextInput, Textarea } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { Link } from 'react-router-dom';
+import { createDashboard, fetchDashboards, type Dashboard } from '../api/dashboards';
 
 function Dashboards() {
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalOpenFor, setModalOpenFor] = useState<string | null>(null);
+  const [opened, { open, close }] = useDisclosure(false);
+  const [newName, setNewName] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -35,27 +39,67 @@ function Dashboards() {
       <Text fw={700} size="xl" className="mb-2">
         Дашборды
       </Text>
+      <Group justify="flex-end" mb="sm">
+        <Button onClick={open}>Новый дашборд</Button>
+      </Group>
       <Grid>
         {dashboards.map((d) => (
           <Grid.Col key={d.id} span={{ base: 12, sm: 6, md: 4 }}>
-            <Card withBorder shadow="sm" padding="lg">
-              <Group justify="space-between" mb={8}>
-                <Text fw={600}>{d.name}</Text>
-                <Button size="xs" onClick={() => setModalOpenFor(d.id)}>Добавить проект</Button>
-              </Group>
+            <Card withBorder shadow="sm" padding="lg" component={Link} to={`/dashboards/${d.id}`}>
+              <Text fw={600}>{d.name}</Text>
               {d.description && (
                 <Text c="dimmed" size="sm" mt={6}>
                   {d.description}
                 </Text>
               )}
             </Card>
-            <ProjectModal opened={modalOpenFor === d.id} onClose={() => setModalOpenFor(null)} dashboardId={d.id} />
           </Grid.Col>
         ))}
       </Grid>
       {dashboards.length === 0 && (
         <Text c="dimmed">Нет доступных дашбордов</Text>
       )}
+
+      <Modal opened={opened} onClose={close} title="Создать дашборд" centered>
+        <Stack>
+          <TextInput
+            label="Название"
+            placeholder="Введи название"
+            value={newName}
+            onChange={(e) => setNewName(e.currentTarget.value)}
+            required
+            data-autofocus
+          />
+          <Textarea
+            label="Описание"
+            placeholder="Опционально"
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.currentTarget.value)}
+            minRows={3}
+          />
+          <Group justify="flex-end">
+            <Button variant="default" onClick={close}>Отмена</Button>
+            <Button
+              loading={creating}
+              disabled={!newName.trim()}
+              onClick={async () => {
+                setCreating(true);
+                try {
+                  const created = await createDashboard({ name: newName.trim(), description: newDescription.trim() || undefined });
+                  setDashboards((prev) => [created, ...prev]);
+                  setNewName('');
+                  setNewDescription('');
+                  close();
+                } finally {
+                  setCreating(false);
+                }
+              }}
+            >
+              Создать
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   );
 }
