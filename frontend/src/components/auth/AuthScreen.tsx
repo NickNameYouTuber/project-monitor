@@ -91,7 +91,7 @@ const AuthScreen: React.FC = () => {
   };
 
   // Get bot name from environment variables
-  const BOT_NAME = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'ProjectMonitorBot';
+  const BOT_NAME = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'NIProjectMonitorBot';
 
   return (
     <AppShell header={{ height: 60 }}>
