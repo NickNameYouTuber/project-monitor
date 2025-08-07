@@ -62,7 +62,7 @@ function DashboardDetail() {
       <Grid>
         {projects.map((p) => (
           <Grid.Col key={p.id} span={{ base: 12, sm: 6, md: 4 }}>
-            <Card withBorder shadow="sm" padding="lg">
+            <Card withBorder shadow="sm" padding="lg" component={Link} to={`/projects/${p.id}`}>
               <Text fw={600}>{p.name}</Text>
               {p.description && (
                 <Text c="dimmed" size="sm" mt={6}>{p.description}</Text>

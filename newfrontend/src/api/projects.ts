@@ -15,4 +15,9 @@ export async function fetchProjectsByDashboard(dashboardId: string): Promise<Pro
   return data;
 }
 
+export async function fetchProject(projectId: string): Promise<Project> {
+  const { data } = await apiClient.get<Project>(`/projects/${projectId}`);
+  return data;
+}
+
 
