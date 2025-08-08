@@ -69,8 +69,8 @@ function ProjectDetail() {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className="h-full w-full p-2">
-        <Stack className="h-full w-full" style={{ height: '100%', padding: 2 }}>
+      <AppShell.Main className="h-full w-full">
+        <Stack className="h-full w-full" style={{ height: '100%', padding: '20px' }}>
           {/* Заголовок перенесён в левую панель */}
 
           {active === 'tasks' && projectId && (
