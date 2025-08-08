@@ -22,7 +22,6 @@ models.comment.Base.metadata.create_all(bind=engine)
 models.repository.Base.metadata.create_all(bind=engine)
 models.repository_member.Base.metadata.create_all(bind=engine)
 models.token.Base.metadata.create_all(bind=engine)  # Initialize personal access token table
-models.whiteboard.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Project Monitor API",

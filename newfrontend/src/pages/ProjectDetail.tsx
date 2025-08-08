@@ -69,7 +69,7 @@ function ProjectDetail() {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className="h-full w-full" style={{ padding: 0 }}>
+      <AppShell.Main className="h-full w-full" style={{ padding: 2 }}>
         <Stack className="h-full w-full">
           {/* Заголовок перенесён в левую панель */}
 

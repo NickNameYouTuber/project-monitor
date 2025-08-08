@@ -15,6 +15,8 @@ export default function WhiteboardPage() {
   const [, setScale] = useState(1);
   const [, setOffset] = useState({ x: 0, y: 0 });
   const stageRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const isPanningRef = useRef(false);
   const lastPosRef = useRef<{x: number; y: number} | null>(null);
 
@@ -30,6 +32,23 @@ export default function WhiteboardPage() {
     })();
     return () => { mounted = false; };
   }, [projectId]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      setSize({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
 
   const onWheel = (e: any) => {
     e.evt.preventDefault();
@@ -92,8 +111,8 @@ export default function WhiteboardPage() {
   };
 
   return (
-    <div className="h-full w-full">
-      <Group p="sm" gap="sm">
+    <div className="h-full w-full flex flex-col">
+      <Group p="sm" gap="sm" className="shrink-0">
         <SegmentedControl
           value={tool}
           onChange={(v) => setTool(v as Tool)}
@@ -115,11 +134,19 @@ export default function WhiteboardPage() {
         }}>Сброс</Button>
       </Group>
 
-      <div className="h-[calc(100%-52px)] w-full">
+      <div
+        ref={containerRef}
+        className="flex-1 w-full"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.06) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      >
         <Stage
           ref={stageRef}
-          width={window.innerWidth - 240}
-          height={window.innerHeight - 64}
+          width={size.width}
+          height={size.height}
           onWheel={onWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
