@@ -69,7 +69,7 @@ function ProjectDetail() {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className="h-full w-full">
+      <AppShell.Main className="h-full w-full p-0">
         <Stack className="h-full w-full">
           {/* Заголовок перенесён в левую панель */}
 

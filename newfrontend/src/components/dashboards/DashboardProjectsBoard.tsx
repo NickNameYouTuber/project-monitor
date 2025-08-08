@@ -83,24 +83,26 @@ export default function DashboardProjectsBoard({ dashboardId }: { dashboardId: s
         <div className="flex overflow-x-auto pb-6 h-full w-full">
           {STATUS_ORDER.map((statusKey) => (
             <div key={statusKey} className="min-w-[300px] w-[320px] mr-4 flex-shrink-0">
-              <Text fw={600} className="mb-2">{STATUS_TITLE[statusKey]}</Text>
-              <Droppable droppableId={statusKey} type="project">
-                {(dropProvided) => (
-                  <div ref={dropProvided.innerRef} {...dropProvided.droppableProps} className="space-y-2">
-                    {columns[statusKey].map((p, index) => (
-                      <Draggable key={p.id} draggableId={p.id} index={index}>
-                        {(dragProvided) => (
-                          <Card ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} withBorder padding="md" shadow="xs" component={Link} to={`/projects/${p.id}/tasks`}>
-                            <Text fw={600}>{p.name}</Text>
-                            {p.description && <Text c="dimmed" size="sm" mt={6}>{p.description}</Text>}
-                          </Card>
-                        )}
-                      </Draggable>
-                    ))}
-                    {dropProvided.placeholder}
-                  </div>
-                )}
-              </Droppable>
+              <Card withBorder padding="sm" shadow="xs" className="h-full">
+                <Text fw={600} className="mb-2">{STATUS_TITLE[statusKey]}</Text>
+                <Droppable droppableId={statusKey} type="project">
+                  {(dropProvided) => (
+                    <div ref={dropProvided.innerRef} {...dropProvided.droppableProps} className="space-y-2 min-h-[60px]">
+                      {columns[statusKey].map((p, index) => (
+                        <Draggable key={p.id} draggableId={p.id} index={index}>
+                          {(dragProvided) => (
+                            <Card ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} withBorder padding="md" shadow="xs" component={Link} to={`/projects/${p.id}/tasks`}>
+                              <Text fw={600}>{p.name}</Text>
+                              {p.description && <Text c="dimmed" size="sm" mt={6}>{p.description}</Text>}
+                            </Card>
+                          )}
+                        </Draggable>
+                      ))}
+                      {dropProvided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </Card>
             </div>
           ))}
         </div>
