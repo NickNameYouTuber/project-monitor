@@ -15,4 +15,9 @@ export async function fetchProjectRepositories(projectId: string): Promise<Repos
   return data;
 }
 
+export async function fetchRepository(repositoryId: string): Promise<Repository> {
+  const { data } = await apiClient.get<Repository>(`/repositories/${repositoryId}`);
+  return data;
+}
+
 

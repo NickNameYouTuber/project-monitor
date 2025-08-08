@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Grid, Group, Loader, Stack, Text } from '@mantine/core';
+import { Link } from 'react-router-dom';
 import { fetchProjectRepositories, type Repository } from '../../api/repositories';
 
 export default function ProjectRepositories({ projectId }: { projectId: string }) {
@@ -33,7 +34,7 @@ export default function ProjectRepositories({ projectId }: { projectId: string }
       <Grid>
         {repos.map((r) => (
           <Grid.Col key={r.id} span={{ base: 12, sm: 6, md: 4 }}>
-            <Card withBorder shadow="xs" padding="md">
+            <Card withBorder shadow="xs" padding="md" component={Link} to={`/repositories/${r.id}`}>
               <Text fw={600}>{r.name}</Text>
               {r.description && (
                 <Text c="dimmed" size="sm" mt={6}>{r.description}</Text>
