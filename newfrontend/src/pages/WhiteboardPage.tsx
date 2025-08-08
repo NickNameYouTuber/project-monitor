@@ -16,7 +16,7 @@ export default function WhiteboardPage() {
   const [, setOffset] = useState({ x: 0, y: 0 });
   const stageRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [size, setSize] = useState({ width: typeof window !== 'undefined' ? window.innerWidth : 1024, height: typeof window !== 'undefined' ? window.innerHeight : 768 });
   const isPanningRef = useRef(false);
   const lastPosRef = useRef<{x: number; y: number} | null>(null);
 
@@ -38,7 +38,12 @@ export default function WhiteboardPage() {
     if (!el) return;
     const measure = () => {
       const rect = el.getBoundingClientRect();
-      setSize({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+      let w = Math.floor(rect.width);
+      let h = Math.floor(rect.height);
+      // Фолбэк, если контейнер ещё не развернут
+      if (w < 10) w = el.clientWidth || el.parentElement?.clientWidth || window.innerWidth;
+      if (h < 10) h = el.clientHeight || el.parentElement?.clientHeight || window.innerHeight - 120;
+      setSize({ width: Math.max(1, w), height: Math.max(1, h) });
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -111,7 +116,7 @@ export default function WhiteboardPage() {
   };
 
   return (
-    <div className="h-full w-full flex flex-col" style={{ minHeight: '100%' }}>
+    <div className="h-full w-full flex flex-col" style={{ height: '100%', minHeight: '100%' }}>
       <Group p="sm" gap="sm" className="shrink-0">
         <SegmentedControl
           value={tool}
@@ -132,6 +137,9 @@ export default function WhiteboardPage() {
           setScale(1);
           setOffset({ x: 0, y: 0 });
         }}>Сброс</Button>
+        <Button variant="light" onClick={() => setTool('hand')}>Рука</Button>
+        <Button variant="light" onClick={() => setTool('select')}>Выделение</Button>
+        <Button variant="light" onClick={() => setTool('sticky')}>Стикер</Button>
       </Group>
 
       <div
@@ -142,6 +150,7 @@ export default function WhiteboardPage() {
             'linear-gradient(to right, rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.06) 1px, transparent 1px)',
           backgroundSize: '20px 20px',
           minHeight: 0,
+          height: '100%',
         }}
       >
         <Stage
