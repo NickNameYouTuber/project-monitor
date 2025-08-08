@@ -6,6 +6,7 @@ import { TaskBoardProvider } from '../context/TaskBoardContext';
 import TaskBoard from '../components/tasks/TaskBoard';
 import ProjectRepositories from '../components/repositories/ProjectRepositories';
 import ProjectSettings from './ProjectSettings';
+import { MiroLikeBoard } from '../components/MiroLikeBoard';
 
 function ProjectDetail() {
   const { projectId } = useParams();
@@ -51,7 +52,7 @@ function ProjectDetail() {
   }
 
   return (
-    <AppShell navbar={{ width: 240, breakpoint: 'sm' }} padding="md">
+    <AppShell navbar={{ width: 240, breakpoint: 'sm' }} padding={0}>
       <AppShell.Navbar p="md" className="h-full">
         <Stack className="h-full">
           <div>
@@ -80,7 +81,7 @@ function ProjectDetail() {
             </TaskBoardProvider>
           )}
           {active === 'whiteboard' && (
-            <Text>Здесь будет вайтборд проекта</Text>
+            <MiroLikeBoard />
           )}
           {active === 'repositories' && (
             projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>
