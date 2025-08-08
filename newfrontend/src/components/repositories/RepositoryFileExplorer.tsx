@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Select, Breadcrumbs, Anchor, Group, Loader, Stack, Text, Card, Divider } from '@mantine/core';
+import { Select, Breadcrumbs, Anchor, Group, Loader, Stack, Text, Card } from '@mantine/core';
 import apiClient from '../../api/client';
-import FileViewer from './FileViewer';
+// FileViewer moved to a separate page
 import BranchActions from './BranchActions';
+import { useNavigate } from 'react-router-dom';
 
 interface GitFile {
   name: string;
@@ -17,13 +18,14 @@ interface GitBranch {
 }
 
 export default function RepositoryFileExplorer({ repositoryId }: { repositoryId: string }) {
+  const navigate = useNavigate();
   const [currentPath, setCurrentPath] = useState('');
   const [files, setFiles] = useState<GitFile[]>([]);
   const [branches, setBranches] = useState<GitBranch[]>([]);
   const [currentBranch, setCurrentBranch] = useState<string>('');
   const [readme, setReadme] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeFile, setActiveFile] = useState<string | null>(null);
+  // file preview opens in a separate page now
 
   useEffect(() => {
     async function loadBranches() {
@@ -49,7 +51,6 @@ export default function RepositoryFileExplorer({ repositoryId }: { repositoryId:
       setFiles(data);
       setCurrentPath(path);
       await loadReadme(path, data);
-      setActiveFile(null);
     } finally {
       setLoading(false);
     }
@@ -107,7 +108,7 @@ export default function RepositoryFileExplorer({ repositoryId }: { repositoryId:
         <Card withBorder padding="md">
           <Stack>
             {files.map((f) => (
-              <Group key={f.path} justify="space-between" onClick={() => (f.type === 'directory' ? loadFiles(f.path) : setActiveFile(f.path))} style={{ cursor: 'pointer' }}>
+              <Group key={f.path} justify="space-between" onClick={() => (f.type === 'directory' ? loadFiles(f.path) : navigate(`/repositories/${repositoryId}/file?branch=${encodeURIComponent(currentBranch)}&path=${encodeURIComponent(f.path)}`))} style={{ cursor: 'pointer' }}>
                 <Text fw={500}>{f.name}</Text>
                 <Text size="xs" c="dimmed">{f.type}</Text>
               </Group>
@@ -116,12 +117,6 @@ export default function RepositoryFileExplorer({ repositoryId }: { repositoryId:
         </Card>
       )}
 
-      {activeFile && (
-        <>
-          <Divider label={activeFile} />
-          <FileViewer repositoryId={repositoryId} branch={currentBranch} path={activeFile} />
-        </>
-      )}
 
       {readme && (
         <Card withBorder padding="md">

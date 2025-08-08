@@ -681,13 +681,25 @@ async def get_commit_detail(
                 else:
                     change_type = "modified"
                     
+                raw_diff = getattr(diff_item, 'diff', None)
+                if isinstance(raw_diff, bytes):
+                    diff_text = raw_diff.decode('utf-8', errors='replace')
+                elif raw_diff is None:
+                    diff_text = ""
+                else:
+                    diff_text = str(raw_diff)
+
+                # Rough counts: number of lines starting with '+'/'-' excluding headers
+                additions = sum(1 for line in diff_text.splitlines() if line.startswith('+') and not line.startswith('+++'))
+                deletions = sum(1 for line in diff_text.splitlines() if line.startswith('-') and not line.startswith('---'))
+
                 file_info = {
                     "path": diff_item.b_path if hasattr(diff_item, 'b_path') else diff_item.a_path,
-                    "old_path": diff_item.a_path if diff_item.a_path != diff_item.b_path else None,
+                    "old_path": diff_item.a_path if hasattr(diff_item, 'a_path') and diff_item.a_path != getattr(diff_item, 'b_path', None) else None,
                     "change_type": change_type,
-                    "additions": diff_item.diff.count(b'+') - 1 if hasattr(diff_item, 'diff') else 0,
-                    "deletions": diff_item.diff.count(b'-') - 1 if hasattr(diff_item, 'diff') else 0,
-                    "diff": diff_item.diff.decode('utf-8', errors='replace') if hasattr(diff_item, 'diff') else ""
+                    "additions": additions,
+                    "deletions": deletions,
+                    "diff": diff_text
                 }
                 
                 commit_info["files"].append(file_info)

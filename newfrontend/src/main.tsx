@@ -14,6 +14,7 @@ import DashboardDetail from './pages/DashboardDetail';
 import ProjectDetail from './pages/ProjectDetail';
 import RepositoryDetail from './pages/RepositoryDetail';
 import RepositoryCreate from './pages/RepositoryCreate';
+import RepositoryFilePreview from './pages/RepositoryFilePreview';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 const theme = createTheme({});
@@ -45,6 +46,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/dashboards/:dashboardId" element={<DashboardDetail />} />
               <Route path="/projects/:projectId/*" element={<ProjectDetail />} />
               <Route path="/repositories/:repositoryId" element={<RepositoryDetail />} />
+              <Route path="/repositories/:repositoryId/file" element={<RepositoryFilePreview />} />
               <Route path="/repositories/create" element={<RepositoryCreate />} />
             </Route>
           </Route>
