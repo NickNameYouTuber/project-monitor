@@ -40,7 +40,7 @@ const TaskBoard = () => {
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Доска задач</h2>
         <Button size="xs" onClick={() => setIsAddingColumn(true)}>Добавить колонку</Button>
@@ -48,7 +48,7 @@ const TaskBoard = () => {
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="board-columns" direction="horizontal" type="column">
           {(provided: any) => (
-            <div className="flex overflow-x-auto pb-6 h-full w-full" ref={provided.innerRef} {...provided.droppableProps}>
+            <div className="flex overflow-x-auto pb-6 h-full" ref={provided.innerRef} {...provided.droppableProps}>
               {columns
                 .sort((a, b) => a.order - b.order)
                 .map((column, i) => (

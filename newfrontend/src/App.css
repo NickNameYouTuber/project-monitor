@@ -1,5 +1,1 @@
 /* Reset Vite demo styles; Tailwind utilities will be used across the app. */
-
-.mantine-AppShell-main {
-  height: calc(100dvh - 56px);
-}

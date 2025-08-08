@@ -68,13 +68,13 @@ function ProjectDetail() {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main>
-        <Stack>
+      <AppShell.Main className="h-full">
+        <Stack className="h-full">
           {/* Заголовок перенесён в левую панель */}
 
           {active === 'tasks' && projectId && (
             <TaskBoardProvider projectId={projectId}>
-              <div className="rounded-lg p-2">
+              <div className="rounded-lg p-2 h-full w-full">
                 <TaskBoard />
               </div>
             </TaskBoardProvider>
