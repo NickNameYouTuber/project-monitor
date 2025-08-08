@@ -6,7 +6,6 @@ import { TaskBoardProvider } from '../context/TaskBoardContext';
 import TaskBoard from '../components/tasks/TaskBoard';
 import ProjectRepositories from '../components/repositories/ProjectRepositories';
 import ProjectSettings from './ProjectSettings';
-import WhiteboardPage from './WhiteboardPage';
 
 function ProjectDetail() {
   const { projectId } = useParams();
@@ -69,7 +68,7 @@ function ProjectDetail() {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className="h-full w-full p-0">
+      <AppShell.Main className="h-full w-full" style={{ padding: 0 }}>
         <Stack className="h-full w-full">
           {/* Заголовок перенесён в левую панель */}
 
@@ -80,10 +79,8 @@ function ProjectDetail() {
               </div>
             </TaskBoardProvider>
           )}
-          {active === 'whiteboard' && projectId && (
-            <div className="h-full w-full">
-              <WhiteboardPage />
-            </div>
+          {active === 'whiteboard' && (
+            <Text c="dimmed">Вайтборд скоро будет доступен</Text>
           )}
           {active === 'repositories' && (
             projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>
