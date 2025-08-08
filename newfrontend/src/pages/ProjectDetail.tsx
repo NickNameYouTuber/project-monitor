@@ -51,9 +51,9 @@ function ProjectDetail() {
   }
 
   return (
-    <AppShell navbar={{ width: 220, breakpoint: 'sm' }} padding="md">
-      <AppShell.Navbar p="md">
-        <Stack>
+    <AppShell navbar={{ width: 240, breakpoint: 'sm' }} padding="md">
+      <AppShell.Navbar p="md" className="h-full">
+        <Stack className="h-full">
           <div>
             <Title order={4} mb={4}>{project.name}</Title>
             {project.description && <Text size="sm" c="dimmed">{project.description}</Text>}
@@ -68,8 +68,8 @@ function ProjectDetail() {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className="h-full">
-        <Stack className="h-full">
+      <AppShell.Main className="h-full w-full">
+        <Stack className="h-full w-full">
           {/* Заголовок перенесён в левую панель */}
 
           {active === 'tasks' && projectId && (

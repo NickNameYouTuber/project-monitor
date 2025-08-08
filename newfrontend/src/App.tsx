@@ -1,4 +1,4 @@
-import { AppShell, Container } from '@mantine/core';
+import { AppShell } from '@mantine/core';
 import { Outlet } from 'react-router-dom';
 import AppHeader from './components/AppHeader';
 import './App.css';
@@ -9,10 +9,10 @@ function App() {
       <AppShell.Header>
         <AppHeader />
       </AppShell.Header>
-      <AppShell.Main>
-        <Container size="lg">
+      <AppShell.Main className="h-full w-full">
+        <div className="h-full w-full">
           <Outlet />
-        </Container>
+        </div>
       </AppShell.Main>
     </AppShell>
   );

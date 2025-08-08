@@ -76,10 +76,13 @@ export default function DashboardProjectsBoard({ dashboardId }: { dashboardId: s
 
   return (
     <div className="flex flex-col h-full w-full">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Проекты</h2>
+      </div>
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-3 overflow-x-auto h-full w-full pb-6">
+        <div className="flex overflow-x-auto pb-6 h-full w-full">
           {STATUS_ORDER.map((statusKey) => (
-            <div key={statusKey} className="min-w-[280px] w-80 flex-shrink-0">
+            <div key={statusKey} className="min-w-[300px] w-[320px] mr-4 flex-shrink-0">
               <Text fw={600} className="mb-2">{STATUS_TITLE[statusKey]}</Text>
               <Droppable droppableId={statusKey} type="project">
                 {(dropProvided) => (
@@ -87,7 +90,7 @@ export default function DashboardProjectsBoard({ dashboardId }: { dashboardId: s
                     {columns[statusKey].map((p, index) => (
                       <Draggable key={p.id} draggableId={p.id} index={index}>
                         {(dragProvided) => (
-                          <Card ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} withBorder padding="md" shadow="sm" component={Link} to={`/projects/${p.id}/tasks`}>
+                          <Card ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} withBorder padding="md" shadow="xs" component={Link} to={`/projects/${p.id}/tasks`}>
                             <Text fw={600}>{p.name}</Text>
                             {p.description && <Text c="dimmed" size="sm" mt={6}>{p.description}</Text>}
                           </Card>
