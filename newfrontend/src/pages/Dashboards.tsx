@@ -36,12 +36,10 @@ function Dashboards() {
 
   return (
     <Stack>
-      <Text fw={700} size="xl" className="mb-2">
-        Дашборды
-      </Text>
-      <Group justify="flex-end" mb="sm">
-        <Button onClick={open}>Новый дашборд</Button>
-      </Group>
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-xl font-semibold">Дашборды</h2>
+        <Button size="xs" onClick={open}>Новый дашборд</Button>
+      </div>
       <Grid>
         {dashboards.map((d) => (
           <Grid.Col key={d.id} span={{ base: 12, sm: 6, md: 4 }}>

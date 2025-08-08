@@ -38,4 +38,18 @@ export async function deleteProject(projectId: string): Promise<void> {
   await apiClient.delete(`/projects/${projectId}`);
 }
 
+export async function updateProjectStatus(projectId: string, status: Project['status']): Promise<Project> {
+  const { data } = await apiClient.patch<Project>(`/projects/${projectId}/status`, { status });
+  return data;
+}
+
+export async function reorderProjects(projectId: string, targetProjectId: string, position: 'above' | 'below'): Promise<{ success: boolean }> {
+  const { data } = await apiClient.post<{ success: boolean }>(`/projects/reorder`, {
+    projectId,
+    targetProjectId,
+    position,
+  });
+  return data;
+}
+
 
