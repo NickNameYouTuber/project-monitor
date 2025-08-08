@@ -111,7 +111,7 @@ export default function WhiteboardPage() {
   };
 
   return (
-    <div className="h-full w-full flex flex-col">
+    <div className="h-full w-full flex flex-col" style={{ minHeight: '100%' }}>
       <Group p="sm" gap="sm" className="shrink-0">
         <SegmentedControl
           value={tool}
@@ -141,12 +141,13 @@ export default function WhiteboardPage() {
           backgroundImage:
             'linear-gradient(to right, rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.06) 1px, transparent 1px)',
           backgroundSize: '20px 20px',
+          minHeight: '0',
         }}
       >
         <Stage
           ref={stageRef}
-          width={size.width}
-          height={size.height}
+          width={Math.max(0, size.width)}
+          height={Math.max(0, size.height)}
           onWheel={onWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
