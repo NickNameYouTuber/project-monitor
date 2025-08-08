@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button, Group, Loader, Stack, Text, Title } from '@mantine/core';
 import { fetchRepository, type Repository } from '../api/repositories';
+import RepositoryFileExplorer from '../components/repositories/RepositoryFileExplorer';
 
 export default function RepositoryDetail() {
   const { repositoryId } = useParams();
@@ -45,6 +46,8 @@ export default function RepositoryDetail() {
         </div>
         <Button component={Link} to={repo.project_id ? `/projects/${repo.project_id}` : '/dashboards'} variant="light">Назад</Button>
       </Group>
+
+      <RepositoryFileExplorer repositoryId={repo.id} />
     </Stack>
   );
 }
