@@ -59,4 +59,74 @@ export async function fetchCloneInfo(repositoryId: string): Promise<CloneInfo> {
   return data;
 }
 
+export interface GitFileContent {
+  name: string;
+  path: string;
+  content: string;
+  encoding: 'utf-8' | 'base64';
+  size: number;
+  binary: boolean;
+}
+
+export async function fetchFileContent(repositoryId: string, path: string, branch?: string): Promise<GitFileContent> {
+  const { data } = await apiClient.get<GitFileContent>(`/repositories/${repositoryId}/content/${encodeURIComponent(path)}`, {
+    params: { branch }
+  });
+  return data;
+}
+
+export interface GitBranch {
+  name: string;
+  is_default?: boolean;
+}
+
+export async function listBranches(repositoryId: string): Promise<GitBranch[]> {
+  const { data } = await apiClient.get<GitBranch[]>(`/repositories/${repositoryId}/branches`);
+  return data;
+}
+
+export async function createBranch(repositoryId: string, name: string, base_branch?: string, task_id?: string): Promise<{ name: string; base_branch: string; success: boolean }> {
+  const { data } = await apiClient.post(`/repositories/${repositoryId}/branches`, { name, base_branch, task_id });
+  return data;
+}
+
+export interface GitCommitShort {
+  hash: string;
+  short_hash: string;
+  author: string;
+  author_email?: string;
+  message: string;
+  date: string;
+  stats?: { files_changed?: number; insertions?: number; deletions?: number };
+}
+
+export async function listCommits(repositoryId: string, params?: { path?: string; branch?: string; limit?: number; skip?: number }): Promise<GitCommitShort[]> {
+  const { data } = await apiClient.get<GitCommitShort[]>(`/repositories/${repositoryId}/commits`, { params });
+  return data;
+}
+
+export interface GitCommitFileChange {
+  path: string;
+  old_path?: string | null;
+  change_type: 'added' | 'deleted' | 'renamed' | 'modified' | 'unknown';
+  additions?: number;
+  deletions?: number;
+  diff?: string;
+}
+
+export interface GitCommitDetail {
+  hash: string;
+  author: string;
+  committer: string;
+  message: string;
+  date: string;
+  parent_hashes: string[];
+  files: GitCommitFileChange[];
+}
+
+export async function getCommitDetail(repositoryId: string, commitHash: string): Promise<GitCommitDetail> {
+  const { data } = await apiClient.get<GitCommitDetail>(`/repositories/${repositoryId}/commits/${commitHash}`);
+  return data;
+}
+
 

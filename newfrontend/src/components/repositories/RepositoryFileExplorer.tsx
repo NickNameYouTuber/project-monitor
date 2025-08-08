@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Select, Breadcrumbs, Anchor, Group, Loader, Stack, Text, Card } from '@mantine/core';
+import { Select, Breadcrumbs, Anchor, Group, Loader, Stack, Text, Card, Divider } from '@mantine/core';
 import apiClient from '../../api/client';
+import FileViewer from './FileViewer';
+import BranchActions from './BranchActions';
 
 interface GitFile {
   name: string;
@@ -21,6 +23,7 @@ export default function RepositoryFileExplorer({ repositoryId }: { repositoryId:
   const [currentBranch, setCurrentBranch] = useState<string>('');
   const [readme, setReadme] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeFile, setActiveFile] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadBranches() {
@@ -46,6 +49,7 @@ export default function RepositoryFileExplorer({ repositoryId }: { repositoryId:
       setFiles(data);
       setCurrentPath(path);
       await loadReadme(path, data);
+      setActiveFile(null);
     } finally {
       setLoading(false);
     }
@@ -83,13 +87,16 @@ export default function RepositoryFileExplorer({ repositoryId }: { repositoryId:
             </Anchor>
           ))}
         </Breadcrumbs>
-        <Select
-          placeholder="Выбери ветку"
-          data={branches.map((b) => ({ value: b.name, label: b.name }))}
-          value={currentBranch}
-          onChange={(v) => v && setCurrentBranch(v)}
-          w={220}
-        />
+        <Group>
+          <Select
+            placeholder="Выбери ветку"
+            data={branches.map((b) => ({ value: b.name, label: b.name }))}
+            value={currentBranch}
+            onChange={(v) => v && setCurrentBranch(v)}
+            w={220}
+          />
+          <BranchActions repositoryId={repositoryId} branches={branches} currentBranch={currentBranch} onCreated={(name) => setCurrentBranch(name)} />
+        </Group>
       </Group>
 
       {loading ? (
@@ -100,13 +107,20 @@ export default function RepositoryFileExplorer({ repositoryId }: { repositoryId:
         <Card withBorder padding="md">
           <Stack>
             {files.map((f) => (
-              <Group key={f.path} justify="space-between" onClick={() => (f.type === 'directory' ? loadFiles(f.path) : undefined)} style={{ cursor: f.type === 'directory' ? 'pointer' : 'default' }}>
+              <Group key={f.path} justify="space-between" onClick={() => (f.type === 'directory' ? loadFiles(f.path) : setActiveFile(f.path))} style={{ cursor: 'pointer' }}>
                 <Text fw={500}>{f.name}</Text>
                 <Text size="xs" c="dimmed">{f.type}</Text>
               </Group>
             ))}
           </Stack>
         </Card>
+      )}
+
+      {activeFile && (
+        <>
+          <Divider label={activeFile} />
+          <FileViewer repositoryId={repositoryId} branch={currentBranch} path={activeFile} />
+        </>
       )}
 
       {readme && (

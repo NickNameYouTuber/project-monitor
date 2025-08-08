@@ -4,6 +4,7 @@ import { Button, Group, Loader, Stack, Tabs, Text, Title } from '@mantine/core';
 import { fetchRepository, type Repository } from '../api/repositories';
 import RepositoryFileExplorer from '../components/repositories/RepositoryFileExplorer';
 import RepositorySettings from '../components/repositories/RepositorySettings';
+import CommitHistory from '../components/repositories/CommitHistory';
 
 export default function RepositoryDetail() {
   const { repositoryId } = useParams();
@@ -51,10 +52,14 @@ export default function RepositoryDetail() {
       <Tabs defaultValue="files">
         <Tabs.List>
           <Tabs.Tab value="files">Файлы</Tabs.Tab>
+          <Tabs.Tab value="history">История</Tabs.Tab>
           <Tabs.Tab value="settings">Настройки</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="files" pt="md">
           <RepositoryFileExplorer repositoryId={repo.id} />
+        </Tabs.Panel>
+        <Tabs.Panel value="history" pt="md">
+          <CommitHistory repositoryId={repo.id} />
         </Tabs.Panel>
         <Tabs.Panel value="settings" pt="md">
           <RepositorySettings repositoryId={repo.id} name={repo.name} description={repo.description} visibility={repo.visibility as any} onUpdated={async () => setRepo(await fetchRepository(repo.id))} />
