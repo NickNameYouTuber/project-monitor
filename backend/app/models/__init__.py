@@ -8,3 +8,4 @@ from .comment import Comment
 from .repository import Repository, VisibilityType
 from .repository_member import RepositoryMember, RepositoryRole
 from .token import PersonalAccessToken
+from .whiteboard import Whiteboard, WhiteboardElement, WhiteboardConnection

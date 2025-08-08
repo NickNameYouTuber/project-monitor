@@ -6,7 +6,7 @@ import { TaskBoardProvider } from '../context/TaskBoardContext';
 import TaskBoard from '../components/tasks/TaskBoard';
 import ProjectRepositories from '../components/repositories/ProjectRepositories';
 import ProjectSettings from './ProjectSettings';
-import { MiroLikeBoard } from '../components/MiroLikeBoard';
+import WhiteboardPage from './WhiteboardPage';
 
 function ProjectDetail() {
   const { projectId } = useParams();
@@ -80,8 +80,10 @@ function ProjectDetail() {
               </div>
             </TaskBoardProvider>
           )}
-          {active === 'whiteboard' && (
-            <MiroLikeBoard />
+          {active === 'whiteboard' && projectId && (
+            <div className="h-full w-full">
+              <WhiteboardPage />
+            </div>
           )}
           {active === 'repositories' && (
             projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>
