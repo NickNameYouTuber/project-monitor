@@ -5,10 +5,13 @@ import { fetchProject, type Project } from '../api/projects';
 import { TaskBoardProvider } from '../context/TaskBoardContext';
 import TaskBoard from '../components/tasks/TaskBoard';
 import ProjectRepositories from '../components/repositories/ProjectRepositories';
+import { Button as MantineButton } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
 
 function ProjectDetail() {
   const { projectId } = useParams();
   const [project, setProject] = useState<Project | null>(null);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<'tasks' | 'whiteboard' | 'repositories' | 'settings'>('tasks');
 
@@ -75,7 +78,12 @@ function ProjectDetail() {
             <Text>Здесь будет вайтборд проекта</Text>
           )}
           {active === 'repositories' && (
-            projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>
+            <Stack>
+              {projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>}
+              <Group>
+                <MantineButton onClick={() => navigate('/repositories/create')}>Создать репозиторий</MantineButton>
+              </Group>
+            </Stack>
           )}
           {active === 'settings' && (
             <Text>Настройки проекта</Text>
