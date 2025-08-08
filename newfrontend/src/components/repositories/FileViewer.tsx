@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { ActionIcon, Group, Loader, Paper, Stack, Text, Tooltip } from '@mantine/core';
 import { fetchFileContent, type GitFileContent } from '../../api/repositories';
 import { IconLink, IconFileDownload } from '@tabler/icons-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface Props {
   repositoryId: string;
@@ -51,12 +55,57 @@ export default function FileViewer({ repositoryId, branch, path }: Props) {
       <Paper withBorder p="md">
         {data.binary ? (
           <Text>Бинарный файл ({data.size} байт). Используйте кнопку RAW для скачивания.</Text>
+        ) : path.toLowerCase().endsWith('.md') ? (
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.content}</ReactMarkdown>
         ) : (
-          <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{data.content}</pre>
+          <SyntaxHighlighter language={detectLanguage(path)} style={oneDark} wrapLongLines>
+            {data.content}
+          </SyntaxHighlighter>
         )}
       </Paper>
     </Stack>
   );
+}
+
+function detectLanguage(filePath: string): string {
+  const ext = filePath.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'ts':
+    case 'tsx':
+      return 'tsx';
+    case 'js':
+    case 'jsx':
+      return 'jsx';
+    case 'json':
+      return 'json';
+    case 'py':
+      return 'python';
+    case 'java':
+      return 'java';
+    case 'go':
+      return 'go';
+    case 'rb':
+      return 'ruby';
+    case 'php':
+      return 'php';
+    case 'sh':
+    case 'bash':
+      return 'bash';
+    case 'yml':
+    case 'yaml':
+      return 'yaml';
+    case 'css':
+      return 'css';
+    case 'scss':
+      return 'scss';
+    case 'md':
+      return 'markdown';
+    case 'html':
+    case 'htm':
+      return 'html';
+    default:
+      return '';
+  }
 }
 
 

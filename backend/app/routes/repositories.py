@@ -380,12 +380,12 @@ async def get_clone_info(
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this repository")
     
     # Get server URL from environment or use default
-    server_url = os.environ.get("SERVER_URL", "https://projectsmonitor.nicorp.tech")
+    server_url = os.environ.get("SERVER_URL", "https://nit.nicorp.tech")
     api_base = f"{server_url}/api"
     
     # Create clone URLs
     https_url = f"{api_base}/git/{repository_id}.git"  # This is correct for our router structure
-    ssh_url = f"git@projectsmonitor.nicorp.tech:{repository_id}.git"
+    ssh_url = f"git@nit.nicorp.tech:{repository_id}.git"
     web_url = f"{server_url}/repositories/{repository_id}"
     
     # Create clone instructions

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Anchor, Card, Drawer, Group, Loader, Stack, Text, Title } from '@mantine/core';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { listCommits, getCommitDetail, type GitCommitDetail, type GitCommitShort } from '../../api/repositories';
 
 export default function CommitHistory({ repositoryId, branch }: { repositoryId: string; branch?: string }) {
@@ -52,7 +54,9 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
               {detail.files.map((f) => (
                 <Card key={f.path} withBorder>
                   <Text fw={600}>{f.path}</Text>
-                  <pre style={{ whiteSpace: 'pre-wrap' }}>{f.diff}</pre>
+                  <SyntaxHighlighter language="diff" style={oneDark} wrapLongLines>
+                    {f.diff || ''}
+                  </SyntaxHighlighter>
                 </Card>
               ))}
             </Stack>

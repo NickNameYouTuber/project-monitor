@@ -25,7 +25,7 @@ const AuthScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // API URL - would come from env in production
-  const API_URL = import.meta.env.VITE_API_URL || 'https://projectsmonitor.nicorp.tech/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://nit.nicorp.tech/api';
   
   // Function to handle Telegram authentication using the Login Widget
   const handleTelegramAuth = async (telegramUser: any) => {

@@ -39,8 +39,8 @@ origins = [
     "http://localhost:5173",     # Frontend dev server
     "http://localhost:7670",     # Frontend in Docker
     "http://localhost:3000",     # Another possible frontend port
-    "https://projectsmonitor.nicorp.tech", # Production domain
-    "http://projectsmonitor.nicorp.tech",  # Production domain HTTP
+    "https://nit.nicorp.tech", # Production domain
+    "http://nit.nicorp.tech",  # Production domain HTTP
     # "*",                       # Allow any origin in development (commented out for production)
 ]
 
