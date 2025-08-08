@@ -45,7 +45,7 @@ export default function RepositoryDetail() {
           <Title order={2}>{repo.name}</Title>
           {repo.description && <Text c="dimmed">{repo.description}</Text>}
         </div>
-        <Button component={Link} to={repo.project_id ? `/projects/${repo.project_id}` : '/dashboards'} variant="light">Назад</Button>
+        <Button component={Link} to={repo.project_id ? `/projects/${repo.project_id}/repositories` : '/dashboards'} variant="light">Назад</Button>
       </Group>
 
       <Tabs defaultValue="files">

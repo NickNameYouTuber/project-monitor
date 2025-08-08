@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Card, Grid, Group, Loader, Stack, Text } from '@mantine/core';
-import { Link } from 'react-router-dom';
+import { Button, Card, Grid, Group, Loader, Stack, Text } from '@mantine/core';
+import { Link, useNavigate } from 'react-router-dom';
 import { fetchProjectRepositories, type Repository } from '../../api/repositories';
 
 export default function ProjectRepositories({ projectId }: { projectId: string }) {
   const [repos, setRepos] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
@@ -30,7 +31,10 @@ export default function ProjectRepositories({ projectId }: { projectId: string }
 
   return (
     <Stack>
-      <Text fw={600}>Репозитории проекта</Text>
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-xl font-semibold">Репозитории</h2>
+        <Button size="xs" onClick={() => navigate(`/repositories/create?projectId=${projectId}`)}>Добавить репозиторий</Button>
+      </div>
       <Grid>
         {repos.map((r) => (
           <Grid.Col key={r.id} span={{ base: 12, sm: 6, md: 4 }}>

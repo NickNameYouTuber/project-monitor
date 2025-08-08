@@ -43,7 +43,7 @@ createRoot(document.getElementById('root')!).render(
               <Route index element={<Navigate to="/dashboards" replace />} />
               <Route path="/dashboards" element={<Dashboards />} />
               <Route path="/dashboards/:dashboardId" element={<DashboardDetail />} />
-              <Route path="/projects/:projectId" element={<ProjectDetail />} />
+              <Route path="/projects/:projectId/*" element={<ProjectDetail />} />
               <Route path="/repositories/:repositoryId" element={<RepositoryDetail />} />
               <Route path="/repositories/create" element={<RepositoryCreate />} />
             </Route>

@@ -20,4 +20,22 @@ export async function fetchProject(projectId: string): Promise<Project> {
   return data;
 }
 
+export interface ProjectUpdate {
+  name?: string;
+  description?: string | null;
+  status?: 'inPlans' | 'inProgress' | 'onPause' | 'completed';
+  priority?: 'high' | 'medium' | 'low';
+  order?: number;
+  dashboard_id?: string | null;
+}
+
+export async function updateProject(projectId: string, payload: ProjectUpdate): Promise<Project> {
+  const { data } = await apiClient.put<Project>(`/projects/${projectId}`, payload);
+  return data;
+}
+
+export async function deleteProject(projectId: string): Promise<void> {
+  await apiClient.delete(`/projects/${projectId}`);
+}
+
 

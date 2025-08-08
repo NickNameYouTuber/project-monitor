@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { AppShell, Button, Group, Loader, NavLink, Stack, Text, Title } from '@mantine/core';
 import { fetchProject, type Project } from '../api/projects';
 import { TaskBoardProvider } from '../context/TaskBoardContext';
 import TaskBoard from '../components/tasks/TaskBoard';
 import ProjectRepositories from '../components/repositories/ProjectRepositories';
-import { Button as MantineButton } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
+import ProjectSettings from './ProjectSettings';
 
 function ProjectDetail() {
   const { projectId } = useParams();
   const [project, setProject] = useState<Project | null>(null);
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState<'tasks' | 'whiteboard' | 'repositories' | 'settings'>('tasks');
+  const location = useLocation();
+  const active: 'tasks' | 'whiteboard' | 'repositories' | 'settings' = (location.pathname.endsWith('/repositories')
+    ? 'repositories'
+    : location.pathname.endsWith('/settings')
+    ? 'settings'
+    : location.pathname.endsWith('/whiteboard')
+    ? 'whiteboard'
+    : 'tasks');
 
   useEffect(() => {
     let mounted = true;
@@ -53,10 +58,10 @@ function ProjectDetail() {
             <Title order={4} mb={4}>{project.name}</Title>
             {project.description && <Text size="sm" c="dimmed">{project.description}</Text>}
           </div>
-          <NavLink label="Доска задач" active={active === 'tasks'} onClick={() => setActive('tasks')} />
-          <NavLink label="Вайтборд" active={active === 'whiteboard'} onClick={() => setActive('whiteboard')} />
-          <NavLink label="Репозитории" active={active === 'repositories'} onClick={() => setActive('repositories')} />
-          <NavLink label="Настройки" active={active === 'settings'} onClick={() => setActive('settings')} />
+          <NavLink label="Доска задач" component={Link} to={`/projects/${project.id}/tasks`} active={active === 'tasks'} />
+          <NavLink label="Вайтборд" component={Link} to={`/projects/${project.id}/whiteboard`} active={active === 'whiteboard'} />
+          <NavLink label="Репозитории" component={Link} to={`/projects/${project.id}/repositories`} active={active === 'repositories'} />
+          <NavLink label="Настройки" component={Link} to={`/projects/${project.id}/settings`} active={active === 'settings'} />
           <Button component={Link} to={`/dashboards/${project.dashboard_id || ''}`} variant="light">
             Назад к дашборду
           </Button>
@@ -78,15 +83,10 @@ function ProjectDetail() {
             <Text>Здесь будет вайтборд проекта</Text>
           )}
           {active === 'repositories' && (
-            <Stack>
-              {projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>}
-              <Group>
-                <MantineButton onClick={() => navigate('/repositories/create')}>Создать репозиторий</MantineButton>
-              </Group>
-            </Stack>
+            projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>
           )}
-          {active === 'settings' && (
-            <Text>Настройки проекта</Text>
+          {active === 'settings' && projectId && (
+            <ProjectSettings projectId={projectId} />
           )}
         </Stack>
       </AppShell.Main>

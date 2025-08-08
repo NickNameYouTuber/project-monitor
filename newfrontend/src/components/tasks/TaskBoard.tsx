@@ -42,7 +42,7 @@ const TaskBoard = () => {
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Task Board</h2>
+        <h2 className="text-xl font-semibold">Доска задач</h2>
         <Button size="xs" onClick={() => setIsAddingColumn(true)}>Добавить колонку</Button>
       </div>
       <DragDropContext onDragEnd={handleDragEnd}>
