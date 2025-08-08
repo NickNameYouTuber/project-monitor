@@ -69,8 +69,8 @@ function ProjectDetail() {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className="h-full w-full" style={{ padding: 3, height: 'calc(100vh - 56px)' }}>
-        <Stack className="h-full w-full" style={{ minHeight: '100%' }}>
+      <AppShell.Main className="h-full w-full" style={{ padding: 2, height: '100%' }}>
+        <Stack className="h-full w-full" style={{ height: '100%' }}>
           {/* Заголовок перенесён в левую панель */}
 
           {active === 'tasks' && projectId && (
@@ -81,7 +81,9 @@ function ProjectDetail() {
             </TaskBoardProvider>
           )}
           {active === 'whiteboard' && projectId && (
-            <WhiteboardPage />
+            <div className="h-full w-full" style={{ height: '100%' }}>
+              <WhiteboardPage />
+            </div>
           )}
           {active === 'repositories' && (
             projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>
