@@ -9,3 +9,4 @@ from .repository import RepositoryBase, RepositoryCreate, RepositoryUpdate, Repo
 from .repository_member import RepositoryMemberBase, RepositoryMemberCreate, RepositoryMemberUpdate, RepositoryMember, RepositoryMemberDetail
 from .git import GitFile, GitAuthor, GitCommitShort, GitCommit, GitCommitStats, GitFileChange, GitCommitDetail, GitContent, GitCloneInfo, GitBranch
 from .token import PATBase, PATCreate, PATResponse, PAT, PATList
+from .whiteboard import WhiteboardResponse, WhiteboardElementResponse, WhiteboardConnectionResponse, WhiteboardElementCreate, WhiteboardElementUpdate, WhiteboardConnectionCreate, WhiteboardConnectionUpdate

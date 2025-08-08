@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { AppShell, Button, Group, Loader, NavLink, Stack, Text, Title } from '@mantine/core';
 import { fetchProject, type Project } from '../api/projects';
+import WhiteboardPage from './WhiteboardPage';
 import { TaskBoardProvider } from '../context/TaskBoardContext';
 import TaskBoard from '../components/tasks/TaskBoard';
 import ProjectRepositories from '../components/repositories/ProjectRepositories';
@@ -79,8 +80,10 @@ function ProjectDetail() {
               </div>
             </TaskBoardProvider>
           )}
-          {active === 'whiteboard' && (
-            <Text c="dimmed">Вайтборд скоро будет доступен</Text>
+          {active === 'whiteboard' && projectId && (
+            <div className="h-full w-full">
+              <WhiteboardPage />
+            </div>
           )}
           {active === 'repositories' && (
             projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>
