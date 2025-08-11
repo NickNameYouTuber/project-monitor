@@ -58,19 +58,35 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
               <Tabs.Panel value="diff" pt="sm">
                 <Stack>
                   {detail.files.map((f) => {
-                    const parsed = parseDiff(f.diff || '', { nearbySequences: 'zip' });
+                    const raw = f.diff || '';
+                    const looksLikeUnified = raw.includes('diff --git') || (raw.includes('--- ') && raw.includes('+++ ')) || raw.includes('@@');
+                    let parsed: ReturnType<typeof parseDiff> | null = null;
+                    if (looksLikeUnified) {
+                      try {
+                        parsed = parseDiff(raw, { nearbySequences: 'zip' });
+                      } catch {
+                        parsed = null;
+                      }
+                    }
                     return (
                       <Card key={f.path} withBorder>
                         <Group justify="space-between" mb={8}>
                           <Text fw={600}>{f.path}</Text>
                           <Badge variant="light">{f.change_type}</Badge>
                         </Group>
-                        {parsed.map(file => (
-                          <Diff key={file.newPath || file.oldPath} viewType="split" diffType={file.type} hunks={file.hunks}>
-                            {hunks => hunks.map(h => <Hunk key={h.content} hunk={h} />)}
-                          </Diff>
-                        ))}
-                        {!f.diff && <Text size="sm" c="dimmed">Нет изменений (метаданные)</Text>}
+                        {parsed && parsed.length > 0 ? (
+                          parsed.map(file => (
+                            <Diff key={file.newPath || file.oldPath} viewType="split" diffType={file.type} hunks={file.hunks}>
+                              {hunks => hunks.map(h => <Hunk key={h.content} hunk={h} />)}
+                            </Diff>
+                          ))
+                        ) : raw ? (
+                          <pre style={{ background: 'var(--mantine-color-dark-6)', padding: 12, borderRadius: 8, overflowX: 'auto' }}>
+                            {raw}
+                          </pre>
+                        ) : (
+                          <Text size="sm" c="dimmed">Нет изменений</Text>
+                        )}
                       </Card>
                     );
                   })}
