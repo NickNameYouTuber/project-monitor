@@ -5,7 +5,7 @@ from fastapi.responses import Response
 from starlette.routing import Route, Mount
 from .database import engine, SQLALCHEMY_DATABASE_URL
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards, merge_requests
 import subprocess
 import os
 from pathlib import Path
@@ -23,6 +23,7 @@ models.comment.Base.metadata.create_all(bind=engine)
 models.repository.Base.metadata.create_all(bind=engine)
 models.repository_member.Base.metadata.create_all(bind=engine)
 models.token.Base.metadata.create_all(bind=engine)  # Initialize personal access token table
+models.merge_request.Base.metadata.create_all(bind=engine)
 
 
 def _apply_startup_migrations():
@@ -139,6 +140,7 @@ app.include_router(repository_members.router, prefix=f"{api_prefix}/repositories
 app.include_router(repository_content.router, prefix=f"{api_prefix}/repositories", tags=["repository_content"])
 app.include_router(tokens.router, prefix=f"{api_prefix}/tokens", tags=["tokens"])
 app.include_router(whiteboards.router, prefix=f"{api_prefix}", tags=["whiteboards"])
+app.include_router(merge_requests.router, prefix=f"{api_prefix}", tags=["merge_requests"])
 
 # Catch-all routes for Git HTTP protocol to handle URLs with .git and subpaths
 @app.get("/api/git/{repository_id:path}")

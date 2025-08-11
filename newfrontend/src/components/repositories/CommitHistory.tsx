@@ -60,6 +60,10 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
                   {detail.files.map((f) => {
                     const raw = f.diff || '';
                     const cleanedDiff = cleanDiffContent(raw);
+                    const originalLines = cleanedDiff.split('\n');
+                    const displayDiff = originalLines
+                      .map((ln) => (ln.startsWith('+') || ln.startsWith('-') ? ln.slice(1) : ln))
+                      .join('\n');
                     return (
                       <Card key={f.path} withBorder>
                         <Group justify="space-between" mb={8}>
@@ -80,7 +84,7 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
                                 background: 'var(--mantine-color-dark-6)'
                               }}
                               lineProps={(lineNumber: number) => {
-                                const line = cleanedDiff.split('\n')[lineNumber - 1];
+                                const line = originalLines[lineNumber - 1] || '';
                                 if (!line) return {};
                                 if (line.startsWith('+')) {
                                   return { style: { backgroundColor: 'rgba(40, 167, 69, 0.2)' } };
@@ -91,7 +95,7 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
                                 return {};
                               }}
                             >
-                              {cleanedDiff}
+                              {displayDiff}
                             </SyntaxHighlighter>
                           </Box>
                         ) : (

@@ -9,3 +9,4 @@ from .repository import Repository, VisibilityType
 from .repository_member import RepositoryMember, RepositoryRole
 from .token import PersonalAccessToken
 from .whiteboard import Whiteboard, WhiteboardElement, WhiteboardConnection
+from .merge_request import MergeRequest, MergeRequestApproval, MergeRequestComment, MergeRequestStatus

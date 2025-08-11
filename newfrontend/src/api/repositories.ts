@@ -129,4 +129,65 @@ export async function getCommitDetail(repositoryId: string, commitHash: string):
   return data;
 }
 
+// Merge Requests
+export interface MergeRequest {
+  id: string;
+  repository_id: string;
+  author_id: string;
+  title: string;
+  description?: string;
+  source_branch: string;
+  target_branch: string;
+  status: 'open' | 'merged' | 'closed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MergeRequestCreate {
+  title: string;
+  description?: string;
+  source_branch: string;
+  target_branch: string;
+}
+
+export interface MergeRequestComment {
+  id: string;
+  merge_request_id: string;
+  user_id: string;
+  content: string;
+  is_system: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listMergeRequests(repositoryId: string) {
+  const { data } = await apiClient.get<MergeRequest[]>(`/repositories/${repositoryId}/merge_requests`);
+  return data;
+}
+
+export async function createMergeRequest(repositoryId: string, payload: MergeRequestCreate) {
+  const { data } = await apiClient.post<MergeRequest>(`/repositories/${repositoryId}/merge_requests`, payload);
+  return data;
+}
+
+export async function approveMergeRequest(repositoryId: string, mrId: string) {
+  const { data } = await apiClient.post(`/repositories/${repositoryId}/merge_requests/${mrId}/approve`, {});
+  return data;
+}
+
+export async function mergeMergeRequest(repositoryId: string, mrId: string) {
+  const { data } = await apiClient.post<MergeRequest>(`/repositories/${repositoryId}/merge_requests/${mrId}/merge`, {});
+  return data;
+}
+
+export async function listMergeRequestComments(repositoryId: string, mrId: string) {
+  const { data } = await apiClient.get<MergeRequestComment[]>(`/repositories/${repositoryId}/merge_requests/${mrId}/comments`);
+  return data;
+}
+
+export async function createMergeRequestComment(repositoryId: string, mrId: string, content: string) {
+  const { data } = await apiClient.post<MergeRequestComment>(`/repositories/${repositoryId}/merge_requests/${mrId}/comments`, { content });
+  return data;
+}
+
 
