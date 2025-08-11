@@ -15,6 +15,7 @@ export default function WhiteboardPage() {
   const [connections, setConnections] = useState<WhiteboardConnection[]>([]);
   const [tempLine, setTempLine] = useState<number[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hoveredTargetId, setHoveredTargetId] = useState<string | null>(null);
   
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
@@ -231,7 +232,7 @@ export default function WhiteboardPage() {
                      listening={false}
                    />
                  )}
-                  {selectedId === el.id && (
+                  {(selectedId === el.id || (tempLine && hoveredTargetId === el.id)) && (
                     <>
                       {anchorPoints(el).map((p, idx) => (
                         <Circle
@@ -244,23 +245,44 @@ export default function WhiteboardPage() {
                           strokeWidth={1}
                           draggable
                           onDragMove={(e) => {
-                            const group = e.target.getParent();
-                            const gx = (group?.x() || 0) + p.x;
-                            const gy = (group?.y() || 0) + p.y;
                             const stage = e.target.getStage();
                             const pos = stage?.getPointerPosition();
-                            if (pos) setTempLine([gx, gy, pos.x, pos.y]);
+                            const abs = (e.target as any).getAbsolutePosition?.();
+                            const sx = abs?.x ?? 0;
+                            const sy = abs?.y ?? 0;
+                            if (pos) setTempLine([sx, sy, pos.x, pos.y]);
+                            // detect hovered target
+                            const layers = stage ? stage.getLayers() : ([] as any[]);
+                            const layer = layers && layers.length > 0 ? layers[0] : null;
+                            const nodes: any = layer ? layer.find('Group') : [];
+                            let targetId: string | null = null;
+                            const arr = nodes?.toArray ? nodes.toArray() : nodes;
+                            arr.forEach((node: any) => {
+                              if (node.id() === el.id) return;
+                              const nx = node.x();
+                              const ny = node.y();
+                              const rect = node.findOne('Rect');
+                              if (!rect) return;
+                              const w = rect.width();
+                              const h = rect.height();
+                              if (pos && pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
+                                targetId = node.id();
+                              }
+                            });
+                            setHoveredTargetId(targetId);
                           }}
                           onDragEnd={(e) => {
                             setTempLine(null);
+                            setHoveredTargetId(null);
                             const stage = e.target.getStage();
                             const pos = stage?.getPointerPosition();
                             if (!pos) return;
-                            const layers = stage ? stage.getLayers() : [] as any[];
+                            const layers = stage ? stage.getLayers() : ([] as any[]);
                             const layer = layers && layers.length > 0 ? layers[0] : null;
-                            const nodes = layer ? layer.find('Group') : [];
+                            const nodes: any = layer ? layer.find('Group') : [];
                             let targetId: string | null = null;
-                            nodes.forEach((node:any) => {
+                            const arr = nodes?.toArray ? nodes.toArray() : nodes;
+                            arr.forEach((node:any) => {
                               if (node.id() === el.id) return;
                               const nx = node.x();
                               const ny = node.y();
