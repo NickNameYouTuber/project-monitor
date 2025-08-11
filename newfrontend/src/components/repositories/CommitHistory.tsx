@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Anchor, Card, Drawer, Group, Loader, Stack, Text, Title, Tabs, Badge } from '@mantine/core';
-import { Diff, Hunk, parseDiff } from 'react-diff-view';
+import { parseDiff } from 'react-diff-view';
 import 'react-diff-view/style/index.css';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { listCommits, getCommitDetail, type GitCommitDetail, type GitCommitShort } from '../../api/repositories';
 
 export default function CommitHistory({ repositoryId, branch }: { repositoryId: string; branch?: string }) {
@@ -59,6 +61,7 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
                 <Stack>
                   {detail.files.map((f) => {
                     const raw = f.diff || '';
+                    const language = guessLanguageFromPath(f.path);
                     const looksLikeUnified = raw.includes('diff --git') || (raw.includes('--- ') && raw.includes('+++ ')) || raw.includes('@@');
                     let parsed: ReturnType<typeof parseDiff> | null = null;
                     if (looksLikeUnified) {
@@ -75,15 +78,64 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
                           <Badge variant="light">{f.change_type}</Badge>
                         </Group>
                         {parsed && parsed.length > 0 ? (
-                          parsed.map(file => (
-                            <Diff key={file.newPath || file.oldPath} viewType="split" diffType={file.type} hunks={file.hunks}>
-                              {hunks => hunks.map(h => <Hunk key={h.content} hunk={h} />)}
-                            </Diff>
-                          ))
+                          <Stack gap={4}>
+                            {parsed.flatMap(file => file.hunks).flatMap(h => h.changes)
+                              .filter(change => change.type === 'insert' || change.type === 'delete')
+                              .map((change, idx) => {
+                                const oldNum = change.type === 'delete' ? (change as any).lineNumber : '';
+                                const newNum = change.type === 'insert' ? (change as any).lineNumber : '';
+                                return (
+                                  <div
+                                    key={change.content + '-' + oldNum + '-' + newNum + '-' + idx}
+                                    style={{
+                                      display: 'grid',
+                                      gridTemplateColumns: '60px 60px 1fr',
+                                      gap: 8,
+                                      alignItems: 'stretch',
+                                      background: change.type === 'insert' ? 'rgba(46, 160, 67, 0.15)' : 'rgba(248, 81, 73, 0.15)',
+                                      borderRadius: 6,
+                                      padding: '4px 8px'
+                                    }}
+                                  >
+                                    <Text size="xs" c="dimmed" ta="right">{oldNum}</Text>
+                                    <Text size="xs" c="dimmed" ta="right">{newNum}</Text>
+                                    <div>
+                                      <SyntaxHighlighter language={language} style={oneDark} customStyle={{ margin: 0, background: 'transparent' }} PreTag="div" wrapLongLines>
+                                        {stripDiffMarker(change.content)}
+                                      </SyntaxHighlighter>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                          </Stack>
                         ) : raw ? (
-                          <pre style={{ background: 'var(--mantine-color-dark-6)', padding: 12, borderRadius: 8, overflowX: 'auto' }}>
-                            {raw}
-                          </pre>
+                          <Stack gap={4}>
+                            {raw.split('\n')
+                              .filter(line => !(line.startsWith('@@') || line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('--- ') || line.startsWith('+++ ')))
+                              .filter(line => line.startsWith('+') || line.startsWith('-'))
+                              .map((line, idx) => (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '60px 60px 1fr',
+                                    gap: 8,
+                                    alignItems: 'stretch',
+                                    background: line.startsWith('+') ? 'rgba(46, 160, 67, 0.15)' : 'rgba(248, 81, 73, 0.15)',
+                                    borderRadius: 6,
+                                    padding: '4px 8px'
+                                  }}
+                                >
+                                  <Text size="xs" c="dimmed" ta="right"></Text>
+                                  <Text size="xs" c="dimmed" ta="right"></Text>
+                                  <div>
+                                    <SyntaxHighlighter language={language} style={oneDark} customStyle={{ margin: 0, background: 'transparent' }} PreTag="div" wrapLongLines>
+                                      {stripDiffMarker(line)}
+                                    </SyntaxHighlighter>
+                                  </div>
+                                </div>
+                              ))}
+                          </Stack>
                         ) : (
                           <Text size="sm" c="dimmed">Нет изменений</Text>
                         )}
@@ -110,4 +162,38 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
   );
 }
 
+function stripDiffMarker(content: string): string {
+  if (content.startsWith('+') || content.startsWith('-')) return content.slice(1);
+  return content;
+}
 
+function guessLanguageFromPath(path: string): string | undefined {
+  const ext = path.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'ts':
+    case 'tsx':
+      return 'tsx';
+    case 'js':
+    case 'jsx':
+      return 'jsx';
+    case 'py':
+      return 'python';
+    case 'md':
+      return 'markdown';
+    case 'json':
+      return 'json';
+    case 'yml':
+    case 'yaml':
+      return 'yaml';
+    case 'css':
+      return 'css';
+    case 'html':
+      return 'html';
+    case 'go':
+      return 'go';
+    case 'rs':
+      return 'rust';
+    default:
+      return undefined;
+  }
+}
