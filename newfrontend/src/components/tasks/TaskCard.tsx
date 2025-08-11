@@ -6,8 +6,10 @@ import TaskForm from './TaskForm';
 import { fetchProject } from '../../api/projects';
 import { fetchProjectRepositories, listBranches, createBranch } from '../../api/repositories';
 import { attachBranch } from '../../api/taskRepository';
+import { useTaskBoard } from '../../context/TaskBoardContext';
 
 export default function TaskCard({ task, index }: { task: Task; index: number }) {
+  const { setSelectedTask } = useTaskBoard();
   const [openEdit, setOpenEdit] = useState(false);
   const [openBranch, setOpenBranch] = useState(false);
   const [repos, setRepos] = useState<{ value: string; label: string }[]>([]);
@@ -64,7 +66,7 @@ export default function TaskCard({ task, index }: { task: Task; index: number })
     <Draggable draggableId={task.id} index={index}>
       {(provided: any) => (
         <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-          <Card withBorder padding="sm" shadow="xs">
+          <Card withBorder padding="sm" shadow="xs" onClick={() => setSelectedTask(task)}>
             <Group justify="space-between" align="flex-start">
               <div>
                 <Text fw={500}>{task.title}</Text>
@@ -76,11 +78,11 @@ export default function TaskCard({ task, index }: { task: Task; index: number })
               </div>
               <Menu withinPortal position="bottom-end">
                 <Menu.Target>
-                  <ActionIcon variant="subtle" aria-label="Настройки задачи">⋮</ActionIcon>
+                  <ActionIcon variant="subtle" aria-label="Настройки задачи" onClick={(e) => e.stopPropagation()}>⋮</ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
-                  <Menu.Item onClick={() => setOpenEdit(true)}>Редактировать</Menu.Item>
-                <Menu.Item onClick={openBranchModal}>Ветка: создать/привязать</Menu.Item>
+                  <Menu.Item onClick={(e) => { e.stopPropagation(); setOpenEdit(true); }}>Редактировать</Menu.Item>
+                  <Menu.Item onClick={(e) => { e.stopPropagation(); openBranchModal(); }}>Ветка: создать/привязать</Menu.Item>
                   <Menu.Item color="red">Удалить</Menu.Item>
                 </Menu.Dropdown>
               </Menu>

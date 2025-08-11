@@ -3,10 +3,11 @@ import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { Button } from '@mantine/core';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import TaskColumn from './TaskColumn';
+import TaskDetail from './TaskDetail';
 import TaskColumnForm from './TaskColumnForm';
 
 const TaskBoard = () => {
-  const { columns, tasks, reorderTasks, moveTask, loading, projectId, reorderColumns } = useTaskBoard();
+  const { columns, tasks, reorderTasks, moveTask, loading, projectId, reorderColumns, selectedTask } = useTaskBoard();
   const [isAddingColumn, setIsAddingColumn] = useState(false);
 
   const handleDragEnd = (result: any) => {
@@ -64,6 +65,7 @@ const TaskBoard = () => {
       {projectId && (
         <TaskColumnForm projectId={projectId} opened={isAddingColumn} onClose={() => setIsAddingColumn(false)} />
       )}
+      {selectedTask && <TaskDetail />}
     </div>
   );
 };
