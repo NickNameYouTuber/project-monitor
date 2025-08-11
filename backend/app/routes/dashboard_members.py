@@ -7,6 +7,7 @@ from ..schemas.dashboard_member import (DashboardMemberCreate, DashboardMemberRe
 from ..models.dashboard_member import DashboardMember
 from ..models.dashboard import Dashboard
 from ..models.user import User
+from datetime import datetime
 from ..auth import get_current_active_user
 import uuid
 
@@ -38,8 +39,52 @@ async def read_dashboard_members(dashboard_id: str,
         DashboardMember.dashboard_id == dashboard_id,
         DashboardMember.is_active == True
     ).all()
-    
+
+    # Ensure owner is included in the list as synthetic entry if missing
+    owner = db.query(User).filter(User.id == dashboard.owner_id).first()
+    if owner:
+        present = any(m.user_id == owner.id for m in members)
+        if not present:
+            synthetic = DashboardMember(
+                id=f"owner-{dashboard_id}",
+                dashboard_id=dashboard_id,
+                user_id=owner.id,
+                role="owner",
+                created_at=datetime.utcnow(),
+                is_active=True
+            )
+            synthetic.user = owner
+            members = [synthetic] + members
     return members
+
+@router.put("/{dashboard_id}/members/{member_id}")
+async def update_dashboard_member_role(dashboard_id: str,
+                               member_id: str,
+                               member: DashboardMemberUpdate,
+                               current_user: User = Depends(get_current_active_user),
+                               db: Session = Depends(get_db)):
+    # Only owner can change roles
+    dashboard = db.query(Dashboard).filter(Dashboard.id == dashboard_id).first()
+    if dashboard is None:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+    if dashboard.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    db_member = db.query(DashboardMember).filter(
+        DashboardMember.id == member_id,
+        DashboardMember.dashboard_id == dashboard_id
+    ).first()
+    if db_member is None:
+        raise HTTPException(status_code=404, detail="Member not found")
+
+    if member.role is not None:
+        if member.role not in ["viewer", "editor", "admin"]:
+            raise HTTPException(status_code=400, detail="Invalid role")
+        db_member.role = member.role
+
+    db.commit()
+    db.refresh(db_member)
+    return db_member
 
 
 @router.post("/{dashboard_id}/members", response_model=DashboardMemberResponse, status_code=status.HTTP_201_CREATED)

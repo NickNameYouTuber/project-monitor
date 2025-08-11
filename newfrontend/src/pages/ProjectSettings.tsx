@@ -118,8 +118,14 @@ export default function ProjectSettings({ projectId }: { projectId: string }) {
             <Group key={m.id} wrap="nowrap">
               <Text w={220}>{m.user.first_name || ''} {m.user.last_name || ''} ({m.user.username})</Text>
               <Select w={180} data={roleOptions} value={m.role} onChange={async (v) => {
-                if (!v) return; // Simplification: could add role update route in backend
-              }} disabled />
+                if (!project?.dashboard_id || !v) return;
+                try {
+                  await apiClient.put(`/dashboards/${project.dashboard_id}/members/${m.id}`, { role: v });
+                  setMembers(prev => prev.map(x => x.id === m.id ? { ...x, role: v } : x));
+                } catch (e:any) {
+                  alert(e?.response?.data?.detail || 'Не удалось обновить роль');
+                }
+              }} />
               <Button variant="default" onClick={() => removeMember(m.id)}>Удалить</Button>
             </Group>
           ))}
