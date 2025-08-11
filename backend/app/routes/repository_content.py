@@ -668,8 +668,10 @@ async def get_commit_detail(
                 "files": []
             }
             
-            # Get file changes
-            for diff_item in commit.diff(commit.parents[0] if commit.parents else git.NULL_TREE):
+            # Get file changes (against first parent or empty tree)
+            parent = commit.parents[0] if commit.parents else None
+            diffs = commit.diff(parent, create_patch=True)
+            for diff_item in diffs:
                 change_type = "unknown"
                 
                 if diff_item.new_file:
@@ -681,21 +683,19 @@ async def get_commit_detail(
                 else:
                     change_type = "modified"
                     
-                raw_diff = getattr(diff_item, 'diff', None)
-                if isinstance(raw_diff, bytes):
-                    diff_text = raw_diff.decode('utf-8', errors='replace')
-                elif raw_diff is None:
-                    diff_text = ""
-                else:
-                    diff_text = str(raw_diff)
+                # Ensure we get textual patch
+                raw = diff_item.diff
+                diff_text = raw.decode('utf-8', errors='replace') if isinstance(raw, (bytes, bytearray)) else str(raw or "")
 
                 # Rough counts: number of lines starting with '+'/'-' excluding headers
                 additions = sum(1 for line in diff_text.splitlines() if line.startswith('+') and not line.startswith('+++'))
                 deletions = sum(1 for line in diff_text.splitlines() if line.startswith('-') and not line.startswith('---'))
 
+                b_path = getattr(diff_item, 'b_path', None)
+                a_path = getattr(diff_item, 'a_path', None)
                 file_info = {
-                    "path": diff_item.b_path if hasattr(diff_item, 'b_path') else diff_item.a_path,
-                    "old_path": diff_item.a_path if hasattr(diff_item, 'a_path') and diff_item.a_path != getattr(diff_item, 'b_path', None) else None,
+                    "path": b_path or a_path,
+                    "old_path": a_path if a_path and a_path != b_path else None,
                     "change_type": change_type,
                     "additions": additions,
                     "deletions": deletions,

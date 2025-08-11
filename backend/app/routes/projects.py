@@ -224,22 +224,12 @@ async def delete_project(project_id: str,
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
         
-    # Проверяем права доступа
+    # Удалять проект может только владелец
     is_owner = str(db_project.owner_id) == str(current_user.id)
-    is_member = False
-    
-    if db_project.dashboard_id:
-        dashboard_member = db.query(DashboardMember).filter(
-            DashboardMember.dashboard_id == db_project.dashboard_id,
-            DashboardMember.user_id == current_user.id,
-            DashboardMember.is_active == True
-        ).first()
-        is_member = dashboard_member is not None
-    
-    if not (is_owner or is_member):
+    if not is_owner:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to delete this project"
+            detail="Only the project owner can delete this project"
         )
     
     # Delete the project

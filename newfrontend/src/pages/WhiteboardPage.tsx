@@ -149,6 +149,19 @@ export default function WhiteboardPage() {
         
         {selectedId && (<Text size="sm" c="dimmed">Выбран элемент</Text>)}
         <Button size="xs" variant="default" onClick={() => setSelectedId(null)}>Снять выделение</Button>
+        {selectedId && (
+          <Button size="xs" color="red" variant="filled" onClick={() => {
+            // удаление выбранного стикера
+            const id = selectedId;
+            setSelectedId(null);
+            // optimistic remove on frontend and call backend
+            setElements(prev => prev.filter(el => el.id !== id));
+            // remove related connections visually
+            setConnections(prev => prev.filter(c => c.source_element_id !== id && c.target_element_id !== id));
+            // backend delete
+            fetch(`/api/whiteboard-elements/${id}`, { method: 'DELETE', credentials: 'include' }).catch(() => {});
+          }}>Удалить стикер</Button>
+        )}
       </MantineGroup>
 
       <div
