@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs, Box } from '@mantine/core';
-import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, type MergeRequest, type MergeRequestComment } from '../../api/repositories';
+import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, type MergeRequest, type MergeRequestComment, type MergeRequestDetail } from '../../api/repositories';
 
 export default function RepositoryMergeRequests({ repositoryId }: { repositoryId: string }) {
   const [mrs, setMrs] = useState<MergeRequest[]>([]);
@@ -11,7 +11,7 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
   const [source, setSource] = useState<string | null>(null);
   const [target, setTarget] = useState<string | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
-  const [activeMr, setActiveMr] = useState<MergeRequest | null>(null);
+  const [activeMr, setActiveMr] = useState<MergeRequestDetail | null>(null);
   const [comments, setComments] = useState<MergeRequestComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
@@ -39,22 +39,15 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
   }, [repositoryId]);
 
   async function openDetail(mr: MergeRequest) {
-    setActiveMr(mr);
+    const detail = await getMergeRequestDetail(repositoryId, mr.id);
+    setActiveMr(detail);
     const list = await listMergeRequestComments(repositoryId, mr.id);
     setComments(list);
-    // fetch changes
     try {
-      const res = await fetch(`/api/repositories/${repositoryId}/merge_requests/${mr.id}/changes`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        const raw = (data.files || []).map((f: any) => f.diff || '').join('\n');
-        setChanges(raw);
-      } else {
-        setChanges('');
-      }
-    } catch {
-      setChanges('');
-    }
+      const data = await getMergeRequestChanges(repositoryId, mr.id);
+      const raw = (data.files || []).map((f: any) => f.diff || '').join('\n');
+      setChanges(raw);
+    } catch { setChanges(''); }
     setDetailOpen(true);
   }
 
@@ -74,7 +67,8 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
   async function submitMerge() {
     if (!activeMr) return;
     const merged = await mergeMergeRequest(repositoryId, activeMr.id);
-    setActiveMr(merged);
+    const detail = await getMergeRequestDetail(repositoryId, merged.id);
+    setActiveMr(detail);
     setMrs(prev => prev.map(m => m.id === merged.id ? merged : m));
   }
 
@@ -133,10 +127,22 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
               <Badge variant="light">{activeMr.status}</Badge>
             </Group>
             {activeMr.description && <Text>{activeMr.description}</Text>}
-            <Group>
-              <Button variant="light" onClick={submitApprove}>Approve</Button>
-              <Button onClick={submitMerge}>Merge</Button>
-            </Group>
+            <Stack>
+              <Group>
+                <Button variant="light" onClick={submitApprove}>Approve</Button>
+                <Button onClick={submitMerge}>Merge</Button>
+              </Group>
+              {activeMr.approvals?.length ? (
+                <Group gap="xs">
+                  <Text size="sm" c="dimmed">Approvals:</Text>
+                  {activeMr.approvals.map(a => (
+                    <Badge key={a.id} variant="light">{a.user_name || a.user_id}</Badge>
+                  ))}
+                </Group>
+              ) : (
+                <Text size="sm" c="dimmed">Нет апрувов</Text>
+              )}
+            </Stack>
             {changes && (
               <Box style={{ background: 'var(--mantine-color-dark-6)', borderRadius: 8, padding: 12, maxHeight: 300, overflow: 'auto' }}>
                 <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{changes}</pre>

@@ -190,4 +190,29 @@ export async function createMergeRequestComment(repositoryId: string, mrId: stri
   return data;
 }
 
+export interface MergeRequestApprovalWithUser {
+  id: string;
+  merge_request_id: string;
+  user_id: string;
+  user_name?: string;
+  created_at: string;
+}
+
+export interface MergeRequestDetail extends MergeRequest {
+  approvals: MergeRequestApprovalWithUser[];
+}
+
+export async function getMergeRequestDetail(repositoryId: string, mrId: string) {
+  const { data } = await apiClient.get<MergeRequestDetail>(`/repositories/${repositoryId}/merge_requests/${mrId}`);
+  return data;
+}
+
+export interface MergeRequestChanges {
+  files: GitCommitFileChange[];
+}
+
+export async function getMergeRequestChanges(repositoryId: string, mrId: string) {
+  const { data } = await apiClient.get<MergeRequestChanges>(`/repositories/${repositoryId}/merge_requests/${mrId}/changes`);
+  return data;
+}
 
