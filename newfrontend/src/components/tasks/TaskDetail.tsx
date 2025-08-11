@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Group, Loader, Modal, MultiSelect, Select, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Button, Group, Loader, Modal, MultiSelect, Select, Stack, Text, Textarea, TextInput, Divider } from '@mantine/core';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { fetchProject } from '../../api/projects';
 import apiClient from '../../api/client';
 import { createComment, getTaskComments, type Comment } from '../../api/comments';
+import { fetchProjectRepositories, listBranches, createBranch } from '../../api/repositories';
+import { attachBranch, getTaskBranches } from '../../api/taskRepository';
 
 export default function TaskDetail() {
   const { selectedTask, setSelectedTask, updateTask } = useTaskBoard();
@@ -18,6 +20,13 @@ export default function TaskDetail() {
   const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [repos, setRepos] = useState<{ value: string; label: string }[]>([]);
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
+  const [branches, setBranches] = useState<{ value: string; label: string }[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+  const [newBranch, setNewBranch] = useState('');
+  const [baseBranch, setBaseBranch] = useState<string | null>(null);
+  const [savingBranch, setSavingBranch] = useState(false);
 
   useEffect(() => {
     if (!task) return;
@@ -37,12 +46,33 @@ export default function TaskDetail() {
         if (p.dashboard_id) {
           const { data } = await apiClient.get(`/dashboards/${p.dashboard_id}/members`);
           const options = (data || []).map((m: any) => ({ value: m.user_id, label: m.user?.username || m.username || m.user_id }));
-          setMembers(options);
+          // всегда включаем текущего пользователя (если его нет в участниках)
+          const me = await apiClient.get('/users/me').then(r => r.data).catch(() => null);
+          const meOption = me ? { value: me.id, label: me.username } : null;
+          const merged = meOption && !options.find((o: { value: string; label: string }) => o.value === meOption.value) ? [meOption, ...options] : options;
+          setMembers(merged);
         } else {
           setMembers([]);
         }
         const cs = await getTaskComments(task.id);
         setComments(Array.isArray(cs) ? cs : []);
+
+        // Репозитории и ветки
+        const pr = await fetchProjectRepositories(task.project_id);
+        const reposOpts = pr.map(r => ({ value: r.id, label: r.name }));
+        setRepos(reposOpts);
+        // Если есть привязанные ветки, можно подтянуть первую как выбранную
+        const related = await getTaskBranches(task.id).catch(() => []);
+        if (Array.isArray(related) && related.length > 0) {
+          const repoMatch = reposOpts.find(r => r.label === related[0].repository_name);
+          if (repoMatch) {
+            setSelectedRepo(repoMatch.value);
+            const bs = await listBranches(repoMatch.value);
+            setBranches(bs.map(b => ({ value: b.name, label: b.name })));
+            setSelectedBranch(related[0].branch_name || null);
+            setBaseBranch(bs.find(b => b.is_default)?.name || bs[0]?.name || null);
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -74,6 +104,31 @@ export default function TaskDetail() {
     const created = await createComment({ task_id: task.id, content: newComment.trim() });
     setComments((prev) => [...prev, created]);
     setNewComment('');
+  }
+
+  async function onRepoChange(repoId: string | null) {
+    setSelectedRepo(repoId);
+    setSelectedBranch(null);
+    setBranches([]);
+    if (repoId) {
+      const bs = await listBranches(repoId);
+      setBranches(bs.map(b => ({ value: b.name, label: b.name })));
+      setBaseBranch(bs.find(b => b.is_default)?.name || bs[0]?.name || null);
+    }
+  }
+
+  async function handleSaveBranch() {
+    if (!task || !selectedRepo) return;
+    setSavingBranch(true);
+    try {
+      if (selectedBranch) {
+        await attachBranch(task.id, selectedRepo, selectedBranch);
+      } else if (newBranch.trim()) {
+        await createBranch(selectedRepo, newBranch.trim(), baseBranch || undefined, task.id);
+      }
+    } finally {
+      setSavingBranch(false);
+    }
   }
 
   return (
@@ -109,6 +164,23 @@ export default function TaskDetail() {
             <Textarea placeholder="Оставить комментарий" value={newComment} onChange={(e) => setNewComment(e.currentTarget.value)} minRows={2} />
             <Group justify="flex-end">
               <Button onClick={handleAddComment} disabled={!newComment.trim()}>Отправить</Button>
+            </Group>
+          </Stack>
+
+          <Divider my="md" />
+          <Stack>
+            <Text fw={600}>Ветка задачи</Text>
+            <Group grow>
+              <Select label="Репозиторий" data={repos} value={selectedRepo} onChange={onRepoChange} searchable nothingFoundMessage="Нет репозиториев" />
+              <Select label="Существующая ветка" data={branches} value={selectedBranch} onChange={setSelectedBranch} searchable clearable nothingFoundMessage="Нет веток" disabled={!selectedRepo} />
+            </Group>
+            <Text size="sm" c="dimmed">или создайте новую</Text>
+            <Group grow>
+              <TextInput label="Новая ветка" value={newBranch} onChange={(e) => setNewBranch(e.currentTarget.value)} placeholder="feature/task-123" disabled={!selectedRepo} />
+              <Select label="Базовая ветка" data={branches} value={baseBranch} onChange={setBaseBranch} searchable disabled={!selectedRepo || !newBranch.trim()} />
+            </Group>
+            <Group justify="flex-end">
+              <Button onClick={handleSaveBranch} loading={savingBranch} disabled={!selectedRepo || (!selectedBranch && !newBranch.trim())}>Сохранить ветку</Button>
             </Group>
           </Stack>
         </Stack>

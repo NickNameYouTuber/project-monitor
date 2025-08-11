@@ -3,7 +3,7 @@ import apiClient from './client';
 export interface TaskBranchInfo {
   repository_id: string;
   repository_name: string;
-  branch: string;
+  branch_name: string;
   base_branch?: string | null;
 }
 
