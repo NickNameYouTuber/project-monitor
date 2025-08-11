@@ -13,6 +13,20 @@ import os
 router = APIRouter()
 
 
+def _user_display_name(user: Optional[User]) -> Optional[str]:
+    if user is None:
+        return None
+    if getattr(user, "username", None):
+        return user.username
+    first = getattr(user, "first_name", None) or ""
+    last = getattr(user, "last_name", None) or ""
+    full = (first + " " + last).strip()
+    if full:
+        return full
+    if getattr(user, "email", None):
+        return user.email
+    return None
+
 @router.get("/repositories/{repository_id}/merge_requests", response_model=List[schemas.merge_request.MergeRequest])
 def list_merge_requests(repository_id: str, status: Optional[str] = None, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
     _ = check_repository_access(repository_id, str(current_user.id), db)
@@ -65,7 +79,7 @@ def get_merge_request(repository_id: str, mr_id: str, current_user: User = Depen
                 id=a.id,
                 merge_request_id=a.merge_request_id,
                 user_id=a.user_id,
-                user_name=(lambda u: u.username if u is not None else None)(db.query(User).filter(User.id == a.user_id).first()) if a.user_id else None,
+                user_name=_user_display_name(db.query(User).filter(User.id == a.user_id).first()) if a.user_id else None,
                 created_at=a.created_at
             ) for a in approvals
         ]
@@ -147,10 +161,15 @@ def get_merge_request_changes(repository_id: str, mr_id: str, current_user: User
             change_type = 'deleted'
         elif getattr(d, 'renamed', False):
             change_type = 'renamed'
+        # Rough counts
+        additions = sum(1 for line in diff_text.splitlines() if line.startswith('+') and not line.startswith('+++'))
+        deletions = sum(1 for line in diff_text.splitlines() if line.startswith('-') and not line.startswith('---'))
         files.append({
             'path': getattr(d, 'b_path', None) or getattr(d, 'a_path', None),
             'old_path': getattr(d, 'a_path', None),
             'change_type': change_type,
+            'additions': additions,
+            'deletions': deletions,
             'diff': diff_text
         })
     return schemas.merge_request.MergeRequestChanges(files=files)
