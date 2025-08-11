@@ -40,6 +40,11 @@ def _apply_startup_migrations():
             cur.execute("ALTER TABLE tasks ADD COLUMN reviewer_id TEXT NULL REFERENCES users(id) ON DELETE SET NULL;")
         except Exception:
             pass
+        # Add updated_at to whiteboards if missing
+        try:
+            cur.execute("ALTER TABLE whiteboards ADD COLUMN updated_at DATETIME")
+        except Exception:
+            pass
         conn.commit()
         conn.close()
     except Exception:
