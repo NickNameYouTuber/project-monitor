@@ -40,11 +40,47 @@ def _apply_startup_migrations():
             cur.execute("ALTER TABLE tasks ADD COLUMN reviewer_id TEXT NULL REFERENCES users(id) ON DELETE SET NULL;")
         except Exception:
             pass
-        # Add updated_at to whiteboards if missing
+        # Whiteboards table incremental columns
         try:
             cur.execute("ALTER TABLE whiteboards ADD COLUMN updated_at DATETIME")
         except Exception:
             pass
+
+        # Whiteboard elements table incremental columns
+        for stmt in [
+            "ALTER TABLE whiteboard_elements ADD COLUMN board_id TEXT",
+            "ALTER TABLE whiteboard_elements ADD COLUMN type TEXT",
+            "ALTER TABLE whiteboard_elements ADD COLUMN x INTEGER",
+            "ALTER TABLE whiteboard_elements ADD COLUMN y INTEGER",
+            "ALTER TABLE whiteboard_elements ADD COLUMN width INTEGER",
+            "ALTER TABLE whiteboard_elements ADD COLUMN height INTEGER",
+            "ALTER TABLE whiteboard_elements ADD COLUMN rotation INTEGER",
+            "ALTER TABLE whiteboard_elements ADD COLUMN z_index INTEGER",
+            "ALTER TABLE whiteboard_elements ADD COLUMN text TEXT",
+            "ALTER TABLE whiteboard_elements ADD COLUMN fill TEXT",
+            "ALTER TABLE whiteboard_elements ADD COLUMN created_at DATETIME",
+            "ALTER TABLE whiteboard_elements ADD COLUMN updated_at DATETIME",
+        ]:
+            try:
+                cur.execute(stmt)
+            except Exception:
+                pass
+
+        # Whiteboard connections table incremental columns
+        for stmt in [
+            "ALTER TABLE whiteboard_connections ADD COLUMN board_id TEXT",
+            "ALTER TABLE whiteboard_connections ADD COLUMN source_element_id TEXT",
+            "ALTER TABLE whiteboard_connections ADD COLUMN target_element_id TEXT",
+            "ALTER TABLE whiteboard_connections ADD COLUMN stroke TEXT",
+            "ALTER TABLE whiteboard_connections ADD COLUMN stroke_width INTEGER",
+            "ALTER TABLE whiteboard_connections ADD COLUMN points TEXT",
+            "ALTER TABLE whiteboard_connections ADD COLUMN created_at DATETIME",
+            "ALTER TABLE whiteboard_connections ADD COLUMN updated_at DATETIME",
+        ]:
+            try:
+                cur.execute(stmt)
+            except Exception:
+                pass
         conn.commit()
         conn.close()
     except Exception:
