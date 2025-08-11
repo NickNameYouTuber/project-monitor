@@ -31,6 +31,10 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
     <Stack>
       <Card withBorder>
         <Stack>
+          <Group>
+            <Text size="sm" c="dimmed">Ветка:</Text>
+            <Anchor onClick={() => setCommits([])} style={{ pointerEvents: 'none' }}>{branch || 'все'}</Anchor>
+          </Group>
           {commits.map((c) => (
             <Group key={c.hash} justify="space-between">
               <Stack gap={2}>

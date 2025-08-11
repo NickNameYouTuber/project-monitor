@@ -1,6 +1,7 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import BaseModel
 from datetime import datetime
+from uuid import UUID
 
 
 class MergeRequestBase(BaseModel):
@@ -15,9 +16,9 @@ class MergeRequestCreate(MergeRequestBase):
 
 
 class MergeRequest(BaseModel):
-    id: str
-    repository_id: str
-    author_id: str
+    id: Union[str, UUID]
+    repository_id: Union[str, UUID]
+    author_id: Union[str, UUID]
     title: str
     description: Optional[str]
     source_branch: str
@@ -31,9 +32,9 @@ class MergeRequest(BaseModel):
 
 
 class MergeRequestApproval(BaseModel):
-    id: str
-    merge_request_id: str
-    user_id: str
+    id: Union[str, UUID]
+    merge_request_id: Union[str, UUID]
+    user_id: Union[str, UUID]
     created_at: datetime
 
     class Config:
@@ -45,9 +46,9 @@ class MergeRequestCommentCreate(BaseModel):
 
 
 class MergeRequestComment(BaseModel):
-    id: str
-    merge_request_id: str
-    user_id: str
+    id: Union[str, UUID]
+    merge_request_id: Union[str, UUID]
+    user_id: Union[str, UUID]
     content: str
     is_system: bool
     created_at: datetime
