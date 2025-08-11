@@ -669,9 +669,9 @@ async def get_commit_detail(
                 "files": []
             }
             
-            # Get file changes (against first parent or empty tree)
+            # Get file changes against first parent (or empty tree for root commit)
             parent = commit.parents[0] if commit.parents else None
-            diffs = commit.diff(parent, create_patch=True)
+            diffs = parent.diff(commit, create_patch=True) if parent else git.NULL_TREE.diff(commit, create_patch=True)
             for diff_item in diffs:
                 change_type = "unknown"
                 
