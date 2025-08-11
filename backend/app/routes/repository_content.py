@@ -488,7 +488,7 @@ async def list_commits(
             # Repository is empty, return empty list (not an error)
             return []
             
-        # Prepare git log command
+        # Prepare git log command (newest first by default)
         git_log_cmd = ["--pretty=format:%H|%an|%ae|%at|%s", f"-{limit}", f"--skip={skip}"]
         
         # Если указана ветка, добавим её в команду
@@ -512,8 +512,9 @@ async def list_commits(
             if len(parts) == 5:
                 commit_hash, author_name, author_email, author_time, subject = parts
                 
-                # Get stats for the commit using git show
-                stats_output = repo.git.show(commit_hash, "--stat", "--format=").strip()
+                # Get stats for the commit using git show (against parent)
+                parent = repo.commit(commit_hash).parents[0] if repo.commit(commit_hash).parents else None
+                stats_output = repo.git.show(commit_hash, "--stat", "--format=", parent.hexsha if parent else None).strip() if parent else repo.git.show(commit_hash, "--stat", "--format=").strip()
                 stats = {}
                 
                 # Parse the stats output
