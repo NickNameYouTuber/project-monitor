@@ -43,8 +43,8 @@ class WhiteboardConnection(Base):
 
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     board_id = Column("whiteboard_id", String, ForeignKey("whiteboards.id", ondelete="CASCADE"), nullable=False, index=True)
-    source_element_id = Column(String, ForeignKey("whiteboard_elements.id", ondelete="CASCADE"), nullable=False)
-    target_element_id = Column(String, ForeignKey("whiteboard_elements.id", ondelete="CASCADE"), nullable=False)
+    source_element_id = Column("from_element_id", String, ForeignKey("whiteboard_elements.id", ondelete="CASCADE"), nullable=False)
+    target_element_id = Column("to_element_id", String, ForeignKey("whiteboard_elements.id", ondelete="CASCADE"), nullable=False)
     stroke = Column(String, default="#2b2d42")
     stroke_width = Column(Integer, default=2)
     points = Column(Text, nullable=True)  # JSON-serialized polyline points if needed
