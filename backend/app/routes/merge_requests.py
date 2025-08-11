@@ -65,7 +65,7 @@ def get_merge_request(repository_id: str, mr_id: str, current_user: User = Depen
                 id=a.id,
                 merge_request_id=a.merge_request_id,
                 user_id=a.user_id,
-                user_name=(db.query(User).filter(User.id == a.user_id).first().username if a.user_id else None),
+                user_name=(lambda u: u.username if u is not None else None)(db.query(User).filter(User.id == a.user_id).first()) if a.user_id else None,
                 created_at=a.created_at
             ) for a in approvals
         ]

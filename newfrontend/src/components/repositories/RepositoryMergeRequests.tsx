@@ -62,6 +62,8 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
   async function submitApprove() {
     if (!activeMr) return;
     await approveMergeRequest(repositoryId, activeMr.id);
+    const detail = await getMergeRequestDetail(repositoryId, activeMr.id);
+    setActiveMr(detail);
   }
 
   async function submitMerge() {
