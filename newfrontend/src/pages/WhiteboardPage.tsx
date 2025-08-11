@@ -152,7 +152,7 @@ export default function WhiteboardPage() {
           backgroundImage: 'radial-gradient(circle, #e0e0e0 1px, transparent 1px)',
           backgroundSize: '20px 20px',
           backgroundColor: '#f5f5f5',
-          cursor: tool === 'hand' ? 'grab' : tool === 'sticky' ? 'crosshair' : tool === 'delete' ? 'pointer' : 'default'
+          cursor: tool === 'hand' ? 'grab' : tool === 'sticky' ? 'crosshair' : 'default'
         }}
       >
         <Stage
@@ -167,42 +167,44 @@ export default function WhiteboardPage() {
           <Layer ref={layerRef}>
             {/* Render elements */}
              {elements.map((el) => (
-               <KonvaGroup key={el.id}>
-                <Rect
-                  id={el.id}
-                  x={el.x}
-                  y={el.y}
-                  width={el.width}
-                  height={el.height}
-                  rotation={0}
-                  fill={el.fill || '#ffeb3b'}
-                  shadowBlur={3}
-                  shadowOffsetX={2}
-                  shadowOffsetY={2}
-                  shadowOpacity={0.2}
-                  draggable
-                  onDragEnd={(e) => handleDragEnd(e, el.id)}
-                  onDblClick={() => handleTextDblClick(el.id)}
-                  cornerRadius={4}
-                />
-                {el.text && (
-                  <KText
-                    x={el.x}
-                    y={el.y}
-                    width={el.width}
-                    height={el.height}
-                    text={el.text}
-                    fontSize={14}
-                    fontFamily="Arial"
-                    fill="#333"
-                    align="center"
-                    verticalAlign="middle"
-                    padding={10}
-                    listening={false}
-                  />
-                )}
+               <KonvaGroup
+                 key={el.id}
+                 id={el.id}
+                 x={el.x}
+                 y={el.y}
+                 draggable
+                 onDragEnd={(e) => handleDragEnd(e, el.id)}
+                 onDblClick={() => handleTextDblClick(el.id)}
+               >
+                 <Rect
+                   width={el.width}
+                   height={el.height}
+                   rotation={0}
+                   fill={el.fill || '#ffeb3b'}
+                   shadowBlur={3}
+                   shadowOffsetX={2}
+                   shadowOffsetY={2}
+                   shadowOpacity={0.2}
+                   cornerRadius={4}
+                 />
+                 {el.text && (
+                   <KText
+                     x={0}
+                     y={0}
+                     width={el.width}
+                     height={el.height}
+                     text={el.text}
+                     fontSize={14}
+                     fontFamily="Arial"
+                     fill="#333"
+                     align="center"
+                     verticalAlign="middle"
+                     padding={10}
+                     listening={false}
+                   />
+                 )}
                </KonvaGroup>
-            ))}
+             ))}
             
             {/* no transformer in minimal */}
           </Layer>
