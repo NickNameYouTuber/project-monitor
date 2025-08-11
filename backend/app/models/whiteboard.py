@@ -22,7 +22,7 @@ class WhiteboardElement(Base):
     __tablename__ = "whiteboard_elements"
 
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-    board_id = Column(String, ForeignKey("whiteboards.id", ondelete="CASCADE"), nullable=False, index=True)
+    board_id = Column("whiteboard_id", String, ForeignKey("whiteboards.id", ondelete="CASCADE"), nullable=False, index=True)
     type = Column(String, nullable=False, default="sticky")
     x = Column(Integer, default=0)
     y = Column(Integer, default=0)
@@ -42,7 +42,7 @@ class WhiteboardConnection(Base):
     __tablename__ = "whiteboard_connections"
 
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-    board_id = Column(String, ForeignKey("whiteboards.id", ondelete="CASCADE"), nullable=False, index=True)
+    board_id = Column("whiteboard_id", String, ForeignKey("whiteboards.id", ondelete="CASCADE"), nullable=False, index=True)
     source_element_id = Column(String, ForeignKey("whiteboard_elements.id", ondelete="CASCADE"), nullable=False)
     target_element_id = Column(String, ForeignKey("whiteboard_elements.id", ondelete="CASCADE"), nullable=False)
     stroke = Column(String, default="#2b2d42")

@@ -48,7 +48,7 @@ def _apply_startup_migrations():
 
         # Whiteboard elements table incremental columns
         for stmt in [
-            "ALTER TABLE whiteboard_elements ADD COLUMN board_id TEXT",
+            "ALTER TABLE whiteboard_elements ADD COLUMN whiteboard_id TEXT",
             "ALTER TABLE whiteboard_elements ADD COLUMN type TEXT",
             "ALTER TABLE whiteboard_elements ADD COLUMN x INTEGER",
             "ALTER TABLE whiteboard_elements ADD COLUMN y INTEGER",
@@ -68,7 +68,7 @@ def _apply_startup_migrations():
 
         # Whiteboard connections table incremental columns
         for stmt in [
-            "ALTER TABLE whiteboard_connections ADD COLUMN board_id TEXT",
+            "ALTER TABLE whiteboard_connections ADD COLUMN whiteboard_id TEXT",
             "ALTER TABLE whiteboard_connections ADD COLUMN source_element_id TEXT",
             "ALTER TABLE whiteboard_connections ADD COLUMN target_element_id TEXT",
             "ALTER TABLE whiteboard_connections ADD COLUMN stroke TEXT",
