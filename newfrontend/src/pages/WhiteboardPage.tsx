@@ -66,16 +66,17 @@ export default function WhiteboardPage() {
     const pos = stage.getPointerPosition();
     if (!pos) return;
 
-    // Click on empty space - deselect and create sticky if tool is sticky
-    if (e.target === stage) {
+    // Click on empty space (stage or empty layer) - deselect and optionally create sticky
+    const isEmpty = e.target === stage || e.target.getClassName?.() === 'Layer';
+    if (isEmpty) {
       setSelectedId(null);
       
       if (tool === 'sticky') {
         // Create new sticky note
         const newEl: Partial<WhiteboardElement> = {
           type: 'sticky',
-          x: Math.round(pos.x - 100),
-          y: Math.round(pos.y - 75),
+          x: Math.round(stage.x() * -1 + pos.x - 100),
+          y: Math.round(stage.y() * -1 + pos.y - 75),
           width: 200,
           height: 150,
           rotation: 0,
@@ -161,6 +162,7 @@ export default function WhiteboardPage() {
           onMouseDown={handleStageMouseDown}
           // no mouse move handler
           draggable={tool === 'hand'}
+          dragBoundFunc={(pos) => pos}
         >
           <Layer ref={layerRef}>
             {/* Render elements */}
