@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { Button } from '@mantine/core';
+import { Button, MultiSelect, TextInput, Select } from '@mantine/core';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import TaskColumn from './TaskColumn';
 import TaskDetail from './TaskDetail';
@@ -9,6 +9,16 @@ import TaskColumnForm from './TaskColumnForm';
 const TaskBoard = () => {
   const { columns, tasks, reorderTasks, moveTask, loading, projectId, reorderColumns, selectedTask } = useTaskBoard();
   const [isAddingColumn, setIsAddingColumn] = useState(false);
+  const [query, setQuery] = useState('');
+  const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
+  const [reviewerFilter, setReviewerFilter] = useState<string | null>(null);
+
+  const assigneeOptions = Array.from(
+    new Map(
+      tasks.flatMap((t) => (t as any).assignees || []).map((u: any) => [u.id, { value: u.id, label: u.username }])
+    ).values()
+  );
+  const reviewerOptions = assigneeOptions;
 
   const handleDragEnd = (result: any) => {
     const { source, destination, type, draggableId } = result;
@@ -53,7 +63,19 @@ const TaskBoard = () => {
               {columns
                 .sort((a, b) => a.order - b.order)
                 .map((column, i) => (
-                  <TaskColumn key={column.id} column={column} tasks={tasks.filter((t) => t.column_id === column.id).sort((a, b) => a.order - b.order)} index={i} />
+                  <TaskColumn
+                    key={column.id}
+                    column={column}
+                    tasks={tasks
+                      .filter((t) => t.column_id === column.id)
+                      .filter((t) =>
+                        (!query || t.title.toLowerCase().includes(query.toLowerCase()) || (t.description || '').toLowerCase().includes(query.toLowerCase())) &&
+                        (assigneeFilter.length === 0 || assigneeFilter.every((id) => ((t as any).assignees || []).some((a: any) => a.id === id))) &&
+                        (!reviewerFilter || (t as any).reviewer_id === reviewerFilter)
+                      )
+                      .sort((a, b) => a.order - b.order)}
+                    index={i}
+                  />
                 ))}
               {provided.placeholder}
             </div>
@@ -61,6 +83,11 @@ const TaskBoard = () => {
         </Droppable>
       </DragDropContext>
       {/* Без внешней обводки у контейнера */}
+      <div className="fixed bottom-4 right-4 bg-white/80 border rounded-md p-2 shadow-sm flex gap-2 items-center">
+        <TextInput placeholder="Поиск" value={query} onChange={(e) => setQuery(e.currentTarget.value)} size="xs" />
+        <MultiSelect data={assigneeOptions} value={assigneeFilter} onChange={setAssigneeFilter} placeholder="Исполнители" searchable clearable size="xs" nothingFoundMessage="Нет" />
+        <Select data={[{ value: '', label: 'Все ревьюеры' }, ...reviewerOptions]} value={reviewerFilter ?? ''} onChange={(v) => setReviewerFilter(v || null)} placeholder="Ревьюер" searchable clearable size="xs" />
+      </div>
       {/* Модалка добавления колонки */}
       {projectId && (
         <TaskColumnForm projectId={projectId} opened={isAddingColumn} onClose={() => setIsAddingColumn(false)} />

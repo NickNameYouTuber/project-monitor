@@ -187,9 +187,12 @@ export default function TaskDetail() {
         <Group justify="center"><Loader /></Group>
       ) : (
         <Stack gap="lg">
-          {/* Ветка задачи — один компактный Select, создание по требованию */}
           <Stack>
-            <Text fw={600}>Ветка задачи</Text>
+            <TextInput label="Название" value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
+            <Textarea label="Описание" value={description} onChange={(e) => setDescription(e.currentTarget.value)} minRows={3} />
+            <MultiSelect label="Исполнители" data={members} value={assigneeIds} onChange={setAssigneeIds} searchable placeholder="Выберите участников" nothingFoundMessage="Нет участников" />
+            <Select label="Ревьюер" data={[{ value: '', label: '—' }, ...members]} value={reviewerId ?? ''} onChange={(v) => setReviewerId(v || null)} searchable allowDeselect />
+            {/* Ветка прямо под ревьюером */}
             <Select
               label="Ветка"
               data={branchOptions}
@@ -232,13 +235,6 @@ export default function TaskDetail() {
                 </Group>
               </>
             )}
-          </Stack>
-
-          <Stack>
-            <TextInput label="Название" value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
-            <Textarea label="Описание" value={description} onChange={(e) => setDescription(e.currentTarget.value)} minRows={3} />
-            <MultiSelect label="Исполнители" data={members} value={assigneeIds} onChange={setAssigneeIds} searchable placeholder="Выберите участников" nothingFoundMessage="Нет участников" />
-            <Select label="Ревьюер" data={[{ value: '', label: '—' }, ...members]} value={reviewerId ?? ''} onChange={(v) => setReviewerId(v || null)} searchable allowDeselect />
             <Group justify="flex-end">
               <Button variant="default" onClick={() => setSelectedTask(null)}>Закрыть</Button>
               <Button onClick={handleSave} loading={saving}>Сохранить</Button>
