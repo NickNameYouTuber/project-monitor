@@ -7,8 +7,10 @@ export interface Task {
   column_id: string;
   project_id: string;
   order: number;
+  reviewer_id?: string | null;
   created_at: string;
   updated_at: string;
+  assignees?: { id: string; username: string }[];
 }
 
 export interface TaskCreate {
@@ -17,6 +19,8 @@ export interface TaskCreate {
   column_id: string;
   project_id: string;
   order?: number;
+  assignee_ids?: string[];
+  reviewer_id?: string | null;
 }
 
 export interface TaskUpdate {
@@ -24,6 +28,8 @@ export interface TaskUpdate {
   description?: string;
   column_id?: string;
   order?: number;
+  assignee_ids?: string[];
+  reviewer_id?: string | null;
 }
 
 export interface TaskMove {

@@ -7,6 +7,7 @@ class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     order: Optional[int] = 0
+    reviewer_id: Optional[str] = None
 
 
 class TaskCreate(TaskBase):
@@ -21,6 +22,7 @@ class TaskUpdate(BaseModel):
     column_id: Optional[str] = None
     order: Optional[int] = None
     assignee_ids: Optional[List[str]] = None
+    reviewer_id: Optional[str] = None
 
 
 class TaskMoveUpdate(BaseModel):

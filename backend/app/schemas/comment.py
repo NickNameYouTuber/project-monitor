@@ -5,6 +5,7 @@ from datetime import datetime
 
 class CommentBase(BaseModel):
     content: str
+    is_system: bool = False
 
 
 class CommentCreate(CommentBase):

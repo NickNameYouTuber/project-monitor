@@ -23,6 +23,7 @@ class Task(Base):
     column_id = Column(String, ForeignKey("task_columns.id", ondelete="CASCADE"), nullable=False)
     project_id = Column(String, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     order = Column(Integer, default=0)
+    reviewer_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -33,3 +34,4 @@ class Task(Base):
     
     # Многие-ко-многим с пользователями (исполнители)
     assignees = relationship("User", secondary=task_assignees, backref="assigned_tasks")
+    reviewer = relationship("User", foreign_keys=[reviewer_id])

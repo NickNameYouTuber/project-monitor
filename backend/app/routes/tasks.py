@@ -70,6 +70,13 @@ def create_task(
         order=task.order if task.order is not None else max_order
     )
     
+    # Reviewer
+    if task.reviewer_id:
+        reviewer = db.query(models.User).filter(models.User.id == task.reviewer_id).first()
+        if not reviewer:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reviewer not found")
+        db_task.reviewer_id = task.reviewer_id
+
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -269,6 +276,16 @@ def update_task(
             user = db.query(models.User).filter(models.User.id == user_id).first()
             if user:
                 task.assignees.append(user)
+    
+    # Обновляем ревьюера
+    if task_update.reviewer_id is not None:
+        if task_update.reviewer_id == "":
+            task.reviewer_id = None
+        else:
+            reviewer = db.query(models.User).filter(models.User.id == task_update.reviewer_id).first()
+            if not reviewer:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reviewer not found")
+            task.reviewer_id = task_update.reviewer_id
     
     db.commit()
     db.refresh(task)

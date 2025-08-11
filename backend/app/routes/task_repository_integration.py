@@ -100,6 +100,52 @@ async def get_task_related_branches(
         )
 
 
+class AttachBranchRequest(git_schemas.BaseModel):
+    repository_id: str
+    branch: str
+
+
+@router.post("/{task_id}/attach-branch")
+async def attach_branch_to_task(
+    task_id: str,
+    payload: AttachBranchRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Привязать существующую ветку к задаче: создается системный комментарий.
+    """
+    try:
+        task = db.query(Task).filter(Task.id == task_id).first()
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+        # Проверяем доступ к репозиторию
+        repo = db.query(Repository).filter(Repository.id == payload.repository_id).first()
+        if not repo:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+
+        # Проверяем права доступа
+        _ = await check_repository_access(payload.repository_id, current_user, db)
+
+        # Создаем системный комментарий
+        comment = Comment(
+            id=str(uuid.uuid4()),
+            task_id=task_id,
+            user_id=current_user.id,
+            content=f"🔄 Привязана ветка **{payload.branch}**",
+            is_system=True,
+        )
+        db.add(comment)
+        db.commit()
+
+        return {"status": "ok"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/{task_id}/commits")
 async def get_branch_commits(
     task_id: str,

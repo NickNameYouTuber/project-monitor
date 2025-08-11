@@ -3,13 +3,14 @@ from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from starlette.routing import Route, Mount
-from .database import engine
+from .database import engine, SQLALCHEMY_DATABASE_URL
 from . import models
 from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards
 import subprocess
 import os
 from pathlib import Path
 import uvicorn
+import sqlite3
 
 # Create database tables
 models.user.Base.metadata.create_all(bind=engine)
@@ -22,6 +23,30 @@ models.comment.Base.metadata.create_all(bind=engine)
 models.repository.Base.metadata.create_all(bind=engine)
 models.repository_member.Base.metadata.create_all(bind=engine)
 models.token.Base.metadata.create_all(bind=engine)  # Initialize personal access token table
+
+
+def _apply_startup_migrations():
+    try:
+        db_path = SQLALCHEMY_DATABASE_URL.replace('sqlite:///', '')
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        # Add is_system to comments if missing
+        try:
+            cur.execute("ALTER TABLE comments ADD COLUMN is_system BOOLEAN DEFAULT FALSE;")
+        except Exception:
+            pass
+        # Add reviewer_id to tasks if missing
+        try:
+            cur.execute("ALTER TABLE tasks ADD COLUMN reviewer_id TEXT NULL REFERENCES users(id) ON DELETE SET NULL;")
+        except Exception:
+            pass
+        conn.commit()
+        conn.close()
+    except Exception:
+        # Best-effort; do not crash app on migration issues
+        pass
+
+_apply_startup_migrations()
 
 app = FastAPI(
     title="Project Monitor API",
