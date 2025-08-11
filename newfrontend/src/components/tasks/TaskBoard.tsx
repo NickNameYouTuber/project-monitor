@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { Button, MultiSelect, TextInput, Select } from '@mantine/core';
+import { Button, MultiSelect, TextInput, Select, Group } from '@mantine/core';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import TaskColumn from './TaskColumn';
 import TaskDetail from './TaskDetail';
 import TaskColumnForm from './TaskColumnForm';
+import { fetchProject } from '../../api/projects';
+import apiClient from '../../api/client';
 
 const TaskBoard = () => {
   const { columns, tasks, reorderTasks, moveTask, loading, projectId, reorderColumns, selectedTask } = useTaskBoard();
@@ -12,13 +14,35 @@ const TaskBoard = () => {
   const [query, setQuery] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
   const [reviewerFilter, setReviewerFilter] = useState<string | null>(null);
+  const [memberOptions, setMemberOptions] = useState<{ value: string; label: string }[]>([]);
 
-  const assigneeOptions = Array.from(
-    new Map(
-      tasks.flatMap((t) => (t as any).assignees || []).map((u: any) => [u.id, { value: u.id, label: u.username }])
-    ).values()
-  );
-  const reviewerOptions = assigneeOptions;
+  useEffect(() => {
+    async function loadMembers() {
+      try {
+        if (!projectId) return;
+        const p = await fetchProject(projectId);
+        const me = await apiClient.get('/users/me').then(r => r.data).catch(() => null);
+        if (p && (p as any).dashboard_id) {
+          const { data } = await apiClient.get(`/dashboards/${(p as any).dashboard_id}/members`);
+          const opts = (data || []).map((m: any) => {
+            const id = m.user_id;
+            const name = m.user?.username || m.username || m.user_id;
+            const label = me && id === me.id ? `${name} (Вы)` : name;
+            return { value: id, label };
+          });
+          if (me && !opts.find((o: any) => o.value === me.id)) {
+            opts.unshift({ value: me.id, label: `${me.username} (Вы)` });
+          }
+          setMemberOptions(opts);
+        } else {
+          setMemberOptions([]);
+        }
+      } catch {
+        setMemberOptions([]);
+      }
+    }
+    void loadMembers();
+  }, [projectId]);
 
   const handleDragEnd = (result: any) => {
     const { source, destination, type, draggableId } = result;
@@ -52,10 +76,15 @@ const TaskBoard = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-semibold">Доска задач</h2>
         <Button size="xs" onClick={() => setIsAddingColumn(true)}>Добавить колонку</Button>
       </div>
+      <Group gap="sm" className="mb-4" wrap="wrap">
+        <TextInput placeholder="Поиск" value={query} onChange={(e) => setQuery(e.currentTarget.value)} size="xs" className="min-w-[220px]" />
+        <MultiSelect data={memberOptions} value={assigneeFilter} onChange={setAssigneeFilter} placeholder="Исполнители" searchable clearable size="xs" nothingFoundMessage="Нет" className="min-w-[260px]" />
+        <Select data={[{ value: '', label: 'Все ревьюеры' }, ...memberOptions]} value={reviewerFilter ?? ''} onChange={(v) => setReviewerFilter(v || null)} placeholder="Ревьюер" searchable clearable size="xs" className="min-w-[220px]" />
+      </Group>
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="board-columns" direction="horizontal" type="column">
           {(provided: any) => (
@@ -83,11 +112,6 @@ const TaskBoard = () => {
         </Droppable>
       </DragDropContext>
       {/* Без внешней обводки у контейнера */}
-      <div className="fixed bottom-4 right-4 bg-white/80 border rounded-md p-2 shadow-sm flex gap-2 items-center">
-        <TextInput placeholder="Поиск" value={query} onChange={(e) => setQuery(e.currentTarget.value)} size="xs" />
-        <MultiSelect data={assigneeOptions} value={assigneeFilter} onChange={setAssigneeFilter} placeholder="Исполнители" searchable clearable size="xs" nothingFoundMessage="Нет" />
-        <Select data={[{ value: '', label: 'Все ревьюеры' }, ...reviewerOptions]} value={reviewerFilter ?? ''} onChange={(v) => setReviewerFilter(v || null)} placeholder="Ревьюер" searchable clearable size="xs" />
-      </div>
       {/* Модалка добавления колонки */}
       {projectId && (
         <TaskColumnForm projectId={projectId} opened={isAddingColumn} onClose={() => setIsAddingColumn(false)} />
