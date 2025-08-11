@@ -20,11 +20,13 @@ export default function TaskDetail() {
   const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [repos, setRepos] = useState<{ value: string; label: string }[]>([]);
-  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
-  const [branches, setBranches] = useState<{ value: string; label: string }[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+  const [repoList, setRepoList] = useState<{ id: string; name: string }[]>([]);
+  const [branchesByRepo, setBranchesByRepo] = useState<Record<string, string[]>>({});
+  const [selectedBranchVal, setSelectedBranchVal] = useState<string | null>(null); // `${repoId}::${branch}` or null
   const [branchQuery, setBranchQuery] = useState('');
+  const [createMode, setCreateMode] = useState(false);
+  const [pendingBranchName, setPendingBranchName] = useState('');
+  const [repoForCreate, setRepoForCreate] = useState<string | null>(null);
   const [baseBranch, setBaseBranch] = useState<string | null>(null);
   const [savingBranch, setSavingBranch] = useState(false);
   const [meId, setMeId] = useState<string | null>(null);
@@ -66,20 +68,24 @@ export default function TaskDetail() {
         const cs = await getTaskComments(task.id);
         setComments(Array.isArray(cs) ? cs : []);
 
-        // Репозитории и ветки
+        // Репозитории и ветки (компактный список repo:branch)
         const pr = await fetchProjectRepositories(task.project_id);
-        const reposOpts = pr.map(r => ({ value: r.id, label: r.name }));
-        setRepos(reposOpts);
-        // Если есть привязанные ветки, можно подтянуть первую как выбранную
+        const repos = pr.map(r => ({ id: r.id, name: r.name }));
+        setRepoList(repos);
+        const map: Record<string, string[]> = {};
+        for (const r of repos) {
+          try {
+            const bs = await listBranches(r.id);
+            map[r.id] = bs.map(b => b.name);
+          } catch {}
+        }
+        setBranchesByRepo(map);
+        // Выбираем существующую связанную ветку, если есть
         const related = await getTaskBranches(task.id).catch(() => []);
         if (Array.isArray(related) && related.length > 0) {
-          const repoMatch = reposOpts.find(r => r.label === related[0].repository_name);
+          const repoMatch = repos.find(r => r.name === related[0].repository_name);
           if (repoMatch) {
-            setSelectedRepo(repoMatch.value);
-            const bs = await listBranches(repoMatch.value);
-            setBranches(bs.map(b => ({ value: b.name, label: b.name })));
-            setSelectedBranch(related[0].branch_name || null);
-            setBaseBranch(bs.find(b => b.is_default)?.name || bs[0]?.name || null);
+            setSelectedBranchVal(`${repoMatch.id}::${related[0].branch_name}`);
           }
         }
       } finally {
@@ -115,24 +121,61 @@ export default function TaskDetail() {
     setNewComment('');
   }
 
-  async function onRepoChange(repoId: string | null) {
-    setSelectedRepo(repoId);
-    setSelectedBranch(null);
-    setBranches([]);
-    if (repoId) {
-      const bs = await listBranches(repoId);
-      setBranches(bs.map(b => ({ value: b.name, label: b.name })));
-      setBaseBranch(bs.find(b => b.is_default)?.name || bs[0]?.name || null);
+  const branchOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [];
+    for (const r of repoList) {
+      const bs = branchesByRepo[r.id] || [];
+      for (const b of bs) {
+        opts.push({ value: `${r.id}::${b}`, label: `${r.name}: ${b}` });
+      }
+    }
+    const q = branchQuery.trim();
+    if (q) {
+      const exists = opts.some(o => o.label.toLowerCase().endsWith(`: ${q.toLowerCase()}`));
+      if (!exists) {
+        opts.unshift({ value: `__create__:${q}`, label: `Создать ветку "${q}"` });
+      }
+    }
+    return opts;
+  }, [repoList, branchesByRepo, branchQuery]);
+
+  async function handleBranchChange(val: string | null) {
+    if (!task) { setSelectedBranchVal(val); return; }
+    if (val && val.startsWith('__create__:')) {
+      const name = val.replace('__create__:', '');
+      setCreateMode(true);
+      setPendingBranchName(name);
+      const firstRepo = repoList[0]?.id || null;
+      setRepoForCreate(firstRepo);
+      if (firstRepo) {
+        const bs = await listBranches(firstRepo);
+        setBranchesByRepo(prev => ({ ...prev, [firstRepo]: bs.map(b => b.name) }));
+        setBaseBranch(bs.find(b => b.is_default)?.name || bs[0]?.name || null);
+      }
+      setSelectedBranchVal(null);
+      return;
+    }
+    setSelectedBranchVal(val);
+    if (!val) return;
+    const [repoId, branch] = val.split('::');
+    setSavingBranch(true);
+    try {
+      await attachBranch(task.id, repoId, branch);
+    } finally {
+      setSavingBranch(false);
     }
   }
 
-  async function handleSaveBranch() {
-    if (!task || !selectedRepo) return;
+  async function confirmCreateAndAttach() {
+    if (!task || !repoForCreate || !pendingBranchName.trim()) return;
     setSavingBranch(true);
     try {
-      if (selectedBranch) {
-        await attachBranch(task.id, selectedRepo, selectedBranch);
-      }
+      await createBranch(repoForCreate, pendingBranchName.trim(), baseBranch || undefined, task.id);
+      const bs = await listBranches(repoForCreate);
+      setBranchesByRepo(prev => ({ ...prev, [repoForCreate]: bs.map(b => b.name) }));
+      setSelectedBranchVal(`${repoForCreate}::${pendingBranchName.trim()}`);
+      setCreateMode(false);
+      setPendingBranchName('');
     } finally {
       setSavingBranch(false);
     }
@@ -144,50 +187,51 @@ export default function TaskDetail() {
         <Group justify="center"><Loader /></Group>
       ) : (
         <Stack gap="lg">
-          {/* Ветка задачи — над комментариями */}
+          {/* Ветка задачи — один компактный Select, создание по требованию */}
           <Stack>
             <Text fw={600}>Ветка задачи</Text>
-            <Group grow>
-              <Select label="Репозиторий" data={repos} value={selectedRepo} onChange={onRepoChange} searchable nothingFoundMessage="Нет репозиториев" />
-              <Select
-                label="Ветка"
-                data={(function() {
-                  const exists = branches.some(b => b.label.toLowerCase() === branchQuery.toLowerCase());
-                  const createOpt = branchQuery && !exists ? [{ value: `__create__:${branchQuery}`, label: `Создать ветку "${branchQuery}"` }] : [];
-                  return [...createOpt, ...branches];
-                })()}
-                value={selectedBranch}
-                onChange={async (val) => {
-                  if (!task || !selectedRepo) { setSelectedBranch(val); return; }
-                  if (val && val.startsWith('__create__:')) {
-                    const name = val.replace('__create__:', '');
-                    setSavingBranch(true);
-                    try {
-                      await createBranch(selectedRepo, name, baseBranch || undefined, task.id);
-                      const item = { value: name, label: name };
-                      setBranches((current) => [item, ...current]);
-                      setSelectedBranch(name);
-                    } finally {
-                      setSavingBranch(false);
-                    }
-                  } else {
-                    setSelectedBranch(val);
-                  }
-                }}
-                searchable
-                searchValue={branchQuery}
-                onSearchChange={setBranchQuery}
-                disabled={!selectedRepo}
-                nothingFoundMessage={selectedRepo ? 'Нет веток' : 'Сначала выберите репозиторий'}
-              />
-            </Group>
-            <Group grow>
-              <Select label="Базовая ветка" data={branches} value={baseBranch} onChange={setBaseBranch} searchable disabled={!selectedRepo} />
-              <div />
-            </Group>
-            <Group justify="flex-end">
-              <Button onClick={handleSaveBranch} loading={savingBranch} disabled={!selectedRepo || !selectedBranch}>Привязать ветку</Button>
-            </Group>
+            <Select
+              label="Ветка"
+              data={branchOptions}
+              value={selectedBranchVal}
+              onChange={handleBranchChange}
+              searchable
+              searchValue={branchQuery}
+              onSearchChange={setBranchQuery}
+              nothingFoundMessage={branchQuery ? 'Создайте новую ветку' : 'Нет веток'}
+            />
+            {createMode && (
+              <>
+                <Text size="sm" c="dimmed">Будет создана ветка: {pendingBranchName}</Text>
+                <Group grow>
+                  <Select
+                    label="Репозиторий"
+                    data={repoList.map(r => ({ value: r.id, label: r.name }))}
+                    value={repoForCreate}
+                    onChange={async (repoId) => {
+                      setRepoForCreate(repoId);
+                      if (repoId) {
+                        const bs = await listBranches(repoId);
+                        setBranchesByRepo(prev => ({ ...prev, [repoId]: bs.map(b => b.name) }));
+                        setBaseBranch(bs.find(b => b.is_default)?.name || bs[0]?.name || null);
+                      }
+                    }}
+                    searchable
+                  />
+                  <Select
+                    label="Базовая ветка"
+                    data={(repoForCreate ? (branchesByRepo[repoForCreate] || []) : []).map(b => ({ value: b, label: b }))}
+                    value={baseBranch}
+                    onChange={setBaseBranch}
+                    searchable
+                  />
+                </Group>
+                <Group justify="flex-end">
+                  <Button variant="default" onClick={() => setCreateMode(false)}>Отмена</Button>
+                  <Button onClick={confirmCreateAndAttach} loading={savingBranch} disabled={!repoForCreate || !pendingBranchName.trim()}>Создать и привязать</Button>
+                </Group>
+              </>
+            )}
           </Stack>
 
           <Stack>
