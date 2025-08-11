@@ -2,6 +2,7 @@ from typing import List, Optional, Union
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
+from .git import GitFileChange
 
 
 class MergeRequestBase(BaseModel):
@@ -56,5 +57,21 @@ class MergeRequestComment(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class MergeRequestApprovalWithUser(BaseModel):
+    id: Union[str, UUID]
+    merge_request_id: Union[str, UUID]
+    user_id: Union[str, UUID]
+    user_name: Optional[str]
+    created_at: datetime
+
+
+class MergeRequestDetail(MergeRequest):
+    approvals: List[MergeRequestApprovalWithUser] = []
+
+
+class MergeRequestChanges(BaseModel):
+    files: List[GitFileChange]
 
 

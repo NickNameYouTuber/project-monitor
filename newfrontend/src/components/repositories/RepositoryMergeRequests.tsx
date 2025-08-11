@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge } from '@mantine/core';
+import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs, Box } from '@mantine/core';
 import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, type MergeRequest, type MergeRequestComment } from '../../api/repositories';
 
 export default function RepositoryMergeRequests({ repositoryId }: { repositoryId: string }) {
@@ -15,6 +15,8 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
   const [comments, setComments] = useState<MergeRequestComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'open' | 'merged' | 'closed'>('open');
+  const [changes, setChanges] = useState<string>('');
 
   useEffect(() => {
     let mounted = true;
@@ -40,6 +42,19 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
     setActiveMr(mr);
     const list = await listMergeRequestComments(repositoryId, mr.id);
     setComments(list);
+    // fetch changes
+    try {
+      const res = await fetch(`/api/repositories/${repositoryId}/merge_requests/${mr.id}/changes`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        const raw = (data.files || []).map((f: any) => f.diff || '').join('\n');
+        setChanges(raw);
+      } else {
+        setChanges('');
+      }
+    } catch {
+      setChanges('');
+    }
     setDetailOpen(true);
   }
 
@@ -78,14 +93,24 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
         <Text fw={600}>Merge Requests</Text>
         <Button onClick={() => setOpen(true)}>Создать MR</Button>
       </Group>
-      {mrs.map(mr => (
+      <Tabs value={activeTab} onChange={(v) => setActiveTab((v as any) || 'open')}>
+        <Tabs.List>
+          <Tabs.Tab value="open">Открытые</Tabs.Tab>
+          <Tabs.Tab value="merged">Смерженные</Tabs.Tab>
+          <Tabs.Tab value="closed">Закрытые</Tabs.Tab>
+        </Tabs.List>
+      </Tabs>
+      {mrs.filter(m => m.status === activeTab).map(mr => (
         <Card key={mr.id} withBorder>
-          <Group justify="space-between">
-            <Stack gap={2} onClick={() => openDetail(mr)} style={{ cursor: 'pointer' }}>
+          <Group justify="space-between" align="flex-start">
+            <Stack gap={2} onClick={() => openDetail(mr)} style={{ cursor: 'pointer', flex: 1 }}>
               <Text>{mr.title}</Text>
+              {mr.description && <Text size="sm" c="dimmed">{mr.description}</Text>}
               <Text size="xs" c="dimmed">{mr.source_branch} → {mr.target_branch}</Text>
             </Stack>
-            <Badge variant="light">{mr.status}</Badge>
+            <Stack align="flex-end">
+              <Badge variant="light">{mr.status}</Badge>
+            </Stack>
           </Group>
         </Card>
       ))}
@@ -100,17 +125,23 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
         </Stack>
       </Modal>
 
-      <Modal opened={detailOpen} onClose={() => setDetailOpen(false)} title={activeMr?.title} size="lg">
+      <Modal opened={detailOpen} onClose={() => setDetailOpen(false)} title={activeMr?.title} size="xl">
         {activeMr && (
           <Stack>
             <Group justify="space-between">
               <Text size="sm" c="dimmed">{activeMr.source_branch} → {activeMr.target_branch}</Text>
               <Badge variant="light">{activeMr.status}</Badge>
             </Group>
+            {activeMr.description && <Text>{activeMr.description}</Text>}
             <Group>
               <Button variant="light" onClick={submitApprove}>Approve</Button>
               <Button onClick={submitMerge}>Merge</Button>
             </Group>
+            {changes && (
+              <Box style={{ background: 'var(--mantine-color-dark-6)', borderRadius: 8, padding: 12, maxHeight: 300, overflow: 'auto' }}>
+                <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{changes}</pre>
+              </Box>
+            )}
             <Stack>
               {comments.map(c => (
                 <Card key={c.id} withBorder>
