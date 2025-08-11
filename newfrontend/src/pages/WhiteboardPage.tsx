@@ -95,8 +95,11 @@ export default function WhiteboardPage() {
       return;
     }
 
-    // Click on element
-    const clickedId = e.target.id();
+    // Click on element: resolve group id so anchors show
+    const target = e.target as any;
+    const parent = target?.getParent?.();
+    const groupId = parent && parent.getClassName && parent.getClassName() === 'Group' && parent.id ? parent.id() : null;
+    const clickedId = groupId || (target?.id ? target.id() : null);
     if (!clickedId) return;
     setSelectedId(clickedId);
   }, [tool, boardId, elements]);
