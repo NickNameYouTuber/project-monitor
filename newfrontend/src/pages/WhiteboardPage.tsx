@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Group, SegmentedControl, Text, Button } from '@mantine/core';
-import { Stage, Layer, Rect, Text as KText } from 'react-konva';
+import { Group as MantineGroup, SegmentedControl, Text, Button } from '@mantine/core';
+import { Stage, Layer, Rect, Text as KText, Group as KonvaGroup } from 'react-konva';
 import { getOrCreateWhiteboard, createElement, updateElement, type WhiteboardElement } from '../api/whiteboard';
 import { useParams } from 'react-router-dom';
 import Konva from 'konva';
@@ -75,8 +75,8 @@ export default function WhiteboardPage() {
         // Create new sticky note
         const newEl: Partial<WhiteboardElement> = {
           type: 'sticky',
-          x: Math.round(stage.x() * -1 + pos.x - 100),
-          y: Math.round(stage.y() * -1 + pos.y - 75),
+          x: Math.round(pos.x - 100),
+          y: Math.round(pos.y - 75),
           width: 200,
           height: 150,
           rotation: 0,
@@ -135,7 +135,7 @@ export default function WhiteboardPage() {
 
   return (
     <div className="h-full w-full flex flex-col" style={{ height: '100%' }}>
-      <Group p="sm" gap="sm" className="shrink-0 bg-white border-b">
+      <MantineGroup p="sm" gap="sm" className="shrink-0 bg-white border-b">
         <SegmentedControl value={tool} onChange={(v) => setTool(v as Tool)} data={[
           { label: '✋ Перемещение', value: 'hand' },
           { label: '📝 Стикер', value: 'sticky' },
@@ -143,7 +143,7 @@ export default function WhiteboardPage() {
         
         {selectedId && (<Text size="sm" c="dimmed">Выбран элемент</Text>)}
         <Button size="xs" variant="default" onClick={() => setSelectedId(null)}>Снять выделение</Button>
-      </Group>
+      </MantineGroup>
 
       <div
         ref={containerRef}
@@ -166,8 +166,8 @@ export default function WhiteboardPage() {
         >
           <Layer ref={layerRef}>
             {/* Render elements */}
-            {elements.map((el) => (
-              <Group key={el.id}>
+             {elements.map((el) => (
+               <KonvaGroup key={el.id}>
                 <Rect
                   id={el.id}
                   x={el.x}
@@ -201,7 +201,7 @@ export default function WhiteboardPage() {
                     listening={false}
                   />
                 )}
-              </Group>
+               </KonvaGroup>
             ))}
             
             {/* no transformer in minimal */}
