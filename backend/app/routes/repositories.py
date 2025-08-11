@@ -121,12 +121,12 @@ async def create_repository(
             # Create a README.md file with initial content
             readme_path = repo_path / "README.md"
             with open(readme_path, "w") as f:
-                f.write(f"# {db_repository.name}\n\n{db_repository.description or 'Repository created with Project Monitor'}\n")
+                f.write(f"# {db_repository.name}\n\n{db_repository.description or 'Repository created with NIT'}\n")
             
             # Create initial commit
             repo.git.add("README.md")
-            repo.git.config("user.email", "system@projectmonitor.com")
-            repo.git.config("user.name", "Project Monitor System")
+            repo.git.config("user.email", "system@nit.local")
+            repo.git.config("user.name", "NIT System")
             repo.git.commit("-m", "Initial commit with README")
             
             # Configure receive.denyCurrentBranch for new repository
@@ -395,7 +395,7 @@ async def get_clone_info(
         "setup": (
             "# Add your SSH key to allow pushing:\n"
             "1. Generate an SSH key if you don't have one: ssh-keygen -t rsa -b 4096\n"
-            "2. Add your public key to your Project Monitor account\n"
+            "2. Add your public key to your NIT account\n"
             "3. Configure Git to use your credentials\n"
             "   git config --global user.name \"Your Name\"\n"
             "   git config --global user.email \"your.email@example.com\"\n"

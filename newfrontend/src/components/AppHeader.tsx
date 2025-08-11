@@ -17,7 +17,7 @@ function AppHeader() {
       <Box>
         <Title order={4} style={{ lineHeight: 1 }}>
           <Link to="/dashboards" style={{ textDecoration: 'none', color: 'inherit' }}>
-            Project Monitor
+            NIT
           </Link>
         </Title>
       </Box>

@@ -76,11 +76,11 @@ export default function DashboardProjectsBoard({ dashboardId }: { dashboardId: s
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-center items-center mb-4">
         <h2 className="text-xl font-semibold">Проекты</h2>
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex overflow-x-auto pb-6 h-full w-full">
+        <div className="flex overflow-x-auto pb-6 h-full w-full justify-center">
           {STATUS_ORDER.map((statusKey) => (
             <div key={statusKey} className="min-w-[300px] w-[320px] mr-4 flex-shrink-0">
               <Card withBorder padding="sm" shadow="xs" className="h-full">

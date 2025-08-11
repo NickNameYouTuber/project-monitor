@@ -49,8 +49,8 @@ def _apply_startup_migrations():
 _apply_startup_migrations()
 
 app = FastAPI(
-    title="Project Monitor API",
-    description="API for Project Monitor application",
+    title="NIT API",
+    description="API for NIT application",
     version="1.0.0",
 )
 
