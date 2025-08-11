@@ -80,7 +80,7 @@ const TaskBoard = () => {
         <h2 className="text-xl font-semibold">Доска задач</h2>
         <Button size="xs" onClick={() => setIsAddingColumn(true)}>Добавить колонку</Button>
       </div>
-      <Group gap="sm" className="mb-4 mt-1" wrap="wrap">
+      <Group gap="sm" className="mb-4 mt-1" wrap="wrap" style={{ marginBottom: '16px' }}>
         <TextInput placeholder="Поиск" value={query} onChange={(e) => setQuery(e.currentTarget.value)} size="xs" className="min-w-[220px]" />
         <MultiSelect data={memberOptions} value={assigneeFilter} onChange={setAssigneeFilter} placeholder="Исполнители" searchable clearable size="xs" nothingFoundMessage="Нет" className="min-w-[260px]" />
         <Select data={[{ value: '', label: 'Все ревьюеры' }, ...memberOptions]} value={reviewerFilter ?? ''} onChange={(v) => setReviewerFilter(v || null)} placeholder="Ревьюер" searchable clearable size="xs" className="min-w-[220px]" />
