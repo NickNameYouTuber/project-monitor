@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Anchor, Card, Drawer, Group, Loader, Stack, Text, Title } from '@mantine/core';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Anchor, Card, Drawer, Group, Loader, Stack, Text, Title, Tabs, Badge } from '@mantine/core';
+import { Diff, Hunk, parseDiff } from 'react-diff-view';
+import 'react-diff-view/style/index.css';
 import { listCommits, getCommitDetail, type GitCommitDetail, type GitCommitShort } from '../../api/repositories';
 
 export default function CommitHistory({ repositoryId, branch }: { repositoryId: string; branch?: string }) {
@@ -50,16 +50,41 @@ export default function CommitHistory({ repositoryId, branch }: { repositoryId: 
           <Stack>
             <Text>{detail.message}</Text>
             <Text size="sm" c="dimmed">{detail.author} • {new Date(detail.date).toLocaleString()}</Text>
-            <Stack>
-              {detail.files.map((f) => (
-                <Card key={f.path} withBorder>
-                  <Text fw={600}>{f.path}</Text>
-                  <SyntaxHighlighter language="diff" style={oneDark} wrapLongLines>
-                    {f.diff || ''}
-                  </SyntaxHighlighter>
+            <Tabs defaultValue="diff">
+              <Tabs.List>
+                <Tabs.Tab value="diff">Изменения</Tabs.Tab>
+                <Tabs.Tab value="meta">Метаданные</Tabs.Tab>
+              </Tabs.List>
+              <Tabs.Panel value="diff" pt="sm">
+                <Stack>
+                  {detail.files.map((f) => {
+                    const parsed = parseDiff(f.diff || '', { nearbySequences: 'zip' });
+                    return (
+                      <Card key={f.path} withBorder>
+                        <Group justify="space-between" mb={8}>
+                          <Text fw={600}>{f.path}</Text>
+                          <Badge variant="light">{f.change_type}</Badge>
+                        </Group>
+                        {parsed.map(file => (
+                          <Diff key={file.newPath || file.oldPath} viewType="split" diffType={file.type} hunks={file.hunks}>
+                            {hunks => hunks.map(h => <Hunk key={h.content} hunk={h} />)}
+                          </Diff>
+                        ))}
+                        {!f.diff && <Text size="sm" c="dimmed">Нет изменений (метаданные)</Text>}
+                      </Card>
+                    );
+                  })}
+                </Stack>
+              </Tabs.Panel>
+              <Tabs.Panel value="meta" pt="sm">
+                <Card withBorder>
+                  <Text size="sm">Hash: {detail.hash}</Text>
+                  <Text size="sm">Дата: {new Date(detail.date).toLocaleString()}</Text>
+                  <Text size="sm">Автор: {detail.author}</Text>
+                  <Text size="sm">Родители: {detail.parent_hashes?.join(', ') || '—'}</Text>
                 </Card>
-              ))}
-            </Stack>
+              </Tabs.Panel>
+            </Tabs>
           </Stack>
         ) : (
           <Group justify="center" mt="md"><Loader /></Group>

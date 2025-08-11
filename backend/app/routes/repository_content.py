@@ -669,9 +669,36 @@ async def get_commit_detail(
                 "files": []
             }
             
-            # Get file changes against first parent (or empty tree for root commit)
             parent = commit.parents[0] if commit.parents else None
-            diffs = parent.diff(commit, create_patch=True) if parent else git.NULL_TREE.diff(commit, create_patch=True)
+            if parent is None:
+                # Root commit: return all files as added with content lines
+                def walk_tree(tree, base_path=""):
+                    files = []
+                    for item in tree:
+                        if isinstance(item, git.Tree):
+                            files.extend(walk_tree(item, os.path.join(base_path, item.name)))
+                        else:
+                            path = os.path.join(base_path, item.name) if base_path else item.name
+                            try:
+                                data = item.data_stream.read()
+                                text = data.decode('utf-8', errors='replace')
+                            except Exception:
+                                text = ""
+                            additions = sum(1 for line in text.splitlines())
+                            files.append({
+                                "path": path,
+                                "old_path": None,
+                                "change_type": "added",
+                                "additions": additions,
+                                "deletions": 0,
+                                "diff": "\n".join(["+" + l for l in text.splitlines()])
+                            })
+                    return files
+                commit_info["files"] = walk_tree(commit.tree)
+                return commit_info
+            
+            # Non-root: diff parent -> commit
+            diffs = parent.diff(commit, create_patch=True)
             for diff_item in diffs:
                 change_type = "unknown"
                 

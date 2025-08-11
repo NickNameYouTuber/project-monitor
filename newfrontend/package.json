@@ -37,6 +37,7 @@
     "embla-carousel-react": "^8.6.0",
     "konva": "^9.3.22",
     "react": "^19.1.1",
+    "react-diff-view": "^3.3.2",
     "react-dom": "^19.1.1",
     "react-konva": "^19.0.7",
     "react-markdown": "^9.1.0",
