@@ -176,10 +176,12 @@ export default function WhiteboardPage() {
               const src = elements.find(el => el.id === conn.source_element_id);
               const dst = elements.find(el => el.id === conn.target_element_id);
               if (!src || !dst) return null;
-              const sx = src.x + src.width / 2;
-              const sy = src.y + src.height / 2;
-              const tx = dst.x + dst.width / 2;
-              const ty = dst.y + dst.height / 2;
+              const srcAnchor = nearestAnchorPoint(src, dst.x + dst.width / 2, dst.y + dst.height / 2);
+              const dstAnchor = nearestAnchorPoint(dst, src.x + src.width / 2, src.y + src.height / 2);
+              const sx = src.x + srcAnchor.x;
+              const sy = src.y + srcAnchor.y;
+              const tx = dst.x + dstAnchor.x;
+              const ty = dst.y + dstAnchor.y;
               return (
                 <Arrow key={conn.id}
                   points={[sx, sy, tx, ty]}
@@ -196,12 +198,18 @@ export default function WhiteboardPage() {
             )}
             {/* Render elements */}
              {elements.map((el) => (
-               <KonvaGroup
+                <KonvaGroup
                  key={el.id}
                  id={el.id}
                  x={el.x}
                  y={el.y}
                  draggable
+                  onDragMove={(e) => {
+                    const node = e.target;
+                    const nx = Math.round(node.x());
+                    const ny = Math.round(node.y());
+                    setElements(prev => prev.map(it => it.id === el.id ? { ...it, x: nx, y: ny } : it));
+                  }}
                  onDragEnd={(e) => handleDragEnd(e, el.id)}
                  onDblClick={() => handleTextDblClick(el.id)}
                >
@@ -250,7 +258,8 @@ export default function WhiteboardPage() {
                             const abs = (e.target as any).getAbsolutePosition?.();
                             const sx = abs?.x ?? 0;
                             const sy = abs?.y ?? 0;
-                            if (pos) setTempLine([sx, sy, pos.x, pos.y]);
+                            let ex = pos?.x ?? sx;
+                            let ey = pos?.y ?? sy;
                             // detect hovered target
                             const layers = stage ? stage.getLayers() : ([] as any[]);
                             const layer = layers && layers.length > 0 ? layers[0] : null;
@@ -270,6 +279,16 @@ export default function WhiteboardPage() {
                               }
                             });
                             setHoveredTargetId(targetId);
+                            if (targetId) {
+                              // snap end to nearest anchor of hovered target
+                              const targetEl = elements.find(it => it.id === targetId);
+                              if (targetEl) {
+                                const local = nearestAnchorPoint(targetEl, ex, ey);
+                                ex = targetEl.x + local.x;
+                                ey = targetEl.y + local.y;
+                              }
+                            }
+                            setTempLine([sx, sy, ex, ey]);
                           }}
                           onDragEnd={(e) => {
                             setTempLine(null);
@@ -327,4 +346,19 @@ function anchorPoints(el: WhiteboardElement) {
     { x: 0, y: el.height },
     { x: 0, y: el.height / 2 },
   ];
+}
+
+function nearestAnchorPoint(el: WhiteboardElement, targetAbsX: number, targetAbsY: number) {
+  const pts = anchorPoints(el);
+  let best = pts[0];
+  let bestD = Number.POSITIVE_INFINITY;
+  for (const p of pts) {
+    const ax = el.x + p.x;
+    const ay = el.y + p.y;
+    const dx = ax - targetAbsX;
+    const dy = ay - targetAbsY;
+    const d = dx * dx + dy * dy;
+    if (d < bestD) { bestD = d; best = p; }
+  }
+  return best;
 }
