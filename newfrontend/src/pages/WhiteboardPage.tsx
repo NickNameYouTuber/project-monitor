@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Group as MantineGroup, SegmentedControl, Text, Button } from '@mantine/core';
-import { Stage, Layer, Rect, Text as KText, Group as KonvaGroup } from 'react-konva';
-import { getOrCreateWhiteboard, createElement, updateElement, type WhiteboardElement } from '../api/whiteboard';
+import { Stage, Layer, Rect, Text as KText, Group as KonvaGroup, Circle, Arrow } from 'react-konva';
+import { getOrCreateWhiteboard, createElement, updateElement, createConnection, type WhiteboardElement, type WhiteboardConnection } from '../api/whiteboard';
 import { useParams } from 'react-router-dom';
 import Konva from 'konva';
 
@@ -12,6 +12,8 @@ export default function WhiteboardPage() {
   const [tool, setTool] = useState<Tool>('hand');
   const [boardId, setBoardId] = useState<string | null>(null);
   const [elements, setElements] = useState<WhiteboardElement[]>([]);
+  const [connections, setConnections] = useState<WhiteboardConnection[]>([]);
+  const [tempLine, setTempLine] = useState<number[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
   const stageRef = useRef<Konva.Stage>(null);
@@ -30,7 +32,7 @@ export default function WhiteboardPage() {
         if (!mounted) return;
         setBoardId(board.id);
         setElements(board.elements || []);
-        // ignore connections in minimal version
+        setConnections(board.connections || []);
       } catch (err) {
         console.error('Failed to load board:', err);
       }
@@ -165,6 +167,29 @@ export default function WhiteboardPage() {
           dragBoundFunc={(pos) => pos}
         >
           <Layer ref={layerRef}>
+            {/* Connections */}
+            {connections.map((conn) => {
+              const src = elements.find(el => el.id === conn.source_element_id);
+              const dst = elements.find(el => el.id === conn.target_element_id);
+              if (!src || !dst) return null;
+              const sx = src.x + src.width / 2;
+              const sy = src.y + src.height / 2;
+              const tx = dst.x + dst.width / 2;
+              const ty = dst.y + dst.height / 2;
+              return (
+                <Arrow key={conn.id}
+                  points={[sx, sy, tx, ty]}
+                  stroke={conn.stroke || '#8a8d91'}
+                  fill={conn.stroke || '#8a8d91'}
+                  strokeWidth={conn.stroke_width || 2}
+                  pointerLength={8}
+                  pointerWidth={8}
+                />
+              );
+            })}
+            {tempLine && (
+              <Arrow points={tempLine} stroke="#2196f3" fill="#2196f3" strokeWidth={2} pointerLength={8} pointerWidth={8} dash={[6,6]} />
+            )}
             {/* Render elements */}
              {elements.map((el) => (
                <KonvaGroup
@@ -187,7 +212,7 @@ export default function WhiteboardPage() {
                    shadowOpacity={0.2}
                    cornerRadius={4}
                  />
-                 {el.text && (
+                  {el.text && (
                    <KText
                      x={0}
                      y={0}
@@ -203,6 +228,58 @@ export default function WhiteboardPage() {
                      listening={false}
                    />
                  )}
+                  {selectedId === el.id && (
+                    <>
+                      {anchorPoints(el).map((p, idx) => (
+                        <Circle
+                          key={idx}
+                          x={p.x}
+                          y={p.y}
+                          radius={5}
+                          fill="#1971c2"
+                          stroke="#fff"
+                          strokeWidth={1}
+                          draggable
+                          onDragMove={(e) => {
+                            const group = e.target.getParent();
+                            const gx = (group?.x() || 0) + p.x;
+                            const gy = (group?.y() || 0) + p.y;
+                            const stage = e.target.getStage();
+                            const pos = stage?.getPointerPosition();
+                            if (pos) setTempLine([gx, gy, pos.x, pos.y]);
+                          }}
+                          onDragEnd={(e) => {
+                            setTempLine(null);
+                            const stage = e.target.getStage();
+                            const pos = stage?.getPointerPosition();
+                            if (!pos) return;
+                            const layers = stage ? stage.getLayers() : [] as any[];
+                            const layer = layers && layers.length > 0 ? layers[0] : null;
+                            const nodes = layer ? layer.find('Group') : [];
+                            let targetId: string | null = null;
+                            nodes.forEach((node:any) => {
+                              if (node.id() === el.id) return;
+                              const nx = node.x();
+                              const ny = node.y();
+                              const rect = node.findOne('Rect');
+                              if (!rect) return;
+                              const w = rect.width();
+                              const h = rect.height();
+                              if (pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
+                                targetId = node.id();
+                              }
+                            });
+                            if (targetId && boardId) {
+                              createConnection(boardId, { source_element_id: el.id, target_element_id: targetId, stroke: '#8a8d91', stroke_width: 2 })
+                                .then((c) => setConnections(prev => [...prev, c]))
+                                .catch(console.error);
+                            }
+                            e.target.position({ x: p.x, y: p.y });
+                          }}
+                        />
+                      ))}
+                    </>
+                  )}
                </KonvaGroup>
              ))}
             
@@ -212,4 +289,17 @@ export default function WhiteboardPage() {
       </div>
     </div>
   );
+}
+
+function anchorPoints(el: WhiteboardElement) {
+  return [
+    { x: 0, y: 0 },
+    { x: el.width / 2, y: 0 },
+    { x: el.width, y: 0 },
+    { x: el.width, y: el.height / 2 },
+    { x: el.width, y: el.height },
+    { x: el.width / 2, y: el.height },
+    { x: 0, y: el.height },
+    { x: 0, y: el.height / 2 },
+  ];
 }
