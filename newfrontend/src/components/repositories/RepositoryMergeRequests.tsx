@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs, Box } from '@mantine/core';
-import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, type MergeRequest, type MergeRequestComment, type MergeRequestDetail } from '../../api/repositories';
+import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs } from '@mantine/core';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
 
 export default function RepositoryMergeRequests({ repositoryId }: { repositoryId: string }) {
   const [mrs, setMrs] = useState<MergeRequest[]>([]);
@@ -16,7 +18,7 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
   const [newComment, setNewComment] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'open' | 'merged' | 'closed'>('open');
-  const [changes, setChanges] = useState<string>('');
+  const [changes, setChanges] = useState<MergeRequestChanges | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -45,9 +47,8 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
     setComments(list);
     try {
       const data = await getMergeRequestChanges(repositoryId, mr.id);
-      const raw = (data.files || []).map((f: any) => f.diff || '').join('\n');
-      setChanges(raw);
-    } catch { setChanges(''); }
+      setChanges(data);
+    } catch { setChanges(null); }
     setDetailOpen(true);
   }
 
@@ -150,13 +151,41 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
                 <Tabs.Tab value="changes">Changes</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="changes" pt="sm">
-                {changes ? (
+                {changes && changes.files?.length ? (
                   <Stack>
-                    <Text size="sm" fw={600}>Файлы:</Text>
-                    {/* Упростим заголовки: пока выводим одним блоком, позже можно перечислить */}
-                    <Box style={{ background: 'var(--mantine-color-dark-6)', borderRadius: 8, padding: 12, maxHeight: 360, overflow: 'auto' }}>
-                      <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{changes}</pre>
-                    </Box>
+                    {changes.files.map((f, idx) => {
+                      const cleaned = cleanDiffContent(f.diff || '');
+                      const originalLines = cleaned.split('\n');
+                      const display = originalLines.map(ln => (ln.startsWith('+') || ln.startsWith('-') ? ln.slice(1) : ln)).join('\n');
+                      return (
+                        <Card key={`${f.path}-${idx}`} withBorder>
+                          <Group justify="space-between" mb={8}>
+                            <Text fw={600}>{f.path}</Text>
+                            <Badge variant="light">{f.change_type}</Badge>
+                          </Group>
+                          {cleaned ? (
+                            <SyntaxHighlighter
+                              language={getLanguageFromPath(f.path)}
+                              style={oneDark}
+                              showLineNumbers
+                              wrapLongLines
+                              lineNumberStyle={{ color: '#666', fontSize: '12px' }}
+                              customStyle={{ margin: 0, padding: '12px', background: 'var(--mantine-color-dark-6)' }}
+                              lineProps={(lineNumber: number) => {
+                                const line = originalLines[lineNumber - 1] || '';
+                                if (line.startsWith('+')) return { style: { backgroundColor: 'rgba(40, 167, 69, 0.2)' } };
+                                if (line.startsWith('-')) return { style: { backgroundColor: 'rgba(220, 53, 69, 0.2)' } };
+                                return {};
+                              }}
+                            >
+                              {display}
+                            </SyntaxHighlighter>
+                          ) : (
+                            <Text size="sm" c="dimmed">Нет изменений</Text>
+                          )}
+                        </Card>
+                      );
+                    })}
                   </Stack>
                 ) : (
                   <Text size="sm" c="dimmed">Нет изменений</Text>
@@ -180,6 +209,31 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
       </Modal>
     </Stack>
   );
+}
+
+function cleanDiffContent(rawDiff: string): string {
+  if (!rawDiff) return '';
+  const lines = rawDiff.split('\n');
+  const cleanLines: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('+++') || line.startsWith('---') || line.match(/^@@.*@@/)) {
+      continue;
+    }
+    if (line.startsWith('+') || line.startsWith('-') || line.startsWith(' ')) {
+      cleanLines.push(line);
+    }
+  }
+  return cleanLines.join('\n');
+}
+
+function getLanguageFromPath(path: string): string {
+  const ext = path.split('.').pop()?.toLowerCase() || '';
+  const map: Record<string, string> = {
+    js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript', py: 'python', rb: 'ruby', php: 'php',
+    java: 'java', c: 'c', cpp: 'cpp', cs: 'csharp', go: 'go', rs: 'rust', sh: 'bash', yml: 'yaml', yaml: 'yaml',
+    json: 'json', xml: 'xml', html: 'html', css: 'css', scss: 'scss', sql: 'sql', md: 'markdown', dockerfile: 'dockerfile'
+  };
+  return map[ext] || 'text';
 }
 
 
