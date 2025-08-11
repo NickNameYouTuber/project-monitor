@@ -142,14 +142,27 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
                   ))}
                 </Group>
               ) : (
-                <Text size="sm" c="dimmed">Нет апрувов</Text>
+                <Text size="sm" c="dimmed">Approvals: нет</Text>
               )}
             </Stack>
-            {changes && (
-              <Box style={{ background: 'var(--mantine-color-dark-6)', borderRadius: 8, padding: 12, maxHeight: 300, overflow: 'auto' }}>
-                <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{changes}</pre>
-              </Box>
-            )}
+            <Tabs defaultValue="changes">
+              <Tabs.List>
+                <Tabs.Tab value="changes">Changes</Tabs.Tab>
+              </Tabs.List>
+              <Tabs.Panel value="changes" pt="sm">
+                {changes ? (
+                  <Stack>
+                    <Text size="sm" fw={600}>Файлы:</Text>
+                    {/* Упростим заголовки: пока выводим одним блоком, позже можно перечислить */}
+                    <Box style={{ background: 'var(--mantine-color-dark-6)', borderRadius: 8, padding: 12, maxHeight: 360, overflow: 'auto' }}>
+                      <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{changes}</pre>
+                    </Box>
+                  </Stack>
+                ) : (
+                  <Text size="sm" c="dimmed">Нет изменений</Text>
+                )}
+              </Tabs.Panel>
+            </Tabs>
             <Stack>
               {comments.map(c => (
                 <Card key={c.id} withBorder>

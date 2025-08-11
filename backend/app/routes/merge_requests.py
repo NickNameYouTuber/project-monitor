@@ -13,19 +13,21 @@ import os
 router = APIRouter()
 
 
-def _user_display_name(user: Optional[User]) -> Optional[str]:
+def _user_display_name(user: Optional[User], *, fallback_id: Optional[str] = None, is_self: bool = False) -> str:
     if user is None:
-        return None
+        base = (fallback_id[:8] if fallback_id else "unknown")
+        return f"{base}{' (Вы)' if is_self else ''}"
     if getattr(user, "username", None):
-        return user.username
+        return f"{user.username}{' (Вы)' if is_self else ''}"
     first = getattr(user, "first_name", None) or ""
     last = getattr(user, "last_name", None) or ""
     full = (first + " " + last).strip()
     if full:
-        return full
+        return f"{full}{' (Вы)' if is_self else ''}"
     if getattr(user, "email", None):
-        return user.email
-    return None
+        return f"{user.email}{' (Вы)' if is_self else ''}"
+    base = (fallback_id[:8] if fallback_id else "unknown")
+    return f"{base}{' (Вы)' if is_self else ''}"
 
 @router.get("/repositories/{repository_id}/merge_requests", response_model=List[schemas.merge_request.MergeRequest])
 def list_merge_requests(repository_id: str, status: Optional[str] = None, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
@@ -79,7 +81,11 @@ def get_merge_request(repository_id: str, mr_id: str, current_user: User = Depen
                 id=a.id,
                 merge_request_id=a.merge_request_id,
                 user_id=a.user_id,
-                user_name=_user_display_name(db.query(User).filter(User.id == a.user_id).first()) if a.user_id else None,
+                user_name=_user_display_name(
+                    db.query(User).filter(User.id == a.user_id).first(),
+                    fallback_id=str(a.user_id),
+                    is_self=(str(a.user_id) == str(current_user.id))
+                ) if a.user_id else _user_display_name(None, fallback_id=None),
                 created_at=a.created_at
             ) for a in approvals
         ]
