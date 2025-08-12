@@ -30,13 +30,7 @@ export default function WhiteboardPage() {
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [scale, setScale] = useState(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
-  // minimap interaction
-  const worldBounds = { width: 3000, height: 2000 };
-  const minimap = {
-    width: 160,
-    height: 120,
-    padding: 5,
-  };
+  const minimapCfg = { width: 180, height: 130, padding: 6 } as const;
 
   // Load board data
   useEffect(() => {
@@ -251,64 +245,6 @@ export default function WhiteboardPage() {
           }}
         >
           <Layer ref={layerRef}>
-            {/* Minimap (interactive) */}
-            {(() => {
-              const mmW = minimap.width;
-              const mmH = minimap.height;
-              const pad = minimap.padding;
-              const worldW = worldBounds.width;
-              const worldH = worldBounds.height;
-              const scaleX = (mmW - pad * 2) / worldW;
-              const scaleY = (mmH - pad * 2) / worldH;
-              const viewW = size.width / (scale || 1);
-              const viewH = size.height / (scale || 1);
-              const viewX = (-stagePos.x) / (scale || 1);
-              const viewY = (-stagePos.y) / (scale || 1);
-              const mmX = size.width - mmW - 8;
-              const mmY = size.height - mmH - 8;
-              const moveViewportTo = (mx: number, my: number) => {
-                const localX = Math.max(0, Math.min(mx - pad, worldW));
-                const localY = Math.max(0, Math.min(my - pad, worldH));
-                const newPos = {
-                  x: -localX * (scale || 1) + (size.width - viewW * (scale || 1)) / 2,
-                  y: -localY * (scale || 1) + (size.height - viewH * (scale || 1)) / 2,
-                };
-                setStagePos(newPos);
-              };
-              return (
-                <KonvaGroup x={mmX} y={mmY}
-                  onMouseDown={(e) => {
-                    const p = e.target.getStage()?.getPointerPosition();
-                    if (!p) return;
-                    const lx = p.x - mmX;
-                    const ly = p.y - mmY;
-                    moveViewportTo(lx / scaleX, ly / scaleY);
-                  }}
-                  onMouseMove={(e) => {
-                    if (e.evt.buttons !== 1) return;
-                    const p = e.target.getStage()?.getPointerPosition();
-                    if (!p) return;
-                    const lx = p.x - mmX;
-                    const ly = p.y - mmY;
-                    moveViewportTo(lx / scaleX, ly / scaleY);
-                  }}
-                >
-                  <Rect width={mmW} height={mmH} fill="#ffffff" stroke="#d0d0d0" cornerRadius={6} opacity={0.95} />
-                  <KonvaGroup x={pad} y={pad}>
-                    <Rect width={worldW * scaleX} height={worldH * scaleY} fill="#f5f5f5" stroke="#e0e0e0" />
-                    <Rect
-                      x={viewX * scaleX}
-                      y={viewY * scaleY}
-                      width={viewW * scaleX}
-                      height={viewH * scaleY}
-                      stroke="#1971c2"
-                      strokeWidth={1}
-                      fill="rgba(25,113,194,0.1)"
-                    />
-                  </KonvaGroup>
-                </KonvaGroup>
-              );
-            })()}
             {/* Connections */}
             {connections.map((conn) => {
               const src = elements.find(el => el.id === conn.source_element_id);
@@ -527,6 +463,65 @@ export default function WhiteboardPage() {
             {/* no transformer in minimal */}
           </Layer>
         </Stage>
+        {/* Overlay minimap */}
+        {(() => {
+          const mmW = minimapCfg.width;
+          const mmH = minimapCfg.height;
+          const pad = minimapCfg.padding;
+          const hasEls = elements.length > 0;
+          const margin = 200;
+          const minX = hasEls ? Math.min(...elements.map(e => e.x)) : 0;
+          const minY = hasEls ? Math.min(...elements.map(e => e.y)) : 0;
+          const maxX = hasEls ? Math.max(...elements.map(e => e.x + e.width)) : size.width;
+          const maxY = hasEls ? Math.max(...elements.map(e => e.y + e.height)) : size.height;
+          const worldX0 = Math.floor(minX - margin);
+          const worldY0 = Math.floor(minY - margin);
+          const worldW = Math.max(800, Math.ceil((maxX - minX) + margin * 2));
+          const worldH = Math.max(600, Math.ceil((maxY - minY) + margin * 2));
+          const s = Math.min((mmW - pad * 2) / worldW, (mmH - pad * 2) / worldH);
+          const mapX = (wx: number) => pad + (wx - worldX0) * s;
+          const mapY = (wy: number) => pad + (wy - worldY0) * s;
+          const vx = (-stagePos.x) / (scale || 1);
+          const vy = (-stagePos.y) / (scale || 1);
+          const vw = size.width / (scale || 1);
+          const vh = size.height / (scale || 1);
+          const handleMini = (clientX: number, clientY: number, host: HTMLDivElement | null) => {
+            if (!host) return;
+            const rect = host.getBoundingClientRect();
+            const lx = clientX - rect.left;
+            const ly = clientY - rect.top;
+            const worldClickX = worldX0 + (lx - pad) / s;
+            const worldClickY = worldY0 + (ly - pad) / s;
+            const newPos = {
+              x: -worldClickX * (scale || 1) + (size.width - vw * (scale || 1)) / 2,
+              y: -worldClickY * (scale || 1) + (size.height - vh * (scale || 1)) / 2,
+            };
+            setStagePos(newPos);
+          };
+          return (
+            <div
+              style={{ position: 'absolute', right: 8, bottom: 8, width: mmW, height: mmH, border: '1px solid #d0d0d0', borderRadius: 6, background: '#fff', opacity: 0.96 }}
+              onMouseDown={(e) => handleMini(e.clientX, e.clientY, e.currentTarget)}
+              onMouseMove={(e) => { if (e.buttons === 1) handleMini(e.clientX, e.clientY, e.currentTarget); }}
+            >
+              <Stage width={mmW} height={mmH} listening={false}>
+                <Layer>
+                  <Rect x={0} y={0} width={mmW} height={mmH} fill={'#ffffff'} cornerRadius={6} />
+                  <Rect x={pad} y={pad} width={worldW * s} height={worldH * s} fill={'#f5f5f5'} stroke={'#e0e0e0'} />
+                  <Rect
+                    x={mapX(vx)}
+                    y={mapY(vy)}
+                    width={Math.max(8, vw * s)}
+                    height={Math.max(8, vh * s)}
+                    stroke={'#1971c2'}
+                    strokeWidth={1}
+                    fill={'rgba(25,113,194,0.12)'}
+                  />
+                </Layer>
+              </Stage>
+            </div>
+          );
+        })()}
         {(selectedId || selectedConnectionId) && (
           <div style={{ position: 'absolute', right: 8, top: 8, width: 280, background: '#fff', border: '1px solid #e9ecef', borderRadius: 6, padding: 12, boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
             {selectedId && (
