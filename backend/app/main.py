@@ -82,6 +82,18 @@ def _apply_startup_migrations():
                 cur.execute(stmt)
             except Exception:
                 pass
+
+        # Merge requests: add snapshot columns if missing
+        for stmt in [
+            "ALTER TABLE merge_requests ADD COLUMN base_sha_at_merge TEXT",
+            "ALTER TABLE merge_requests ADD COLUMN source_sha_at_merge TEXT",
+            "ALTER TABLE merge_requests ADD COLUMN target_sha_at_merge TEXT",
+            "ALTER TABLE merge_requests ADD COLUMN merge_commit_sha TEXT",
+        ]:
+            try:
+                cur.execute(stmt)
+            except Exception:
+                pass
         conn.commit()
         conn.close()
     except Exception:

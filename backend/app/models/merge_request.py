@@ -30,6 +30,12 @@ class MergeRequest(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Snapshot SHAs at merge time to keep stable diffs after branches move
+    base_sha_at_merge = Column(String, nullable=True)
+    source_sha_at_merge = Column(String, nullable=True)
+    target_sha_at_merge = Column(String, nullable=True)
+    merge_commit_sha = Column(String, nullable=True)
+
     # Relations
     approvals = relationship("MergeRequestApproval", back_populates="merge_request", cascade="all, delete-orphan")
     comments = relationship("MergeRequestComment", back_populates="merge_request", cascade="all, delete-orphan")

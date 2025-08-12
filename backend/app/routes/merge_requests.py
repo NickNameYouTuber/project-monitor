@@ -141,14 +141,27 @@ def merge_merge_request(repository_id: str, mr_id: str, current_user: User = Dep
 
     # Simple fast-forward or merge commit
     try:
-        # Checkout target
+        # Resolve objects for snapshot
+        source_commit = repo.heads[mr.source_branch].commit
+        target_commit = repo.heads[mr.target_branch].commit
+        bases = repo.merge_base(target_commit, source_commit)
+        base_commit = bases[0] if isinstance(bases, (list, tuple)) and bases else bases
+
+        # Checkout target and merge
         repo.git.checkout(mr.target_branch)
-        # Merge source into target
         repo.git.merge(mr.source_branch, '--no-ff')
+
+        # After merge, get merge commit
+        merge_commit = repo.head.commit
+
+        # Persist snapshot SHAs
+        mr.base_sha_at_merge = base_commit.hexsha if base_commit else None
+        mr.source_sha_at_merge = source_commit.hexsha
+        mr.target_sha_at_merge = target_commit.hexsha
+        mr.merge_commit_sha = merge_commit.hexsha
+        mr.status = MergeRequestStatus.MERGED
     except git.GitCommandError as e:
         raise HTTPException(status_code=400, detail=f"Merge failed: {str(e)}")
-
-    mr.status = MergeRequestStatus.MERGED
     db.commit()
     db.refresh(mr)
     return mr
@@ -203,15 +216,12 @@ def get_merge_request_changes(repository_id: str, mr_id: str, current_user: User
 
     # Strategy:
     # - OPEN/CLOSED: show diff target -> source (what would be merged)
-    # - MERGED: show diff from merge-base(target, source) -> source (what was merged)
+    # - MERGED: use snapshot SHAs captured at merge time for stable view
     try:
-        if mr.status == MergeRequestStatus.MERGED:
-            bases = repo.merge_base(target_commit, source_commit)
-            base_commit = bases[0] if isinstance(bases, (list, tuple)) and bases else bases
-            if base_commit is None:
-                diffs = target_commit.diff(source_commit, create_patch=True)
-            else:
-                diffs = base_commit.diff(source_commit, create_patch=True)
+        if mr.status == MergeRequestStatus.MERGED and (mr.base_sha_at_merge or mr.source_sha_at_merge):
+            base = repo.commit(mr.base_sha_at_merge) if mr.base_sha_at_merge else None
+            src = repo.commit(mr.source_sha_at_merge) if mr.source_sha_at_merge else source_commit
+            diffs = (base.diff(src, create_patch=True) if base else target_commit.diff(src, create_patch=True))
         else:
             diffs = target_commit.diff(source_commit, create_patch=True)
     except Exception:
