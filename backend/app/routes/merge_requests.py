@@ -1,6 +1,8 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 from ..database import get_db
 from ..auth import get_current_active_user
 from ..models import Repository, RepositoryMember, User
@@ -32,11 +34,37 @@ def _user_display_name(user: Optional[User], *, fallback_id: Optional[str] = Non
 @router.get("/repositories/{repository_id}/merge_requests", response_model=List[schemas.merge_request.MergeRequest])
 def list_merge_requests(repository_id: str, status: Optional[str] = None, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
     _ = check_repository_access(repository_id, str(current_user.id), db)
-    q = db.query(MergeRequest).filter(MergeRequest.repository_id == repository_id)
-    if status in {s.value for s in MergeRequestStatus}:
-        q = q.filter(MergeRequest.status == status)
-    items = q.order_by(MergeRequest.created_at.desc()).all()
-    return items
+    try:
+        q = db.query(MergeRequest).filter(MergeRequest.repository_id == repository_id)
+        if status in {s.value for s in MergeRequestStatus}:
+            q = q.filter(MergeRequest.status == status)
+        items = q.order_by(MergeRequest.created_at.desc()).all()
+        return items
+    except OperationalError as e:
+        # Runtime safety: if columns were not migrated yet, add them on the fly (SQLite only)
+        msg = str(e.orig) if getattr(e, 'orig', None) else str(e)
+        if "no such column" in msg and "merge_requests" in msg:
+            try:
+                for stmt in [
+                    "ALTER TABLE merge_requests ADD COLUMN base_sha_at_merge TEXT",
+                    "ALTER TABLE merge_requests ADD COLUMN source_sha_at_merge TEXT",
+                    "ALTER TABLE merge_requests ADD COLUMN target_sha_at_merge TEXT",
+                    "ALTER TABLE merge_requests ADD COLUMN merge_commit_sha TEXT",
+                    "ALTER TABLE merge_requests ADD COLUMN merged_at DATETIME",
+                ]:
+                    try:
+                        db.execute(text(stmt))
+                    except Exception:
+                        pass
+                db.commit()
+            except Exception:
+                pass
+            # Retry once after attempting to add columns
+            q = db.query(MergeRequest).filter(MergeRequest.repository_id == repository_id)
+            if status in {s.value for s in MergeRequestStatus}:
+                q = q.filter(MergeRequest.status == status)
+            return q.order_by(MergeRequest.created_at.desc()).all()
+        raise
 
 
 @router.post("/repositories/{repository_id}/merge_requests", response_model=schemas.merge_request.MergeRequest)
