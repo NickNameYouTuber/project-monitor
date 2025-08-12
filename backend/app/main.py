@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from starlette.routing import Route, Mount
 from .database import engine, SQLALCHEMY_DATABASE_URL
+from sqlalchemy import text
 from . import models
 from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards, merge_requests
 import subprocess
@@ -25,6 +26,7 @@ for base in [
     models.repository_member.Base,
     models.token.Base,
     models.merge_request.Base,
+    models.whiteboard.Base,
 ]:
     base.metadata.create_all(bind=engine)
 
@@ -110,6 +112,24 @@ def _apply_startup_migrations():
 # Keep SQLite-only startup migrations guarded
 if SQLALCHEMY_DATABASE_URL.startswith('sqlite'):
     _apply_startup_migrations()
+elif SQLALCHEMY_DATABASE_URL.startswith('postgres'):
+    # Minimal Postgres migrations for whiteboard features
+    try:
+        with engine.connect() as conn:
+            # Ensure whiteboard elements extra columns exist
+            for stmt in [
+                "ALTER TABLE whiteboard_elements ADD COLUMN IF NOT EXISTS text_color TEXT",
+                "ALTER TABLE whiteboard_elements ADD COLUMN IF NOT EXISTS font_family TEXT",
+                "ALTER TABLE whiteboard_elements ADD COLUMN IF NOT EXISTS font_size INTEGER",
+            ]:
+                try:
+                    conn.execute(text(stmt))
+                except Exception:
+                    # Best-effort: ignore if not applicable
+                    pass
+            conn.commit()
+    except Exception:
+        pass
 
 app = FastAPI(
     title="NIT API",
