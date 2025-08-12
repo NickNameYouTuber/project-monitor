@@ -258,127 +258,118 @@ export default function WhiteboardPage() {
                     <>
                       {anchorPoints(el).map((p, idx) => (
                         <>
-                          {/* Guard zone around anchor to block sticker drag and start connection easily */}
+                          {/* Large guard zone around anchor to capture drag attempts and override sticker drag */}
                           <Circle
                             key={`guard-${idx}`}
                             x={p.x}
                             y={p.y}
-                            radius={14}
+                            radius={50}
                             fillEnabled={false}
                             strokeEnabled={false}
-                            listening
+                            draggable
                             onMouseEnter={(e) => {
                               const container = e.target.getStage()?.container();
-                              if (container) container.style.cursor = 'default';
+                              if (container) container.style.cursor = 'crosshair';
                             }}
                             onMouseLeave={(e) => {
                               const container = e.target.getStage()?.container();
                               if (container) container.style.cursor = 'default';
                             }}
-                            onMouseDown={(e) => {
+                            onDragStart={(e) => {
                               e.cancelBubble = true;
                               setConnectingFromId(el.id);
-                              const stageNode = stageRef.current;
-                              if (stageNode) stageNode.draggable(false);
-                              const parent = (e.target as any).getParent?.();
-                              if (parent && parent.draggable) parent.draggable(false);
                               
-                              // Start drawing line from anchor position
-                              const abs = (e.target as any).getAbsolutePosition?.();
-                              const sx = abs?.x ?? 0;
-                              const sy = abs?.y ?? 0;
+                              // Start drawing line from anchor position (not guard circle position)
+                              const parentGroup = (e.target as any).getParent();
+                              const groupPos = parentGroup ? { x: parentGroup.x(), y: parentGroup.y() } : { x: 0, y: 0 };
+                              const sx = groupPos.x + p.x;
+                              const sy = groupPos.y + p.y;
                               setTempLine([sx, sy, sx, sy]);
+                            }}
+                            onDragMove={(e) => {
+                              e.cancelBubble = true;
+                              const stage = e.target.getStage();
+                              const pos = stage?.getPointerPosition();
+                              if (!pos) return;
                               
-                              // Handle mouse move for line drawing
-                              const handleMouseMove = (moveEvent: any) => {
-                                const stage = moveEvent.target.getStage();
-                                const pos = stage?.getPointerPosition();
-                                if (!pos) return;
-                                
-                                let ex = pos.x;
-                                let ey = pos.y;
-                                
-                                // detect hovered target
-                                const layers = stage ? stage.getLayers() : ([] as any[]);
-                                const layer = layers && layers.length > 0 ? layers[0] : null;
-                                const nodes: any = layer ? layer.find('Group') : [];
-                                let targetId: string | null = null;
-                                const arr = nodes?.toArray ? nodes.toArray() : nodes;
-                                arr.forEach((node: any) => {
-                                  if (node.id() === el.id) return;
-                                  const nx = node.x();
-                                  const ny = node.y();
-                                  const rect = node.findOne('Rect');
-                                  if (!rect) return;
-                                  const w = rect.width();
-                                  const h = rect.height();
-                                  if (pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
-                                    targetId = node.id();
-                                  }
-                                });
-                                setHoveredTargetId(targetId);
-                                if (targetId) {
-                                  const targetEl = elements.find(it => it.id === targetId);
-                                  if (targetEl) {
-                                    const local = nearestAnchorPoint(targetEl, ex, ey);
-                                    ex = targetEl.x + local.x;
-                                    ey = targetEl.y + local.y;
-                                  }
-                                }
-                                setTempLine([sx, sy, ex, ey]);
-                              };
+                              // Start point is the actual anchor position, not the guard circle
+                              const parentGroup = (e.target as any).getParent();
+                              const groupPos = parentGroup ? { x: parentGroup.x(), y: parentGroup.y() } : { x: 0, y: 0 };
+                              const sx = groupPos.x + p.x;
+                              const sy = groupPos.y + p.y;
                               
-                              // Handle mouse up for line creation
-                              const handleMouseUp = (upEvent: any) => {
-                                setTempLine(null);
-                                setHoveredTargetId(null);
-                                setConnectingFromId(null);
-                                const stage = upEvent.target.getStage();
-                                const pos = stage?.getPointerPosition();
-                                if (!pos) {
-                                  stage?.off('mousemove', handleMouseMove);
-                                  stage?.off('mouseup', handleMouseUp);
-                                  const stageNode = stageRef.current;
-                                  if (stageNode) stageNode.draggable(tool === 'hand');
-                                  return;
-                                }
-                                
-                                const layers = stage ? stage.getLayers() : ([] as any[]);
-                                const layer = layers && layers.length > 0 ? layers[0] : null;
-                                const nodes: any = layer ? layer.find('Group') : [];
-                                let targetId: string | null = null;
-                                const arr = nodes?.toArray ? nodes.toArray() : nodes;
-                                arr.forEach((node:any) => {
-                                  if (node.id() === el.id) return;
-                                  const nx = node.x();
-                                  const ny = node.y();
-                                  const rect = node.findOne('Rect');
-                                  if (!rect) return;
-                                  const w = rect.width();
-                                  const h = rect.height();
-                                  if (pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
-                                    targetId = node.id();
-                                  }
-                                });
-                                
-                                if (targetId && boardId) {
-                                  createConnection(boardId, { source_element_id: el.id, target_element_id: targetId, stroke: '#8a8d91', stroke_width: 2 })
-                                    .then((c) => setConnections(prev => [...prev, c]))
-                                    .catch(console.error);
-                                }
-                                
-                                // Clean up event listeners
-                                stage?.off('mousemove', handleMouseMove);
-                                stage?.off('mouseup', handleMouseUp);
-                                
-                                const stageNode = stageRef.current;
-                                if (stageNode) stageNode.draggable(tool === 'hand');
-                              };
+                              let ex = pos.x;
+                              let ey = pos.y;
                               
-                              // Attach event listeners to stage
-                              const stageEl = e.target.getStage();
-                              stageEl?.on('mousemove', handleMouseMove);
-                              stageEl?.on('mouseup', handleMouseUp);
+                              // detect hovered target
+                              const layers = stage ? stage.getLayers() : ([] as any[]);
+                              const layer = layers && layers.length > 0 ? layers[0] : null;
+                              const nodes: any = layer ? layer.find('Group') : [];
+                              let targetId: string | null = null;
+                              const arr = nodes?.toArray ? nodes.toArray() : nodes;
+                              arr.forEach((node: any) => {
+                                if (node.id() === el.id) return;
+                                const nx = node.x();
+                                const ny = node.y();
+                                const rect = node.findOne('Rect');
+                                if (!rect) return;
+                                const w = rect.width();
+                                const h = rect.height();
+                                if (pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
+                                  targetId = node.id();
+                                }
+                              });
+                              setHoveredTargetId(targetId);
+                              if (targetId) {
+                                const targetEl = elements.find(it => it.id === targetId);
+                                if (targetEl) {
+                                  const local = nearestAnchorPoint(targetEl, ex, ey);
+                                  ex = targetEl.x + local.x;
+                                  ey = targetEl.y + local.y;
+                                }
+                              }
+                              setTempLine([sx, sy, ex, ey]);
+                            }}
+                            onDragEnd={(e) => {
+                              e.cancelBubble = true;
+                              setTempLine(null);
+                              setHoveredTargetId(null);
+                              setConnectingFromId(null);
+                              
+                              const stage = e.target.getStage();
+                              const pos = stage?.getPointerPosition();
+                              if (!pos) {
+                                // Reset position to original anchor
+                                e.target.position({ x: p.x, y: p.y });
+                                return;
+                              }
+                              
+                              const layers = stage ? stage.getLayers() : ([] as any[]);
+                              const layer = layers && layers.length > 0 ? layers[0] : null;
+                              const nodes: any = layer ? layer.find('Group') : [];
+                              let targetId: string | null = null;
+                              const arr = nodes?.toArray ? nodes.toArray() : nodes;
+                              arr.forEach((node:any) => {
+                                if (node.id() === el.id) return;
+                                const nx = node.x();
+                                const ny = node.y();
+                                const rect = node.findOne('Rect');
+                                if (!rect) return;
+                                const w = rect.width();
+                                const h = rect.height();
+                                if (pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
+                                  targetId = node.id();
+                                }
+                              });
+                              
+                              if (targetId && boardId) {
+                                createConnection(boardId, { source_element_id: el.id, target_element_id: targetId, stroke: '#8a8d91', stroke_width: 2 })
+                                  .then((c) => setConnections(prev => [...prev, c]))
+                                  .catch(console.error);
+                              }
+                              
+                              // Reset position to original anchor
+                              e.target.position({ x: p.x, y: p.y });
                             }}
                           />
                           {/* Actual small anchor */}
