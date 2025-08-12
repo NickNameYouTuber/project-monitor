@@ -54,7 +54,7 @@ function ProjectDetail() {
   return (
     <div className="flex h-full">
       {/* Левая панель навигации */}
-      <div className="flex-shrink-0 w-60 bg-gray-50 border-r border-gray-200 p-4">
+      <div className="flex-shrink-0 w-60 bg-gray-50 border-r border-gray-200" style={{ width: '240px', padding: '16px' }}>
         <Stack className="h-full">
           <div>
             <Title order={4} mb={4}>{project.name}</Title>
