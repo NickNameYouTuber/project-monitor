@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs, Divider } from '@mantine/core';
+import { Button, Card, Divider, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs } from '@mantine/core';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, unapproveMergeRequest, closeMergeRequest, reopenMergeRequest, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
+import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, unapproveMergeRequest, closeMergeRequest, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
 
 export default function RepositoryMergeRequests({ repositoryId }: { repositoryId: string }) {
   const [mrs, setMrs] = useState<MergeRequest[]>([]);
@@ -90,13 +90,7 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
     setMrs(prev => prev.map(m => m.id === closed.id ? closed : m));
   }
 
-  async function submitReopen() {
-    if (!activeMr) return;
-    const reopened = await reopenMergeRequest(repositoryId, activeMr.id);
-    const detail = await getMergeRequestDetail(repositoryId, activeMr.id);
-    setActiveMr(detail);
-    setMrs(prev => prev.map(m => m.id === reopened.id ? reopened : m));
-  }
+  // Reopen оставим реализованным, но кнопки нет по текущим требованиям
 
   async function submitComment() {
     if (!activeMr || !newComment.trim()) return;
@@ -163,10 +157,10 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
                     <Button color="red" variant="light" onClick={submitClose}>Закрыть</Button>
                   </>
                 )}
-                {activeMr.status === 'closed' && (
-                  <Button variant="light" onClick={submitReopen}>Переоткрыть</Button>
+                {activeMr.status === 'merged' && (
+                  <Button color="red" variant="light" onClick={submitClose}>Закрыть</Button>
                 )}
-                {/* merged: никаких действий */}
+                {/* closed: no actions */}
               </Group>
               {activeMr.approvals?.length ? (
                 <Group gap="xs">
@@ -225,8 +219,7 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
                 )}
               </Tabs.Panel>
             </Tabs>
-            <Divider my="sm" />
-            <Text fw={600}>Комментарии</Text>
+            <Divider label="Комментарии" labelPosition="center" my="sm"/>
             <Stack>
               {comments.map(c => (
                 <Card key={c.id} withBorder>

@@ -160,8 +160,9 @@ def close_merge_request(repository_id: str, mr_id: str, current_user: User = Dep
     mr = db.query(MergeRequest).filter(MergeRequest.id == mr_id, MergeRequest.repository_id == repository_id).first()
     if not mr:
         raise HTTPException(status_code=404, detail="Merge Request not found")
-    if mr.status != MergeRequestStatus.OPEN:
-        raise HTTPException(status_code=400, detail="Only open MR can be closed")
+    # Allow closing when MR is open or already merged
+    if mr.status not in (MergeRequestStatus.OPEN, MergeRequestStatus.MERGED):
+        raise HTTPException(status_code=400, detail="Only open or merged MR can be closed")
     mr.status = MergeRequestStatus.CLOSED
     db.commit()
     db.refresh(mr)
