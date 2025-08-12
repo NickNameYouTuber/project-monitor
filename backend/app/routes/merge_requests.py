@@ -50,18 +50,8 @@ def list_merge_requests(repository_id: str, status: Optional[str] = None, curren
                     db.rollback()
                 except Exception:
                     pass
-                for stmt in [
-                    "ALTER TABLE merge_requests ADD COLUMN base_sha_at_merge TEXT",
-                    "ALTER TABLE merge_requests ADD COLUMN source_sha_at_merge TEXT",
-                    "ALTER TABLE merge_requests ADD COLUMN target_sha_at_merge TEXT",
-                    "ALTER TABLE merge_requests ADD COLUMN merge_commit_sha TEXT",
-                    "ALTER TABLE merge_requests ADD COLUMN merged_at DATETIME",
-                ]:
-                    try:
-                        db.execute(text(stmt))
-                    except Exception:
-                        pass
-                db.commit()
+                # Skip adding snapshot columns for now to avoid schema errors
+                pass
             except Exception:
                 pass
             # Retry once after attempting to add columns
@@ -191,14 +181,14 @@ def merge_merge_request(repository_id: str, mr_id: str, current_user: User = Dep
         # After merge, get merge commit
         merge_commit = repo.head.commit
 
-        # Persist snapshot SHAs
-        mr.base_sha_at_merge = base_commit.hexsha if base_commit else None
-        mr.source_sha_at_merge = source_commit.hexsha
-        mr.target_sha_at_merge = target_commit.hexsha
-        mr.merge_commit_sha = merge_commit.hexsha
+        # Persist snapshot SHAs - DISABLED FOR NOW
+        # mr.base_sha_at_merge = base_commit.hexsha if base_commit else None
+        # mr.source_sha_at_merge = source_commit.hexsha
+        # mr.target_sha_at_merge = target_commit.hexsha
+        # mr.merge_commit_sha = merge_commit.hexsha
         mr.status = MergeRequestStatus.MERGED
-        mr.updated_at = merge_commit.committed_datetime
-        mr.merged_at = merge_commit.committed_datetime
+        # mr.updated_at = merge_commit.committed_datetime
+        # mr.merged_at = merge_commit.committed_datetime
     except git.GitCommandError as e:
         raise HTTPException(status_code=400, detail=f"Merge failed: {str(e)}")
     db.commit()
@@ -264,43 +254,43 @@ def get_merge_request_changes(repository_id: str, mr_id: str, current_user: User
         log_ts = None
 
         if mr.status == MergeRequestStatus.MERGED:
-            # 1) Use stored snapshot if present
-            if mr.base_sha_at_merge or mr.source_sha_at_merge:
-                base = repo.commit(mr.base_sha_at_merge) if mr.base_sha_at_merge else None
-                src = repo.commit(mr.source_sha_at_merge) if mr.source_sha_at_merge else source_commit
-                diffs = (base.diff(src, create_patch=True) if base else target_commit.diff(src, create_patch=True))
-                log_mode = "snapshot"
-                log_base_sha = getattr(base, 'hexsha', None) if base else None
-                log_src_sha = getattr(src, 'hexsha', None)
-                log_tgt_sha = getattr(target_commit, 'hexsha', None)
-            else:
-                # 2) Fallback: commit selection by time (as of mr.updated_at)
-                def commit_as_of(branch_name: str, ts: int):
-                    try:
-                        for c in repo.iter_commits(branch_name):
-                            if getattr(c, 'committed_date', None) and int(c.committed_date) <= ts:
-                                return c
-                    except Exception:
-                        return None
+            # For MERGED: try to find merge commit by time and use its parents
+            # If not found by time, fallback to current heads
+            def find_merge_commit_around_time(ts: int):
+                if not ts:
                     return None
+                try:
+                    for c in repo.iter_commits(mr.target_branch, max_count=200):
+                        # Look for merge commits around the time MR was updated
+                        if len(c.parents) >= 2 and abs(int(c.committed_date) - ts) <= 86400:  # within 1 day
+                            return c.parents[0], c.parents[1]  # first parent = target before, second = source at merge
+                except Exception:
+                    pass
+                return None
 
-                ts = int(getattr(mr, 'updated_at', None).timestamp()) if getattr(mr, 'updated_at', None) else None
-                src_at = commit_as_of(mr.source_branch, ts) if ts else None
-                tgt_at = commit_as_of(mr.target_branch, ts) if ts else None
-                # If not found by time, fallback to current heads
-                src_at = src_at or source_commit
-                tgt_at = tgt_at or target_commit
-                bases = repo.merge_base(tgt_at, src_at)
+            ts = int(getattr(mr, 'updated_at', None).timestamp()) if getattr(mr, 'updated_at', None) else None
+            merge_parents = find_merge_commit_around_time(ts)
+            if merge_parents:
+                tgt_at_merge, src_at_merge = merge_parents
+                bases = repo.merge_base(tgt_at_merge, src_at_merge)
                 base_at = bases[0] if isinstance(bases, (list, tuple)) and bases else bases
                 if base_at is None:
-                    diffs = tgt_at.diff(src_at, create_patch=True)
+                    diffs = tgt_at_merge.diff(src_at_merge, create_patch=True)
                 else:
-                    diffs = base_at.diff(src_at, create_patch=True)
-                log_mode = "time_fallback"
-                log_ts = ts
+                    diffs = base_at.diff(src_at_merge, create_patch=True)
+                log_mode = "merge_parents"
                 log_base_sha = getattr(base_at, 'hexsha', None) if base_at else None
-                log_src_sha = getattr(src_at, 'hexsha', None)
-                log_tgt_sha = getattr(tgt_at, 'hexsha', None)
+                log_src_sha = getattr(src_at_merge, 'hexsha', None)
+                log_tgt_sha = getattr(tgt_at_merge, 'hexsha', None)
+                log_ts = ts
+            else:
+                # Fallback: use current branch heads
+                diffs = target_commit.diff(source_commit, create_patch=True)
+                log_mode = "heads_fallback"
+                log_base_sha = None
+                log_src_sha = getattr(source_commit, 'hexsha', None)
+                log_tgt_sha = getattr(target_commit, 'hexsha', None)
+                log_ts = ts
         else:
             diffs = target_commit.diff(source_commit, create_patch=True)
             log_mode = "heads"
