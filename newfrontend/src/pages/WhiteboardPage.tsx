@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Group as MantineGroup, SegmentedControl, Text, Button } from '@mantine/core';
 import { Stage, Layer, Rect, Text as KText, Group as KonvaGroup, Circle, Arrow } from 'react-konva';
-import { getOrCreateWhiteboard, createElement, updateElement, createConnection, type WhiteboardElement, type WhiteboardConnection } from '../api/whiteboard';
+import { getOrCreateWhiteboard, createElement, updateElement, createConnection, deleteElement, type WhiteboardElement, type WhiteboardConnection } from '../api/whiteboard';
 import { useParams } from 'react-router-dom';
 import Konva from 'konva';
 
@@ -159,8 +159,8 @@ export default function WhiteboardPage() {
             setElements(prev => prev.filter(el => el.id !== id));
             // remove related connections visually
             setConnections(prev => prev.filter(c => c.source_element_id !== id && c.target_element_id !== id));
-            // backend delete
-            fetch(`/api/whiteboard-elements/${id}`, { method: 'DELETE', credentials: 'include' }).catch(() => {});
+            // backend delete with auth token
+            deleteElement(id).catch(() => {});
           }}>Удалить стикер</Button>
         )}
       </MantineGroup>
