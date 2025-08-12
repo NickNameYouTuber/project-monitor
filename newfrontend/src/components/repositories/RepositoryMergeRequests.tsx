@@ -6,7 +6,7 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, unapproveMergeRequest, closeMergeRequest, updateMergeRequest, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
 
 export default function RepositoryMergeRequests({ repositoryId }: { repositoryId: string }) {
-  const [me, setMe] = useState<{ id: string; username?: string } | null>(null);
+  const [, setMe] = useState<{ id: string; username?: string } | null>(null);
   const [mrs, setMrs] = useState<MergeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
