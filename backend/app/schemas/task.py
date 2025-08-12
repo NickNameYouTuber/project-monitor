@@ -8,8 +8,9 @@ class TaskBase(BaseModel):
     description: Optional[str] = None
     order: Optional[int] = 0
     reviewer_id: Optional[str] = None
+    # Planning fields
     due_date: Optional[datetime] = None
-    estimate_hours: Optional[int] = None
+    estimate_minutes: Optional[int] = None
 
 
 class TaskCreate(TaskBase):
@@ -26,7 +27,7 @@ class TaskUpdate(BaseModel):
     assignee_ids: Optional[List[str]] = None
     reviewer_id: Optional[str] = None
     due_date: Optional[datetime] = None
-    estimate_hours: Optional[int] = None
+    estimate_minutes: Optional[int] = None
 
 
 class TaskMoveUpdate(BaseModel):

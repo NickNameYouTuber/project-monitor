@@ -16,6 +16,8 @@ export default function TaskDetail() {
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [reviewerId, setReviewerId] = useState<string | null>(null);
   const [members, setMembers] = useState<{ value: string; label: string }[]>([]);
+  const [dueDate, setDueDate] = useState<string | null>(null);
+  const [estimateMinutes, setEstimateMinutes] = useState<string>('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -37,6 +39,8 @@ export default function TaskDetail() {
     setDescription(task.description || '');
     setAssigneeIds(task.assignees?.map((a) => a.id) || []);
     setReviewerId(task.reviewer_id || null);
+    setDueDate(task.due_date ? new Date(task.due_date).toISOString().slice(0,16) : null);
+    setEstimateMinutes(task.estimate_minutes != null ? String(task.estimate_minutes) : '');
     setComments([]);
   }, [task]);
 
@@ -108,6 +112,8 @@ export default function TaskDetail() {
         description: description.trim(),
         assignee_ids: assigneeIds,
         reviewer_id: reviewerId,
+        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        estimate_minutes: estimateMinutes.trim() ? parseInt(estimateMinutes, 10) : null,
       });
     } finally {
       setSaving(false);
@@ -192,6 +198,13 @@ export default function TaskDetail() {
             <Textarea label="Описание" value={description} onChange={(e) => setDescription(e.currentTarget.value)} minRows={3} />
             <MultiSelect label="Исполнители" data={members} value={assigneeIds} onChange={setAssigneeIds} searchable placeholder="Выберите участников" nothingFoundMessage="Нет участников" />
             <Select label="Ревьюер" data={[{ value: '', label: '—' }, ...members]} value={reviewerId ?? ''} onChange={(v) => setReviewerId(v || null)} searchable allowDeselect />
+            <Group grow>
+              <div>
+                <label className="text-sm text-dimmed">Дедлайн</label>
+                <input type="datetime-local" value={dueDate ?? ''} onChange={(e) => setDueDate(e.currentTarget.value || null)} className="w-full rounded border px-3 py-2" />
+              </div>
+              <TextInput label="Оценка, мин" value={estimateMinutes} onChange={(e) => setEstimateMinutes(e.currentTarget.value.replace(/[^0-9]/g, ''))} placeholder="Напр. 90" />
+            </Group>
             {/* Ветка прямо под ревьюером */}
             <Select
               label="Ветка"

@@ -9,7 +9,7 @@ export interface Task {
   order: number;
   reviewer_id?: string | null;
   due_date?: string | null;
-  estimate_hours?: number | null;
+  estimate_minutes?: number | null;
   created_at: string;
   updated_at: string;
   assignees?: { id: string; username: string }[];
@@ -24,7 +24,7 @@ export interface TaskCreate {
   assignee_ids?: string[];
   reviewer_id?: string | null;
   due_date?: string | null;
-  estimate_hours?: number | null;
+  estimate_minutes?: number | null;
 }
 
 export interface TaskUpdate {
@@ -35,7 +35,7 @@ export interface TaskUpdate {
   assignee_ids?: string[];
   reviewer_id?: string | null;
   due_date?: string | null;
-  estimate_hours?: number | null;
+  estimate_minutes?: number | null;
 }
 
 export interface TaskMove {

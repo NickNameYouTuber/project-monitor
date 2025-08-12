@@ -24,10 +24,11 @@ class Task(Base):
     project_id = Column(String, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     order = Column(Integer, default=0)
     reviewer_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # New planning fields
+    due_date = Column(DateTime, nullable=True)
+    estimate_minutes = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    due_date = Column(DateTime, nullable=True)
-    estimate_hours = Column(Integer, nullable=True)
     
     # Relationships
     column = relationship("TaskColumn", back_populates="tasks")

@@ -7,6 +7,7 @@ from .database import engine, SQLALCHEMY_DATABASE_URL
 from sqlalchemy import text
 from . import models
 from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards, merge_requests
+from .utils.telegram_notify import notify_task_event_silent
 import subprocess
 import os
 from pathlib import Path
@@ -44,6 +45,15 @@ def _apply_startup_migrations():
         # Add reviewer_id to tasks if missing
         try:
             cur.execute("ALTER TABLE tasks ADD COLUMN reviewer_id TEXT NULL REFERENCES users(id) ON DELETE SET NULL;")
+        except Exception:
+            pass
+        # Add planning fields to tasks
+        try:
+            cur.execute("ALTER TABLE tasks ADD COLUMN due_date DATETIME")
+        except Exception:
+            pass
+        try:
+            cur.execute("ALTER TABLE tasks ADD COLUMN estimate_minutes INTEGER")
         except Exception:
             pass
         # Whiteboards table incremental columns
@@ -103,15 +113,6 @@ def _apply_startup_migrations():
                 cur.execute(stmt)
             except Exception:
                 pass
-        # Tasks extras
-        for stmt in [
-            "ALTER TABLE tasks ADD COLUMN due_date DATETIME",
-            "ALTER TABLE tasks ADD COLUMN estimate_hours INTEGER",
-        ]:
-            try:
-                cur.execute(stmt)
-            except Exception:
-                pass
         conn.commit()
         conn.close()
     except Exception:
@@ -130,8 +131,9 @@ elif SQLALCHEMY_DATABASE_URL.startswith('postgres'):
                 "ALTER TABLE whiteboard_elements ADD COLUMN IF NOT EXISTS text_color TEXT",
                 "ALTER TABLE whiteboard_elements ADD COLUMN IF NOT EXISTS font_family TEXT",
                 "ALTER TABLE whiteboard_elements ADD COLUMN IF NOT EXISTS font_size INTEGER",
+                # Tasks planning fields
                 "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date TIMESTAMP",
-                "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS estimate_hours INTEGER",
+                "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS estimate_minutes INTEGER",
             ]:
                 try:
                     conn.execute(text(stmt))

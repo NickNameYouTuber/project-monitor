@@ -9,7 +9,7 @@ from ..models import Repository, RepositoryMember, User
 from ..models.merge_request import MergeRequest, MergeRequestStatus, MergeRequestApproval, MergeRequestComment
 from .. import schemas
 from ..routes.repository_content import get_repo_path, check_repository_access
-from ..utils.telegram_notify import send_telegram_message
+from ..utils.telegram_notify import notify_mr_event_silent
 import git
 import os
 
@@ -66,13 +66,9 @@ def create_merge_request(repository_id: str, payload: schemas.merge_request.Merg
     db.add(mr)
     db.commit()
     db.refresh(mr)
-    # Notify repository members (simple broadcast) and author
+    # Notify repo members later; for now notify author only
     try:
-        members = db.query(RepositoryMember).filter(RepositoryMember.repository_id == repository_id).all()
-        for m in members:
-            user = db.query(User).filter(User.id == m.user_id).first()
-            if user and user.telegram_id:
-                send_telegram_message(int(user.telegram_id), f"🔀 Новый MR в репозитории <b>{repo_path.split('/')[-1]}</b>: <b>{mr.title}</b>")
+        notify_mr_event_silent(db, mr, actor_id=str(current_user.id), action="created")
     except Exception:
         pass
     return mr

@@ -28,6 +28,8 @@ export default function WhiteboardPage() {
   // transformer removed in minimal version
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [size, setSize] = useState({ width: 800, height: 600 });
+  const [scale, setScale] = useState(1);
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
   // Load board data
   useEffect(() => {
@@ -66,54 +68,6 @@ export default function WhiteboardPage() {
     return () => ro.disconnect();
   }, []);
 
-  // Zoom and pan: Ctrl + wheel, double click to focus
-  useEffect(() => {
-    const stage = stageRef.current;
-    const container = containerRef.current;
-    if (!stage || !container) return;
-    const onWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey) return;
-      e.preventDefault();
-      const oldScale = stage.scaleX();
-      const pointer = stage.getPointerPosition() || { x: size.width / 2, y: size.height / 2 };
-      const scaleBy = 1.05;
-      const direction = e.deltaY > 0 ? -1 : 1;
-      const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-      const mousePointTo = {
-        x: (pointer.x - stage.x()) / oldScale,
-        y: (pointer.y - stage.y()) / oldScale,
-      };
-      stage.scale({ x: newScale, y: newScale });
-      const newPos = {
-        x: pointer.x - mousePointTo.x * newScale,
-        y: pointer.y - mousePointTo.y * newScale,
-      };
-      stage.position(newPos as any);
-      stage.batchDraw();
-    };
-    const onDblClick = () => {
-      const stage = stageRef.current;
-      if (!stage) return;
-      const pos = stage.getPointerPosition() || { x: size.width / 2, y: size.height / 2 };
-      // Smooth focus: center clicked point and slightly zoom in
-      const oldScale = stage.scaleX();
-      const newScale = Math.min(oldScale * 1.2, 4);
-      const mousePointTo = {
-        x: (pos.x - stage.x()) / oldScale,
-        y: (pos.y - stage.y()) / oldScale,
-      };
-      stage.scale({ x: newScale, y: newScale });
-      stage.position({ x: pos.x - mousePointTo.x * newScale, y: pos.y - mousePointTo.y * newScale } as any);
-      stage.batchDraw();
-    };
-    container.addEventListener('wheel', onWheel, { passive: false });
-    container.addEventListener('dblclick', onDblClick);
-    return () => {
-      container.removeEventListener('wheel', onWheel as any);
-      container.removeEventListener('dblclick', onDblClick as any);
-    };
-  }, [size.width, size.height]);
-
   // no transformer logic
 
   const handleStageMouseDown = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -131,10 +85,14 @@ export default function WhiteboardPage() {
       
       if (tool === 'sticky') {
         // Create new sticky note
+        const pointer = stage.getPointerPosition();
+        const invScale = scale === 0 ? 1 : scale;
+        const px = ((pointer?.x || 0) - stagePos.x) / invScale;
+        const py = ((pointer?.y || 0) - stagePos.y) / invScale;
         const newEl: Partial<WhiteboardElement> = {
           type: 'sticky',
-          x: Math.round(pos.x - 100),
-          y: Math.round(pos.y - 75),
+          x: Math.round(px - 100),
+          y: Math.round(py - 75),
           width: 200,
           height: 150,
           rotation: 0,
@@ -239,8 +197,81 @@ export default function WhiteboardPage() {
           // no mouse move handler
           draggable={tool === 'hand' && !connectingFromId}
           dragBoundFunc={(pos) => pos}
+          scaleX={scale}
+          scaleY={scale}
+          x={stagePos.x}
+          y={stagePos.y}
+          onDragEnd={(e) => setStagePos({ x: e.target.x(), y: e.target.y() })}
+          onWheel={(e) => {
+            if (!e.evt.ctrlKey) return; // zoom only with Ctrl
+            e.evt.preventDefault();
+            const stage = stageRef.current;
+            if (!stage) return;
+            const oldScale = scale;
+            const pointer = stage.getPointerPosition();
+            if (!pointer) return;
+            const scaleBy = 1.05;
+            const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+            const clamped = Math.max(0.2, Math.min(4, newScale));
+            const mousePointTo = {
+              x: (pointer.x - stagePos.x) / oldScale,
+              y: (pointer.y - stagePos.y) / oldScale,
+            };
+            const newPos = {
+              x: pointer.x - mousePointTo.x * clamped,
+              y: pointer.y - mousePointTo.y * clamped,
+            };
+            setScale(clamped);
+            setStagePos(newPos);
+          }}
+          onDblClick={() => {
+            const stage = stageRef.current;
+            if (!stage) return;
+            const pointer = stage.getPointerPosition();
+            if (!pointer) return;
+            // focus zoom to 1.2x centered at double-click point
+            const targetScale = Math.max(0.2, Math.min(3, scale * 1.2));
+            const mousePointTo = {
+              x: (pointer.x - stagePos.x) / scale,
+              y: (pointer.y - stagePos.y) / scale,
+            };
+            const newPos = {
+              x: pointer.x - mousePointTo.x * targetScale,
+              y: pointer.y - mousePointTo.y * targetScale,
+            };
+            setScale(targetScale);
+            setStagePos(newPos);
+          }}
         >
           <Layer ref={layerRef}>
+            {/* Minimap */}
+            <KonvaGroup x={size.width - 160} y={size.height - 120} listening={false}>
+              <Rect width={150} height={110} fill="#ffffff" stroke="#d0d0d0" cornerRadius={6} opacity={0.9} />
+              {(() => {
+                const worldW = 2000;
+                const worldH = 2000;
+                const scaleX = 140 / worldW;
+                const scaleY = 90 / worldH;
+                const viewportW = size.width / (scale || 1);
+                const viewportH = size.height / (scale || 1);
+                const viewX = (-stagePos.x) / (scale || 1);
+                const viewY = (-stagePos.y) / (scale || 1);
+                return (
+                  <KonvaGroup x={5} y={5}>
+                    <Rect width={worldW * scaleX} height={worldH * scaleY} fill="#f5f5f5" stroke="#e0e0e0" />
+                    <Rect
+                      x={viewX * scaleX}
+                      y={viewY * scaleY}
+                      width={viewportW * scaleX}
+                      height={viewportH * scaleY}
+                      stroke="#1971c2"
+                      strokeWidth={1}
+                      fill="rgba(25,113,194,0.1)"
+                    />
+                  </KonvaGroup>
+                );
+              })()}
+            </KonvaGroup>
             {/* Connections */}
             {connections.map((conn) => {
               const src = elements.find(el => el.id === conn.source_element_id);
@@ -280,8 +311,8 @@ export default function WhiteboardPage() {
                 <KonvaGroup
                  key={el.id}
                  id={el.id}
-                 x={el.x}
-                 y={el.y}
+                  x={el.x}
+                  y={el.y}
                   draggable={!connectingFromId}
                   onDragMove={(e) => {
                     const node = e.target;
@@ -459,29 +490,6 @@ export default function WhiteboardPage() {
             {/* no transformer in minimal */}
           </Layer>
         </Stage>
-        {/* Minimap */}
-        <div style={{ position: 'absolute', left: 8, bottom: 8, width: 180, height: 120, background: '#fff', border: '1px solid #e9ecef', borderRadius: 6, boxShadow: '0 2px 6px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-          <Stage width={180} height={120} listening={false} scaleX={180 / Math.max(size.width, 1)} scaleY={120 / Math.max(size.height, 1)}>
-            <Layer>
-              {elements.map((el) => (
-                <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height} fill="#ddd" cornerRadius={2} />
-              ))}
-              {connections.map((conn) => {
-                const src = elements.find(el => el.id === conn.source_element_id);
-                const dst = elements.find(el => el.id === conn.target_element_id);
-                if (!src || !dst) return null;
-                const srcAnchor = nearestAnchorPoint(src, dst.x + dst.width / 2, dst.y + dst.height / 2);
-                const dstAnchor = nearestAnchorPoint(dst, src.x + src.width / 2, src.y + src.height / 2);
-                const sx = src.x + srcAnchor.x;
-                const sy = src.y + srcAnchor.y;
-                const tx = dst.x + dstAnchor.x;
-                const ty = dst.y + dstAnchor.y;
-                return <Arrow key={conn.id} points={[sx, sy, tx, ty]} stroke="#bbb" fill="#bbb" strokeWidth={1} pointerLength={4} pointerWidth={4} />
-              })}
-            </Layer>
-          </Stage>
-        </div>
-
         {(selectedId || selectedConnectionId) && (
           <div style={{ position: 'absolute', right: 8, top: 8, width: 280, background: '#fff', border: '1px solid #e9ecef', borderRadius: 6, padding: 12, boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
             {selectedId && (

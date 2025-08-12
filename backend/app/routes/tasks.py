@@ -3,9 +3,9 @@ from ..dependencies import get_current_user, get_db
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from typing import List
+from ..utils.telegram_notify import notify_task_event_silent
 from .comments import get_comments_for_task
 from sqlalchemy import and_
-from ..utils.telegram_notify import send_telegram_message
 
 router = APIRouter(
     tags=["tasks"]
@@ -70,7 +70,7 @@ def create_task(
         project_id=task.project_id,
         order=task.order if task.order is not None else max_order,
         due_date=task.due_date,
-        estimate_hours=task.estimate_hours
+        estimate_minutes=task.estimate_minutes,
     )
     
     # Reviewer
@@ -83,6 +83,13 @@ def create_task(
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
+
+    # Notify assignees and reviewer
+    try:
+        assignee_ids = task.assignee_ids or []
+        notify_task_event_silent(db, db_task, actor_id=str(current_user.id), action="created", notify_user_ids=assignee_ids + ([task.reviewer_id] if task.reviewer_id else []))
+    except Exception:
+        pass
     
     # Добавляем исполнителей, если они указаны
     if task.assignee_ids:
@@ -94,18 +101,6 @@ def create_task(
         db.commit()
         db.refresh(db_task)
     
-    # Telegram notifications to assignees and reviewer
-    try:
-        notified_users = set()
-        for user in db_task.assignees:
-            if user.telegram_id and user.telegram_id not in notified_users:
-                send_telegram_message(int(user.telegram_id), f"🆕 Новая задача: <b>{db_task.title}</b>")
-                notified_users.add(user.telegram_id)
-        if db_task.reviewer and db_task.reviewer.telegram_id and db_task.reviewer.telegram_id not in notified_users:
-            send_telegram_message(int(db_task.reviewer.telegram_id), f"🆕 Назначен ревьюером: <b>{db_task.title}</b>")
-    except Exception:
-        pass
-
     return db_task
 
 
@@ -280,6 +275,11 @@ def update_task(
     
     if task_update.order is not None:
         task.order = task_update.order
+    # Planning fields
+    if task_update.due_date is not None:
+        task.due_date = task_update.due_date
+    if task_update.estimate_minutes is not None:
+        task.estimate_minutes = task_update.estimate_minutes
     
     # Обновляем исполнителей
     if task_update.assignee_ids is not None:
@@ -302,15 +302,16 @@ def update_task(
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reviewer not found")
             task.reviewer_id = task_update.reviewer_id
     
-    # Доп. поля
-    if task_update.due_date is not None:
-        task.due_date = task_update.due_date
-    if task_update.estimate_hours is not None:
-        task.estimate_hours = task_update.estimate_hours
-
     db.commit()
     db.refresh(task)
     
+    # Notifications on update (assignment, deadline etc.)
+    try:
+        assignee_ids = task_update.assignee_ids if task_update.assignee_ids is not None else [u.id for u in task.assignees]
+        notify_task_event_silent(db, task, actor_id=str(current_user.id), action="updated", notify_user_ids=assignee_ids + ([task.reviewer_id] if task.reviewer_id else []))
+    except Exception:
+        pass
+
     return task
 
 

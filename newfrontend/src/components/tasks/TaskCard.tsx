@@ -70,20 +70,24 @@ export default function TaskCard({ task, index }: { task: Task; index: number })
             <Group justify="space-between" align="flex-start">
               <div>
                 <Text fw={500}>{task.title}</Text>
-                {(task.due_date || typeof task.estimate_hours === 'number') && (
-                  <Group gap={8} mt={6} wrap="nowrap">
-                    {task.due_date && (
-                      <Text size="xs" c="dimmed">⏰ {new Date(task.due_date).toLocaleDateString()}</Text>
-                    )}
-                    {typeof task.estimate_hours === 'number' && (
-                      <Text size="xs" c="dimmed">⏱ {task.estimate_hours}ч</Text>
-                    )}
-                  </Group>
-                )}
                 {task.description && (
                   <Text size="sm" c="dimmed" mt={4}>
                     {task.description}
                   </Text>
+                )}
+                {(task.due_date || task.estimate_minutes != null) && (
+                  <Group gap={8} mt={6}>
+                    {task.estimate_minutes != null && (
+                      <Text size="xs" c="dimmed" title="Оценка времени">
+                        ⏱ {Math.max(0, Math.floor((task.estimate_minutes || 0) / 60))}h{(task.estimate_minutes || 0) % 60 ? ` ${(task.estimate_minutes || 0) % 60}m` : ''}
+                      </Text>
+                    )}
+                    {task.due_date && (
+                      <Text size="xs" c={new Date(task.due_date) < new Date() ? 'red' : 'dimmed'} title="Дедлайн">
+                        🗓 {new Date(task.due_date).toLocaleDateString()}
+                      </Text>
+                    )}
+                  </Group>
                 )}
               </div>
               <Menu withinPortal position="bottom-end">
