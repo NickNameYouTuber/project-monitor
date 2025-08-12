@@ -13,6 +13,9 @@ class WhiteboardElementBase(BaseModel):
     z_index: int = 0
     text: Optional[str] = None
     fill: Optional[str] = None
+    text_color: Optional[str] = None
+    font_family: Optional[str] = None
+    font_size: Optional[int] = 14
 
 
 class WhiteboardElementCreate(WhiteboardElementBase):
@@ -28,6 +31,9 @@ class WhiteboardElementUpdate(BaseModel):
     z_index: Optional[int] = None
     text: Optional[str] = None
     fill: Optional[str] = None
+    text_color: Optional[str] = None
+    font_family: Optional[str] = None
+    font_size: Optional[int] = None
 
 
 class WhiteboardElementResponse(WhiteboardElementBase):

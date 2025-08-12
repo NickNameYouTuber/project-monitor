@@ -19,6 +19,9 @@ export default function WhiteboardPage() {
   const [connectingFromId, setConnectingFromId] = useState<string | null>(null);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [pendingFill, setPendingFill] = useState<string | null>(null);
+  const [pendingTextColor, setPendingTextColor] = useState<string | null>(null);
+  const [pendingFontFamily, setPendingFontFamily] = useState<string | null>(null);
+  const [pendingFontSize, setPendingFontSize] = useState<number | null>(null);
   
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
@@ -165,7 +168,7 @@ export default function WhiteboardPage() {
             // remove related connections visually
             setConnections(prev => prev.filter(c => c.source_element_id !== id && c.target_element_id !== id));
             // backend delete with auth token
-            deleteElement(id).catch(() => {});
+           deleteElement(id).catch(() => {});
           }}>Удалить стикер</Button>
         )}
       </MantineGroup>
@@ -209,8 +212,9 @@ export default function WhiteboardPage() {
                   stroke={conn.stroke || '#8a8d91'}
                   fill={conn.stroke || '#8a8d91'}
                   strokeWidth={(conn.stroke_width || 2) + (isSelected ? 1 : 0)}
-                  pointerLength={8}
-                  pointerWidth={8}
+                  pointerLength={getHeadsMeta(conn) === 'none' ? 0 : 8}
+                  pointerWidth={getHeadsMeta(conn) === 'none' ? 0 : 8}
+                  pointerAtBeginning={getHeadsMeta(conn) === 'both'}
                   dash={dashed ? [8, 6] : undefined}
                   onClick={(e) => {
                     e.cancelBubble = true;
@@ -258,9 +262,9 @@ export default function WhiteboardPage() {
                      width={el.width}
                      height={el.height}
                      text={el.text}
-                     fontSize={14}
-                     fontFamily="Arial"
-                     fill="#333"
+                      fontSize={el.font_size ?? 14}
+                      fontFamily={el.font_family ?? 'Arial'}
+                      fill={el.text_color ?? '#333'}
                      align="center"
                      verticalAlign="middle"
                      padding={10}
@@ -416,14 +420,35 @@ export default function WhiteboardPage() {
                   <label style={{ fontSize: 13, width: 110 }}>Цвет фона</label>
                   <input type="color" value={pendingFill ?? (elements.find(e => e.id === selectedId)?.fill || '#ffeb3b')} onChange={(ev) => setPendingFill(ev.target.value)} />
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <label style={{ fontSize: 13, width: 110 }}>Цвет текста</label>
+                  <input type="color" value={pendingTextColor ?? (elements.find(e => e.id === selectedId)?.text_color || '#333333')} onChange={(ev) => setPendingTextColor(ev.target.value)} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <label style={{ fontSize: 13, width: 110 }}>Шрифт</label>
+                  <select value={pendingFontFamily ?? (elements.find(e => e.id === selectedId)?.font_family || 'Arial')} onChange={(ev) => setPendingFontFamily(ev.target.value)} style={{ flex: 1 }}>
+                    <option value="Arial">Arial</option>
+                    <option value="Inter">Inter</option>
+                    <option value="Roboto">Roboto</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Courier New">Courier New</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <label style={{ fontSize: 13, width: 110 }}>Размер</label>
+                  <input type="number" min={10} max={64} value={pendingFontSize ?? (elements.find(e => e.id === selectedId)?.font_size ?? 14)} onChange={(ev) => setPendingFontSize(parseInt(ev.target.value || '14', 10))} style={{ width: 80 }} />
+                </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <Button size="xs" variant="default" onClick={() => setPendingFill(null)}>Сброс</Button>
                   <Button size="xs" onClick={() => {
                     const el = elements.find(e => e.id === selectedId);
                     if (!el) return;
                     const newFill = pendingFill ?? el.fill ?? '#ffeb3b';
-                    updateElement(el.id, { fill: newFill }).then(() => {
-                      setElements(prev => prev.map(it => it.id === el.id ? { ...it, fill: newFill } : it));
+                    const newTextColor = pendingTextColor ?? el.text_color ?? '#333333';
+                    const newFontFamily = pendingFontFamily ?? el.font_family ?? 'Arial';
+                    const newFontSize = pendingFontSize ?? el.font_size ?? 14;
+                    updateElement(el.id, { fill: newFill, text_color: newTextColor, font_family: newFontFamily, font_size: newFontSize }).then(() => {
+                      setElements(prev => prev.map(it => it.id === el.id ? { ...it, fill: newFill, text_color: newTextColor, font_family: newFontFamily, font_size: newFontSize } : it));
                     }).catch(console.error);
                   }}>Сохранить</Button>
                 </div>
@@ -460,6 +485,35 @@ export default function WhiteboardPage() {
                       setConnections(prev => prev.map(c => c.id === conn.id ? { ...c, points: updated.points } : c));
                     }).catch(console.error);
                   }}>{getDashedFlag(connections.find(c => c.id === selectedConnectionId)) ? 'Сделать сплошной' : 'Сделать пунктирной'}</Button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <Button size="xs" variant={getHeadsMeta(connections.find(c => c.id === selectedConnectionId)) === 'end' ? 'filled' : 'default'} onClick={() => {
+                      const conn = connections.find(c => c.id === selectedConnectionId);
+                      if (!conn) return;
+                      const meta = safeParsePointsMeta(conn.points);
+                      const nextMeta = { ...meta, heads: 'end' as const };
+                      updateConnection(conn.id, { points: JSON.stringify(nextMeta) }).then((updated) => {
+                        setConnections(prev => prev.map(c => c.id === conn.id ? { ...c, points: updated.points } : c));
+                      }).catch(console.error);
+                    }}>Одна</Button>
+                    <Button size="xs" variant={getHeadsMeta(connections.find(c => c.id === selectedConnectionId)) === 'both' ? 'filled' : 'default'} onClick={() => {
+                      const conn = connections.find(c => c.id === selectedConnectionId);
+                      if (!conn) return;
+                      const meta = safeParsePointsMeta(conn.points);
+                      const nextMeta = { ...meta, heads: 'both' as const };
+                      updateConnection(conn.id, { points: JSON.stringify(nextMeta) }).then((updated) => {
+                        setConnections(prev => prev.map(c => c.id === conn.id ? { ...c, points: updated.points } : c));
+                      }).catch(console.error);
+                    }}>Две</Button>
+                    <Button size="xs" variant={getHeadsMeta(connections.find(c => c.id === selectedConnectionId)) === 'none' ? 'filled' : 'default'} onClick={() => {
+                      const conn = connections.find(c => c.id === selectedConnectionId);
+                      if (!conn) return;
+                      const meta = safeParsePointsMeta(conn.points);
+                      const nextMeta = { ...meta, heads: 'none' as const };
+                      updateConnection(conn.id, { points: JSON.stringify(nextMeta) }).then((updated) => {
+                        setConnections(prev => prev.map(c => c.id === conn.id ? { ...c, points: updated.points } : c));
+                      }).catch(console.error);
+                    }}>Без</Button>
+                  </div>
                   <Button size="xs" color="red" variant="filled" onClick={() => {
                     const conn = connections.find(c => c.id === selectedConnectionId);
                     if (!conn) return;
@@ -506,19 +560,27 @@ function nearestAnchorPoint(el: WhiteboardElement, targetAbsX: number, targetAbs
   return best;
 }
 
-function safeParsePointsMeta(points?: string | null): { dashed?: boolean } {
-  if (!points) return {};
+function safeParsePointsMeta(points?: string | null): { dashed?: boolean; heads?: 'end' | 'both' | 'none' } {
+  if (!points) return {} as any;
   try {
     const obj = JSON.parse(points);
     if (obj && typeof obj === 'object') {
-      return { dashed: !!(obj as any).dashed };
+      const o: any = obj;
+      const heads = o.heads === 'both' || o.heads === 'none' ? o.heads : 'end';
+      return { dashed: !!o.dashed, heads };
     }
   } catch {}
-  return {};
+  return {} as any;
 }
 
 function getDashedFlag(conn?: WhiteboardConnection): boolean {
   if (!conn) return false;
   const meta = safeParsePointsMeta(conn.points);
   return !!meta.dashed;
+}
+
+function getHeadsMeta(conn?: WhiteboardConnection): 'end' | 'both' | 'none' {
+  if (!conn) return 'end';
+  const meta = safeParsePointsMeta(conn.points);
+  return meta.heads ?? 'end';
 }

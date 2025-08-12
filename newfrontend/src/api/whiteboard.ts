@@ -12,6 +12,9 @@ export interface WhiteboardElement {
   z_index: number;
   text?: string;
   fill?: string;
+  text_color?: string;
+  font_family?: string;
+  font_size?: number;
 }
 
 export interface WhiteboardConnection {

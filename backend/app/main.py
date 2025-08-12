@@ -62,6 +62,9 @@ def _apply_startup_migrations():
             "ALTER TABLE whiteboard_elements ADD COLUMN z_index INTEGER",
             "ALTER TABLE whiteboard_elements ADD COLUMN text TEXT",
             "ALTER TABLE whiteboard_elements ADD COLUMN fill TEXT",
+            "ALTER TABLE whiteboard_elements ADD COLUMN text_color TEXT",
+            "ALTER TABLE whiteboard_elements ADD COLUMN font_family TEXT",
+            "ALTER TABLE whiteboard_elements ADD COLUMN font_size INTEGER",
             "ALTER TABLE whiteboard_elements ADD COLUMN created_at DATETIME",
             "ALTER TABLE whiteboard_elements ADD COLUMN updated_at DATETIME",
         ]:

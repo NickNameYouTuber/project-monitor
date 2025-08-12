@@ -31,7 +31,10 @@ class WhiteboardElement(Base):
     rotation = Column(Integer, default=0)
     z_index = Column(Integer, default=0)
     text = Column(Text, nullable=True)
-    fill = Column(String, nullable=True)
+    fill = Column(String, nullable=True)  # background color
+    text_color = Column(String, nullable=True)
+    font_family = Column(String, nullable=True)
+    font_size = Column(Integer, default=14)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
