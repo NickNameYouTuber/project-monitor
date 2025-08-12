@@ -201,7 +201,21 @@ def get_merge_request_changes(repository_id: str, mr_id: str, current_user: User
     except Exception:
         raise HTTPException(status_code=400, detail="Branch not found")
 
-    diffs = target_commit.diff(source_commit, create_patch=True)
+    # Strategy:
+    # - OPEN/CLOSED: show diff target -> source (what would be merged)
+    # - MERGED: show diff from merge-base(target, source) -> source (what was merged)
+    try:
+        if mr.status == MergeRequestStatus.MERGED:
+            bases = repo.merge_base(target_commit, source_commit)
+            base_commit = bases[0] if isinstance(bases, (list, tuple)) and bases else bases
+            if base_commit is None:
+                diffs = target_commit.diff(source_commit, create_patch=True)
+            else:
+                diffs = base_commit.diff(source_commit, create_patch=True)
+        else:
+            diffs = target_commit.diff(source_commit, create_patch=True)
+    except Exception:
+        diffs = target_commit.diff(source_commit, create_patch=True)
     files = []
     for d in diffs:
         raw = d.diff
