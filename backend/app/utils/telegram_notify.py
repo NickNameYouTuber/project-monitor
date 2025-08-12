@@ -62,12 +62,23 @@ def notify_mr_event_silent(db: Session, mr: MergeRequest, *, actor_id: Optional[
         f"Репозиторий: {mr.repository_id}\n"
         f"От: {actor_name}"
     )
-    # For now, only author
+    recipients: List[int] = []
+    # author
     author: Optional[User] = db.query(User).filter(User.id == mr.author_id).first()
     if author and getattr(author, 'telegram_id', None):
         try:
-            _send_telegram_message(int(author.telegram_id), text)
+            recipients.append(int(author.telegram_id))
         except Exception:
             pass
+    # reviewer
+    if getattr(mr, 'reviewer_id', None):
+        reviewer = db.query(User).filter(User.id == mr.reviewer_id).first()
+        if reviewer and getattr(reviewer, 'telegram_id', None):
+            try:
+                recipients.append(int(reviewer.telegram_id))
+            except Exception:
+                pass
+    for cid in set(recipients):
+        _send_telegram_message(cid, text)
 
 

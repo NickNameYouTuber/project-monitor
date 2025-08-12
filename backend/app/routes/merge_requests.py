@@ -89,12 +89,8 @@ def get_merge_request(repository_id: str, mr_id: str, current_user: User = Depen
             schemas.merge_request.MergeRequestApprovalWithUser(
                 id=a.id,
                 merge_request_id=a.merge_request_id,
-                user_id=a.user_id,
-                user_name=_user_display_name(
-                    db.query(User).filter(User.id == str(a.user_id)).first(),
-                    fallback_id=str(a.user_id),
-                    is_self=(str(a.user_id) == str(current_user.id))
-                ) if a.user_id else _user_display_name(None, fallback_id=None),
+                user_id=str(a.user_id) if a.user_id else None,
+                user_name=None,
                 created_at=a.created_at
             ) for a in approvals
         ],
@@ -118,6 +114,10 @@ def update_merge_request(repository_id: str, mr_id: str, payload: dict, current_
         # normalize type: allow string UUID
         value = payload['reviewer_id']
         mr.reviewer_id = value if value else None
+        try:
+            notify_mr_event_silent(db, mr, actor_id=str(current_user.id), action="reviewer_assigned")
+        except Exception:
+            pass
     db.commit()
     db.refresh(mr)
     return mr
