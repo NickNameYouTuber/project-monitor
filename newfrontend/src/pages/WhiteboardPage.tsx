@@ -263,10 +263,11 @@ export default function WhiteboardPage() {
                             key={`guard-${idx}`}
                             x={p.x}
                             y={p.y}
-                            radius={20}
-                            fill="rgba(25, 118, 210, 0)"
-                            fillEnabled={false}
-                            strokeEnabled={false}
+                            radius={50}
+                            fill="rgba(25, 118, 210, 0.00001)"
+                            stroke="#00000000"
+                            strokeWidth={1}
+                            listening={false}
                             draggable
                             onMouseEnter={(e) => {
                               const container = e.target.getStage()?.container();
