@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Group as MantineGroup, SegmentedControl, Text, Button } from '@mantine/core';
 import { Stage, Layer, Rect, Text as KText, Group as KonvaGroup, Circle, Arrow } from 'react-konva';
-import { getOrCreateWhiteboard, createElement, updateElement, createConnection, deleteElement, type WhiteboardElement, type WhiteboardConnection } from '../api/whiteboard';
+import { getOrCreateWhiteboard, createElement, updateElement, createConnection, deleteElement, updateConnection, deleteConnection, type WhiteboardElement, type WhiteboardConnection } from '../api/whiteboard';
 import { useParams } from 'react-router-dom';
 import Konva from 'konva';
 
@@ -17,6 +17,8 @@ export default function WhiteboardPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredTargetId, setHoveredTargetId] = useState<string | null>(null);
   const [connectingFromId, setConnectingFromId] = useState<string | null>(null);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const [pendingFill, setPendingFill] = useState<string | null>(null);
   
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
@@ -74,6 +76,7 @@ export default function WhiteboardPage() {
     const isEmpty = e.target === stage || e.target.getClassName?.() === 'Layer';
     if (isEmpty) {
       setSelectedId(null);
+      setSelectedConnectionId(null);
       
       if (tool === 'sticky') {
         // Create new sticky note
@@ -148,8 +151,10 @@ export default function WhiteboardPage() {
           { label: '📝 Стикер', value: 'sticky' },
         ]} />
         
-        {selectedId && (<Text size="sm" c="dimmed">Выбран элемент</Text>)}
-        <Button size="xs" variant="default" onClick={() => setSelectedId(null)}>Снять выделение</Button>
+        {(!!selectedId || !!selectedConnectionId) && (
+          <Text size="sm" c="dimmed">{selectedId ? 'Выбран стикер' : 'Выбрана стрелка'}</Text>
+        )}
+        <Button size="xs" variant="default" onClick={() => { setSelectedId(null); setSelectedConnectionId(null); }}>Снять выделение</Button>
         {selectedId && (
           <Button size="xs" color="red" variant="filled" onClick={() => {
             // удаление выбранного стикера
@@ -167,7 +172,7 @@ export default function WhiteboardPage() {
 
       <div
         ref={containerRef}
-        className="flex-1 w-full overflow-hidden"
+        className="flex-1 w-full overflow-hidden relative"
         style={{
           backgroundImage: 'radial-gradient(circle, #e0e0e0 1px, transparent 1px)',
           backgroundSize: '20px 20px',
@@ -196,14 +201,22 @@ export default function WhiteboardPage() {
               const sy = src.y + srcAnchor.y;
               const tx = dst.x + dstAnchor.x;
               const ty = dst.y + dstAnchor.y;
+              const dashed = getDashedFlag(conn);
+              const isSelected = selectedConnectionId === conn.id;
               return (
                 <Arrow key={conn.id}
                   points={[sx, sy, tx, ty]}
                   stroke={conn.stroke || '#8a8d91'}
                   fill={conn.stroke || '#8a8d91'}
-                  strokeWidth={conn.stroke_width || 2}
+                  strokeWidth={(conn.stroke_width || 2) + (isSelected ? 1 : 0)}
                   pointerLength={8}
                   pointerWidth={8}
+                  dash={dashed ? [8, 6] : undefined}
+                  onClick={(e) => {
+                    e.cancelBubble = true;
+                    setSelectedId(null);
+                    setSelectedConnectionId(conn.id);
+                  }}
                 />
               );
             })}
@@ -394,6 +407,72 @@ export default function WhiteboardPage() {
             {/* no transformer in minimal */}
           </Layer>
         </Stage>
+        {(selectedId || selectedConnectionId) && (
+          <div style={{ position: 'absolute', right: 8, top: 8, width: 280, background: '#fff', border: '1px solid #e9ecef', borderRadius: 6, padding: 12, boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
+            {selectedId && (
+              <div>
+                <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>Настройки стикера</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <label style={{ fontSize: 13, width: 110 }}>Цвет фона</label>
+                  <input type="color" value={pendingFill ?? (elements.find(e => e.id === selectedId)?.fill || '#ffeb3b')} onChange={(ev) => setPendingFill(ev.target.value)} />
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button size="xs" variant="default" onClick={() => setPendingFill(null)}>Сброс</Button>
+                  <Button size="xs" onClick={() => {
+                    const el = elements.find(e => e.id === selectedId);
+                    if (!el) return;
+                    const newFill = pendingFill ?? el.fill ?? '#ffeb3b';
+                    updateElement(el.id, { fill: newFill }).then(() => {
+                      setElements(prev => prev.map(it => it.id === el.id ? { ...it, fill: newFill } : it));
+                    }).catch(console.error);
+                  }}>Сохранить</Button>
+                </div>
+              </div>
+            )}
+            {selectedConnectionId && (
+              <div style={{ marginTop: selectedId ? 12 : 0 }}>
+                <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>Настройки стрелки</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Button size="xs" variant="default" onClick={() => {
+                    const conn = connections.find(c => c.id === selectedConnectionId);
+                    if (!conn || !boardId) return;
+                    // reverse by recreate
+                    deleteConnection(conn.id).catch(() => {});
+                    createConnection(boardId, {
+                      source_element_id: conn.target_element_id,
+                      target_element_id: conn.source_element_id,
+                      stroke: conn.stroke,
+                      stroke_width: conn.stroke_width,
+                      points: conn.points || null,
+                    }).then((newConn) => {
+                      setConnections(prev => prev
+                        .filter(c => c.id !== conn.id)
+                        .concat(newConn));
+                      setSelectedConnectionId(newConn.id);
+                    }).catch(console.error);
+                  }}>Поменять направление</Button>
+                  <Button size="xs" variant="default" onClick={() => {
+                    const conn = connections.find(c => c.id === selectedConnectionId);
+                    if (!conn) return;
+                    const meta = safeParsePointsMeta(conn.points);
+                    const nextMeta = { ...meta, dashed: !meta.dashed };
+                    updateConnection(conn.id, { points: JSON.stringify(nextMeta) }).then((updated) => {
+                      setConnections(prev => prev.map(c => c.id === conn.id ? { ...c, points: updated.points } : c));
+                    }).catch(console.error);
+                  }}>{getDashedFlag(connections.find(c => c.id === selectedConnectionId)) ? 'Сделать сплошной' : 'Сделать пунктирной'}</Button>
+                  <Button size="xs" color="red" variant="filled" onClick={() => {
+                    const conn = connections.find(c => c.id === selectedConnectionId);
+                    if (!conn) return;
+                    deleteConnection(conn.id).then(() => {
+                      setConnections(prev => prev.filter(c => c.id !== conn.id));
+                      setSelectedConnectionId(null);
+                    }).catch(console.error);
+                  }}>Удалить</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -425,4 +504,21 @@ function nearestAnchorPoint(el: WhiteboardElement, targetAbsX: number, targetAbs
     if (d < bestD) { bestD = d; best = p; }
   }
   return best;
+}
+
+function safeParsePointsMeta(points?: string | null): { dashed?: boolean } {
+  if (!points) return {};
+  try {
+    const obj = JSON.parse(points);
+    if (obj && typeof obj === 'object') {
+      return { dashed: !!(obj as any).dashed };
+    }
+  } catch {}
+  return {};
+}
+
+function getDashedFlag(conn?: WhiteboardConnection): boolean {
+  if (!conn) return false;
+  const meta = safeParsePointsMeta(conn.points);
+  return !!meta.dashed;
 }
