@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs } from '@mantine/core';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
+import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, unapproveMergeRequest, closeMergeRequest, reopenMergeRequest, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
 
 export default function RepositoryMergeRequests({ repositoryId }: { repositoryId: string }) {
   const [mrs, setMrs] = useState<MergeRequest[]>([]);
@@ -67,12 +67,35 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
     setActiveMr(detail);
   }
 
+  async function submitUnapprove() {
+    if (!activeMr) return;
+    await unapproveMergeRequest(repositoryId, activeMr.id);
+    const detail = await getMergeRequestDetail(repositoryId, activeMr.id);
+    setActiveMr(detail);
+  }
+
   async function submitMerge() {
     if (!activeMr) return;
     const merged = await mergeMergeRequest(repositoryId, activeMr.id);
     const detail = await getMergeRequestDetail(repositoryId, merged.id);
     setActiveMr(detail);
     setMrs(prev => prev.map(m => m.id === merged.id ? merged : m));
+  }
+
+  async function submitClose() {
+    if (!activeMr) return;
+    const closed = await closeMergeRequest(repositoryId, activeMr.id);
+    const detail = await getMergeRequestDetail(repositoryId, activeMr.id);
+    setActiveMr(detail);
+    setMrs(prev => prev.map(m => m.id === closed.id ? closed : m));
+  }
+
+  async function submitReopen() {
+    if (!activeMr) return;
+    const reopened = await reopenMergeRequest(repositoryId, activeMr.id);
+    const detail = await getMergeRequestDetail(repositoryId, activeMr.id);
+    setActiveMr(detail);
+    setMrs(prev => prev.map(m => m.id === reopened.id ? reopened : m));
   }
 
   async function submitComment() {
@@ -133,7 +156,14 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
             <Stack>
               <Group>
                 <Button variant="light" onClick={submitApprove}>Approve</Button>
+                <Button variant="light" onClick={submitUnapprove}>Unapprove</Button>
                 <Button onClick={submitMerge}>Merge</Button>
+                {activeMr.status === 'open' && (
+                  <Button color="red" variant="light" onClick={submitClose}>Закрыть</Button>
+                )}
+                {activeMr.status === 'closed' && (
+                  <Button variant="light" onClick={submitReopen}>Переоткрыть</Button>
+                )}
               </Group>
               {activeMr.approvals?.length ? (
                 <Group gap="xs">

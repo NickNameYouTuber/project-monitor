@@ -180,6 +180,21 @@ export async function mergeMergeRequest(repositoryId: string, mrId: string) {
   return data;
 }
 
+export async function unapproveMergeRequest(repositoryId: string, mrId: string) {
+  const { data } = await apiClient.post(`/repositories/${repositoryId}/merge_requests/${mrId}/unapprove`, {});
+  return data;
+}
+
+export async function closeMergeRequest(repositoryId: string, mrId: string) {
+  const { data } = await apiClient.post<MergeRequest>(`/repositories/${repositoryId}/merge_requests/${mrId}/close`, {});
+  return data;
+}
+
+export async function reopenMergeRequest(repositoryId: string, mrId: string) {
+  const { data } = await apiClient.post<MergeRequest>(`/repositories/${repositoryId}/merge_requests/${mrId}/reopen`, {});
+  return data;
+}
+
 export async function listMergeRequestComments(repositoryId: string, mrId: string) {
   const { data } = await apiClient.get<MergeRequestComment[]>(`/repositories/${repositoryId}/merge_requests/${mrId}/comments`);
   return data;

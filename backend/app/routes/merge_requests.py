@@ -110,6 +110,23 @@ def approve_merge_request(repository_id: str, mr_id: str, current_user: User = D
     return approval
 
 
+@router.post("/repositories/{repository_id}/merge_requests/{mr_id}/unapprove")
+def unapprove_merge_request(repository_id: str, mr_id: str, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    _ = check_repository_access(repository_id, str(current_user.id), db)
+    mr = db.query(MergeRequest).filter(MergeRequest.id == mr_id, MergeRequest.repository_id == repository_id).first()
+    if not mr or mr.status != MergeRequestStatus.OPEN:
+        raise HTTPException(status_code=400, detail="Cannot unapprove")
+    existing = db.query(MergeRequestApproval).filter(
+        MergeRequestApproval.merge_request_id == mr_id,
+        MergeRequestApproval.user_id == current_user.id
+    ).first()
+    if not existing:
+        return {"status": "noop"}
+    db.delete(existing)
+    db.commit()
+    return {"status": "ok"}
+
+
 @router.post("/repositories/{repository_id}/merge_requests/{mr_id}/merge", response_model=schemas.merge_request.MergeRequest)
 def merge_merge_request(repository_id: str, mr_id: str, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
     _ = check_repository_access(repository_id, str(current_user.id), db)
@@ -132,6 +149,34 @@ def merge_merge_request(repository_id: str, mr_id: str, current_user: User = Dep
         raise HTTPException(status_code=400, detail=f"Merge failed: {str(e)}")
 
     mr.status = MergeRequestStatus.MERGED
+    db.commit()
+    db.refresh(mr)
+    return mr
+
+
+@router.post("/repositories/{repository_id}/merge_requests/{mr_id}/close", response_model=schemas.merge_request.MergeRequest)
+def close_merge_request(repository_id: str, mr_id: str, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    _ = check_repository_access(repository_id, str(current_user.id), db)
+    mr = db.query(MergeRequest).filter(MergeRequest.id == mr_id, MergeRequest.repository_id == repository_id).first()
+    if not mr:
+        raise HTTPException(status_code=404, detail="Merge Request not found")
+    if mr.status != MergeRequestStatus.OPEN:
+        raise HTTPException(status_code=400, detail="Only open MR can be closed")
+    mr.status = MergeRequestStatus.CLOSED
+    db.commit()
+    db.refresh(mr)
+    return mr
+
+
+@router.post("/repositories/{repository_id}/merge_requests/{mr_id}/reopen", response_model=schemas.merge_request.MergeRequest)
+def reopen_merge_request(repository_id: str, mr_id: str, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    _ = check_repository_access(repository_id, str(current_user.id), db)
+    mr = db.query(MergeRequest).filter(MergeRequest.id == mr_id, MergeRequest.repository_id == repository_id).first()
+    if not mr:
+        raise HTTPException(status_code=404, detail="Merge Request not found")
+    if mr.status != MergeRequestStatus.CLOSED:
+        raise HTTPException(status_code=400, detail="Only closed MR can be reopened")
+    mr.status = MergeRequestStatus.OPEN
     db.commit()
     db.refresh(mr)
     return mr
