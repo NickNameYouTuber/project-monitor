@@ -199,10 +199,12 @@ export default function TaskDetail() {
             <MultiSelect label="Исполнители" data={members} value={assigneeIds} onChange={setAssigneeIds} searchable placeholder="Выберите участников" nothingFoundMessage="Нет участников" />
             <Select label="Ревьюер" data={[{ value: '', label: '—' }, ...members]} value={reviewerId ?? ''} onChange={(v) => setReviewerId(v || null)} searchable allowDeselect />
             <Group grow>
-              <div>
-                <label className="text-sm text-dimmed">Дедлайн</label>
-                <input type="datetime-local" value={dueDate ?? ''} onChange={(e) => setDueDate(e.currentTarget.value || null)} className="w-full rounded border px-3 py-2" />
-              </div>
+              <TextInput
+                label="Дедлайн"
+                type="datetime-local"
+                value={dueDate ?? ''}
+                onChange={(e) => setDueDate(e.currentTarget.value || null)}
+              />
               <TextInput label="Оценка, мин" value={estimateMinutes} onChange={(e) => setEstimateMinutes(e.currentTarget.value.replace(/[^0-9]/g, ''))} placeholder="Напр. 90" />
             </Group>
             {/* Ветка прямо под ревьюером */}

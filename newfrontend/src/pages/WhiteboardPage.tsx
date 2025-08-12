@@ -30,6 +30,13 @@ export default function WhiteboardPage() {
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [scale, setScale] = useState(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+  // minimap interaction
+  const worldBounds = { width: 3000, height: 2000 };
+  const minimap = {
+    width: 160,
+    height: 120,
+    padding: 5,
+  };
 
   // Load board data
   useEffect(() => {
@@ -244,34 +251,64 @@ export default function WhiteboardPage() {
           }}
         >
           <Layer ref={layerRef}>
-            {/* Minimap */}
-            <KonvaGroup x={size.width - 160} y={size.height - 120} listening={false}>
-              <Rect width={150} height={110} fill="#ffffff" stroke="#d0d0d0" cornerRadius={6} opacity={0.9} />
-              {(() => {
-                const worldW = 2000;
-                const worldH = 2000;
-                const scaleX = 140 / worldW;
-                const scaleY = 90 / worldH;
-                const viewportW = size.width / (scale || 1);
-                const viewportH = size.height / (scale || 1);
-                const viewX = (-stagePos.x) / (scale || 1);
-                const viewY = (-stagePos.y) / (scale || 1);
-                return (
-                  <KonvaGroup x={5} y={5}>
+            {/* Minimap (interactive) */}
+            {(() => {
+              const mmW = minimap.width;
+              const mmH = minimap.height;
+              const pad = minimap.padding;
+              const worldW = worldBounds.width;
+              const worldH = worldBounds.height;
+              const scaleX = (mmW - pad * 2) / worldW;
+              const scaleY = (mmH - pad * 2) / worldH;
+              const viewW = size.width / (scale || 1);
+              const viewH = size.height / (scale || 1);
+              const viewX = (-stagePos.x) / (scale || 1);
+              const viewY = (-stagePos.y) / (scale || 1);
+              const mmX = size.width - mmW - 8;
+              const mmY = size.height - mmH - 8;
+              const moveViewportTo = (mx: number, my: number) => {
+                const localX = Math.max(0, Math.min(mx - pad, worldW));
+                const localY = Math.max(0, Math.min(my - pad, worldH));
+                const newPos = {
+                  x: -localX * (scale || 1) + (size.width - viewW * (scale || 1)) / 2,
+                  y: -localY * (scale || 1) + (size.height - viewH * (scale || 1)) / 2,
+                };
+                setStagePos(newPos);
+              };
+              return (
+                <KonvaGroup x={mmX} y={mmY}
+                  onMouseDown={(e) => {
+                    const p = e.target.getStage()?.getPointerPosition();
+                    if (!p) return;
+                    const lx = p.x - mmX;
+                    const ly = p.y - mmY;
+                    moveViewportTo(lx / scaleX, ly / scaleY);
+                  }}
+                  onMouseMove={(e) => {
+                    if (e.evt.buttons !== 1) return;
+                    const p = e.target.getStage()?.getPointerPosition();
+                    if (!p) return;
+                    const lx = p.x - mmX;
+                    const ly = p.y - mmY;
+                    moveViewportTo(lx / scaleX, ly / scaleY);
+                  }}
+                >
+                  <Rect width={mmW} height={mmH} fill="#ffffff" stroke="#d0d0d0" cornerRadius={6} opacity={0.95} />
+                  <KonvaGroup x={pad} y={pad}>
                     <Rect width={worldW * scaleX} height={worldH * scaleY} fill="#f5f5f5" stroke="#e0e0e0" />
                     <Rect
                       x={viewX * scaleX}
                       y={viewY * scaleY}
-                      width={viewportW * scaleX}
-                      height={viewportH * scaleY}
+                      width={viewW * scaleX}
+                      height={viewH * scaleY}
                       stroke="#1971c2"
                       strokeWidth={1}
                       fill="rgba(25,113,194,0.1)"
                     />
                   </KonvaGroup>
-                );
-              })()}
-            </KonvaGroup>
+                </KonvaGroup>
+              );
+            })()}
             {/* Connections */}
             {connections.map((conn) => {
               const src = elements.find(el => el.id === conn.source_element_id);
