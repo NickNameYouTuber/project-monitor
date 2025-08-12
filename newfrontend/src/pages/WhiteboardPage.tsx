@@ -455,7 +455,7 @@ export default function WhiteboardPage() {
         </Stage>
         {/* Minimap */}
         <div style={{ position: 'absolute', right: 8, bottom: 8, width: 180, height: 120, background: '#fff', border: '1px solid #e9ecef', borderRadius: 4, boxShadow: '0 2px 6px rgba(0,0,0,0.08)', overflow: 'hidden', cursor: 'pointer' }}
-          onClick={(ev) => {
+          onMouseDown={(ev) => {
             const rect = (ev.currentTarget as HTMLDivElement).getBoundingClientRect();
             const rx = ev.clientX - rect.left;
             const ry = ev.clientY - rect.top;

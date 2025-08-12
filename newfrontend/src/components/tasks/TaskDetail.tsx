@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Group, Loader, Modal, MultiSelect, Select, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Button, Group, Loader, Modal, MultiSelect, Select, Stack, Text, Textarea, TextInput, NumberInput } from '@mantine/core';
+import { DateInput } from '@mantine/dates';
 import { useTaskBoard } from '../../context/TaskBoardContext';
 import { fetchProject } from '../../api/projects';
 import apiClient from '../../api/client';
@@ -30,6 +31,8 @@ export default function TaskDetail() {
   const [baseBranch, setBaseBranch] = useState<string | null>(null);
   const [savingBranch, setSavingBranch] = useState(false);
   const [meId, setMeId] = useState<string | null>(null);
+  const [estimateHours, setEstimateHours] = useState<number>(0);
+  const [dueDate, setDueDate] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!task) return;
@@ -37,6 +40,8 @@ export default function TaskDetail() {
     setDescription(task.description || '');
     setAssigneeIds(task.assignees?.map((a) => a.id) || []);
     setReviewerId(task.reviewer_id || null);
+    setEstimateHours(task.estimate_hours ?? 0);
+    setDueDate(task.due_date ? new Date(task.due_date) : null);
     setComments([]);
   }, [task]);
 
@@ -108,6 +113,8 @@ export default function TaskDetail() {
         description: description.trim(),
         assignee_ids: assigneeIds,
         reviewer_id: reviewerId,
+        estimate_hours: estimateHours || undefined,
+        due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
       });
     } finally {
       setSaving(false);
@@ -190,6 +197,10 @@ export default function TaskDetail() {
           <Stack>
             <TextInput label="Название" value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
             <Textarea label="Описание" value={description} onChange={(e) => setDescription(e.currentTarget.value)} minRows={3} />
+            <Group grow>
+              <NumberInput label="Оценка, часов" value={estimateHours} onChange={(v) => setEstimateHours(Number(v) || 0)} min={0} />
+              <DateInput label="Дедлайн" value={dueDate} onChange={(v) => setDueDate(v as any)} />
+            </Group>
             <MultiSelect label="Исполнители" data={members} value={assigneeIds} onChange={setAssigneeIds} searchable placeholder="Выберите участников" nothingFoundMessage="Нет участников" />
             <Select label="Ревьюер" data={[{ value: '', label: '—' }, ...members]} value={reviewerId ?? ''} onChange={(v) => setReviewerId(v || null)} searchable allowDeselect />
             {/* Ветка прямо под ревьюером */}
