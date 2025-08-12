@@ -264,6 +264,7 @@ export default function WhiteboardPage() {
                             x={p.x}
                             y={p.y}
                             radius={20}
+                            fill="rgba(25, 118, 210, 0)"
                             fillEnabled={false}
                             strokeEnabled={false}
                             draggable
