@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs } from '@mantine/core';
+import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs, Divider } from '@mantine/core';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, unapproveMergeRequest, closeMergeRequest, reopenMergeRequest, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
@@ -155,15 +155,18 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
             {activeMr.description && <Text>{activeMr.description}</Text>}
             <Stack>
               <Group>
-                <Button variant="light" onClick={submitApprove}>Approve</Button>
-                <Button variant="light" onClick={submitUnapprove}>Unapprove</Button>
-                <Button onClick={submitMerge}>Merge</Button>
                 {activeMr.status === 'open' && (
-                  <Button color="red" variant="light" onClick={submitClose}>Закрыть</Button>
+                  <>
+                    <Button variant="light" onClick={submitApprove}>Approve</Button>
+                    <Button variant="light" onClick={submitUnapprove}>Unapprove</Button>
+                    <Button onClick={submitMerge}>Merge</Button>
+                    <Button color="red" variant="light" onClick={submitClose}>Закрыть</Button>
+                  </>
                 )}
                 {activeMr.status === 'closed' && (
                   <Button variant="light" onClick={submitReopen}>Переоткрыть</Button>
                 )}
+                {/* merged: никаких действий */}
               </Group>
               {activeMr.approvals?.length ? (
                 <Group gap="xs">
@@ -222,6 +225,8 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
                 )}
               </Tabs.Panel>
             </Tabs>
+            <Divider my="sm" />
+            <Text fw={600}>Комментарии</Text>
             <Stack>
               {comments.map(c => (
                 <Card key={c.id} withBorder>

@@ -16,7 +16,7 @@ router = APIRouter()
 def _user_display_name(user: Optional[User], *, fallback_id: Optional[str] = None, is_self: bool = False) -> str:
     if user is None:
         base = (fallback_id[:8] if fallback_id else "unknown")
-        return f"{base}{' (Вы)' if is_self else ''}"
+        return f"Гость-{base}{' (Вы)' if is_self else ''}"
     if getattr(user, "username", None):
         return f"{user.username}{' (Вы)' if is_self else ''}"
     first = getattr(user, "first_name", None) or ""
@@ -27,7 +27,7 @@ def _user_display_name(user: Optional[User], *, fallback_id: Optional[str] = Non
     if getattr(user, "email", None):
         return f"{user.email}{' (Вы)' if is_self else ''}"
     base = (fallback_id[:8] if fallback_id else "unknown")
-    return f"{base}{' (Вы)' if is_self else ''}"
+    return f"Гость-{base}{' (Вы)' if is_self else ''}"
 
 @router.get("/repositories/{repository_id}/merge_requests", response_model=List[schemas.merge_request.MergeRequest])
 def list_merge_requests(repository_id: str, status: Optional[str] = None, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
