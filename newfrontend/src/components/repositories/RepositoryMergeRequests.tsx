@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import apiClient from '../../api/client';
 import { Button, Card, Divider, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs } from '@mantine/core';
 // Fallback local user id from API if global AppContext is not available
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -38,16 +39,14 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
         setBranches(brs.map(b => b.name));
         // try to load repo members for reviewer select (fallback to approvals authors later if needed)
         try {
-          const res = await fetch(`/api/repositories/${repositoryId}/members`, { credentials: 'include' });
-          const data = await res.json();
+          const { data } = await apiClient.get(`/repositories/${repositoryId}/members`);
           if (Array.isArray(data)) {
             let opts = data.map((m: any) => ({ value: m.user?.id || m.user_id, label: m.user?.username || m.user_id }));
             setMembers(opts);
           }
         } catch {}
         try {
-          const meRes = await fetch('/api/users/me', { credentials: 'include' });
-          const meData = await meRes.json();
+          const { data: meData } = await apiClient.get('/users/me');
           if (meData?.id) setMe({ id: meData.id, username: meData.username });
           // ensure me in members
           setMembers(prev => {
