@@ -27,7 +27,7 @@ services:
       - "7671:7671"
     volumes:
       - ./db-data:/data
-      - ./git-repos:/app/git_repos
+      - gitrepos:/app/git_repos
     networks:
       - project-monitor-network
     restart: unless-stopped
@@ -59,3 +59,4 @@ networks:
 
 volumes:
   pgdata:
+  gitrepos:
