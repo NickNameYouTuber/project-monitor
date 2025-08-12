@@ -266,93 +266,119 @@ export default function WhiteboardPage() {
                             radius={14}
                             fillEnabled={false}
                             strokeEnabled={false}
-                            draggable
+                            listening
+                            onMouseEnter={(e) => {
+                              const container = e.target.getStage()?.container();
+                              if (container) container.style.cursor = 'default';
+                            }}
+                            onMouseLeave={(e) => {
+                              const container = e.target.getStage()?.container();
+                              if (container) container.style.cursor = 'default';
+                            }}
                             onMouseDown={(e) => {
                               e.cancelBubble = true;
                               setConnectingFromId(el.id);
-                              const stage = stageRef.current;
-                              if (stage) stage.draggable(false);
+                              const stageNode = stageRef.current;
+                              if (stageNode) stageNode.draggable(false);
                               const parent = (e.target as any).getParent?.();
                               if (parent && parent.draggable) parent.draggable(false);
-                            }}
-                            onDragStart={(e) => {
-                              e.cancelBubble = true;
-                              setConnectingFromId(el.id);
-                              const stage = stageRef.current;
-                              if (stage) stage.draggable(false);
-                              const parent = (e.target as any).getParent?.();
-                              if (parent && parent.draggable) parent.draggable(false);
-                            }}
-                            onDragMove={(e) => {
-                              const stage = e.target.getStage();
-                              const pos = stage?.getPointerPosition();
+                              
+                              // Start drawing line from anchor position
                               const abs = (e.target as any).getAbsolutePosition?.();
                               const sx = abs?.x ?? 0;
                               const sy = abs?.y ?? 0;
-                              let ex = pos?.x ?? sx;
-                              let ey = pos?.y ?? sy;
-                              const layers = stage ? stage.getLayers() : ([] as any[]);
-                              const layer = layers && layers.length > 0 ? layers[0] : null;
-                              const nodes: any = layer ? layer.find('Group') : [];
-                              let targetId: string | null = null;
-                              const arr = nodes?.toArray ? nodes.toArray() : nodes;
-                              arr.forEach((node: any) => {
-                                if (node.id() === el.id) return;
-                                const nx = node.x();
-                                const ny = node.y();
-                                const rect = node.findOne('Rect');
-                                if (!rect) return;
-                                const w = rect.width();
-                                const h = rect.height();
-                                if (pos && pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
-                                  targetId = node.id();
+                              setTempLine([sx, sy, sx, sy]);
+                              
+                              // Handle mouse move for line drawing
+                              const handleMouseMove = (moveEvent: any) => {
+                                const stage = moveEvent.target.getStage();
+                                const pos = stage?.getPointerPosition();
+                                if (!pos) return;
+                                
+                                let ex = pos.x;
+                                let ey = pos.y;
+                                
+                                // detect hovered target
+                                const layers = stage ? stage.getLayers() : ([] as any[]);
+                                const layer = layers && layers.length > 0 ? layers[0] : null;
+                                const nodes: any = layer ? layer.find('Group') : [];
+                                let targetId: string | null = null;
+                                const arr = nodes?.toArray ? nodes.toArray() : nodes;
+                                arr.forEach((node: any) => {
+                                  if (node.id() === el.id) return;
+                                  const nx = node.x();
+                                  const ny = node.y();
+                                  const rect = node.findOne('Rect');
+                                  if (!rect) return;
+                                  const w = rect.width();
+                                  const h = rect.height();
+                                  if (pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
+                                    targetId = node.id();
+                                  }
+                                });
+                                setHoveredTargetId(targetId);
+                                if (targetId) {
+                                  const targetEl = elements.find(it => it.id === targetId);
+                                  if (targetEl) {
+                                    const local = nearestAnchorPoint(targetEl, ex, ey);
+                                    ex = targetEl.x + local.x;
+                                    ey = targetEl.y + local.y;
+                                  }
                                 }
-                              });
-                              setHoveredTargetId(targetId);
-                              if (targetId) {
-                                const targetEl = elements.find(it => it.id === targetId);
-                                if (targetEl) {
-                                  const local = nearestAnchorPoint(targetEl, ex, ey);
-                                  ex = targetEl.x + local.x;
-                                  ey = targetEl.y + local.y;
+                                setTempLine([sx, sy, ex, ey]);
+                              };
+                              
+                              // Handle mouse up for line creation
+                              const handleMouseUp = (upEvent: any) => {
+                                setTempLine(null);
+                                setHoveredTargetId(null);
+                                setConnectingFromId(null);
+                                const stage = upEvent.target.getStage();
+                                const pos = stage?.getPointerPosition();
+                                if (!pos) {
+                                  stage?.off('mousemove', handleMouseMove);
+                                  stage?.off('mouseup', handleMouseUp);
+                                  const stageNode = stageRef.current;
+                                  if (stageNode) stageNode.draggable(tool === 'hand');
+                                  return;
                                 }
-                              }
-                              setTempLine([sx, sy, ex, ey]);
-                            }}
-                            onDragEnd={(e) => {
-                              setTempLine(null);
-                              setHoveredTargetId(null);
-                              setConnectingFromId(null);
-                              const stage = e.target.getStage();
-                              const pos = stage?.getPointerPosition();
-                              if (!pos) return;
-                              const layers = stage ? stage.getLayers() : ([] as any[]);
-                              const layer = layers && layers.length > 0 ? layers[0] : null;
-                              const nodes: any = layer ? layer.find('Group') : [];
-                              let targetId: string | null = null;
-                              const arr = nodes?.toArray ? nodes.toArray() : nodes;
-                              arr.forEach((node:any) => {
-                                if (node.id() === el.id) return;
-                                const nx = node.x();
-                                const ny = node.y();
-                                const rect = node.findOne('Rect');
-                                if (!rect) return;
-                                const w = rect.width();
-                                const h = rect.height();
-                                if (pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
-                                  targetId = node.id();
+                                
+                                const layers = stage ? stage.getLayers() : ([] as any[]);
+                                const layer = layers && layers.length > 0 ? layers[0] : null;
+                                const nodes: any = layer ? layer.find('Group') : [];
+                                let targetId: string | null = null;
+                                const arr = nodes?.toArray ? nodes.toArray() : nodes;
+                                arr.forEach((node:any) => {
+                                  if (node.id() === el.id) return;
+                                  const nx = node.x();
+                                  const ny = node.y();
+                                  const rect = node.findOne('Rect');
+                                  if (!rect) return;
+                                  const w = rect.width();
+                                  const h = rect.height();
+                                  if (pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
+                                    targetId = node.id();
+                                  }
+                                });
+                                
+                                if (targetId && boardId) {
+                                  createConnection(boardId, { source_element_id: el.id, target_element_id: targetId, stroke: '#8a8d91', stroke_width: 2 })
+                                    .then((c) => setConnections(prev => [...prev, c]))
+                                    .catch(console.error);
                                 }
-                              });
-                              if (targetId && boardId) {
-                                createConnection(boardId, { source_element_id: el.id, target_element_id: targetId, stroke: '#8a8d91', stroke_width: 2 })
-                                  .then((c) => setConnections(prev => [...prev, c]))
-                                  .catch(console.error);
-                              }
-                              e.target.position({ x: p.x, y: p.y });
-                              const parent = (e.target as any).getParent?.();
-                              if (parent && parent.draggable) parent.draggable(true);
-                              const stageNode = stageRef.current;
-                              if (stageNode) stageNode.draggable(tool === 'hand');
+                                
+                                // Clean up event listeners
+                                stage?.off('mousemove', handleMouseMove);
+                                stage?.off('mouseup', handleMouseUp);
+                                
+                                const stageNode = stageRef.current;
+                                if (stageNode) stageNode.draggable(tool === 'hand');
+                              };
+                              
+                              // Attach event listeners to stage
+                              const stageEl = e.target.getStage();
+                              stageEl?.on('mousemove', handleMouseMove);
+                              stageEl?.on('mouseup', handleMouseUp);
                             }}
                           />
                           {/* Actual small anchor */}
@@ -364,94 +390,7 @@ export default function WhiteboardPage() {
                             fill="#1971c2"
                             stroke="#fff"
                             strokeWidth={1}
-                            draggable
-                            onMouseDown={(e) => {
-                              e.cancelBubble = true;
-                              setConnectingFromId(el.id);
-                              const stage = stageRef.current;
-                              if (stage) stage.draggable(false);
-                              const parent = (e.target as any).getParent?.();
-                              if (parent && parent.draggable) parent.draggable(false);
-                            }}
-                            onDragStart={(e) => {
-                              e.cancelBubble = true;
-                              setConnectingFromId(el.id);
-                              const stage = stageRef.current;
-                              if (stage) stage.draggable(false);
-                              const parent = (e.target as any).getParent?.();
-                              if (parent && parent.draggable) parent.draggable(false);
-                            }}
-                            onDragMove={(e) => {
-                              const stage = e.target.getStage();
-                              const pos = stage?.getPointerPosition();
-                              const abs = (e.target as any).getAbsolutePosition?.();
-                              const sx = abs?.x ?? 0;
-                              const sy = abs?.y ?? 0;
-                              let ex = pos?.x ?? sx;
-                              let ey = pos?.y ?? sy;
-                              const layers = stage ? stage.getLayers() : ([] as any[]);
-                              const layer = layers && layers.length > 0 ? layers[0] : null;
-                              const nodes: any = layer ? layer.find('Group') : [];
-                              let targetId: string | null = null;
-                              const arr = nodes?.toArray ? nodes.toArray() : nodes;
-                              arr.forEach((node: any) => {
-                                if (node.id() === el.id) return;
-                                const nx = node.x();
-                                const ny = node.y();
-                                const rect = node.findOne('Rect');
-                                if (!rect) return;
-                                const w = rect.width();
-                                const h = rect.height();
-                                if (pos && pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
-                                  targetId = node.id();
-                                }
-                              });
-                              setHoveredTargetId(targetId);
-                              if (targetId) {
-                                const targetEl = elements.find(it => it.id === targetId);
-                                if (targetEl) {
-                                  const local = nearestAnchorPoint(targetEl, ex, ey);
-                                  ex = targetEl.x + local.x;
-                                  ey = targetEl.y + local.y;
-                                }
-                              }
-                              setTempLine([sx, sy, ex, ey]);
-                            }}
-                            onDragEnd={(e) => {
-                              setTempLine(null);
-                              setHoveredTargetId(null);
-                              setConnectingFromId(null);
-                              const stage = e.target.getStage();
-                              const pos = stage?.getPointerPosition();
-                              if (!pos) return;
-                              const layers = stage ? stage.getLayers() : ([] as any[]);
-                              const layer = layers && layers.length > 0 ? layers[0] : null;
-                              const nodes: any = layer ? layer.find('Group') : [];
-                              let targetId: string | null = null;
-                              const arr = nodes?.toArray ? nodes.toArray() : nodes;
-                              arr.forEach((node:any) => {
-                                if (node.id() === el.id) return;
-                                const nx = node.x();
-                                const ny = node.y();
-                                const rect = node.findOne('Rect');
-                                if (!rect) return;
-                                const w = rect.width();
-                                const h = rect.height();
-                                if (pos.x >= nx && pos.x <= nx + w && pos.y >= ny && pos.y <= ny + h) {
-                                  targetId = node.id();
-                                }
-                              });
-                              if (targetId && boardId) {
-                                createConnection(boardId, { source_element_id: el.id, target_element_id: targetId, stroke: '#8a8d91', stroke_width: 2 })
-                                  .then((c) => setConnections(prev => [...prev, c]))
-                                  .catch(console.error);
-                              }
-                              e.target.position({ x: p.x, y: p.y });
-                              const parent = (e.target as any).getParent?.();
-                              if (parent && parent.draggable) parent.draggable(true);
-                              const stageNode = stageRef.current;
-                              if (stageNode) stageNode.draggable(tool === 'hand');
-                            }}
+                            listening={false}
                           />
                         </>
                       ))}
