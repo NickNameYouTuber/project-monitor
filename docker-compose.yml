@@ -49,7 +49,7 @@ services:
     volumes:
       - ./db-data/pg:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "7672:5432"
     networks:
       - project-monitor-network
 
