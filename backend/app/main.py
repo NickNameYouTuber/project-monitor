@@ -89,6 +89,7 @@ def _apply_startup_migrations():
             "ALTER TABLE merge_requests ADD COLUMN source_sha_at_merge TEXT",
             "ALTER TABLE merge_requests ADD COLUMN target_sha_at_merge TEXT",
             "ALTER TABLE merge_requests ADD COLUMN merge_commit_sha TEXT",
+            "ALTER TABLE merge_requests ADD COLUMN merged_at DATETIME",
         ]:
             try:
                 cur.execute(stmt)

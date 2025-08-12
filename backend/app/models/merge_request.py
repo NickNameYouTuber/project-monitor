@@ -29,6 +29,7 @@ class MergeRequest(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    merged_at = Column(DateTime, nullable=True)
 
     # Snapshot SHAs at merge time to keep stable diffs after branches move
     base_sha_at_merge = Column(String, nullable=True)

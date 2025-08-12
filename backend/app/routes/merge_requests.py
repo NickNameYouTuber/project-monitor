@@ -160,6 +160,8 @@ def merge_merge_request(repository_id: str, mr_id: str, current_user: User = Dep
         mr.target_sha_at_merge = target_commit.hexsha
         mr.merge_commit_sha = merge_commit.hexsha
         mr.status = MergeRequestStatus.MERGED
+        mr.updated_at = merge_commit.committed_datetime
+        mr.merged_at = merge_commit.committed_datetime
     except git.GitCommandError as e:
         raise HTTPException(status_code=400, detail=f"Merge failed: {str(e)}")
     db.commit()
