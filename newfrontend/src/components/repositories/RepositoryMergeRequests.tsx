@@ -19,7 +19,6 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'open' | 'merged' | 'closed'>('open');
   const [changes, setChanges] = useState<MergeRequestChanges | null>(null);
-  
 
   useEffect(() => {
     let mounted = true;

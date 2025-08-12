@@ -5,7 +5,7 @@ from .. import models, schemas
 from typing import List
 from .comments import get_comments_for_task
 from sqlalchemy import and_
-from ..utils.telegram_notify import send_telegram_message_safe
+from ..utils.telegram_notify import send_telegram_message
 
 router = APIRouter(
     tags=["tasks"]
@@ -68,7 +68,9 @@ def create_task(
         description=task.description,
         column_id=task.column_id,
         project_id=task.project_id,
-        order=task.order if task.order is not None else max_order
+        order=task.order if task.order is not None else max_order,
+        due_date=task.due_date,
+        estimate_hours=task.estimate_hours
     )
     
     # Reviewer
@@ -77,15 +79,6 @@ def create_task(
         if not reviewer:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reviewer not found")
         db_task.reviewer_id = task.reviewer_id
-
-    # optional time-related fields
-    try:
-        if getattr(task, 'estimate_hours', None) is not None:
-            db_task.estimate_hours = task.estimate_hours
-        if getattr(task, 'due_date', None) is not None:
-            db_task.due_date = task.due_date
-    except Exception:
-        pass
 
     db.add(db_task)
     db.commit()
@@ -97,15 +90,22 @@ def create_task(
             user = db.query(models.User).filter(models.User.id == user_id).first()
             if user:
                 db_task.assignees.append(user)
-                if user.telegram_id:
-                    try:
-                        send_telegram_message_safe(user.telegram_id, f"Новая задача: {db_task.title}")
-                    except Exception:
-                        pass
         
         db.commit()
         db.refresh(db_task)
     
+    # Telegram notifications to assignees and reviewer
+    try:
+        notified_users = set()
+        for user in db_task.assignees:
+            if user.telegram_id and user.telegram_id not in notified_users:
+                send_telegram_message(int(user.telegram_id), f"🆕 Новая задача: <b>{db_task.title}</b>")
+                notified_users.add(user.telegram_id)
+        if db_task.reviewer and db_task.reviewer.telegram_id and db_task.reviewer.telegram_id not in notified_users:
+            send_telegram_message(int(db_task.reviewer.telegram_id), f"🆕 Назначен ревьюером: <b>{db_task.title}</b>")
+    except Exception:
+        pass
+
     return db_task
 
 
@@ -280,31 +280,17 @@ def update_task(
     
     if task_update.order is not None:
         task.order = task_update.order
-
-    # time-related fields
-    if task_update.estimate_hours is not None:
-        task.estimate_hours = task_update.estimate_hours
-    if task_update.due_date is not None:
-        task.due_date = task_update.due_date
     
     # Обновляем исполнителей
     if task_update.assignee_ids is not None:
-        # Вычислим добавленных
-        current_ids = {u.id for u in task.assignees}
-        new_ids = set(task_update.assignee_ids or [])
-        # Удалить снятых
-        task.assignees = [u for u in task.assignees if u.id in new_ids]
-        # Добавить новых
-        added_ids = new_ids - current_ids
-        for user_id in added_ids:
+        # Удаляем всех текущих исполнителей
+        task.assignees = []
+        
+        # Добавляем новых исполнителей
+        for user_id in task_update.assignee_ids:
             user = db.query(models.User).filter(models.User.id == user_id).first()
             if user:
                 task.assignees.append(user)
-                if user.telegram_id:
-                    try:
-                        send_telegram_message_safe(user.telegram_id, f"Вам назначили задачу: {task.title}")
-                    except Exception:
-                        pass
     
     # Обновляем ревьюера
     if task_update.reviewer_id is not None:
@@ -315,12 +301,13 @@ def update_task(
             if not reviewer:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reviewer not found")
             task.reviewer_id = task_update.reviewer_id
-            if reviewer.telegram_id:
-                try:
-                    send_telegram_message_safe(reviewer.telegram_id, f"Вы назначены ревьюером задачи: {task.title}")
-                except Exception:
-                    pass
     
+    # Доп. поля
+    if task_update.due_date is not None:
+        task.due_date = task_update.due_date
+    if task_update.estimate_hours is not None:
+        task.estimate_hours = task_update.estimate_hours
+
     db.commit()
     db.refresh(task)
     

@@ -8,8 +8,8 @@ export interface Task {
   project_id: string;
   order: number;
   reviewer_id?: string | null;
-  estimate_hours?: number | null;
   due_date?: string | null;
+  estimate_hours?: number | null;
   created_at: string;
   updated_at: string;
   assignees?: { id: string; username: string }[];
@@ -23,8 +23,8 @@ export interface TaskCreate {
   order?: number;
   assignee_ids?: string[];
   reviewer_id?: string | null;
-  estimate_hours?: number | null;
   due_date?: string | null;
+  estimate_hours?: number | null;
 }
 
 export interface TaskUpdate {
@@ -34,8 +34,8 @@ export interface TaskUpdate {
   order?: number;
   assignee_ids?: string[];
   reviewer_id?: string | null;
-  estimate_hours?: number | null;
   due_date?: string | null;
+  estimate_hours?: number | null;
 }
 
 export interface TaskMove {
