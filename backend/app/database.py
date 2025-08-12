@@ -11,33 +11,22 @@ Determines the application's root directory by navigating two levels up from thi
 Used as fallback for local development database path.
 """
 
-# Path for database storage
-# In Docker, use /data directory which is mounted as a volume
-# In development, use a local file in the backend directory
-if os.path.exists("/data"):
-    # Docker environment
-    db_dir = "/data"
-    os.makedirs(db_dir, exist_ok=True)
-    db_path = os.path.join(db_dir, "app.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
+
+if DATABASE_URL.startswith("postgres"):
+    SQLALCHEMY_DATABASE_URL = DATABASE_URL
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 else:
-    # Local development environment
-    db_dir = app_root
-    db_path = os.path.join(db_dir, "app.db")
-    
-print(f"Using database at: {db_path}")
-"""
-Configures database storage path based on environment:
-- Uses Docker-mounted /data volume in production
-- Uses local file in project root during development
-"""
-
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}"
-"""
-Database connection URL constructed from environment-specific path.
-Uses SQLite with file-based storage for simplicity in development and Docker.
-"""
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+    # Fallback to SQLite (dev only)
+    if os.path.exists("/data"):
+        db_dir = "/data"
+        os.makedirs(db_dir, exist_ok=True)
+        db_path = os.path.join(db_dir, "app.db")
+    else:
+        db_dir = app_root
+        db_path = os.path.join(db_dir, "app.db")
+    SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}"
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 """
 SQLAlchemy engine configured with:
 - Database URL from environment-specific path

@@ -12,18 +12,21 @@ from pathlib import Path
 import uvicorn
 import sqlite3
 
-# Create database tables
-models.user.Base.metadata.create_all(bind=engine)
-models.project.Base.metadata.create_all(bind=engine)
-models.dashboard.Base.metadata.create_all(bind=engine)
-models.dashboard_member.Base.metadata.create_all(bind=engine)
-models.task_column.Base.metadata.create_all(bind=engine)
-models.task.Base.metadata.create_all(bind=engine)
-models.comment.Base.metadata.create_all(bind=engine)
-models.repository.Base.metadata.create_all(bind=engine)
-models.repository_member.Base.metadata.create_all(bind=engine)
-models.token.Base.metadata.create_all(bind=engine)  # Initialize personal access token table
-models.merge_request.Base.metadata.create_all(bind=engine)
+# Create database tables (works for both SQLite and Postgres)
+for base in [
+    models.user.Base,
+    models.project.Base,
+    models.dashboard.Base,
+    models.dashboard_member.Base,
+    models.task_column.Base,
+    models.task.Base,
+    models.comment.Base,
+    models.repository.Base,
+    models.repository_member.Base,
+    models.token.Base,
+    models.merge_request.Base,
+]:
+    base.metadata.create_all(bind=engine)
 
 
 def _apply_startup_migrations():
@@ -101,7 +104,9 @@ def _apply_startup_migrations():
         # Best-effort; do not crash app on migration issues
         pass
 
-_apply_startup_migrations()
+# Keep SQLite-only startup migrations guarded
+if SQLALCHEMY_DATABASE_URL.startswith('sqlite'):
+    _apply_startup_migrations()
 
 app = FastAPI(
     title="NIT API",
