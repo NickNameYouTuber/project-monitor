@@ -9,7 +9,7 @@ function App() {
       <AppShell.Header>
         <AppHeader />
       </AppShell.Header>
-      <AppShell.Main className="w-full h-[calc(100vh-56px)] overflow-hidden">
+      <AppShell.Main className="w-full h-[calc(100vh-56px)] overflow-hidden min-h-0">
         <div className="w-full h-full">
           <Outlet />
         </div>

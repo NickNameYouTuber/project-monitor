@@ -69,8 +69,8 @@ function ProjectDetail() {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className="w-full h-[calc(100vh-56px)] overflow-hidden" p={0}>
-        <Stack className="w-full h-full overflow-hidden" style={{ padding: active === 'whiteboard' ? '0' : '20px' }}>
+      <AppShell.Main className="w-full h-[calc(100vh-56px)] overflow-hidden min-h-0" p={0}>
+        <Stack className="w-full h-full overflow-hidden min-h-0" style={{ padding: active === 'whiteboard' ? '0' : '20px' }}>
           {/* Заголовок перенесён в левую панель */}
 
           {active === 'tasks' && projectId && (
@@ -81,7 +81,7 @@ function ProjectDetail() {
             </TaskBoardProvider>
           )}
           {active === 'whiteboard' && projectId && (
-            <div className="w-full h-full overflow-hidden m-0 p-0">
+            <div className="w-full h-full overflow-hidden m-0 p-0 min-h-0">
               <WhiteboardPage />
             </div>
           )}

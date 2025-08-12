@@ -69,9 +69,11 @@ def create_merge_request(repository_id: str, payload: schemas.merge_request.Merg
     db.refresh(mr)
     # Notify repo members later; for now notify author only
     try:
+        # Refresh to ensure reviewer_id visible to notifier
+        db.refresh(mr)
         notify_mr_event_silent(db, mr, actor_id=str(current_user.id), action="created")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"notify MR(created) error: {e}")
     return mr
 
 

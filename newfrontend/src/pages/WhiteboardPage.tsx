@@ -154,7 +154,7 @@ export default function WhiteboardPage() {
   // minimal version: no connections
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
+    <div className="w-full h-full flex flex-col overflow-hidden min-h-0">
       <MantineGroup p="sm" gap="sm" className="shrink-0 bg-white border-b">
         <SegmentedControl value={tool} onChange={(v) => setTool(v as Tool)} data={[
           { label: '✋ Перемещение', value: 'hand' },
@@ -182,7 +182,7 @@ export default function WhiteboardPage() {
 
       <div
         ref={containerRef}
-        className="flex-1 w-full overflow-hidden relative"
+        className="flex-1 w-full overflow-hidden relative min-h-0"
         style={{
           backgroundImage: 'radial-gradient(circle, #e0e0e0 1px, transparent 1px)',
           backgroundSize: '20px 20px',
