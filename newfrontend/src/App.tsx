@@ -10,7 +10,7 @@ function App() {
         <AppHeader />
       </AppShell.Header>
       <AppShell.Main className="w-full h-[calc(100vh-56px)] overflow-hidden">
-        <div className="w-full h-full" style={{ padding: '20px' }}>
+        <div className="w-full h-full">
           <Outlet />
         </div>
       </AppShell.Main>
