@@ -48,7 +48,7 @@ function DashboardDetail() {
   }
 
   return (
-    <Stack className="h-full w-full" style={{ paddingLeft: 20, paddingRight: 20 }}>
+    <Stack className="h-full w-full px-4 md:px-6 lg:px-8">
       <Group justify="space-between" align="center" className="mb-2">
         <h2 className="text-xl font-semibold">Дашборд: {dashboard.name}</h2>
         <Button component={Link} to="/dashboards" variant="light">Назад</Button>

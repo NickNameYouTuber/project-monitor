@@ -35,7 +35,7 @@ function Dashboards() {
   }
 
   return (
-    <Stack style={{ paddingLeft: 20, paddingRight: 20 }}>
+    <Stack className="px-4 md:px-6 lg:px-8">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-semibold">Дашборды</h2>
         <Button size="xs" onClick={open}>Новый дашборд</Button>
