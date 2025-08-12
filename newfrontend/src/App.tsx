@@ -5,12 +5,12 @@ import './App.css';
 
 function App() {
   return (
-    <AppShell header={{ height: 56 }} padding="md">
+    <AppShell header={{ height: 56 }} padding={0}>
       <AppShell.Header>
         <AppHeader />
       </AppShell.Header>
-      <AppShell.Main className="h-full w-full">
-        <div className="h-full w-full">
+      <AppShell.Main className="w-full h-[calc(100vh-56px)] overflow-hidden">
+        <div className="w-full h-full">
           <Outlet />
         </div>
       </AppShell.Main>

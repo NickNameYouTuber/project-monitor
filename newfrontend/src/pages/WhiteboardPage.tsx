@@ -53,9 +53,9 @@ export default function WhiteboardPage() {
     if (!el) return;
     
     const measure = () => {
-      const rect = el.getBoundingClientRect();
-      const w = Math.max(100, Math.floor(rect.width));
-      const h = Math.max(100, Math.floor(rect.height));
+      // Use clientWidth/Height to avoid scrollbar-driven layout shifts
+      const w = Math.max(100, Math.floor(el.clientWidth));
+      const h = Math.max(100, Math.floor(el.clientHeight));
       setSize({ width: w, height: h });
     };
     
@@ -147,7 +147,7 @@ export default function WhiteboardPage() {
   // minimal version: no connections
 
   return (
-    <div className="h-full w-full flex flex-col" style={{ height: '100%' }}>
+    <div className="w-full h-full flex flex-col overflow-hidden">
       <MantineGroup p="sm" gap="sm" className="shrink-0 bg-white border-b">
         <SegmentedControl value={tool} onChange={(v) => setTool(v as Tool)} data={[
           { label: '✋ Перемещение', value: 'hand' },
