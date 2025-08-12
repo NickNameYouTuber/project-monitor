@@ -5,6 +5,7 @@ from .. import models, schemas
 from typing import List
 from .comments import get_comments_for_task
 from sqlalchemy import and_
+from ..utils.telegram_notify import send_telegram_message_safe
 
 router = APIRouter(
     tags=["tasks"]
@@ -77,6 +78,15 @@ def create_task(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reviewer not found")
         db_task.reviewer_id = task.reviewer_id
 
+    # optional time-related fields
+    try:
+        if getattr(task, 'estimate_hours', None) is not None:
+            db_task.estimate_hours = task.estimate_hours
+        if getattr(task, 'due_date', None) is not None:
+            db_task.due_date = task.due_date
+    except Exception:
+        pass
+
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -87,6 +97,11 @@ def create_task(
             user = db.query(models.User).filter(models.User.id == user_id).first()
             if user:
                 db_task.assignees.append(user)
+                if user.telegram_id:
+                    try:
+                        send_telegram_message_safe(user.telegram_id, f"Новая задача: {db_task.title}")
+                    except Exception:
+                        pass
         
         db.commit()
         db.refresh(db_task)
@@ -265,17 +280,31 @@ def update_task(
     
     if task_update.order is not None:
         task.order = task_update.order
+
+    # time-related fields
+    if task_update.estimate_hours is not None:
+        task.estimate_hours = task_update.estimate_hours
+    if task_update.due_date is not None:
+        task.due_date = task_update.due_date
     
     # Обновляем исполнителей
     if task_update.assignee_ids is not None:
-        # Удаляем всех текущих исполнителей
-        task.assignees = []
-        
-        # Добавляем новых исполнителей
-        for user_id in task_update.assignee_ids:
+        # Вычислим добавленных
+        current_ids = {u.id for u in task.assignees}
+        new_ids = set(task_update.assignee_ids or [])
+        # Удалить снятых
+        task.assignees = [u for u in task.assignees if u.id in new_ids]
+        # Добавить новых
+        added_ids = new_ids - current_ids
+        for user_id in added_ids:
             user = db.query(models.User).filter(models.User.id == user_id).first()
             if user:
                 task.assignees.append(user)
+                if user.telegram_id:
+                    try:
+                        send_telegram_message_safe(user.telegram_id, f"Вам назначили задачу: {task.title}")
+                    except Exception:
+                        pass
     
     # Обновляем ревьюера
     if task_update.reviewer_id is not None:
@@ -286,6 +315,11 @@ def update_task(
             if not reviewer:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reviewer not found")
             task.reviewer_id = task_update.reviewer_id
+            if reviewer.telegram_id:
+                try:
+                    send_telegram_message_safe(reviewer.telegram_id, f"Вы назначены ревьюером задачи: {task.title}")
+                except Exception:
+                    pass
     
     db.commit()
     db.refresh(task)

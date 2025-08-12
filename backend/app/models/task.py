@@ -23,6 +23,8 @@ class Task(Base):
     column_id = Column(String, ForeignKey("task_columns.id", ondelete="CASCADE"), nullable=False)
     project_id = Column(String, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     order = Column(Integer, default=0)
+    estimate_hours = Column(Integer, nullable=True)
+    due_date = Column(DateTime, nullable=True)
     reviewer_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

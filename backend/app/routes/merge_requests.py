@@ -7,6 +7,7 @@ from ..database import get_db
 from ..auth import get_current_active_user
 from ..models import Repository, RepositoryMember, User
 from ..models.merge_request import MergeRequest, MergeRequestStatus, MergeRequestApproval, MergeRequestComment
+from ..utils.telegram_notify import send_telegram_message_safe
 from .. import schemas
 from ..routes.repository_content import get_repo_path, check_repository_access
 import git
@@ -65,6 +66,18 @@ def create_merge_request(repository_id: str, payload: schemas.merge_request.Merg
     db.add(mr)
     db.commit()
     db.refresh(mr)
+    # Notify repository members except author (best effort)
+    try:
+        members = db.query(RepositoryMember).filter(RepositoryMember.repository_id == repository_id).all()
+        for m in members:
+            try:
+                user = db.query(User).filter(User.id == m.user_id).first()
+                if user and user.id != current_user.id and getattr(user, 'telegram_id', None):
+                    send_telegram_message_safe(user.telegram_id, f"Новый MR: {payload.title} ({payload.source_branch} → {payload.target_branch})")
+            except Exception:
+                pass
+    except Exception:
+        pass
     return mr
 
 

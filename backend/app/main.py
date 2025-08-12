@@ -75,6 +75,16 @@ def _apply_startup_migrations():
             except Exception:
                 pass
 
+        # Tasks table incremental columns
+        for stmt in [
+            "ALTER TABLE tasks ADD COLUMN estimate_hours INTEGER",
+            "ALTER TABLE tasks ADD COLUMN due_date DATETIME",
+        ]:
+            try:
+                cur.execute(stmt)
+            except Exception:
+                pass
+
         # Whiteboard connections table incremental columns
         for stmt in [
             "ALTER TABLE whiteboard_connections ADD COLUMN whiteboard_id TEXT",
@@ -121,6 +131,8 @@ elif SQLALCHEMY_DATABASE_URL.startswith('postgres'):
                 "ALTER TABLE whiteboard_elements ADD COLUMN IF NOT EXISTS text_color TEXT",
                 "ALTER TABLE whiteboard_elements ADD COLUMN IF NOT EXISTS font_family TEXT",
                 "ALTER TABLE whiteboard_elements ADD COLUMN IF NOT EXISTS font_size INTEGER",
+                "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS estimate_hours INTEGER",
+                "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date TIMESTAMP",
             ]:
                 try:
                     conn.execute(text(stmt))

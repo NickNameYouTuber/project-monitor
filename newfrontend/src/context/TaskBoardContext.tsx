@@ -18,8 +18,8 @@ interface TaskBoardContextType {
   deleteColumn: (columnId: string) => Promise<void>;
   reorderColumns: (projectId: string, columnIds: string[]) => Promise<void>;
   fetchTasks: (projectId: string) => Promise<void>;
-  addTask: (taskData: { title: string; description?: string; column_id: string; project_id: string; assignee_ids?: string[]; reviewer_id?: string | null }) => Promise<Task | undefined>;
-  updateTask: (taskId: string, updateData: { title?: string; description?: string; column_id?: string; order?: number; assignee_ids?: string[]; reviewer_id?: string | null }) => Promise<Task | undefined>;
+  addTask: (taskData: { title: string; description?: string; column_id: string; project_id: string; assignee_ids?: string[]; reviewer_id?: string | null; estimate_hours?: number | null; due_date?: string | null }) => Promise<Task | undefined>;
+  updateTask: (taskId: string, updateData: { title?: string; description?: string; column_id?: string; order?: number; assignee_ids?: string[]; reviewer_id?: string | null; estimate_hours?: number | null; due_date?: string | null }) => Promise<Task | undefined>;
   moveTask: (taskId: string, moveData: { column_id: string; order: number }) => Promise<Task | undefined>;
   deleteTask: (taskId: string) => Promise<void>;
   reorderTasks: (columnId: string, taskIds: string[]) => Promise<void>;
@@ -129,7 +129,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     }
   }, []);
 
-  const addTask = useCallback(async (taskData: { title: string; description?: string; column_id: string; project_id: string; assignee_ids?: string[]; reviewer_id?: string | null }) => {
+  const addTask = useCallback(async (taskData: { title: string; description?: string; column_id: string; project_id: string; assignee_ids?: string[]; reviewer_id?: string | null; estimate_hours?: number | null; due_date?: string | null }) => {
     try {
       setLoading(true);
       const newTask = await createTask(taskData);
@@ -143,7 +143,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     }
   }, []);
 
-  const updateTaskFn = useCallback(async (taskId: string, updateData: { title?: string; description?: string; column_id?: string; order?: number; assignee_ids?: string[]; reviewer_id?: string | null }) => {
+  const updateTaskFn = useCallback(async (taskId: string, updateData: { title?: string; description?: string; column_id?: string; order?: number; assignee_ids?: string[]; reviewer_id?: string | null; estimate_hours?: number | null; due_date?: string | null }) => {
     try {
       setLoading(true);
       const updated = await updateTask(taskId, updateData);

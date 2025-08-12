@@ -1,5 +1,5 @@
 import { Draggable } from '@hello-pangea/dnd';
-import { Card, Group, Menu, Text, ActionIcon, Button, Modal, Stack, Select, TextInput } from '@mantine/core';
+import { Card, Group, Menu, Text, ActionIcon, Button, Modal, Stack, Select, TextInput, Badge } from '@mantine/core';
 import type { Task } from '../../api/tasks';
 import { useState } from 'react';
 import TaskForm from './TaskForm';
@@ -70,6 +70,12 @@ export default function TaskCard({ task, index }: { task: Task; index: number })
             <Group justify="space-between" align="flex-start">
               <div>
                 <Text fw={500}>{task.title}</Text>
+                {(task.estimate_hours || task.due_date) && (
+                  <Group gap={6} mt={4} wrap="nowrap">
+                    {task.estimate_hours ? <Badge variant="light" size="xs">⏱ {task.estimate_hours}ч</Badge> : null}
+                    {task.due_date ? <Badge variant="light" size="xs">📅 {new Date(task.due_date).toLocaleDateString()}</Badge> : null}
+                  </Group>
+                )}
                 {task.description && (
                   <Text size="sm" c="dimmed" mt={4}>
                     {task.description}

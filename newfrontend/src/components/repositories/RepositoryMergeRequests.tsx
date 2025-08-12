@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Divider, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs } from '@mantine/core';
+import { Button, Card, Divider, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs, ScrollArea } from '@mantine/core';
+import { Diff, Hunk, parseDiff } from 'react-diff-view';
+import 'react-diff-view/style/index.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, unapproveMergeRequest, closeMergeRequest, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
@@ -19,6 +21,8 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'open' | 'merged' | 'closed'>('open');
   const [changes, setChanges] = useState<MergeRequestChanges | null>(null);
+  const [splitView, setSplitView] = useState(true);
+  const [activeFileIdx, setActiveFileIdx] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -179,41 +183,71 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
               </Tabs.List>
               <Tabs.Panel value="changes" pt="sm">
                 {changes && changes.files?.length ? (
-                  <Stack>
-                    {changes.files.map((f, idx) => {
-                      const cleaned = cleanDiffContent(f.diff || '');
-                      const originalLines = cleaned.split('\n');
-                      const display = originalLines.map(ln => (ln.startsWith('+') || ln.startsWith('-') ? ln.slice(1) : ln)).join('\n');
-                      return (
-                        <Card key={`${f.path}-${idx}`} withBorder>
-                          <Group justify="space-between" mb={8}>
-                            <Text fw={600}>{f.path}</Text>
-                            <Badge variant="light">{f.change_type}</Badge>
-                          </Group>
-                          {cleaned ? (
-                            <SyntaxHighlighter
-                              language={getLanguageFromPath(f.path)}
-                              style={oneDark}
-                              showLineNumbers
-                              wrapLongLines
-                              lineNumberStyle={{ color: '#666', fontSize: '12px' }}
-                              customStyle={{ margin: 0, padding: '12px', background: 'var(--mantine-color-dark-6)' }}
-                              lineProps={(lineNumber: number) => {
-                                const line = originalLines[lineNumber - 1] || '';
-                                if (line.startsWith('+')) return { style: { backgroundColor: 'rgba(40, 167, 69, 0.2)' } };
-                                if (line.startsWith('-')) return { style: { backgroundColor: 'rgba(220, 53, 69, 0.2)' } };
-                                return {};
-                              }}
-                            >
-                              {display}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <Text size="sm" c="dimmed">Нет изменений</Text>
-                          )}
-                        </Card>
-                      );
-                    })}
-                  </Stack>
+                  <Group align="stretch" wrap="nowrap" gap="md">
+                    <Card withBorder style={{ width: 280, flex: '0 0 auto', padding: 8 }}>
+                      <Group justify="space-between" mb={8}>
+                        <Text fw={600}>Файлы</Text>
+                        <Button size="xs" variant="default" onClick={() => setSplitView(v => !v)}>{splitView ? 'Обычный' : 'Side-by-side'}</Button>
+                      </Group>
+                      <ScrollArea h={400}>
+                        <Stack gap={4}>
+                          {changes.files.map((f, idx) => (
+                            <Card key={`${f.path}-${idx}`} withBorder onClick={() => setActiveFileIdx(idx)} style={{ cursor: 'pointer', borderColor: idx === activeFileIdx ? 'var(--mantine-color-blue-6)' : undefined }}>
+                              <Group justify="space-between">
+                                <Text size="sm" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>{f.path}</Text>
+                                <Badge variant="light" size="xs">{f.change_type}</Badge>
+                              </Group>
+                            </Card>
+                          ))}
+                        </Stack>
+                      </ScrollArea>
+                    </Card>
+                    <Card withBorder style={{ flex: 1, minWidth: 0 }}>
+                      {(() => {
+                        const f = changes.files[activeFileIdx] || changes.files[0];
+                        if (!f) return <Text size="sm" c="dimmed">Нет изменений</Text>;
+                        if (!splitView) {
+                          const cleaned = cleanDiffContent(f.diff || '');
+                          const originalLines = cleaned.split('\n');
+                          const display = originalLines.map(ln => (ln.startsWith('+') || ln.startsWith('-') ? ln.slice(1) : ln)).join('\n');
+                          return (
+                            <>
+                              <Group justify="space-between" mb={8}>
+                                <Text fw={600}>{f.path}</Text>
+                                <Badge variant="light">{f.change_type}</Badge>
+                              </Group>
+                              <SyntaxHighlighter
+                                language={getLanguageFromPath(f.path)}
+                                style={oneDark}
+                                showLineNumbers
+                                wrapLongLines
+                                lineNumberStyle={{ color: '#666', fontSize: '12px' }}
+                                customStyle={{ margin: 0, padding: '12px', background: 'var(--mantine-color-dark-6)' }}
+                                lineProps={(lineNumber: number) => {
+                                  const line = originalLines[lineNumber - 1] || '';
+                                  if (line.startsWith('+')) return { style: { backgroundColor: 'rgba(40, 167, 69, 0.2)' } };
+                                  if (line.startsWith('-')) return { style: { backgroundColor: 'rgba(220, 53, 69, 0.2)' } };
+                                  return {};
+                                }}
+                              >
+                                {display}
+                              </SyntaxHighlighter>
+                            </>
+                          );
+                        }
+                        try {
+                          const parsed = parseDiff(f.diff || '', { nearbySequences: 'zip' });
+                          return parsed.map((file, i) => (
+                            <Diff key={i} viewType="split" diffType={file.type} hunks={file.hunks}>
+                              {hunks => hunks.map((h, hi) => <Hunk key={hi} hunk={h} />)}
+                            </Diff>
+                          ));
+                        } catch {
+                          return <Text size="sm" c="red">Не удалось построить side-by-side дифф</Text>;
+                        }
+                      })()}
+                    </Card>
+                  </Group>
                 ) : (
                   <Text size="sm" c="dimmed">Нет изменений</Text>
                 )}

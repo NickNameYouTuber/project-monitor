@@ -28,6 +28,8 @@ export default function WhiteboardPage() {
   // transformer removed in minimal version
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [size, setSize] = useState({ width: 800, height: 600 });
+  const [scale, setScale] = useState(1);
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
   // Load board data
   useEffect(() => {
@@ -190,7 +192,47 @@ export default function WhiteboardPage() {
           onMouseDown={handleStageMouseDown}
           // no mouse move handler
           draggable={tool === 'hand' && !connectingFromId}
+          x={stagePos.x}
+          y={stagePos.y}
+          scaleX={scale}
+          scaleY={scale}
           dragBoundFunc={(pos) => pos}
+          onWheel={(e) => {
+            if (!e.evt.ctrlKey) return;
+            e.evt.preventDefault();
+            const stage = stageRef.current;
+            if (!stage) return;
+            const oldScale = scale;
+            const pointer = stage.getPointerPosition();
+            if (!pointer) return;
+            const mousePointTo = {
+              x: (pointer.x - stagePos.x) / oldScale,
+              y: (pointer.y - stagePos.y) / oldScale,
+            };
+            const direction = e.evt.deltaY > 0 ? -1 : 1;
+            const scaleBy = 1.05;
+            let newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+            newScale = Math.max(0.25, Math.min(3, newScale));
+            const newPos = {
+              x: pointer.x - mousePointTo.x * newScale,
+              y: pointer.y - mousePointTo.y * newScale,
+            };
+            setScale(newScale);
+            setStagePos(newPos);
+          }}
+          onDblClick={() => {
+            const stage = stageRef.current;
+            if (!stage) return;
+            const p = stage.getPointerPosition();
+            if (!p) return;
+            // Center view on double click
+            const newScale = 1.4;
+            const center = { x: size.width / 2, y: size.height / 2 };
+            const mousePointTo = { x: (p.x - stagePos.x) / scale, y: (p.y - stagePos.y) / scale };
+            const newPos = { x: center.x - mousePointTo.x * newScale, y: center.y - mousePointTo.y * newScale };
+            setScale(newScale);
+            setStagePos(newPos);
+          }}
         >
           <Layer ref={layerRef}>
             {/* Connections */}
@@ -411,6 +453,71 @@ export default function WhiteboardPage() {
             {/* no transformer in minimal */}
           </Layer>
         </Stage>
+        {/* Minimap */}
+        <div style={{ position: 'absolute', right: 8, bottom: 8, width: 180, height: 120, background: '#fff', border: '1px solid #e9ecef', borderRadius: 4, boxShadow: '0 2px 6px rgba(0,0,0,0.08)', overflow: 'hidden', cursor: 'pointer' }}
+          onClick={(ev) => {
+            const rect = (ev.currentTarget as HTMLDivElement).getBoundingClientRect();
+            const rx = ev.clientX - rect.left;
+            const ry = ev.clientY - rect.top;
+            // compute world bounds
+            const worldMinX = Math.min(0, ...elements.map(e => e.x));
+            const worldMinY = Math.min(0, ...elements.map(e => e.y));
+            const worldMaxX = Math.max(size.width, ...elements.map(e => e.x + e.width));
+            const worldMaxY = Math.max(size.height, ...elements.map(e => e.y + e.height));
+            const worldW = Math.max(1, worldMaxX - worldMinX);
+            const worldH = Math.max(1, worldMaxY - worldMinY);
+            const mmW = 180, mmH = 120;
+            const sx = mmW / worldW;
+            const sy = mmH / worldH;
+            const s = Math.min(sx, sy);
+            const wx = rx / s + worldMinX;
+            const wy = ry / s + worldMinY;
+            // center stage to (wx, wy)
+            const center = { x: size.width / 2, y: size.height / 2 };
+            const newPos = { x: center.x - wx * scale, y: center.y - wy * scale };
+            setStagePos(newPos);
+          }}
+        >
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            {elements.map(el => {
+              const worldMinX = Math.min(0, ...elements.map(e => e.x));
+              const worldMinY = Math.min(0, ...elements.map(e => e.y));
+              const worldMaxX = Math.max(size.width, ...elements.map(e => e.x + e.width));
+              const worldMaxY = Math.max(size.height, ...elements.map(e => e.y + e.height));
+              const worldW = Math.max(1, worldMaxX - worldMinX);
+              const worldH = Math.max(1, worldMaxY - worldMinY);
+              const mmW = 180, mmH = 120;
+              const sx = mmW / worldW;
+              const sy = mmH / worldH;
+              const s = Math.min(sx, sy);
+              const x = (el.x - worldMinX) * s;
+              const y = (el.y - worldMinY) * s;
+              const w = el.width * s;
+              const h = el.height * s;
+              return <div key={el.id} style={{ position: 'absolute', left: x, top: y, width: w, height: h, background: '#abd5ff', opacity: 0.7, border: '1px solid #74a9f5' }} />;
+            })}
+            {/* viewport */}
+            {(() => {
+              const worldMinX = Math.min(0, ...elements.map(e => e.x));
+              const worldMinY = Math.min(0, ...elements.map(e => e.y));
+              const worldMaxX = Math.max(size.width, ...elements.map(e => e.x + e.width));
+              const worldMaxY = Math.max(size.height, ...elements.map(e => e.y + e.height));
+              const worldW = Math.max(1, worldMaxX - worldMinX);
+              const worldH = Math.max(1, worldMaxY - worldMinY);
+              const mmW = 180, mmH = 120;
+              const sx = mmW / worldW;
+              const sy = mmH / worldH;
+              const s = Math.min(sx, sy);
+              const viewX = (-stagePos.x) / scale;
+              const viewY = (-stagePos.y) / scale;
+              const x = (viewX - worldMinX) * s;
+              const y = (viewY - worldMinY) * s;
+              const w = size.width * s / scale;
+              const h = size.height * s / scale;
+              return <div style={{ position: 'absolute', left: x, top: y, width: w, height: h, border: '1px solid #333', boxShadow: 'inset 0 0 0 9999px rgba(0,0,0,0.05)' }} />;
+            })()}
+          </div>
+        </div>
         {(selectedId || selectedConnectionId) && (
           <div style={{ position: 'absolute', right: 8, top: 8, width: 280, background: '#fff', border: '1px solid #e9ecef', borderRadius: 6, padding: 12, boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
             {selectedId && (
