@@ -61,6 +61,7 @@ def create_merge_request(repository_id: str, payload: schemas.merge_request.Merg
         description=payload.description,
         source_branch=payload.source_branch,
         target_branch=payload.target_branch,
+        reviewer_id=payload.reviewer_id if getattr(payload, 'reviewer_id', None) else None,
         status=MergeRequestStatus.OPEN,
     )
     db.add(mr)
@@ -96,9 +97,28 @@ def get_merge_request(repository_id: str, mr_id: str, current_user: User = Depen
                 ) if a.user_id else _user_display_name(None, fallback_id=None),
                 created_at=a.created_at
             ) for a in approvals
-        ]
+        ],
     )
     return detail
+
+@router.put("/repositories/{repository_id}/merge_requests/{mr_id}", response_model=schemas.merge_request.MergeRequest)
+def update_merge_request(repository_id: str, mr_id: str, payload: dict, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    _ = check_repository_access(repository_id, str(current_user.id), db)
+    mr = db.query(MergeRequest).filter(MergeRequest.id == mr_id, MergeRequest.repository_id == repository_id).first()
+    if not mr:
+        raise HTTPException(status_code=404, detail="Merge Request not found")
+    # Only author or repo admin/owner can update reviewer
+    repo = db.query(Repository).filter(Repository.id == repository_id).first()
+    is_author = str(mr.author_id) == str(current_user.id)
+    is_owner = repo and str(repo.owner_id) == str(current_user.id)
+    is_admin = db.query(RepositoryMember).filter(RepositoryMember.repository_id == repository_id, RepositoryMember.user_id == current_user.id).first() is not None
+    if not (is_author or is_owner or is_admin):
+        raise HTTPException(status_code=403, detail="Not allowed")
+    if 'reviewer_id' in payload:
+        mr.reviewer_id = payload['reviewer_id'] or None
+    db.commit()
+    db.refresh(mr)
+    return mr
 
 
 @router.post("/repositories/{repository_id}/merge_requests/{mr_id}/approve", response_model=schemas.merge_request.MergeRequestApproval)

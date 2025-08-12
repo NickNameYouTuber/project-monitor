@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Card, Divider, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs } from '@mantine/core';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, unapproveMergeRequest, closeMergeRequest, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
+import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, unapproveMergeRequest, closeMergeRequest, updateMergeRequest, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
 
 export default function RepositoryMergeRequests({ repositoryId }: { repositoryId: string }) {
   const [mrs, setMrs] = useState<MergeRequest[]>([]);
@@ -13,6 +13,8 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
   const [source, setSource] = useState<string | null>(null);
   const [target, setTarget] = useState<string | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
+  const [reviewerId, setReviewerId] = useState<string | null>(null);
+  const [members, setMembers] = useState<{ value: string; label: string }[]>([]);
   const [activeMr, setActiveMr] = useState<MergeRequestDetail | null>(null);
   const [comments, setComments] = useState<MergeRequestComment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -32,6 +34,14 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
         if (!mounted) return;
         setMrs(mrsData);
         setBranches(brs.map(b => b.name));
+        // try to load repo members for reviewer select (fallback to approvals authors later if needed)
+        try {
+          const res = await fetch(`/api/repositories/${repositoryId}/members`, { credentials: 'include' });
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setMembers(data.map((m: any) => ({ value: m.user?.id || m.user_id, label: m.user?.username || m.user_id })));
+          }
+        } catch {}
       } finally {
         if (mounted) setLoading(false);
       }
@@ -54,10 +64,11 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
 
   async function submitCreate() {
     if (!source || !target || !title.trim()) return;
-    const mr = await createMergeRequest(repositoryId, { title, description, source_branch: source, target_branch: target });
+    const mr = await createMergeRequest(repositoryId, { title, description, source_branch: source, target_branch: target, reviewer_id: reviewerId || undefined });
     setMrs(prev => [mr, ...prev]);
     setOpen(false);
     setTitle(''); setDescription(''); setSource(null); setTarget(null);
+    setReviewerId(null);
   }
 
   async function submitApprove() {
@@ -135,6 +146,7 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
           <TextInput label="Описание" value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
           <Select label="Source" data={branches} value={source} onChange={setSource} searchable />
           <Select label="Target" data={branches} value={target} onChange={setTarget} searchable />
+          <Select label="Ревьюер (опционально)" data={members} value={reviewerId} onChange={setReviewerId} searchable clearable placeholder="Выберите ревьюера" />
           <Button onClick={submitCreate}>Создать</Button>
         </Stack>
       </Modal>
@@ -145,6 +157,22 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
             <Group justify="space-between">
               <Text size="sm" c="dimmed">{activeMr.source_branch} → {activeMr.target_branch}</Text>
               <Badge variant="light">{activeMr.status}</Badge>
+            </Group>
+            <Group>
+              <Select
+                label="Ревьюер"
+                data={members}
+                value={(activeMr as any).reviewer_id ?? null}
+                onChange={async (val) => {
+                  if (!activeMr) return;
+                  const updated = await updateMergeRequest(repositoryId, activeMr.id, { reviewer_id: val || null });
+                  const detail = await getMergeRequestDetail(repositoryId, updated.id);
+                  setActiveMr(detail);
+                }}
+                searchable
+                clearable
+                placeholder="Не назначен"
+              />
             </Group>
             {activeMr.description && <Text>{activeMr.description}</Text>}
             <Stack>

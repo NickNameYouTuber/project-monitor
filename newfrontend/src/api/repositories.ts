@@ -148,6 +148,7 @@ export interface MergeRequestCreate {
   description?: string;
   source_branch: string;
   target_branch: string;
+  reviewer_id?: string | null;
 }
 
 export interface MergeRequestComment {
@@ -167,6 +168,11 @@ export async function listMergeRequests(repositoryId: string) {
 
 export async function createMergeRequest(repositoryId: string, payload: MergeRequestCreate) {
   const { data } = await apiClient.post<MergeRequest>(`/repositories/${repositoryId}/merge_requests`, payload);
+  return data;
+}
+
+export async function updateMergeRequest(repositoryId: string, mrId: string, payload: Partial<Pick<MergeRequest, 'title' | 'description'> & { reviewer_id: string | null }>) {
+  const { data } = await apiClient.put<MergeRequest>(`/repositories/${repositoryId}/merge_requests/${mrId}`, payload);
   return data;
 }
 

@@ -123,7 +123,7 @@ def _apply_startup_migrations():
 if SQLALCHEMY_DATABASE_URL.startswith('sqlite'):
     _apply_startup_migrations()
 elif SQLALCHEMY_DATABASE_URL.startswith('postgres'):
-    # Minimal Postgres migrations for whiteboard features
+    # Minimal Postgres migrations
     try:
         with engine.connect() as conn:
             # Ensure whiteboard elements extra columns exist
@@ -134,6 +134,8 @@ elif SQLALCHEMY_DATABASE_URL.startswith('postgres'):
                 # Tasks planning fields
                 "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date TIMESTAMP",
                 "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS estimate_minutes INTEGER",
+                # MR reviewer
+                "ALTER TABLE merge_requests ADD COLUMN IF NOT EXISTS reviewer_id UUID",
             ]:
                 try:
                     conn.execute(text(stmt))

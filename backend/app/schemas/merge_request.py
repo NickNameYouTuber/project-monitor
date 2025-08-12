@@ -10,6 +10,7 @@ class MergeRequestBase(BaseModel):
     description: Optional[str] = None
     source_branch: str
     target_branch: str
+    reviewer_id: Optional[Union[str, UUID]] = None
 
 
 class MergeRequestCreate(MergeRequestBase):
@@ -20,6 +21,7 @@ class MergeRequest(BaseModel):
     id: Union[str, UUID]
     repository_id: Union[str, UUID]
     author_id: Union[str, UUID]
+    reviewer_id: Optional[Union[str, UUID]]
     title: str
     description: Optional[str]
     source_branch: str
