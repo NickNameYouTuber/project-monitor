@@ -34,36 +34,11 @@ def _user_display_name(user: Optional[User], *, fallback_id: Optional[str] = Non
 @router.get("/repositories/{repository_id}/merge_requests", response_model=List[schemas.merge_request.MergeRequest])
 def list_merge_requests(repository_id: str, status: Optional[str] = None, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
     _ = check_repository_access(repository_id, str(current_user.id), db)
-    try:
-        q = db.query(MergeRequest).filter(MergeRequest.repository_id == repository_id)
-        if status in {s.value for s in MergeRequestStatus}:
-            q = q.filter(MergeRequest.status == status)
-        items = q.order_by(MergeRequest.created_at.desc()).all()
-        return items
-    except OperationalError as e:
-        # Runtime safety: if columns were not migrated yet, add them on the fly (SQLite only)
-        msg = str(e.orig) if getattr(e, 'orig', None) else str(e)
-        if "no such column" in msg and "merge_requests" in msg:
-            try:
-                # reset failed transaction before DDL
-                try:
-                    db.rollback()
-                except Exception:
-                    pass
-                # Skip adding snapshot columns for now to avoid schema errors
-                pass
-            except Exception:
-                pass
-            # Retry once after attempting to add columns
-            try:
-                db.rollback()
-            except Exception:
-                pass
-            q = db.query(MergeRequest).filter(MergeRequest.repository_id == repository_id)
-            if status in {s.value for s in MergeRequestStatus}:
-                q = q.filter(MergeRequest.status == status)
-            return q.order_by(MergeRequest.created_at.desc()).all()
-        raise
+    q = db.query(MergeRequest).filter(MergeRequest.repository_id == repository_id)
+    if status in {s.value for s in MergeRequestStatus}:
+        q = q.filter(MergeRequest.status == status)
+    items = q.order_by(MergeRequest.created_at.desc()).all()
+    return items
 
 
 @router.post("/repositories/{repository_id}/merge_requests", response_model=schemas.merge_request.MergeRequest)
