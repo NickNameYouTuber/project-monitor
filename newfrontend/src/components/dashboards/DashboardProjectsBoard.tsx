@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
-import { Card, Group, Loader, Text } from '@mantine/core';
+import { Button, Card, Group, Loader, Modal, Stack, Text, TextInput, Select } from '@mantine/core';
 import { Link } from 'react-router-dom';
-import { fetchProjectsByDashboard, reorderProjects, updateProjectStatus, type Project } from '../../api/projects';
+import { createProject, fetchProjectsByDashboard, reorderProjects, updateProjectStatus, type Project } from '../../api/projects';
 
 const STATUS_ORDER: Project['status'][] = ['inPlans', 'inProgress', 'onPause', 'completed'];
 const STATUS_TITLE: Record<Project['status'], string> = {
@@ -16,6 +16,11 @@ const STATUS_TITLE: Record<Project['status'], string> = {
 export default function DashboardProjectsBoard({ dashboardId }: { dashboardId: string }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [newStatus, setNewStatus] = useState<Project['status']>('inPlans');
+  const [newPriority, setNewPriority] = useState<Project['priority']>('medium');
 
   const columns = useMemo(() => {
     const byStatus: Record<Project['status'], Project[]> = {
@@ -76,9 +81,10 @@ export default function DashboardProjectsBoard({ dashboardId }: { dashboardId: s
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="flex justify-center items-center mb-4">
+      <Group justify="space-between" align="center" className="mb-4">
         <h2 className="text-xl font-semibold">Проекты</h2>
-      </div>
+        <Button onClick={() => setCreateOpen(true)}>Добавить проект</Button>
+      </Group>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex overflow-x-auto pb-6 h-full w-full justify-center">
           {STATUS_ORDER.map((statusKey) => (
@@ -107,6 +113,42 @@ export default function DashboardProjectsBoard({ dashboardId }: { dashboardId: s
           ))}
         </div>
       </DragDropContext>
+
+      <Modal opened={createOpen} onClose={() => setCreateOpen(false)} title="Новый проект">
+        <Stack>
+          <TextInput label="Название" placeholder="Название проекта" value={newName} onChange={(e) => setNewName(e.currentTarget.value)} />
+          <TextInput label="Описание" placeholder="Коротко о проекте" value={newDesc} onChange={(e) => setNewDesc(e.currentTarget.value)} />
+          <Select label="Статус" data={[
+            { value: 'inPlans', label: 'В планах' },
+            { value: 'inProgress', label: 'В работе' },
+            { value: 'onPause', label: 'Пауза' },
+            { value: 'completed', label: 'Завершён' },
+          ]} value={newStatus} onChange={(v) => setNewStatus((v as Project['status']) || 'inPlans')} />
+          <Select label="Приоритет" data={[
+            { value: 'high', label: 'Высокий' },
+            { value: 'medium', label: 'Средний' },
+            { value: 'low', label: 'Низкий' },
+          ]} value={newPriority} onChange={(v) => setNewPriority((v as Project['priority']) || 'medium')} />
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => setCreateOpen(false)}>Отмена</Button>
+            <Button onClick={async () => {
+              if (!newName.trim()) return;
+              const p = await createProject({
+                name: newName.trim(),
+                description: newDesc.trim(),
+                status: newStatus,
+                priority: newPriority,
+                order: projects.length,
+                dashboard_id: dashboardId,
+              });
+              setProjects((prev) => [p, ...prev]);
+              setCreateOpen(false);
+              setNewName(''); setNewDesc('');
+              setNewStatus('inPlans'); setNewPriority('medium');
+            }}>Создать</Button>
+          </Group>
+        </Stack>
+      </Modal>
     </div>
   );
 }

@@ -20,6 +20,29 @@ export async function fetchProject(projectId: string): Promise<Project> {
   return data;
 }
 
+export interface ProjectCreate {
+  name: string;
+  description?: string;
+  status?: Project['status'];
+  priority?: Project['priority'];
+  order?: number;
+  dashboard_id?: string;
+}
+
+export async function createProject(payload: ProjectCreate): Promise<Project> {
+  const body = {
+    name: payload.name,
+    description: payload.description ?? '',
+    status: payload.status ?? 'inPlans',
+    priority: payload.priority ?? 'medium',
+    order: payload.order ?? 0,
+    dashboard_id: payload.dashboard_id ?? null,
+    assignee: '',
+  };
+  const { data } = await apiClient.post<Project>(`/projects`, body);
+  return data;
+}
+
 export interface ProjectUpdate {
   name?: string;
   description?: string | null;
