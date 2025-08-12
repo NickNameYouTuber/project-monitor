@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { AppShell, Button, Group, Loader, NavLink, Stack, Text, Title } from '@mantine/core';
+import { Button, Group, Loader, NavLink, Stack, Text, Title } from '@mantine/core';
 import { fetchProject, type Project } from '../api/projects';
 import WhiteboardPage from './WhiteboardPage';
 import { TaskBoardProvider } from '../context/TaskBoardContext';
@@ -52,8 +52,9 @@ function ProjectDetail() {
   }
 
   return (
-    <AppShell navbar={{ width: 240, breakpoint: 'sm' }} padding={0}>
-      <AppShell.Navbar p="md" className="h-full">
+    <div className="flex h-full">
+      {/* Левая панель навигации */}
+      <div className="flex-shrink-0 w-60 bg-gray-50 border-r border-gray-200 p-4">
         <Stack className="h-full">
           <div>
             <Title order={4} mb={4}>{project.name}</Title>
@@ -67,15 +68,14 @@ function ProjectDetail() {
             Назад к дашборду
           </Button>
         </Stack>
-      </AppShell.Navbar>
+      </div>
 
-      <AppShell.Main className="w-full h-[calc(100vh-56px)] overflow-hidden min-h-0" p={0}>
-        <Stack className="w-full h-full overflow-hidden min-h-0" style={{ padding: active === 'whiteboard' ? '0' : '20px' }}>
-          {/* Заголовок перенесён в левую панель */}
-
+      {/* Правая панель контента */}
+      <div className="flex-1 overflow-hidden min-h-0">
+        <div className="w-full h-full overflow-hidden" style={{ padding: active === 'whiteboard' ? '0' : '20px' }}>
           {active === 'tasks' && projectId && (
             <TaskBoardProvider projectId={projectId}>
-              <div className="rounded-lg p-2 h-full w-full">
+              <div className="rounded-lg p-2 h-full w-full overflow-hidden">
                 <TaskBoard />
               </div>
             </TaskBoardProvider>
@@ -86,14 +86,18 @@ function ProjectDetail() {
             </div>
           )}
           {active === 'repositories' && (
-            projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>
+            <div className="h-full overflow-auto">
+              {projectId ? <ProjectRepositories projectId={projectId} /> : <Text>Нет projectId</Text>}
+            </div>
           )}
           {active === 'settings' && projectId && (
-            <ProjectSettings projectId={projectId} />
+            <div className="h-full overflow-auto">
+              <ProjectSettings projectId={projectId} />
+            </div>
           )}
-        </Stack>
-      </AppShell.Main>
-    </AppShell>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -1,20 +1,18 @@
-import { AppShell } from '@mantine/core';
+
 import { Outlet } from 'react-router-dom';
 import AppHeader from './components/AppHeader';
 import './App.css';
 
 function App() {
   return (
-    <AppShell header={{ height: 56 }} padding={0}>
-      <AppShell.Header>
+    <div className="flex flex-col h-screen">
+      <div className="flex-shrink-0 h-14">
         <AppHeader />
-      </AppShell.Header>
-      <AppShell.Main className="w-full h-[calc(100vh-56px)] overflow-hidden min-h-0">
-        <div className="w-full h-full">
-          <Outlet />
-        </div>
-      </AppShell.Main>
-    </AppShell>
+      </div>
+      <div className="flex-1 overflow-hidden min-h-0">
+        <Outlet />
+      </div>
+    </div>
   );
 }
 
