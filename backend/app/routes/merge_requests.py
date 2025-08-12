@@ -216,12 +216,37 @@ def get_merge_request_changes(repository_id: str, mr_id: str, current_user: User
 
     # Strategy:
     # - OPEN/CLOSED: show diff target -> source (what would be merged)
-    # - MERGED: use snapshot SHAs captured at merge time for stable view
+    # - MERGED: prefer snapshot SHAs captured at merge time; if missing, pick commits as of mr.updated_at
     try:
-        if mr.status == MergeRequestStatus.MERGED and (mr.base_sha_at_merge or mr.source_sha_at_merge):
-            base = repo.commit(mr.base_sha_at_merge) if mr.base_sha_at_merge else None
-            src = repo.commit(mr.source_sha_at_merge) if mr.source_sha_at_merge else source_commit
-            diffs = (base.diff(src, create_patch=True) if base else target_commit.diff(src, create_patch=True))
+        if mr.status == MergeRequestStatus.MERGED:
+            # 1) Use stored snapshot if present
+            if mr.base_sha_at_merge or mr.source_sha_at_merge:
+                base = repo.commit(mr.base_sha_at_merge) if mr.base_sha_at_merge else None
+                src = repo.commit(mr.source_sha_at_merge) if mr.source_sha_at_merge else source_commit
+                diffs = (base.diff(src, create_patch=True) if base else target_commit.diff(src, create_patch=True))
+            else:
+                # 2) Fallback: commit selection by time (as of mr.updated_at)
+                def commit_as_of(branch_name: str, ts: int):
+                    try:
+                        for c in repo.iter_commits(branch_name):
+                            if getattr(c, 'committed_date', None) and int(c.committed_date) <= ts:
+                                return c
+                    except Exception:
+                        return None
+                    return None
+
+                ts = int(getattr(mr, 'updated_at', None).timestamp()) if getattr(mr, 'updated_at', None) else None
+                src_at = commit_as_of(mr.source_branch, ts) if ts else None
+                tgt_at = commit_as_of(mr.target_branch, ts) if ts else None
+                # If not found by time, fallback to current heads
+                src_at = src_at or source_commit
+                tgt_at = tgt_at or target_commit
+                bases = repo.merge_base(tgt_at, src_at)
+                base_at = bases[0] if isinstance(bases, (list, tuple)) and bases else bases
+                if base_at is None:
+                    diffs = tgt_at.diff(src_at, create_patch=True)
+                else:
+                    diffs = base_at.diff(src_at, create_patch=True)
         else:
             diffs = target_commit.diff(source_commit, create_patch=True)
     except Exception:
