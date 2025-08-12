@@ -84,7 +84,7 @@ def get_merge_request(repository_id: str, mr_id: str, current_user: User = Depen
     # approvals with user name
     approvals = db.query(MergeRequestApproval).filter(MergeRequestApproval.merge_request_id == mr.id).all()
     detail = schemas.merge_request.MergeRequestDetail(
-        **{k: getattr(mr, k) for k in ['id','repository_id','author_id','title','description','source_branch','target_branch','status','created_at','updated_at']},
+        **{k: getattr(mr, k) for k in ['id','repository_id','author_id','reviewer_id','title','description','source_branch','target_branch','status','created_at','updated_at']},
         approvals=[
             schemas.merge_request.MergeRequestApprovalWithUser(
                 id=a.id,
