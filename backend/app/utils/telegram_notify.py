@@ -24,13 +24,20 @@ def _collect_telegram_ids(db: Session, user_ids: Iterable[str]) -> List[int]:
 
 def _send_telegram_message(chat_id: int, text: str) -> None:
     if not TELEGRAM_BOT_TOKEN:
+        print("Telegram notify: missing TELEGRAM_BOT_TOKEN; skip sending")
         return
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        requests.post(url, json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"}, timeout=5)
+        resp = requests.post(url, json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"}, timeout=8)
+        try:
+            data = resp.json()
+        except Exception:
+            data = {"ok": False, "non_json": True}
+        if not resp.ok or not data.get("ok", False):
+            print(f"Telegram notify failed: status={resp.status_code} body={data}")
     except Exception:
         # best-effort only
-        pass
+        print("Telegram notify: exception while sending", flush=True)
 
 
 def notify_task_event_silent(db: Session, task: Task, *, actor_id: Optional[str], action: str, notify_user_ids: Optional[Iterable[str]] = None) -> None:
@@ -56,8 +63,12 @@ def notify_task_event_silent(db: Session, task: Task, *, actor_id: Optional[str]
 def notify_mr_event_silent(db: Session, mr: MergeRequest, *, actor_id: Optional[str], action: str) -> None:
     actor: Optional[User] = db.query(User).filter(User.id == actor_id).first() if actor_id else None
     actor_name = actor.username if actor and getattr(actor, 'username', None) else (actor.email if actor and getattr(actor, 'email', None) else 'system')
+    action_text = {
+        "created": "создан",
+        "reviewer_assigned": "назначен ревьюер",
+    }.get(action, action)
     text = (
-        f"MR: <b>{mr.title}</b> — {action}\n"
+        f"MR: <b>{mr.title}</b> — {action_text}\n"
         f"{mr.source_branch} → {mr.target_branch}\n"
         f"Репозиторий: {mr.repository_id}\n"
         f"От: {actor_name}"
