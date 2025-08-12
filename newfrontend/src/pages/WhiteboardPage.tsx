@@ -16,6 +16,7 @@ export default function WhiteboardPage() {
   const [tempLine, setTempLine] = useState<number[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredTargetId, setHoveredTargetId] = useState<string | null>(null);
+  const [connectingFromId, setConnectingFromId] = useState<string | null>(null);
   
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
@@ -180,7 +181,7 @@ export default function WhiteboardPage() {
           height={size.height}
           onMouseDown={handleStageMouseDown}
           // no mouse move handler
-          draggable={tool === 'hand'}
+          draggable={tool === 'hand' && !connectingFromId}
           dragBoundFunc={(pos) => pos}
         >
           <Layer ref={layerRef}>
@@ -216,7 +217,7 @@ export default function WhiteboardPage() {
                  id={el.id}
                  x={el.x}
                  y={el.y}
-                 draggable
+                  draggable={!connectingFromId}
                   onDragMove={(e) => {
                     const node = e.target;
                     const nx = Math.round(node.x());
@@ -265,6 +266,23 @@ export default function WhiteboardPage() {
                           stroke="#fff"
                           strokeWidth={1}
                           draggable
+                          onMouseDown={(e) => {
+                            // prevent selecting/dragging parent group or stage
+                            e.cancelBubble = true;
+                            setConnectingFromId(el.id);
+                            const stage = stageRef.current;
+                            if (stage) stage.draggable(false);
+                            const parent = (e.target as any).getParent?.();
+                            if (parent && parent.draggable) parent.draggable(false);
+                          }}
+                          onDragStart={(e) => {
+                            e.cancelBubble = true;
+                            setConnectingFromId(el.id);
+                            const stage = stageRef.current;
+                            if (stage) stage.draggable(false);
+                            const parent = (e.target as any).getParent?.();
+                            if (parent && parent.draggable) parent.draggable(false);
+                          }}
                           onDragMove={(e) => {
                             const stage = e.target.getStage();
                             const pos = stage?.getPointerPosition();
@@ -306,6 +324,7 @@ export default function WhiteboardPage() {
                           onDragEnd={(e) => {
                             setTempLine(null);
                             setHoveredTargetId(null);
+                            setConnectingFromId(null);
                             const stage = e.target.getStage();
                             const pos = stage?.getPointerPosition();
                             if (!pos) return;
@@ -332,6 +351,11 @@ export default function WhiteboardPage() {
                                 .catch(console.error);
                             }
                             e.target.position({ x: p.x, y: p.y });
+                            // restore draggables
+                            const parent = (e.target as any).getParent?.();
+                            if (parent && parent.draggable) parent.draggable(true);
+                            const stageNode = stageRef.current;
+                            if (stageNode) stageNode.draggable(tool === 'hand');
                           }}
                         />
                       ))}
