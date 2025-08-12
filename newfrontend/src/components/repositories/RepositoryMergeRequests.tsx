@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, Divider, Group, Loader, Modal, Stack, Text, TextInput, Select, Badge, Tabs } from '@mantine/core';
+import { useAppContext } from '../../utils/AppContext';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { listBranches, listMergeRequests, createMergeRequest, approveMergeRequest, mergeMergeRequest, listMergeRequestComments, createMergeRequestComment, getMergeRequestDetail, getMergeRequestChanges, unapproveMergeRequest, closeMergeRequest, updateMergeRequest, type MergeRequest, type MergeRequestComment, type MergeRequestDetail, type MergeRequestChanges } from '../../api/repositories';
 
 export default function RepositoryMergeRequests({ repositoryId }: { repositoryId: string }) {
+  const { currentUser } = useAppContext();
   const [mrs, setMrs] = useState<MergeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -39,7 +41,12 @@ export default function RepositoryMergeRequests({ repositoryId }: { repositoryId
           const res = await fetch(`/api/repositories/${repositoryId}/members`, { credentials: 'include' });
           const data = await res.json();
           if (Array.isArray(data)) {
-            setMembers(data.map((m: any) => ({ value: m.user?.id || m.user_id, label: m.user?.username || m.user_id })));
+            let opts = data.map((m: any) => ({ value: m.user?.id || m.user_id, label: m.user?.username || m.user_id }));
+            // ensure current user is present
+            if (currentUser?.id && !opts.find(o => o.value === currentUser.id)) {
+              opts.unshift({ value: currentUser.id, label: `${currentUser.username || 'Вы'} (Вы)` });
+            }
+            setMembers(opts);
           }
         } catch {}
       } finally {

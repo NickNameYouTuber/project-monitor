@@ -91,7 +91,7 @@ def get_merge_request(repository_id: str, mr_id: str, current_user: User = Depen
                 merge_request_id=a.merge_request_id,
                 user_id=a.user_id,
                 user_name=_user_display_name(
-                    db.query(User).filter(User.id == a.user_id).first(),
+                    db.query(User).filter(User.id == str(a.user_id)).first(),
                     fallback_id=str(a.user_id),
                     is_self=(str(a.user_id) == str(current_user.id))
                 ) if a.user_id else _user_display_name(None, fallback_id=None),
@@ -115,7 +115,9 @@ def update_merge_request(repository_id: str, mr_id: str, payload: dict, current_
     if not (is_author or is_owner or is_admin):
         raise HTTPException(status_code=403, detail="Not allowed")
     if 'reviewer_id' in payload:
-        mr.reviewer_id = payload['reviewer_id'] or None
+        # normalize type: allow string UUID
+        value = payload['reviewer_id']
+        mr.reviewer_id = value if value else None
     db.commit()
     db.refresh(mr)
     return mr

@@ -41,7 +41,7 @@ export default function RepositoryDetail() {
   if (!repo) return <Text c="red">Репозиторий не найден</Text>;
 
   return (
-    <Stack>
+    <Stack style={{ padding: '16px 20px 0 20px' }}>
       <Group justify="space-between" align="center">
         <div>
           <Title order={2}>{repo.name}</Title>
