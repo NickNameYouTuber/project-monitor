@@ -218,12 +218,22 @@ def get_merge_request_changes(repository_id: str, mr_id: str, current_user: User
     # - OPEN/CLOSED: show diff target -> source (what would be merged)
     # - MERGED: prefer snapshot SHAs captured at merge time; if missing, pick commits as of mr.updated_at
     try:
+        log_mode = ""
+        log_base_sha = None
+        log_src_sha = None
+        log_tgt_sha = None
+        log_ts = None
+
         if mr.status == MergeRequestStatus.MERGED:
             # 1) Use stored snapshot if present
             if mr.base_sha_at_merge or mr.source_sha_at_merge:
                 base = repo.commit(mr.base_sha_at_merge) if mr.base_sha_at_merge else None
                 src = repo.commit(mr.source_sha_at_merge) if mr.source_sha_at_merge else source_commit
                 diffs = (base.diff(src, create_patch=True) if base else target_commit.diff(src, create_patch=True))
+                log_mode = "snapshot"
+                log_base_sha = getattr(base, 'hexsha', None) if base else None
+                log_src_sha = getattr(src, 'hexsha', None)
+                log_tgt_sha = getattr(target_commit, 'hexsha', None)
             else:
                 # 2) Fallback: commit selection by time (as of mr.updated_at)
                 def commit_as_of(branch_name: str, ts: int):
@@ -247,10 +257,36 @@ def get_merge_request_changes(repository_id: str, mr_id: str, current_user: User
                     diffs = tgt_at.diff(src_at, create_patch=True)
                 else:
                     diffs = base_at.diff(src_at, create_patch=True)
+                log_mode = "time_fallback"
+                log_ts = ts
+                log_base_sha = getattr(base_at, 'hexsha', None) if base_at else None
+                log_src_sha = getattr(src_at, 'hexsha', None)
+                log_tgt_sha = getattr(tgt_at, 'hexsha', None)
         else:
             diffs = target_commit.diff(source_commit, create_patch=True)
+            log_mode = "heads"
+            log_base_sha = None
+            log_src_sha = getattr(source_commit, 'hexsha', None)
+            log_tgt_sha = getattr(target_commit, 'hexsha', None)
     except Exception:
         diffs = target_commit.diff(source_commit, create_patch=True)
+        log_mode = "error_fallback_heads"
+        log_base_sha = None
+        log_src_sha = getattr(source_commit, 'hexsha', None)
+        log_tgt_sha = getattr(target_commit, 'hexsha', None)
+        log_ts = None
+
+    try:
+        # Console log summary of what we compare
+        def short(x):
+            return (x[:8] if isinstance(x, str) else (x.hexsha[:8] if hasattr(x, 'hexsha') else None)) if x else None
+        print(
+            f"[MR changes] repo={repository_id} mr={mr_id} status={mr.status} mode={log_mode} "
+            f"target={short(log_tgt_sha)} source={short(log_src_sha)} base={short(log_base_sha)} ts={log_ts} "
+            f"branches={mr.target_branch}->{mr.source_branch}"
+        )
+    except Exception:
+        pass
     files = []
     for d in diffs:
         raw = d.diff
