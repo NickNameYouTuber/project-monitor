@@ -45,6 +45,11 @@ def list_merge_requests(repository_id: str, status: Optional[str] = None, curren
         msg = str(e.orig) if getattr(e, 'orig', None) else str(e)
         if "no such column" in msg and "merge_requests" in msg:
             try:
+                # reset failed transaction before DDL
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
                 for stmt in [
                     "ALTER TABLE merge_requests ADD COLUMN base_sha_at_merge TEXT",
                     "ALTER TABLE merge_requests ADD COLUMN source_sha_at_merge TEXT",
@@ -60,6 +65,10 @@ def list_merge_requests(repository_id: str, status: Optional[str] = None, curren
             except Exception:
                 pass
             # Retry once after attempting to add columns
+            try:
+                db.rollback()
+            except Exception:
+                pass
             q = db.query(MergeRequest).filter(MergeRequest.repository_id == repository_id)
             if status in {s.value for s in MergeRequestStatus}:
                 q = q.filter(MergeRequest.status == status)
