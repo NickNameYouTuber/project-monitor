@@ -16,18 +16,45 @@ export default function RepositoryPipelines({ repositoryId }: { repositoryId: st
   const logsScrollRef = useRef<HTMLDivElement | null>(null);
 
   async function load() {
-    setLoading(true);
     try {
       const list = await fetchPipelines(repositoryId);
-      setItems(list);
+      setItems((prev) => {
+        // map by id for quick diff
+        const prevMap = new Map(prev.map((p) => [p.id, p]));
+        const next: PipelineListItem[] = [];
+        for (const it of list) {
+          const old = prevMap.get(it.id);
+          if (!old) {
+            next.push(it);
+          } else {
+            // Update only changed fields
+            if (
+              old.status !== it.status ||
+              old.commit_sha !== it.commit_sha ||
+              old.ref !== it.ref ||
+              old.source !== it.source ||
+              old.created_at !== it.created_at
+            ) {
+              next.push(it);
+            } else {
+              next.push(old);
+            }
+            prevMap.delete(it.id);
+          }
+        }
+        return next;
+      });
+    } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
+    setLoading(true);
     load();
-    const t = setInterval(load, 5000);
+    const t = setInterval(load, 20000);
     return () => clearInterval(t);
   }, [repositoryId]);
 
