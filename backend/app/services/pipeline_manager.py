@@ -247,7 +247,7 @@ def trigger_pipeline(
             stage=job_cfg.get("stage"),
             image=job_cfg.get("image") or "alpine:3",
             script="\n".join(script_lines),
-            env_json=json.dumps(job_cfg.get("env") or {}),
+            env_json=json.dumps({**(job_cfg.get("env") or {}), **ci_context}),
             needs_json=json.dumps(job_cfg.get("needs") or []),
             status=JobStatus.QUEUED,
             max_retries=max_retries,
