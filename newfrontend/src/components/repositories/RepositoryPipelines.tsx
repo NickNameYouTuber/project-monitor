@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActionIcon, Badge, Button, Card, Group, Loader, Modal, ScrollArea, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
-import { fetchPipelines, fetchPipelineDetail, triggerPipeline, cancelPipeline, type PipelineListItem, type PipelineDetail } from '../../api/repositories';
+import { fetchPipelines, fetchPipelineDetail, triggerPipeline, cancelPipeline, getJobLogs, type PipelineListItem, type PipelineDetail } from '../../api/repositories';
 import { IconRefresh, IconPlayerPlay, IconListDetails } from '@tabler/icons-react';
 
 export default function RepositoryPipelines({ repositoryId }: { repositoryId: string }) {
@@ -126,6 +126,7 @@ export default function RepositoryPipelines({ repositoryId }: { repositoryId: st
                     <Table.Th>Status</Table.Th>
                     <Table.Th>Image</Table.Th>
                     <Table.Th>Exit</Table.Th>
+                    <Table.Th></Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -136,6 +137,16 @@ export default function RepositoryPipelines({ repositoryId }: { repositoryId: st
                       <Table.Td>{statusBadge(j.status as any)}</Table.Td>
                       <Table.Td><Text size="sm" c="dimmed">{j.image}</Text></Table.Td>
                       <Table.Td>{j.exit_code ?? ''}</Table.Td>
+                      <Table.Td width={90}>
+                        <Button size="xs" variant="light" onClick={async () => {
+                          const logs = await getJobLogs(j.id);
+                          const w = window.open('', '_blank');
+                          if (w) {
+                            w.document.write(`<pre>${logs.replace(/</g, '&lt;')}</pre>`);
+                            w.document.close();
+                          }
+                        }}>Логи</Button>
+                      </Table.Td>
                     </Table.Tr>
                   ))}
                 </Table.Tbody>

@@ -64,6 +64,11 @@ export async function cancelPipeline(pipelineId: string): Promise<{ status: stri
   return data;
 }
 
+export async function getJobLogs(jobId: string): Promise<string> {
+  const { data } = await apiClient.get<{ logs: string }>(`/pipelines/jobs/${jobId}/logs`);
+  return data.logs || '';
+}
+
 export async function fetchProjectRepositories(projectId: string): Promise<Repository[]> {
   const { data } = await apiClient.get<Repository[]>(`/repositories`, { params: { project_id: projectId } });
   return data;

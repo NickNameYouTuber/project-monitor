@@ -170,11 +170,41 @@ def update_status(job_id: str, body: JobStatusUpdate, db: Session = Depends(get_
 
 
 @router.get("/pipelines/jobs/{job_id}", response_model=PipelineJobSchema)
-def get_job(job_id: str, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+def get_job(job_id: str, db: Session = Depends(get_db), authorization: Optional[str] = Header(default=None), current_user: Optional[User] = Depends(get_current_active_user)):
+    # Allow either runner token or user auth
+    runner_ok = False
+    try:
+        if authorization:
+            _ = _get_runner_from_token(db, authorization, None)
+            runner_ok = True
+    except Exception:
+        runner_ok = False
+    if not runner_ok and not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     job = db.query(PipelineJob).filter(PipelineJob.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+
+@router.get("/pipelines/jobs/{job_id}/logs")
+def get_job_logs(job_id: str, db: Session = Depends(get_db), authorization: Optional[str] = Header(default=None), current_user: Optional[User] = Depends(get_current_active_user)):
+    # Allow either runner token or user auth
+    runner_ok = False
+    try:
+        if authorization:
+            _ = _get_runner_from_token(db, authorization, None)
+            runner_ok = True
+    except Exception:
+        runner_ok = False
+    if not runner_ok and not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    job = db.query(PipelineJob).filter(PipelineJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    chunks = db.query(PipelineLogChunk).filter(PipelineLogChunk.job_id == job_id).order_by(PipelineLogChunk.seq.asc()).all()
+    text = "".join([c.content or "" for c in chunks])
+    return {"logs": text}
 
 
 @router.post("/pipelines/jobs/{job_id}/artifacts")
