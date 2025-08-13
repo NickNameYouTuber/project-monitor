@@ -124,12 +124,12 @@ async def list_files(
                     "type": "directory" if is_dir else "file",
                     "size": item.size if not is_dir else None,
                     "last_commit": {
-                        "hash": str(repo.git.log("-1", "--format=%H", item.path)),
-                        "message": str(repo.git.log("-1", "--format=%s", item.path)),
+                        "hash": str(repo.git.log("-1", "--format=%H", "--", item.path)),
+                        "message": str(repo.git.log("-1", "--format=%s", "--", item.path)),
                         "date": datetime.fromtimestamp(
-                            int(repo.git.log("-1", "--format=%at", item.path))
+                            int(repo.git.log("-1", "--format=%at", "--", item.path))
                         ).isoformat(),
-                        "author": str(repo.git.log("-1", "--format=%an", item.path))
+                        "author": str(repo.git.log("-1", "--format=%an", "--", item.path))
                     }
                 }
                 result.append(file_info)
