@@ -2,17 +2,19 @@ from __future__ import annotations
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from ..models.pipeline import PipelineStatus, JobStatus, PipelineSource
+from uuid import UUID
+from datetime import datetime
 
 
 class PipelineJob(BaseModel):
-    id: str
+    id: UUID
     name: str
     stage: Optional[str] = None
     image: str
     script: str
     status: JobStatus
-    started_at: Optional[str] = None
-    finished_at: Optional[str] = None
+    started_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
     exit_code: Optional[int] = None
 
     class Config:
@@ -20,15 +22,15 @@ class PipelineJob(BaseModel):
 
 
 class Pipeline(BaseModel):
-    id: str
-    repository_id: str
+    id: UUID
+    repository_id: UUID
     commit_sha: Optional[str] = None
     ref: Optional[str] = None
     source: PipelineSource
     status: PipelineStatus
-    created_at: Optional[str] = None
-    started_at: Optional[str] = None
-    finished_at: Optional[str] = None
+    created_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
     jobs: List[PipelineJob] = []
 
     class Config:
@@ -36,12 +38,12 @@ class Pipeline(BaseModel):
 
 
 class PipelineListItem(BaseModel):
-    id: str
+    id: UUID
     status: PipelineStatus
     commit_sha: Optional[str] = None
     ref: Optional[str] = None
     source: PipelineSource
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
