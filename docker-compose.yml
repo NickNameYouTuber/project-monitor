@@ -41,6 +41,20 @@ services:
       - GIT_REPOS_DIR=/git-repos
 
   db:
+    image: postgres:15-alpine
+    container_name: project-monitor-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=nit
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "7672:5432"
+    networks:
+      - project-monitor-network
+
   runner:
     build:
       context: ./runner
@@ -58,19 +72,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
-    image: postgres:15-alpine
-    container_name: project-monitor-db
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=nit
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "7672:5432"
-    networks:
-      - project-monitor-network
 
 networks:
   project-monitor-network:
