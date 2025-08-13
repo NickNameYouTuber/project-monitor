@@ -2,6 +2,9 @@ import os
 import time
 import requests
 import docker
+from docker.errors import APIError
+from docker.types import Mount
+import traceback
 import subprocess
 import threading
 
@@ -79,12 +82,21 @@ def run_job(job: dict):
     container = None
     exit_code = 1
     try:
+        # Mount named volume (not host path) so nested container sees same git volume
+        mounts = []
+        git_volume_name = os.environ.get("GIT_REPOS_VOLUME", "gitrepos")
+        mounts.append(Mount(target="/git-repos", source=git_volume_name, type="volume", read_only=False))
+
+        working_dir = "/workspace"
+        if repo_path and repo_path.startswith("/git-repos"):
+            working_dir = repo_path
+
         container = docker_client.containers.run(
             image,
             command=["bash", "-lc", script],
-            working_dir="/workspace",
+            working_dir=working_dir,
             environment=env,
-            volumes={os.path.abspath(repo_path): {"bind": "/workspace", "mode": "rw"}} if repo_path else {},
+            mounts=mounts,
             detach=True,
             stdout=True,
             stderr=True,
@@ -112,8 +124,11 @@ def run_job(job: dict):
                     pass
         res = container.wait()
         exit_code = res.get("StatusCode", 1)
+    except APIError as e:
+        detail = getattr(e, 'explanation', None) or str(e)
+        post_log(job_id, 0, f"Runner error (Docker API): {detail}\n{traceback.format_exc()}\n")
     except Exception as e:
-        post_log(job_id, 0, f"Runner error: {e}\n")
+        post_log(job_id, 0, f"Runner error: {e}\n{traceback.format_exc()}\n")
     finally:
         try:
             if container is not None:
