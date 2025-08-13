@@ -66,6 +66,12 @@ class PipelineJob(Base):
     retries = Column(Integer, default=0)
     max_retries = Column(Integer, default=0)
     timeout_seconds = Column(Integer, nullable=True)
+    when = Column(String, nullable=True)  # on_success | manual | delayed
+    is_manual = Column(Boolean, default=False)
+    allow_failure = Column(Boolean, default=False)
+    start_after_seconds = Column(Integer, nullable=True)
+    rule_hint = Column(Text, nullable=True)
+    manual_released = Column(Boolean, default=False)
 
     pipeline = relationship("Pipeline", back_populates="jobs")
     logs = relationship("PipelineLogChunk", back_populates="job", cascade="all, delete-orphan")

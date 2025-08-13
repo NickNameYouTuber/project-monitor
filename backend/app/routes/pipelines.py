@@ -99,7 +99,21 @@ def _get_runner_from_token(db: Session, authorization: Optional[str], runner_nam
 @router.post("/pipelines/runners/lease", response_model=Optional[LeaseResponse])
 def lease_job(body: LeaseRequest, db: Session = Depends(get_db), authorization: Optional[str] = Header(default=None), x_runner_name: Optional[str] = Header(default=None)):
     _ = _get_runner_from_token(db, authorization, x_runner_name)
-    job = pick_next_job(db)
+    # Pick next job, skipping manual unless released and delayed until start_after_seconds
+    now = datetime.utcnow()
+    job = None
+    candidates = db.query(PipelineJob).filter(PipelineJob.status == JobStatus.QUEUED).all()
+    for j in candidates:
+        if j.when == 'manual' and not j.manual_released:
+            continue
+        if j.when == 'delayed' and j.start_after_seconds:
+            # ensure pipeline.started_at exists
+            pipe = db.query(Pipeline).filter(Pipeline.id == j.pipeline_id).first()
+            base_time = pipe.started_at or pipe.created_at or now
+            if (base_time or now) + timedelta(seconds=int(j.start_after_seconds)) > now:
+                continue
+        job = j
+        break
     if not job:
         return None
     # Mark running
@@ -171,6 +185,18 @@ def update_status(job_id: str, body: JobStatusUpdate, db: Session = Depends(get_
                 notify_pipeline_result_silent(db, pipeline)
             except Exception:
                 pass
+    return {"status": "ok"}
+
+
+@router.post("/pipelines/jobs/{job_id}/start")
+def start_manual_job(job_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    job = db.query(PipelineJob).filter(PipelineJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.when != 'manual':
+        raise HTTPException(status_code=400, detail="Job is not manual")
+    job.manual_released = True
+    db.commit()
     return {"status": "ok"}
 
 

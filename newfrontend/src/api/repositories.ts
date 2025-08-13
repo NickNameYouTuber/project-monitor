@@ -69,6 +69,11 @@ export async function getJobLogs(jobId: string): Promise<string> {
   return data.logs || '';
 }
 
+export async function startManualJob(jobId: string): Promise<{ status: string }> {
+  const { data } = await apiClient.post<{ status: string }>(`/pipelines/jobs/${jobId}/start`, {});
+  return data;
+}
+
 export async function fetchProjectRepositories(projectId: string): Promise<Repository[]> {
   const { data } = await apiClient.get<Repository[]>(`/repositories`, { params: { project_id: projectId } });
   return data;

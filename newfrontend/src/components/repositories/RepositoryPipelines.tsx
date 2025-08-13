@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, Badge, Button, Card, Group, Loader, Modal, ScrollArea, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
-import { fetchPipelines, fetchPipelineDetail, triggerPipeline, cancelPipeline, getJobLogs, type PipelineListItem, type PipelineDetail } from '../../api/repositories';
+import { fetchPipelines, fetchPipelineDetail, triggerPipeline, cancelPipeline, getJobLogs, startManualJob, type PipelineListItem, type PipelineDetail } from '../../api/repositories';
 import { IconRefresh, IconPlayerPlay, IconListDetails } from '@tabler/icons-react';
 
 export default function RepositoryPipelines({ repositoryId }: { repositoryId: string }) {
@@ -170,7 +170,7 @@ export default function RepositoryPipelines({ repositoryId }: { repositoryId: st
                       <Table.Td>{statusBadge(j.status as any)}</Table.Td>
                       <Table.Td><Text size="sm" c="dimmed">{j.image}</Text></Table.Td>
                       <Table.Td>{j.exit_code ?? ''}</Table.Td>
-                      <Table.Td width={90}>
+                      <Table.Td width={180}>
                         <Button size="xs" variant="light" onClick={async () => {
                           setLogsJobId(j.id);
                           setLogsOpen(true);
@@ -199,6 +199,12 @@ export default function RepositoryPipelines({ repositoryId }: { repositoryId: st
                             }, 2000) as unknown as number;
                           }
                         }}>Логи</Button>
+                        {j.status === 'queued' && (j as any).is_manual && (
+                          <Button size="xs" ml="xs" variant="outline" color="blue" onClick={async () => {
+                            await startManualJob(j.id);
+                            await openDetail(selected.id);
+                          }}>Запустить</Button>
+                        )}
                       </Table.Td>
                     </Table.Tr>
                   ))}

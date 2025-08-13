@@ -10,6 +10,7 @@ from ..models.repository import Repository
 from ..models.user import User
 from .pipeline_parser import parse_pipeline_yaml
 import git
+import re
 
 
 REPOS_BASE_DIR = os.environ.get("GIT_REPOS_DIR", "/app/git_repos")
@@ -116,6 +117,66 @@ def trigger_pipeline(
     db.add(pipeline)
     db.flush()  # get id
 
+    # Compute changed paths for context
+    changed_paths: List[str] = []
+    try:
+        if commit_sha:
+            repo = git.Repo(repo_path)
+            commit_obj = repo.commit(commit_sha)
+            parent = commit_obj.parents[0] if commit_obj.parents else None
+            diffs = parent.diff(commit_obj, create_patch=False) if parent else commit_obj.diff(NULL_TREE='4b825dc642cb6eb9a060e54bf8d69288fbee4904')
+            for d in diffs:
+                p = getattr(d, 'b_path', None) or getattr(d, 'a_path', None)
+                if p:
+                    changed_paths.append(p)
+    except Exception:
+        changed_paths = []
+
+    # CI context
+    ci_context: Dict[str, str] = {
+        "CI_PIPELINE_SOURCE": (source.value if hasattr(source, 'value') else str(source)),
+        "CI_COMMIT_BRANCH": ref or "",
+        "CI_COMMIT_TAG": "",
+        "CI_REPO_ID": str(repository_id),
+        "CI_PIPELINE_ID": str(pipeline.id),
+        "CI_COMMIT_SHA": commit_sha or "",
+        "CI_MR_SOURCE": "",
+        "CI_MR_TARGET": "",
+        "CI_CHANGED_PATHS": " ".join(changed_paths),
+    }
+
+    def _eval_rules(rules: List[Dict[str, Any]]) -> Dict[str, Any]:
+        if not rules:
+            return {"when": "on_success", "delay": 0, "allow_failure": False, "hint": None}
+        for rule in rules:
+            expr = rule.get("if")
+            when = rule.get("when", "on_success")
+            allow_failure = bool(rule.get("allow_failure", False))
+            delay = 0
+            if when == "delayed":
+                try:
+                    delay = int(rule.get("start_in", 0))
+                except Exception:
+                    delay = 0
+            if not expr:
+                return {"when": when, "delay": delay, "allow_failure": allow_failure, "hint": when}
+            # Replace $VARS in expression
+            def repl(m):
+                key = m.group(0).strip().strip('$')
+                return json.dumps(ci_context.get(key, ""))
+            expr_vars = re.sub(r"\$[A-Z0-9_]+", repl, expr)
+            expr_ops = expr_vars.replace("&&", " and ").replace("||", " or ")
+            expr_ops = re.sub(r"=~", " in ", expr_ops)
+            expr_ops = re.sub(r"!~", " not in ", expr_ops)
+            ok = False
+            try:
+                ok = bool(eval(expr_ops, {"__builtins__": {}}, {}))
+            except Exception:
+                ok = False
+            if ok:
+                return {"when": when, "delay": delay, "allow_failure": allow_failure, "hint": expr}
+        return {"when": "never", "delay": 0, "allow_failure": False, "hint": None}
+
     # Build job graph
     for job_cfg in parsed.jobs:
         # simple filters by source; minimal implementation
@@ -127,8 +188,15 @@ def trigger_pipeline(
         if except_ and src in except_:
             continue
 
+        # evaluate rules
+        rules = job_cfg.get("rules") or []
+        rule_res = _eval_rules(rules)
+        if rule_res.get("when") == "never":
+            continue
+
         # Normalize script lines to strings
-        raw_script = job_cfg.get("script") or ["echo nothing"]
+        before_script = job_cfg.get("before_script") or []
+        raw_script = [*before_script, *(job_cfg.get("script") or ["echo nothing"]) ]
         if isinstance(raw_script, str):
             script_lines = [raw_script]
         else:
@@ -184,6 +252,11 @@ def trigger_pipeline(
             status=JobStatus.QUEUED,
             max_retries=max_retries,
             timeout_seconds=timeout_seconds,
+            when=rule_res.get("when"),
+            is_manual=(rule_res.get("when") == "manual"),
+            allow_failure=bool(rule_res.get("allow_failure")),
+            start_after_seconds=(rule_res.get("delay") or None),
+            rule_hint=rule_res.get("hint"),
         )
         db.add(pj)
 
