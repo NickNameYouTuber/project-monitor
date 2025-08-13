@@ -34,7 +34,7 @@ export default function RepositoryFilePreview() {
   if (!path || !branch) return <Text c="dimmed">Не указан путь файла или ветка</Text>;
 
   return (
-    <Stack>
+    <Stack style={{ padding: '16px' }}>
       <Group justify="space-between" align="center">
         <div>
           <Title order={3}>{repo.name}</Title>
