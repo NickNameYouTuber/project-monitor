@@ -22,46 +22,53 @@ def _read_pipeline_file(repo_path: str, *, ref: Optional[str], commit_sha: Optio
     try:
         repo = git.Repo(repo_path)
     except Exception:
-        # Not a git repo yet
         return None
 
     candidates = [".pm-ci.yml", ".pm-ci.yaml"]
 
-    # If commit_sha provided, try to read directly from that commit
+    # Try commit
     if commit_sha:
         for name in candidates:
-            try:
-                return repo.git.show(f"{commit_sha}:{name}")
-            except Exception:
-                continue
+            for rev in [commit_sha, f"{commit_sha}"]:
+                try:
+                    return repo.git.show(f"{rev}:{name}")
+                except Exception:
+                    pass
 
-    # Determine branch/ref
-    branch_name: Optional[str] = ref
+    # Build list of ref candidates
+    ref_candidates: List[str] = []
+    if ref:
+        ref_candidates.extend([ref, f"refs/heads/{ref}"])
+    # active branch
     try:
-        heads = [h.name for h in repo.heads]
+        ab = repo.active_branch.name
+        ref_candidates.extend([ab, f"refs/heads/{ab}"])
     except Exception:
-        heads = []
-    if not branch_name:
-        try:
-            branch_name = repo.active_branch.name
-        except Exception:
-            branch_name = None
-    if not branch_name:
-        for candidate in ["main", "master"]:
-            if candidate in heads:
-                branch_name = candidate
-                break
-    if not branch_name and heads:
-        branch_name = heads[0]
+        pass
+    # conventional names
+    for nm in ["main", "master"]:
+        ref_candidates.extend([nm, f"refs/heads/{nm}"])
+    # all heads
+    try:
+        for h in repo.heads:
+            ref_candidates.extend([h.name, f"refs/heads/{h.name}"])
+    except Exception:
+        pass
 
-    if not branch_name:
-        return None
+    # Deduplicate while preserving order
+    seen = set()
+    ordered_refs: List[str] = []
+    for r in ref_candidates:
+        if r and r not in seen:
+            seen.add(r)
+            ordered_refs.append(r)
 
     for name in candidates:
-        try:
-            return repo.git.show(f"{branch_name}:{name}")
-        except Exception:
-            continue
+        for r in ordered_refs:
+            try:
+                return repo.git.show(f"{r}:{name}")
+            except Exception:
+                continue
 
     return None
 
