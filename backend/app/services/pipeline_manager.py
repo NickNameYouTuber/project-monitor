@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from ..models.pipeline import Pipeline, PipelineJob, PipelineStatus, JobStatus, PipelineSource
 from ..models.repository import Repository
 from .pipeline_parser import parse_pipeline_yaml
+import git
 
 
 REPOS_BASE_DIR = os.environ.get("GIT_REPOS_DIR", "/app/git_repos")
@@ -17,15 +18,51 @@ def _repo_path(repository_id: str) -> str:
     return os.path.join(REPOS_BASE_DIR, str(repository_id))
 
 
-def _read_pipeline_file(repo_path: str) -> Optional[str]:
-    for name in [".pm-ci.yml", ".pm-ci.yaml"]:
-        full = os.path.join(repo_path, name)
-        if os.path.exists(full):
+def _read_pipeline_file(repo_path: str, *, ref: Optional[str], commit_sha: Optional[str]) -> Optional[str]:
+    try:
+        repo = git.Repo(repo_path)
+    except Exception:
+        # Not a git repo yet
+        return None
+
+    candidates = [".pm-ci.yml", ".pm-ci.yaml"]
+
+    # If commit_sha provided, try to read directly from that commit
+    if commit_sha:
+        for name in candidates:
             try:
-                with open(full, "r", encoding="utf-8") as f:
-                    return f.read()
+                return repo.git.show(f"{commit_sha}:{name}")
             except Exception:
-                return None
+                continue
+
+    # Determine branch/ref
+    branch_name: Optional[str] = ref
+    try:
+        heads = [h.name for h in repo.heads]
+    except Exception:
+        heads = []
+    if not branch_name:
+        try:
+            branch_name = repo.active_branch.name
+        except Exception:
+            branch_name = None
+    if not branch_name:
+        for candidate in ["main", "master"]:
+            if candidate in heads:
+                branch_name = candidate
+                break
+    if not branch_name and heads:
+        branch_name = heads[0]
+
+    if not branch_name:
+        return None
+
+    for name in candidates:
+        try:
+            return repo.git.show(f"{branch_name}:{name}")
+        except Exception:
+            continue
+
     return None
 
 
@@ -42,7 +79,7 @@ def trigger_pipeline(
     if not repo:
         return None
     repo_path = _repo_path(repository_id)
-    content = _read_pipeline_file(repo_path)
+    content = _read_pipeline_file(repo_path, ref=ref, commit_sha=commit_sha)
     if not content:
         # No pipeline file — do nothing
         return None
