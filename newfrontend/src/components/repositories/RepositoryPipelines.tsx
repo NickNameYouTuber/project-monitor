@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActionIcon, Badge, Button, Card, Group, Loader, Modal, ScrollArea, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
-import { fetchPipelines, fetchPipelineDetail, triggerPipeline, type PipelineListItem, type PipelineDetail } from '../../api/repositories';
+import { fetchPipelines, fetchPipelineDetail, triggerPipeline, cancelPipeline, type PipelineListItem, type PipelineDetail } from '../../api/repositories';
 import { IconRefresh, IconPlayerPlay, IconListDetails } from '@tabler/icons-react';
 
 export default function RepositoryPipelines({ repositoryId }: { repositoryId: string }) {
@@ -110,7 +110,12 @@ export default function RepositoryPipelines({ repositoryId }: { repositoryId: st
                 {statusBadge(selected.status)}
                 <Text>{selected.source}</Text>
               </Group>
-              <Text size="sm">{selected.created_at ? new Date(selected.created_at).toLocaleString() : ''}</Text>
+              <Group gap="xs">
+                <Text size="sm">{selected.created_at ? new Date(selected.created_at).toLocaleString() : ''}</Text>
+                {selected.status === 'running' && (
+                  <Button variant="light" color="red" size="xs" onClick={async () => { await cancelPipeline(selected.id); await openDetail(selected.id); load(); }}>Остановить</Button>
+                )}
+              </Group>
             </Group>
             <Card withBorder padding="sm">
               <Table withRowBorders={false} verticalSpacing="xs">
