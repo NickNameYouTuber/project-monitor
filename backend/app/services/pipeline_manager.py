@@ -24,7 +24,11 @@ def _read_pipeline_file(repo_path: str, *, ref: Optional[str], commit_sha: Optio
     except Exception:
         return None
 
-    candidates = [".pm-ci.yml", ".pm-ci.yaml"]
+    candidates = [
+        ".pm-ci.yml", ".pm-ci.yaml",
+        ".ci.yml", ".ci.yaml",
+        ".nit-ci.yml", ".nit-ci.yaml",
+    ]
 
     # Try commit
     if commit_sha:

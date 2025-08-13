@@ -36,7 +36,7 @@ export default function FileViewer({ repositoryId, branch, path }: Props) {
   const permalink = window.location.origin + window.location.pathname + `?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(path)}`;
 
   return (
-    <Stack>
+    <Stack style={{ padding: '16px' }}>
       <Group justify="space-between">
         <Text fw={600}>{path}</Text>
         <Group gap="xs">
