@@ -139,12 +139,18 @@ elif SQLALCHEMY_DATABASE_URL.startswith('postgres'):
                 "ALTER TABLE merge_requests ADD COLUMN IF NOT EXISTS reviewer_id UUID",
                 # CI/CD tables (idempotent if exist)
                 "CREATE TABLE IF NOT EXISTS pipelines (id UUID PRIMARY KEY, repository_id UUID NOT NULL, commit_sha TEXT, ref TEXT, source TEXT NOT NULL, status TEXT NOT NULL, triggered_by_user_id TEXT, created_at TIMESTAMP, started_at TIMESTAMP, finished_at TIMESTAMP)",
-                "CREATE TABLE IF NOT EXISTS pipeline_jobs (id UUID PRIMARY KEY, pipeline_id UUID NOT NULL, name TEXT NOT NULL, stage TEXT, image TEXT NOT NULL, script TEXT NOT NULL, env_json TEXT, needs_json TEXT, status TEXT NOT NULL, started_at TIMESTAMP, finished_at TIMESTAMP, exit_code INTEGER, retries INTEGER DEFAULT 0, max_retries INTEGER DEFAULT 0, timeout_seconds INTEGER)",
+                "CREATE TABLE IF NOT EXISTS pipeline_jobs (id UUID PRIMARY KEY, pipeline_id UUID NOT NULL, name TEXT NOT NULL, stage TEXT, image TEXT NOT NULL, script TEXT NOT NULL, env_json TEXT, needs_json TEXT, status TEXT NOT NULL, started_at TIMESTAMP, finished_at TIMESTAMP, exit_code INTEGER, retries INTEGER DEFAULT 0, max_retries INTEGER DEFAULT 0, timeout_seconds INTEGER, \"when\" TEXT, is_manual BOOLEAN DEFAULT FALSE, allow_failure BOOLEAN DEFAULT FALSE, start_after_seconds INTEGER, rule_hint TEXT, manual_released BOOLEAN DEFAULT FALSE)",
                 "CREATE TABLE IF NOT EXISTS pipeline_log_chunks (id UUID PRIMARY KEY, job_id UUID NOT NULL, seq INTEGER NOT NULL, content TEXT NOT NULL, created_at TIMESTAMP)",
                 "CREATE TABLE IF NOT EXISTS pipeline_artifacts (id UUID PRIMARY KEY, job_id UUID NOT NULL, path TEXT NOT NULL, size INTEGER, content_path TEXT NOT NULL, created_at TIMESTAMP)",
                 "CREATE TABLE IF NOT EXISTS runners (id UUID PRIMARY KEY, name TEXT NOT NULL, token TEXT UNIQUE NOT NULL, active BOOLEAN DEFAULT TRUE, tags_json TEXT, last_seen_at TIMESTAMP)",
                 # Ensure new columns exist on upgrades
                 "ALTER TABLE pipeline_jobs ADD COLUMN IF NOT EXISTS timeout_seconds INTEGER",
+                "ALTER TABLE pipeline_jobs ADD COLUMN IF NOT EXISTS \"when\" TEXT",
+                "ALTER TABLE pipeline_jobs ADD COLUMN IF NOT EXISTS is_manual BOOLEAN DEFAULT FALSE",
+                "ALTER TABLE pipeline_jobs ADD COLUMN IF NOT EXISTS allow_failure BOOLEAN DEFAULT FALSE",
+                "ALTER TABLE pipeline_jobs ADD COLUMN IF NOT EXISTS start_after_seconds INTEGER",
+                "ALTER TABLE pipeline_jobs ADD COLUMN IF NOT EXISTS rule_hint TEXT",
+                "ALTER TABLE pipeline_jobs ADD COLUMN IF NOT EXISTS manual_released BOOLEAN DEFAULT FALSE",
             ]:
                 try:
                     conn.execute(text(stmt))
