@@ -11,7 +11,7 @@ from ..database import get_db
 from ..auth import get_current_active_user
 from ..models import Repository, RepositoryMember, User
 from ..models.pipeline import Pipeline, PipelineJob, PipelineStatus, JobStatus, PipelineArtifact, PipelineLogChunk, Runner, PipelineSource
-from ..schemas.pipeline import Pipeline as PipelineSchema, PipelineListItem, TriggerPipelineRequest, LeaseRequest, LeaseResponse, JobStatusUpdate, JobLogChunk
+from ..schemas.pipeline import Pipeline as PipelineSchema, PipelineListItem, TriggerPipelineRequest, LeaseRequest, LeaseResponse, JobStatusUpdate, JobLogChunk, PipelineJob as PipelineJobSchema
 from ..services.pipeline_manager import trigger_pipeline, pick_next_job
 from .repository_content import get_repo_path
 
@@ -163,7 +163,7 @@ def update_status(job_id: str, body: JobStatusUpdate, db: Session = Depends(get_
     return {"status": "ok"}
 
 
-@router.get("/pipelines/jobs/{job_id}", response_model=PipelineJob)
+@router.get("/pipelines/jobs/{job_id}", response_model=PipelineJobSchema)
 def get_job(job_id: str, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
     job = db.query(PipelineJob).filter(PipelineJob.id == job_id).first()
     if not job:
