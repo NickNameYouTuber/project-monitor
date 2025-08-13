@@ -178,6 +178,7 @@ def trigger_pipeline(
         return {"when": "never", "delay": 0, "allow_failure": False, "hint": None}
 
     # Build job graph
+    created_any_job = False
     for job_cfg in parsed.jobs:
         # simple filters by source; minimal implementation
         only = set(job_cfg.get("only") or [])
@@ -259,6 +260,16 @@ def trigger_pipeline(
             rule_hint=rule_res.get("hint"),
         )
         db.add(pj)
+        created_any_job = True
+
+    # If no jobs matched rules/filters, do not keep empty pipeline
+    if not created_any_job:
+        try:
+            db.delete(pipeline)
+            db.commit()
+        except Exception:
+            pass
+        return None
 
     db.commit()
     db.refresh(pipeline)
