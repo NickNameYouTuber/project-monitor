@@ -7,8 +7,14 @@ from sqlalchemy.orm import Session
 
 from ..models.pipeline import Pipeline, PipelineJob, PipelineStatus, JobStatus, PipelineSource
 from ..models.repository import Repository
-from ..routes.repository_content import get_repo_path
 from .pipeline_parser import parse_pipeline_yaml
+
+
+REPOS_BASE_DIR = os.environ.get("GIT_REPOS_DIR", "/app/git_repos")
+
+
+def _repo_path(repository_id: str) -> str:
+    return os.path.join(REPOS_BASE_DIR, str(repository_id))
 
 
 def _read_pipeline_file(repo_path: str) -> Optional[str]:
@@ -35,7 +41,7 @@ def trigger_pipeline(
     repo = db.query(Repository).filter(Repository.id == repository_id).first()
     if not repo:
         return None
-    repo_path = str(get_repo_path(repository_id))
+    repo_path = _repo_path(repository_id)
     content = _read_pipeline_file(repo_path)
     if not content:
         # No pipeline file — do nothing
