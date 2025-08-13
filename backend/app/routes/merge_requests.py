@@ -10,6 +10,8 @@ from ..models.merge_request import MergeRequest, MergeRequestStatus, MergeReques
 from .. import schemas
 from ..routes.repository_content import get_repo_path, check_repository_access
 from ..utils.telegram_notify import notify_mr_event_silent
+from ..services.pipeline_manager import trigger_pipeline
+from ..models.pipeline import PipelineSource
 import git
 import tempfile
 import shutil
@@ -125,6 +127,22 @@ def update_merge_request(repository_id: str, mr_id: str, payload: dict, current_
             pass
     db.commit()
     db.refresh(mr)
+
+    # Trigger pipeline with MR context for rules like merge_request_event
+    try:
+        trigger_pipeline(
+            db,
+            repository_id=repository_id,
+            ref=mr.target_branch,
+            commit_sha=None,
+            source=PipelineSource.MR,
+            user_id=str(current_user.id),
+            mr_source_branch=mr.source_branch,
+            mr_target_branch=mr.target_branch,
+        )
+    except Exception as _e:
+        print(f"Trigger pipeline on MR merge failed: {_e}")
+    
     return mr
 
 

@@ -87,6 +87,8 @@ def trigger_pipeline(
     commit_sha: Optional[str] = None,
     source: PipelineSource = PipelineSource.PUSH,
     user_id: Optional[str] = None,
+    mr_source_branch: Optional[str] = None,
+    mr_target_branch: Optional[str] = None,
 ) -> Optional[Pipeline]:
     repo = db.query(Repository).filter(Repository.id == repository_id).first()
     if not repo:
@@ -133,15 +135,24 @@ def trigger_pipeline(
         changed_paths = []
 
     # CI context
+    # Map source to compatibility values (mr -> merge_request_event)
+    src_value = (source.value if hasattr(source, 'value') else str(source))
+    if src_value == 'MR' or src_value.lower() == 'mr':
+        src_value = 'merge_request_event'
+
     ci_context: Dict[str, str] = {
-        "CI_PIPELINE_SOURCE": (source.value if hasattr(source, 'value') else str(source)),
+        "CI_PIPELINE_SOURCE": src_value,
         "CI_COMMIT_BRANCH": ref or "",
         "CI_COMMIT_TAG": "",
         "CI_REPO_ID": str(repository_id),
         "CI_PIPELINE_ID": str(pipeline.id),
         "CI_COMMIT_SHA": commit_sha or "",
-        "CI_MR_SOURCE": "",
-        "CI_MR_TARGET": "",
+        # Our variables
+        "CI_MR_SOURCE": mr_source_branch or "",
+        "CI_MR_TARGET": mr_target_branch or "",
+        # GitLab-style aliases for MR context
+        "CI_MERGE_REQUEST_SOURCE_BRANCH_NAME": mr_source_branch or "",
+        "CI_MERGE_REQUEST_TARGET_BRANCH_NAME": mr_target_branch or "",
         "CI_CHANGED_PATHS": " ".join(changed_paths),
     }
 
