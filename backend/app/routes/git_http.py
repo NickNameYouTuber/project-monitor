@@ -932,7 +932,17 @@ async def git_receive_pack(
             repo = git.Repo(repo_path)
             ref = None
             try:
-                ref = repo.active_branch.name
+                # Try active branch
+                try:
+                    ref = repo.active_branch.name
+                except Exception:
+                    ref = None
+                # Prefer master/main if present
+                head_names = [h.name for h in repo.heads]
+                if 'master' in head_names:
+                    ref = ref or 'master'
+                elif 'main' in head_names:
+                    ref = ref or 'main'
             except Exception:
                 ref = None
             trigger_pipeline(db, repository_id=str(repository.id), ref=ref, commit_sha=None, source=PipelineSource.PUSH, user_id=user_id)

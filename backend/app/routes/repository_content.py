@@ -499,12 +499,27 @@ async def list_commits(
             # Repository is empty, return empty list (not an error)
             return []
             
+        # Determine branch: if not provided, pick branch with most recent commit
+        branch_name = branch
+        if not branch_name:
+            try:
+                latest = None
+                latest_name = None
+                for h in repo.heads:
+                    if h.commit is None:
+                        continue
+                    ts = h.commit.committed_date
+                    if latest is None or ts > latest:
+                        latest = ts
+                        latest_name = h.name
+                branch_name = latest_name or (repo.active_branch.name if hasattr(repo, 'active_branch') else None)
+            except Exception:
+                branch_name = None
+
         # Prepare git log command (newest first by default)
         git_log_cmd = ["--pretty=format:%H|%an|%ae|%at|%s", f"-{limit}", f"--skip={skip}"]
-        
-        # Если указана ветка, добавим её в команду
-        if branch:
-            git_log_cmd.insert(0, branch)
+        if branch_name:
+            git_log_cmd.insert(0, branch_name)
         
         if path:
             git_log_cmd.append("--")
