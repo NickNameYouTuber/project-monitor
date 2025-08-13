@@ -10,6 +10,55 @@ export interface Repository {
   updated_at: string;
 }
 
+export interface PipelineListItem {
+  id: string;
+  status: 'queued' | 'running' | 'success' | 'failed' | 'canceled';
+  commit_sha?: string | null;
+  ref?: string | null;
+  source: 'push' | 'mr';
+  created_at?: string | null;
+}
+
+export interface PipelineJob {
+  id: string;
+  name: string;
+  stage?: string | null;
+  image: string;
+  script: string;
+  status: 'queued' | 'running' | 'success' | 'failed' | 'canceled';
+  started_at?: string | null;
+  finished_at?: string | null;
+  exit_code?: number | null;
+}
+
+export interface PipelineDetail {
+  id: string;
+  repository_id: string;
+  commit_sha?: string | null;
+  ref?: string | null;
+  source: 'push' | 'mr';
+  status: 'queued' | 'running' | 'success' | 'failed' | 'canceled';
+  created_at?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+  jobs: PipelineJob[];
+}
+
+export async function fetchPipelines(repositoryId: string): Promise<PipelineListItem[]> {
+  const { data } = await apiClient.get<PipelineListItem[]>(`/repositories/${repositoryId}/pipelines`);
+  return data;
+}
+
+export async function fetchPipelineDetail(pipelineId: string): Promise<PipelineDetail> {
+  const { data } = await apiClient.get<PipelineDetail>(`/pipelines/${pipelineId}`);
+  return data;
+}
+
+export async function triggerPipeline(repositoryId: string, ref?: string, commit_sha?: string): Promise<PipelineDetail> {
+  const { data } = await apiClient.post<PipelineDetail>(`/repositories/${repositoryId}/pipelines/trigger`, { ref, commit_sha, source: 'push' });
+  return data;
+}
+
 export async function fetchProjectRepositories(projectId: string): Promise<Repository[]> {
   const { data } = await apiClient.get<Repository[]>(`/repositories`, { params: { project_id: projectId } });
   return data;

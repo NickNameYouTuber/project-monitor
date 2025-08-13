@@ -27,7 +27,7 @@ services:
       - "7671:7671"
     volumes:
       - ./db-data:/data
-      - gitrepos:/app/git_repos
+      - gitrepos:/git-repos
     networks:
       - project-monitor-network
     restart: unless-stopped
@@ -37,8 +37,27 @@ services:
       - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/nit
       - HOST=0.0.0.0
       - PORT=7671
+      - PIPELINE_ARTIFACTS_DIR=/data/pipeline_artifacts
+      - GIT_REPOS_DIR=/git-repos
 
   db:
+  runner:
+    build:
+      context: ./runner
+    container_name: project-monitor-runner
+    environment:
+      - API_URL=http://backend:7671/api
+      - RUNNER_TOKEN=dev-runner-token
+      - RUNNER_NAME=default-runner
+      - WORKSPACE_ROOT=/git-repos
+    volumes:
+      - gitrepos:/git-repos
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - project-monitor-network
+    depends_on:
+      - backend
+    restart: unless-stopped
     image: postgres:15-alpine
     container_name: project-monitor-db
     restart: unless-stopped

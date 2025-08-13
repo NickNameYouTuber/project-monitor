@@ -32,6 +32,48 @@ project-monitor/
 - **Team Management**: Add and remove team members
 - **Dark/Light Theme**: Toggle between dark and light modes
 
+## CI/CD (built-in)
+
+Built-in pipelines are supported via `.pm-ci.yml` placed at repo root. On git push our backend triggers a pipeline, jobs run on internal runner in Docker.
+
+Example `.pm-ci.yml`:
+
+```yaml
+stages:
+  - build
+  - test
+
+variables:
+  NODE_ENV: production
+
+jobs:
+  build:
+    stage: build
+    image: node:20-alpine
+    script:
+      - corepack enable
+      - pnpm -v || npm i -g pnpm
+      - pnpm install --frozen-lockfile || npm ci
+      - npm run build
+    artifacts:
+      paths:
+        - frontend/dist
+    only:
+      - push
+      - mr
+
+  test:
+    stage: test
+    image: node:20-alpine
+    needs: [build]
+    script:
+      - npm test -- --ci
+    only:
+      - push
+```
+
+Runner service is defined in `docker-compose.yml`. Configure `RUNNER_TOKEN` if needed.
+
 ## Running the Application
 
 ### Development Mode

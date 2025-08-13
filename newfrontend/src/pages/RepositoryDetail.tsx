@@ -4,6 +4,7 @@ import { Button, Group, Loader, Stack, Tabs, Text, Title } from '@mantine/core';
 import { fetchRepository, type Repository } from '../api/repositories';
 import RepositoryFileExplorer from '../components/repositories/RepositoryFileExplorer';
 import RepositorySettings from '../components/repositories/RepositorySettings';
+import RepositoryPipelines from '../components/repositories/RepositoryPipelines';
 import RepositoryMergeRequests from '../components/repositories/RepositoryMergeRequests';
 import CommitHistory from '../components/repositories/CommitHistory';
 
@@ -55,6 +56,7 @@ export default function RepositoryDetail() {
           <Tabs.Tab value="files">Файлы</Tabs.Tab>
           <Tabs.Tab value="history">История</Tabs.Tab>
           <Tabs.Tab value="merge-requests">Merge Requests</Tabs.Tab>
+          <Tabs.Tab value="pipelines">Пайплайны</Tabs.Tab>
           <Tabs.Tab value="settings">Настройки</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="files" pt="md">
@@ -65,6 +67,9 @@ export default function RepositoryDetail() {
         </Tabs.Panel>
         <Tabs.Panel value="merge-requests" pt="md">
           <RepositoryMergeRequests repositoryId={repo.id} />
+        </Tabs.Panel>
+        <Tabs.Panel value="pipelines" pt="md">
+          <RepositoryPipelines repositoryId={repo.id} />
         </Tabs.Panel>
         <Tabs.Panel value="settings" pt="md">
           <RepositorySettings repositoryId={repo.id} name={repo.name} description={repo.description} visibility={repo.visibility as any} onUpdated={async () => setRepo(await fetchRepository(repo.id))} />

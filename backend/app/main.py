@@ -6,7 +6,7 @@ from starlette.routing import Route, Mount
 from .database import engine, SQLALCHEMY_DATABASE_URL
 from sqlalchemy import text
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards, merge_requests
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards, merge_requests, pipelines
 from .utils.telegram_notify import notify_task_event_silent
 import subprocess
 import os
@@ -28,6 +28,7 @@ for base in [
     models.token.Base,
     models.merge_request.Base,
     models.whiteboard.Base,
+    models.pipeline.Base,
 ]:
     base.metadata.create_all(bind=engine)
 
@@ -136,6 +137,12 @@ elif SQLALCHEMY_DATABASE_URL.startswith('postgres'):
                 "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS estimate_minutes INTEGER",
                 # MR reviewer
                 "ALTER TABLE merge_requests ADD COLUMN IF NOT EXISTS reviewer_id UUID",
+                # CI/CD tables (idempotent if exist)
+                "CREATE TABLE IF NOT EXISTS pipelines (id UUID PRIMARY KEY, repository_id UUID NOT NULL, commit_sha TEXT, ref TEXT, source TEXT NOT NULL, status TEXT NOT NULL, triggered_by_user_id TEXT, created_at TIMESTAMP, started_at TIMESTAMP, finished_at TIMESTAMP)",
+                "CREATE TABLE IF NOT EXISTS pipeline_jobs (id UUID PRIMARY KEY, pipeline_id UUID NOT NULL, name TEXT NOT NULL, stage TEXT, image TEXT NOT NULL, script TEXT NOT NULL, env_json TEXT, needs_json TEXT, status TEXT NOT NULL, started_at TIMESTAMP, finished_at TIMESTAMP, exit_code INTEGER, retries INTEGER DEFAULT 0, max_retries INTEGER DEFAULT 0)",
+                "CREATE TABLE IF NOT EXISTS pipeline_log_chunks (id UUID PRIMARY KEY, job_id UUID NOT NULL, seq INTEGER NOT NULL, content TEXT NOT NULL, created_at TIMESTAMP)",
+                "CREATE TABLE IF NOT EXISTS pipeline_artifacts (id UUID PRIMARY KEY, job_id UUID NOT NULL, path TEXT NOT NULL, size INTEGER, content_path TEXT NOT NULL, created_at TIMESTAMP)",
+                "CREATE TABLE IF NOT EXISTS runners (id UUID PRIMARY KEY, name TEXT NOT NULL, token TEXT UNIQUE NOT NULL, active BOOLEAN DEFAULT TRUE, tags_json TEXT, last_seen_at TIMESTAMP)",
             ]:
                 try:
                     conn.execute(text(stmt))
@@ -197,6 +204,7 @@ app.include_router(repository_content.router, prefix=f"{api_prefix}/repositories
 app.include_router(tokens.router, prefix=f"{api_prefix}/tokens", tags=["tokens"])
 app.include_router(whiteboards.router, prefix=f"{api_prefix}", tags=["whiteboards"])
 app.include_router(merge_requests.router, prefix=f"{api_prefix}", tags=["merge_requests"])
+app.include_router(pipelines.router, prefix=f"{api_prefix}", tags=["pipelines"])
 
 # Catch-all routes for Git HTTP protocol to handle URLs with .git and subpaths
 @app.get("/api/git/{repository_id:path}")

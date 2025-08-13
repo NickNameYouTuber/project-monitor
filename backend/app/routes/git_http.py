@@ -3,6 +3,7 @@ import subprocess
 import re
 import shutil
 from pathlib import Path
+from datetime import datetime
 from fastapi import APIRouter, Request, Depends, HTTPException, status, Body
 from fastapi.responses import Response, PlainTextResponse
 from sqlalchemy.orm import Session
@@ -18,6 +19,8 @@ from ..database import get_db
 from ..models import Repository, RepositoryMember, User
 from ..models.repository import VisibilityType
 from ..auth import get_current_user_optional
+from ..services.pipeline_manager import trigger_pipeline
+from ..models.pipeline import PipelineSource
 
 # Get repos base directory from environment (same as in repository_content.py)
 REPOS_BASE_DIR = os.environ.get("GIT_REPOS_DIR", "/app/git_repos")
@@ -922,6 +925,20 @@ async def git_receive_pack(
             "Cache-Control": "no-cache",
         }
         
+        # Try to trigger pipeline best-effort
+        try:
+            # Guess ref (active branch)
+            import git
+            repo = git.Repo(repo_path)
+            ref = None
+            try:
+                ref = repo.active_branch.name
+            except Exception:
+                ref = None
+            trigger_pipeline(db, repository_id=str(repository.id), ref=ref, commit_sha=None, source=PipelineSource.PUSH, user_id=user_id)
+        except Exception as _e:
+            print(f"Pipeline trigger skipped: {_e}")
+        
         return Response(content=stdout, headers=headers)
     
     except Exception as e:
@@ -1061,6 +1078,18 @@ async def git_receive_pack_direct(
             "Cache-Control": "no-cache",
         }
         
+        # Try to trigger pipeline best-effort
+        try:
+            import git
+            repo = git.Repo(repo_path)
+            ref = None
+            try:
+                ref = repo.active_branch.name
+            except Exception:
+                ref = None
+            trigger_pipeline(db, repository_id=str(repository.id), ref=ref, commit_sha=None, source=PipelineSource.PUSH, user_id=user_id)
+        except Exception as _e:
+            print(f"Direct endpoint: Pipeline trigger skipped: {_e}")
         return Response(content=stdout, headers=headers)
     
     except Exception as e:

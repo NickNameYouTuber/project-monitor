@@ -14,6 +14,8 @@ from datetime import datetime
 from pydantic import BaseModel
 import uuid
 import re
+from ..services.pipeline_manager import trigger_pipeline
+from ..models.pipeline import PipelineSource
 
 class CommitNotification(BaseModel):
     repository_id: str
