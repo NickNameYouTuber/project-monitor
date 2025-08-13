@@ -31,6 +31,8 @@ def parse_pipeline_yaml(content: str) -> ParsedPipeline:
                 "artifacts": (cfg.get("artifacts") or {}).get("paths", []),
                 "only": cfg.get("only") or [],
                 "except": cfg.get("except") or [],
+                "retry": cfg.get("retry"),
+                "timeout": cfg.get("timeout"),
             }
             # normalize script to list
             if isinstance(job["script"], str):

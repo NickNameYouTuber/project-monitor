@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from ..models.user import User
 from ..models.task import Task
 from ..models.merge_request import MergeRequest
+from ..models.pipeline import Pipeline, PipelineStatus
 
 
 def _collect_telegram_ids(db: Session, user_ids: Iterable[str]) -> List[int]:
@@ -92,4 +93,24 @@ def notify_mr_event_silent(db: Session, mr: MergeRequest, *, actor_id: Optional[
     for cid in set(recipients):
         _send_telegram_message(cid, text)
 
+
+def notify_pipeline_result_silent(db: Session, pipeline: Pipeline) -> None:
+    # Send summary to pipeline.triggered_by_user if telegram_id exists
+    user: Optional[User] = None
+    if getattr(pipeline, 'triggered_by_user_id', None):
+        user = db.query(User).filter(User.id == pipeline.triggered_by_user_id).first()
+    if not user or not getattr(user, 'telegram_id', None):
+        return
+    status = pipeline.status.value if hasattr(pipeline.status, 'value') else str(pipeline.status)
+    text = (
+        f"CI: Пайплайн {pipeline.id}\n"
+        f"Репозиторий: {pipeline.repository_id}\n"
+        f"Статус: {status.upper()}\n"
+        f"Ref: {pipeline.ref or '-'}\n"
+        f"Commit: {(pipeline.commit_sha or '')[:8]}"
+    )
+    try:
+        _send_telegram_message(int(user.telegram_id), text)
+    except Exception:
+        pass
 

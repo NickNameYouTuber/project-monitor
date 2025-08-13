@@ -58,6 +58,7 @@ def run_job(job: dict):
     script_lines = job.get("script") or []
     script = " && ".join([line for line in script_lines if line and line.strip()]) or "echo nothing"
     env = job.get("env") or {}
+    timeout = job.get("timeout_seconds") or None
 
     # Ensure repo checkout best-effort (commit optional)
     if repo_path and os.path.isdir(repo_path):
@@ -122,7 +123,18 @@ def run_job(job: dict):
                         break
                 except Exception:
                     pass
-        res = container.wait()
+        if timeout and isinstance(timeout, int) and timeout > 0:
+            try:
+                res = container.wait(timeout=timeout)
+            except Exception:
+                try:
+                    container.kill()
+                except Exception:
+                    pass
+                exit_code = 124
+                res = {"StatusCode": exit_code}
+        else:
+            res = container.wait()
         exit_code = res.get("StatusCode", 1)
     except APIError as e:
         detail = getattr(e, 'explanation', None) or str(e)

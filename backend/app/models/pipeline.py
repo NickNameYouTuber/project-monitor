@@ -65,6 +65,7 @@ class PipelineJob(Base):
     exit_code = Column(Integer, nullable=True)
     retries = Column(Integer, default=0)
     max_retries = Column(Integer, default=0)
+    timeout_seconds = Column(Integer, nullable=True)
 
     pipeline = relationship("Pipeline", back_populates="jobs")
     logs = relationship("PipelineLogChunk", back_populates="job", cascade="all, delete-orphan")

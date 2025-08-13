@@ -14,6 +14,7 @@ from ..models.pipeline import Pipeline, PipelineJob, PipelineStatus, JobStatus, 
 from ..schemas.pipeline import Pipeline as PipelineSchema, PipelineListItem, TriggerPipelineRequest, LeaseRequest, LeaseResponse, JobStatusUpdate, JobLogChunk, PipelineJob as PipelineJobSchema
 from ..services.pipeline_manager import trigger_pipeline, pick_next_job
 from .repository_content import get_repo_path
+from ..utils.telegram_notify import notify_pipeline_result_silent
 
 
 router = APIRouter()
@@ -166,6 +167,10 @@ def update_status(job_id: str, body: JobStatusUpdate, db: Session = Depends(get_
             # pipeline SUCCESS if all jobs SUCCESS
             pipeline.status = PipelineStatus.SUCCESS if all(j.status == JobStatus.SUCCESS for j in jobs) else PipelineStatus.FAILED
             db.commit()
+            try:
+                notify_pipeline_result_silent(db, pipeline)
+            except Exception:
+                pass
     return {"status": "ok"}
 
 

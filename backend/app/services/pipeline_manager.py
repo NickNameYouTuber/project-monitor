@@ -149,6 +149,23 @@ def trigger_pipeline(
                     continue
                 script_lines.append(str(item))
 
+        max_retries = 0
+        timeout_seconds = None
+        retry_cfg = job_cfg.get("retry")
+        if isinstance(retry_cfg, int):
+            max_retries = retry_cfg
+        elif isinstance(retry_cfg, dict):
+            try:
+                max_retries = int(retry_cfg.get("max", 0))
+            except Exception:
+                max_retries = 0
+        tmo = job_cfg.get("timeout")
+        if tmo is not None:
+            try:
+                timeout_seconds = int(tmo)
+            except Exception:
+                timeout_seconds = None
+
         pj = PipelineJob(
             pipeline_id=pipeline.id,
             name=job_cfg["name"],
@@ -158,6 +175,8 @@ def trigger_pipeline(
             env_json=json.dumps(job_cfg.get("env") or {}),
             needs_json=json.dumps(job_cfg.get("needs") or []),
             status=JobStatus.QUEUED,
+            max_retries=max_retries,
+            timeout_seconds=timeout_seconds,
         )
         db.add(pj)
 
