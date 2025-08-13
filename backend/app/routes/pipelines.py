@@ -71,7 +71,7 @@ def _get_runner_from_token(db: Session, authorization: Optional[str], runner_nam
     return runner
 
 
-@router.post("/runners/lease", response_model=Optional[LeaseResponse])
+@router.post("/pipelines/runners/lease", response_model=Optional[LeaseResponse])
 def lease_job(body: LeaseRequest, db: Session = Depends(get_db), authorization: Optional[str] = Header(default=None), x_runner_name: Optional[str] = Header(default=None)):
     _ = _get_runner_from_token(db, authorization, x_runner_name)
     job = pick_next_job(db)
@@ -110,7 +110,7 @@ def lease_job(body: LeaseRequest, db: Session = Depends(get_db), authorization: 
     )
 
 
-@router.post("/jobs/{job_id}/logs")
+@router.post("/pipelines/jobs/{job_id}/logs")
 def push_logs(job_id: str, body: JobLogChunk, db: Session = Depends(get_db), authorization: Optional[str] = Header(default=None)):
     _ = _get_runner_from_token(db, authorization, None)
     job = db.query(PipelineJob).filter(PipelineJob.id == job_id).first()
@@ -122,7 +122,7 @@ def push_logs(job_id: str, body: JobLogChunk, db: Session = Depends(get_db), aut
     return {"status": "ok"}
 
 
-@router.post("/jobs/{job_id}/status")
+@router.post("/pipelines/jobs/{job_id}/status")
 def update_status(job_id: str, body: JobStatusUpdate, db: Session = Depends(get_db), authorization: Optional[str] = Header(default=None)):
     _ = _get_runner_from_token(db, authorization, None)
     job = db.query(PipelineJob).filter(PipelineJob.id == job_id).first()
@@ -145,7 +145,7 @@ def update_status(job_id: str, body: JobStatusUpdate, db: Session = Depends(get_
     return {"status": "ok"}
 
 
-@router.post("/jobs/{job_id}/artifacts")
+@router.post("/pipelines/jobs/{job_id}/artifacts")
 def upload_artifact(job_id: str, file: UploadFile = File(...), db: Session = Depends(get_db), authorization: Optional[str] = Header(default=None)):
     _ = _get_runner_from_token(db, authorization, None)
     job = db.query(PipelineJob).filter(PipelineJob.id == job_id).first()
