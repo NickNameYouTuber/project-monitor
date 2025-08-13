@@ -366,7 +366,36 @@ async def receive_pack_handler(repository_id: str, current_user: User, body: byt
             )
         
         print(f"Git receive-pack successful, returning {len(stdout)} bytes")
-        
+
+        # Best-effort: trigger pipeline after successful push
+        try:
+            import git
+            repo = git.Repo(repo_path)
+            ref = None
+            commit_sha = None
+            try:
+                head_names = [h.name for h in repo.heads]
+                if 'master' in head_names:
+                    ref = 'master'
+                    commit_sha = repo.heads[head_names.index('master')].commit.hexsha
+                elif 'main' in head_names:
+                    ref = 'main'
+                    commit_sha = repo.heads[head_names.index('main')].commit.hexsha
+                else:
+                    try:
+                        ref = repo.active_branch.name
+                        commit_sha = repo.active_branch.commit.hexsha
+                    except Exception:
+                        ref = None
+                        commit_sha = None
+            except Exception:
+                ref = None
+                commit_sha = None
+            user_id_str = str(current_user.id) if current_user else None
+            trigger_pipeline(db, repository_id=str(repository_id), ref=ref, commit_sha=commit_sha, source=PipelineSource.PUSH, user_id=user_id_str)
+        except Exception as _e:
+            print(f"Pipeline trigger (receive-pack) error: {_e}")
+
         # Return the git-receive-pack result directly without any modification
         # This is important - Git expects raw binary output here
         return Response(
