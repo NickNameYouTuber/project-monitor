@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, Badge, Button, Card, Group, Loader, Modal, ScrollArea, Stack, Table, Text, Title, Tooltip } from '@mantine/core';
 import { fetchPipelines, fetchPipelineDetail, triggerPipeline, cancelPipeline, getJobLogs, type PipelineListItem, type PipelineDetail } from '../../api/repositories';
 import { IconRefresh, IconPlayerPlay, IconListDetails } from '@tabler/icons-react';
@@ -8,6 +8,12 @@ export default function RepositoryPipelines({ repositoryId }: { repositoryId: st
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<PipelineDetail | null>(null);
   const [fetchingOne, setFetchingOne] = useState(false);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [logsJobId, setLogsJobId] = useState<string | null>(null);
+  const [logsText, setLogsText] = useState<string>("");
+  const [logsLoading, setLogsLoading] = useState(false);
+  const logsIntervalRef = useRef<number | null>(null);
+  const logsScrollRef = useRef<HTMLDivElement | null>(null);
 
   async function load() {
     setLoading(true);
@@ -139,11 +145,31 @@ export default function RepositoryPipelines({ repositoryId }: { repositoryId: st
                       <Table.Td>{j.exit_code ?? ''}</Table.Td>
                       <Table.Td width={90}>
                         <Button size="xs" variant="light" onClick={async () => {
-                          const logs = await getJobLogs(j.id);
-                          const w = window.open('', '_blank');
-                          if (w) {
-                            w.document.write(`<pre>${logs.replace(/</g, '&lt;')}</pre>`);
-                            w.document.close();
+                          setLogsJobId(j.id);
+                          setLogsOpen(true);
+                          setLogsLoading(true);
+                          try {
+                            const logs = await getJobLogs(j.id);
+                            setLogsText(logs || "");
+                            // Auto-scroll to bottom
+                            setTimeout(() => {
+                              if (logsScrollRef.current) {
+                                logsScrollRef.current.scrollTop = logsScrollRef.current.scrollHeight;
+                              }
+                            }, 0);
+                          } finally {
+                            setLogsLoading(false);
+                          }
+                          // If running, start polling
+                          if (j.status === 'running') {
+                            if (logsIntervalRef.current) window.clearInterval(logsIntervalRef.current);
+                            logsIntervalRef.current = window.setInterval(async () => {
+                              const txt = await getJobLogs(j.id);
+                              setLogsText(txt || "");
+                              if (logsScrollRef.current) {
+                                logsScrollRef.current.scrollTop = logsScrollRef.current.scrollHeight;
+                              }
+                            }, 2000) as unknown as number;
                           }
                         }}>Логи</Button>
                       </Table.Td>
@@ -151,6 +177,39 @@ export default function RepositoryPipelines({ repositoryId }: { repositoryId: st
                   ))}
                 </Table.Tbody>
               </Table>
+            </Card>
+          </Stack>
+        )}
+      </Modal>
+
+      <Modal opened={logsOpen} onClose={() => {
+        setLogsOpen(false);
+        setLogsJobId(null);
+        if (logsIntervalRef.current) window.clearInterval(logsIntervalRef.current);
+      }} title="Логи job" size="lg">
+        {logsLoading ? (
+          <Group justify="center" py="lg"><Loader /></Group>
+        ) : (
+          <Stack gap="sm">
+            <Group justify="space-between">
+              <Text size="sm" c="dimmed">{logsJobId}</Text>
+              <Group gap="xs">
+                <Button variant="light" size="xs" onClick={() => navigator.clipboard.writeText(logsText || '')}>Скопировать</Button>
+                <Button variant="light" size="xs" onClick={() => {
+                  const blob = new Blob([logsText || ''], { type: 'text/plain;charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `job-${logsJobId || 'logs'}.log`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}>Скачать</Button>
+              </Group>
+            </Group>
+            <Card withBorder padding="xs">
+              <ScrollArea h={420} viewportRef={logsScrollRef}>
+                <pre style={{ margin: 0, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: 12, lineHeight: 1.4, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{(logsText || '').replace(/</g, '\u003c')}</pre>
+              </ScrollArea>
             </Card>
           </Stack>
         )}
