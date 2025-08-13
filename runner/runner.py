@@ -93,7 +93,7 @@ def run_job(job: dict):
 
         container = docker_client.containers.run(
             image,
-            command=["bash", "-lc", script],
+            command=["sh", "-lc", script],
             working_dir=working_dir,
             environment=env,
             mounts=mounts,
