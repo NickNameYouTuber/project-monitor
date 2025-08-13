@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..models.pipeline import Pipeline, PipelineJob, PipelineStatus, JobStatus, PipelineSource
 from ..models.repository import Repository
+from ..models.user import User
 from .pipeline_parser import parse_pipeline_yaml
 import git
 
@@ -96,6 +97,12 @@ def trigger_pipeline(
         return None
 
     parsed = parse_pipeline_yaml(content)
+
+    # Validate triggering user exists; if not, set None
+    if user_id:
+        exists = db.query(User).filter(User.id == user_id).first()
+        if not exists:
+            user_id = None
 
     pipeline = Pipeline(
         repository_id=repository_id,
