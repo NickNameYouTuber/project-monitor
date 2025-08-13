@@ -11,6 +11,9 @@ from .. import schemas
 from ..routes.repository_content import get_repo_path, check_repository_access
 from ..utils.telegram_notify import notify_mr_event_silent
 import git
+import tempfile
+import shutil
+import subprocess
 import os
 
 router = APIRouter()
@@ -171,31 +174,45 @@ def merge_merge_request(repository_id: str, mr_id: str, current_user: User = Dep
     if not mr or mr.status != MergeRequestStatus.OPEN:
         raise HTTPException(status_code=400, detail="Cannot merge")
 
-    # Simple fast-forward or merge commit
+    # Merge in isolated worktree to avoid dirty state/conflicts in main tree
+    tmpdir = tempfile.mkdtemp(prefix="nit-merge-")
     try:
-        # Resolve objects for snapshot
-        source_commit = repo.heads[mr.source_branch].commit
-        target_commit = repo.heads[mr.target_branch].commit
-        bases = repo.merge_base(target_commit, source_commit)
-        base_commit = bases[0] if isinstance(bases, (list, tuple)) and bases else bases
+        # Ensure branches exist
+        if mr.source_branch not in [h.name for h in repo.heads] or mr.target_branch not in [h.name for h in repo.heads]:
+            raise HTTPException(status_code=400, detail="Branch not found")
 
-        # Checkout target and merge
-        repo.git.checkout(mr.target_branch)
-        repo.git.merge(mr.source_branch, '--no-ff')
+        # Add worktree for target branch
+        r = subprocess.run(["git", "worktree", "add", tmpdir, mr.target_branch], cwd=repo_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if r.returncode != 0:
+            raise HTTPException(status_code=400, detail=f"Failed to add worktree: {r.stderr.decode()}")
 
-        # After merge, get merge commit
-        merge_commit = repo.head.commit
+        # Configure user in worktree
+        subprocess.run(["git", "config", "user.email", "system@projectmonitor.com"], cwd=tmpdir)
+        subprocess.run(["git", "config", "user.name", "Project Monitor System"], cwd=tmpdir)
 
-        # Persist snapshot SHAs - DISABLED FOR NOW
-        # mr.base_sha_at_merge = base_commit.hexsha if base_commit else None
-        # mr.source_sha_at_merge = source_commit.hexsha
-        # mr.target_sha_at_merge = target_commit.hexsha
-        # mr.merge_commit_sha = merge_commit.hexsha
+        # Merge source branch
+        r2 = subprocess.run(["git", "merge", "--no-ff", mr.source_branch], cwd=tmpdir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if r2.returncode != 0:
+            # Abort merge to clean state
+            subprocess.run(["git", "merge", "--abort"], cwd=tmpdir)
+            raise HTTPException(status_code=400, detail=f"Merge failed: {r2.stderr.decode() or r2.stdout.decode()}")
+
+        # Success → update MR status
         mr.status = MergeRequestStatus.MERGED
-        # mr.updated_at = merge_commit.committed_datetime
-        # mr.merged_at = merge_commit.committed_datetime
-    except git.GitCommandError as e:
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(status_code=400, detail=f"Merge failed: {str(e)}")
+    finally:
+        try:
+            # Remove worktree
+            subprocess.run(["git", "worktree", "remove", "--force", tmpdir], cwd=repo_path)
+        except Exception:
+            pass
+        try:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+        except Exception:
+            pass
     db.commit()
     db.refresh(mr)
     return mr
