@@ -118,19 +118,28 @@ async def list_files(
             for item in tree:
                 is_dir = isinstance(item, git.Tree)
                 
+                display_path = os.path.join(path, item.name) if path else item.name
+                last_commit = None
+                try:
+                    log_line = repo.git.log("-1", "--format=%H|%s|%at|%an", "--", display_path)
+                    if log_line and log_line.strip():
+                        parts = log_line.split("|", 3)
+                        if len(parts) == 4 and parts[2].strip():
+                            last_commit = {
+                                "hash": parts[0],
+                                "message": parts[1],
+                                "date": datetime.fromtimestamp(int(parts[2])).isoformat(),
+                                "author": parts[3],
+                            }
+                except Exception:
+                    last_commit = None
+
                 file_info = {
                     "name": item.name,
-                    "path": os.path.join(path, item.name) if path else item.name,
+                    "path": display_path,
                     "type": "directory" if is_dir else "file",
                     "size": item.size if not is_dir else None,
-                    "last_commit": {
-                        "hash": str(repo.git.log("-1", "--format=%H", "--", item.path)),
-                        "message": str(repo.git.log("-1", "--format=%s", "--", item.path)),
-                        "date": datetime.fromtimestamp(
-                            int(repo.git.log("-1", "--format=%at", "--", item.path))
-                        ).isoformat(),
-                        "author": str(repo.git.log("-1", "--format=%an", "--", item.path))
-                    }
+                    "last_commit": last_commit,
                 }
                 result.append(file_info)
                 
