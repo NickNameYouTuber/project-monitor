@@ -52,15 +52,19 @@ export default function FileViewer({ repositoryId, branch, path }: Props) {
           </Tooltip>
         </Group>
       </Group>
-      <Paper withBorder p="md">
+      <Paper withBorder p="md" radius="md" style={{ padding: 16 }}>
         {data.binary ? (
           <Text>Бинарный файл ({data.size} байт). Используйте кнопку RAW для скачивания.</Text>
         ) : path.toLowerCase().endsWith('.md') ? (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.content}</ReactMarkdown>
+          <div style={{ padding: '8px 12px' }}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.content}</ReactMarkdown>
+          </div>
         ) : (
-          <SyntaxHighlighter language={detectLanguage(path)} style={oneDark} wrapLongLines>
-            {data.content}
-          </SyntaxHighlighter>
+          <div style={{ padding: '8px 12px' }}>
+            <SyntaxHighlighter language={detectLanguage(path)} style={oneDark} wrapLongLines>
+              {data.content}
+            </SyntaxHighlighter>
+          </div>
         )}
       </Paper>
     </Stack>
