@@ -116,12 +116,24 @@ def trigger_pipeline(
         if except_ and src in except_:
             continue
 
+        # Normalize script lines to strings
+        raw_script = job_cfg.get("script") or ["echo nothing"]
+        if isinstance(raw_script, str):
+            script_lines = [raw_script]
+        else:
+            script_lines = []
+            for item in raw_script:
+                if isinstance(item, dict) and "run" in item:
+                    script_lines.append(str(item.get("run")))
+                else:
+                    script_lines.append(str(item))
+
         pj = PipelineJob(
             pipeline_id=pipeline.id,
             name=job_cfg["name"],
             stage=job_cfg.get("stage"),
             image=job_cfg.get("image") or "alpine:3",
-            script="\n".join(job_cfg.get("script") or ["echo nothing"]),
+            script="\n".join(script_lines),
             env_json=json.dumps(job_cfg.get("env") or {}),
             needs_json=json.dumps(job_cfg.get("needs") or []),
             status=JobStatus.QUEUED,
