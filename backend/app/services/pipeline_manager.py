@@ -123,10 +123,27 @@ def trigger_pipeline(
         else:
             script_lines = []
             for item in raw_script:
-                if isinstance(item, dict) and "run" in item:
-                    script_lines.append(str(item.get("run")))
-                else:
-                    script_lines.append(str(item))
+                # Common YAML forms
+                if isinstance(item, dict):
+                    if "run" in item:
+                        script_lines.append(str(item.get("run")))
+                        continue
+                    if len(item) == 1:
+                        k, v = next(iter(item.items()))
+                        if v is None:
+                            script_lines.append(str(k))
+                        elif isinstance(v, (list, tuple)):
+                            script_lines.append(str(k) + " " + " ".join(str(x) for x in v))
+                        else:
+                            script_lines.append(str(k) + " " + str(v))
+                        continue
+                    # Fallback: join key=value
+                    script_lines.append(" ".join(f"{str(k)}={str(v)}" for k, v in item.items()))
+                    continue
+                if isinstance(item, (list, tuple)):
+                    script_lines.append(" ".join(str(x) for x in item))
+                    continue
+                script_lines.append(str(item))
 
         pj = PipelineJob(
             pipeline_id=pipeline.id,
