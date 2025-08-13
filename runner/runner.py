@@ -3,6 +3,7 @@ import time
 import requests
 import docker
 import subprocess
+import threading
 
 API = os.environ.get("API_URL", "http://localhost:7671/api").rstrip("/")
 TOKEN = os.environ.get("RUNNER_TOKEN", "dev-runner-token")
@@ -65,6 +66,15 @@ def run_job(job: dict):
         except Exception:
             pass
 
+    # Double check not canceled before start
+    try:
+        r = session.get(f"{API}/pipelines/jobs/{job_id}", timeout=10)
+        if r.ok and r.json().get("status") == "canceled":
+            post_status(job_id, "canceled")
+            return
+    except Exception:
+        pass
+
     post_status(job_id, "running")
     container = None
     exit_code = 1
@@ -80,12 +90,26 @@ def run_job(job: dict):
             stderr=True,
         )
         seq = 0
+        cancel_check_counter = 0
         for line in container.logs(stream=True, follow=True):
             try:
                 post_log(job_id, seq, line.decode("utf-8", "ignore"))
             except Exception:
                 pass
             seq += 1
+            cancel_check_counter += 1
+            if cancel_check_counter % 50 == 0:
+                try:
+                    r = session.get(f"{API}/pipelines/jobs/{job_id}", timeout=5)
+                    if r.ok and r.json().get("status") == "canceled":
+                        try:
+                            container.kill()
+                        except Exception:
+                            pass
+                        exit_code = 137
+                        break
+                except Exception:
+                    pass
         res = container.wait()
         exit_code = res.get("StatusCode", 1)
     except Exception as e:

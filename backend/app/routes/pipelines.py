@@ -54,6 +54,24 @@ def get_pipeline(pipeline_id: str, current_user: User = Depends(get_current_acti
     return p
 
 
+@router.post("/pipelines/{pipeline_id}/cancel")
+def cancel_pipeline(pipeline_id: str, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    p = db.query(Pipeline).filter(Pipeline.id == pipeline_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+    # Mark pipeline canceled
+    p.status = PipelineStatus.CANCELED
+    p.finished_at = datetime.utcnow()
+    # Cancel all non-finished jobs
+    jobs = db.query(PipelineJob).filter(PipelineJob.pipeline_id == p.id).all()
+    for j in jobs:
+        if j.status not in (JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.CANCELED):
+            j.status = JobStatus.CANCELED
+            j.finished_at = datetime.utcnow()
+    db.commit()
+    return {"status": "ok"}
+
+
 def _get_runner_from_token(db: Session, authorization: Optional[str], runner_name: Optional[str]) -> Runner:
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="Runner token required")
@@ -143,6 +161,14 @@ def update_status(job_id: str, body: JobStatusUpdate, db: Session = Depends(get_
             pipeline.status = PipelineStatus.SUCCESS if all(j.status == JobStatus.SUCCESS for j in jobs) else PipelineStatus.FAILED
             db.commit()
     return {"status": "ok"}
+
+
+@router.get("/pipelines/jobs/{job_id}", response_model=PipelineJob)
+def get_job(job_id: str, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    job = db.query(PipelineJob).filter(PipelineJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
 
 
 @router.post("/pipelines/jobs/{job_id}/artifacts")

@@ -39,6 +39,18 @@ Built-in pipelines are supported via `.pm-ci.yml` placed at repo root. On git pu
 Example `.pm-ci.yml`:
 
 ```yaml
+stages: [check]
+jobs:
+  sanity:
+    stage: check
+    image: alpine:3
+    script:
+      - echo "Runner OK"
+      - uname -a
+      - echo "Time: $(date)"
+    only: [push, mr]
+
+# More advanced example
 stages:
   - build
   - test
