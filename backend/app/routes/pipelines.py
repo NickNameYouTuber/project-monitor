@@ -21,20 +21,26 @@ router = APIRouter()
 
 @router.post("/repositories/{repository_id}/pipelines/trigger", response_model=PipelineSchema)
 def trigger(repository_id: str, payload: TriggerPipelineRequest, current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
-    _ = db.query(Repository).filter(Repository.id == repository_id).first()
-    if not _:
+    repo = db.query(Repository).filter(Repository.id == repository_id).first()
+    if not repo:
         raise HTTPException(status_code=404, detail="Repository not found")
-    p = trigger_pipeline(
-        db,
-        repository_id=repository_id,
-        ref=payload.ref,
-        commit_sha=payload.commit_sha,
-        source=payload.source,
-        user_id=str(current_user.id),
-    )
-    if not p:
-        raise HTTPException(status_code=400, detail="No pipeline file found or failed to create pipeline")
-    return p
+    try:
+        p = trigger_pipeline(
+            db,
+            repository_id=repository_id,
+            ref=payload.ref,
+            commit_sha=payload.commit_sha,
+            source=payload.source,
+            user_id=str(current_user.id),
+        )
+        if not p:
+            raise HTTPException(status_code=400, detail="No pipeline file found or failed to create pipeline")
+        return p
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Return diagnostic to help debug
+        raise HTTPException(status_code=500, detail=f"Trigger failed: {e}")
 
 
 @router.get("/repositories/{repository_id}/pipelines", response_model=List[PipelineListItem])
