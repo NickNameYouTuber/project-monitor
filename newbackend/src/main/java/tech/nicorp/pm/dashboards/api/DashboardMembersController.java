@@ -35,7 +35,7 @@ public class DashboardMembersController {
 
     @GetMapping("/members")
     @Operation(summary = "Список участников дашборда")
-    public ResponseEntity<List<DashboardMemberResponse>> list(Authentication auth, @PathVariable UUID dashboardId) {
+    public ResponseEntity<List<DashboardMemberResponse>> list(Authentication auth, @PathVariable("dashboardId") UUID dashboardId) {
         Dashboard d = dashboards.findById(dashboardId).orElse(null);
         if (d == null) return ResponseEntity.notFound().build();
         if (!isOwnerOrMember(auth, d)) return ResponseEntity.status(403).build();
@@ -47,7 +47,7 @@ public class DashboardMembersController {
 
     @PostMapping("/members")
     @Operation(summary = "Добавить участника в дашборд")
-    public ResponseEntity<DashboardMemberResponse> add(Authentication auth, @PathVariable UUID dashboardId, @RequestBody DashboardMemberCreateRequest body) {
+    public ResponseEntity<DashboardMemberResponse> add(Authentication auth, @PathVariable("dashboardId") UUID dashboardId, @RequestBody DashboardMemberCreateRequest body) {
         Dashboard d = dashboards.findById(dashboardId).orElse(null);
         if (d == null) return ResponseEntity.notFound().build();
         if (!isOwner(auth, d)) return ResponseEntity.status(403).build();
@@ -66,7 +66,7 @@ public class DashboardMembersController {
 
     @DeleteMapping("/members/{memberId}")
     @Operation(summary = "Удалить участника из дашборда")
-    public ResponseEntity<Void> remove(Authentication auth, @PathVariable UUID dashboardId, @PathVariable UUID memberId) {
+    public ResponseEntity<Void> remove(Authentication auth, @PathVariable("dashboardId") UUID dashboardId, @PathVariable("memberId") UUID memberId) {
         Dashboard d = dashboards.findById(dashboardId).orElse(null);
         if (d == null) return ResponseEntity.notFound().build();
         if (!isOwner(auth, d)) return ResponseEntity.status(403).build();

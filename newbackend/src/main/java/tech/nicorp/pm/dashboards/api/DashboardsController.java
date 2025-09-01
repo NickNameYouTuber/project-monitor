@@ -39,7 +39,7 @@ public class DashboardsController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Получить дашборд")
-    public ResponseEntity<DashboardResponse> get(@PathVariable UUID id) {
+    public ResponseEntity<DashboardResponse> get(@PathVariable("id") UUID id) {
         return dashboards.findById(id).map(d -> ResponseEntity.ok(toResponse(d))).orElse(ResponseEntity.notFound().build());
     }
 
@@ -61,7 +61,7 @@ public class DashboardsController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Обновить дашборд")
-    public ResponseEntity<DashboardResponse> update(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<DashboardResponse> update(@PathVariable("id") UUID id, @RequestBody Map<String, Object> body) {
         return dashboards.findById(id).map(d -> {
             if (body.containsKey("name")) d.setName((String) body.get("name"));
             if (body.containsKey("description")) d.setDescription((String) body.get("description"));
@@ -71,7 +71,7 @@ public class DashboardsController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         if (!dashboards.existsById(id)) return ResponseEntity.notFound().build();
         dashboards.deleteById(id);
         return ResponseEntity.noContent().build();
