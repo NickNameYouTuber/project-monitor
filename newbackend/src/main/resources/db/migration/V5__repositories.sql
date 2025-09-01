@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS repositories (
 CREATE TABLE IF NOT EXISTS repository_members (
     id UUID PRIMARY KEY,
     repository_id UUID NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
-    user_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role VARCHAR(32) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL
 );
