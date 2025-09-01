@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS merge_requests (
     id UUID PRIMARY KEY,
     repository_id UUID NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
-    author_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    author_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     source_branch VARCHAR(200) NOT NULL,
     target_branch VARCHAR(200) NOT NULL,
     status VARCHAR(32) NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS merge_requests (
 CREATE TABLE IF NOT EXISTS merge_request_approvals (
     id UUID PRIMARY KEY,
     merge_request_id UUID NOT NULL REFERENCES merge_requests(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL
 );
 
