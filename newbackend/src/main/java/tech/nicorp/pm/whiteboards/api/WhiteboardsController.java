@@ -69,7 +69,7 @@ public class WhiteboardsController {
 
     @PostMapping("/whiteboards/{boardId}/elements")
     @Operation(summary = "Создать элемент на доске")
-    public ResponseEntity<WhiteboardElement> createElement(@PathVariable("boardId") UUID boardId, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<WhiteboardElementResponse> createElement(@PathVariable("boardId") UUID boardId, @RequestBody Map<String, Object> body) {
         Whiteboard b = boards.findById(boardId).orElse(null);
         if (b == null) return ResponseEntity.notFound().build();
         WhiteboardElement el = new WhiteboardElement();
@@ -87,7 +87,7 @@ public class WhiteboardsController {
         if (body.get("font_family") != null) el.setFontFamily((String) body.get("font_family"));
         if (body.get("font_size") instanceof Number n) el.setFontSize(n.intValue());
         WhiteboardElement saved = elements.save(el);
-        return ResponseEntity.created(URI.create("/api/whiteboards/" + boardId + "/elements/" + saved.getId())).body(saved);
+        return ResponseEntity.created(URI.create("/api/whiteboards/" + boardId + "/elements/" + saved.getId())).body(toElement(saved));
     }
 
     @PatchMapping("/whiteboard-elements/{elementId}")
@@ -120,7 +120,7 @@ public class WhiteboardsController {
 
     @PostMapping("/whiteboards/{boardId}/connections")
     @Operation(summary = "Создать связь на доске")
-    public ResponseEntity<WhiteboardConnection> createConnection(@PathVariable("boardId") UUID boardId, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<WhiteboardConnectionResponse> createConnection(@PathVariable("boardId") UUID boardId, @RequestBody Map<String, Object> body) {
         Whiteboard b = boards.findById(boardId).orElse(null);
         if (b == null) return ResponseEntity.notFound().build();
         WhiteboardConnection c = new WhiteboardConnection();
@@ -131,7 +131,7 @@ public class WhiteboardsController {
         if (body.get("stroke_width") instanceof Number n) c.setStrokeWidth(n.intValue());
         if (body.get("points") != null) c.setPoints((String) body.get("points"));
         WhiteboardConnection saved = connections.save(c);
-        return ResponseEntity.created(URI.create("/api/whiteboards/" + boardId + "/connections/" + saved.getId())).body(saved);
+        return ResponseEntity.created(URI.create("/api/whiteboards/" + boardId + "/connections/" + saved.getId())).body(toConnection(saved));
     }
 
     private WhiteboardElementResponse toElement(WhiteboardElement el) {
