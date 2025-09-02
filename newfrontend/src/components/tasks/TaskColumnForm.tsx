@@ -10,7 +10,7 @@ export default function TaskColumnForm({ projectId, opened, onClose, column }: {
   async function handleCreate() {
     setLoading(true);
     try {
-      await addColumn({ name: name.trim(), project_id: projectId });
+      await addColumn({ name: name.trim() });
       setName('');
       onClose();
     } finally {

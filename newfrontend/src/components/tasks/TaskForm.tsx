@@ -53,7 +53,7 @@ export default function TaskForm({ projectId, columnId, opened, onClose, task }:
       if (isEdit && task) {
         await updateTask(task.id, { title: title.trim(), description: description.trim(), assignee_ids: assigneeIds, reviewer_id: reviewerId });
       } else if (columnId) {
-        await addTask({ title: title.trim(), description: description.trim() || undefined, column_id: columnId, project_id: projectId, assignee_ids: assigneeIds, reviewer_id: reviewerId });
+        await addTask({ title: title.trim(), description: description.trim() || undefined, column_id: columnId, assignee_ids: assigneeIds, reviewer_id: reviewerId });
       }
       onClose();
     } finally {
