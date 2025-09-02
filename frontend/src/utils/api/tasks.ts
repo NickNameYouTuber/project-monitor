@@ -50,14 +50,14 @@ const tasksApi = {
   },
 
   async get(taskId: string, token: string) {
-    const response = await axios.get(`${API_BASE_URL}/tasks/${taskId}`, {
+    const response = await axios.get(`${API_BASE_URL}/projects/_/tasks/${taskId}`.replace('/_/', '/'), {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
 
   async getByColumn(columnId: string, token: string) {
-    const response = await axios.get(`${API_BASE_URL}/tasks/column/${columnId}`, {
+    const response = await axios.get(`${API_BASE_URL}/projects/_/tasks/column/${columnId}`.replace('/_/', '/'), {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -71,27 +71,27 @@ const tasksApi = {
   },
 
   async update(taskId: string, updateData: TaskUpdate, token: string) {
-    const response = await axios.put(`${API_BASE_URL}/tasks/${taskId}`, updateData, {
+    const response = await axios.put(`${API_BASE_URL}/projects/_/tasks/${taskId}`.replace('/_/', '/'), updateData, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
 
   async move(taskId: string, moveData: TaskMove, token: string) {
-    const response = await axios.put(`${API_BASE_URL}/tasks/${taskId}/move`, moveData, {
+    const response = await axios.put(`${API_BASE_URL}/projects/_/tasks/${taskId}/move`.replace('/_/', '/'), moveData, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
 
   async delete(taskId: string, token: string) {
-    await axios.delete(`${API_BASE_URL}/tasks/${taskId}`, {
+    await axios.delete(`${API_BASE_URL}/projects/_/tasks/${taskId}`.replace('/_/', '/'), {
       headers: { Authorization: `Bearer ${token}` }
     });
   },
 
   async reorder(columnId: string, taskIds: string[], token: string) {
-    const response = await axios.put(`${API_BASE_URL}/tasks/column/${columnId}/reorder`, { task_ids: taskIds }, {
+    const response = await axios.put(`${API_BASE_URL}/projects/_/tasks/column/${columnId}/reorder`.replace('/_/', '/'), { task_ids: taskIds }, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
