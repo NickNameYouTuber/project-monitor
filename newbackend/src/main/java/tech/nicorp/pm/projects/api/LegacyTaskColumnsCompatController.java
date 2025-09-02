@@ -94,7 +94,7 @@ public class LegacyTaskColumnsCompatController {
         }
         List<TaskColumnResponse> result = columns.findAll().stream()
                 .filter(c -> c.getProject() != null && projectId.equals(c.getProject().getId()))
-                .sorted(java.util.Comparator.comparing(c -> c.getOrderIndex() == null ? 0 : c.getOrderIndex()))
+                .sorted(java.util.Comparator.comparingInt(TaskColumn::getOrderIndex))
                 .map(this::toResponse)
                 .toList();
         return ResponseEntity.ok(result);
