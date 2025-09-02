@@ -8,6 +8,7 @@ import tech.nicorp.pm.repositories.domain.Repository;
 import tech.nicorp.pm.repositories.repo.RepositoryRepository;
 import tech.nicorp.pm.projects.domain.Project;
 import tech.nicorp.pm.projects.repo.ProjectRepository;
+import tech.nicorp.pm.repositories.api.dto.RepositoryResponse;
 
 import java.io.IOException;
 import java.util.Map;
@@ -45,12 +46,10 @@ public class RepositoriesController {
     @GetMapping
     public ResponseEntity<Object> list(@RequestParam(name = "project_id", required = false) UUID projectId) {
         if (projectId != null && !projects.existsById(projectId)) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "project_not_found"));
-        var list = repositories.findAll();
-        if (projectId != null) {
-            list = list.stream().filter(r -> {
-                try { return r.getProject() != null && projectId.equals(r.getProject().getId()); } catch (Exception e) { return false; }
-            }).toList();
-        }
+        var list = repositories.findAll().stream()
+                .filter(r -> projectId == null || (r.getProject() != null && projectId.equals(r.getProject().getId())))
+                .map(this::toResponse)
+                .toList();
         return ResponseEntity.ok(list);
     }
 
@@ -65,7 +64,17 @@ public class RepositoriesController {
             try { var pid = UUID.fromString(s); projects.findById(pid).ifPresent(r::setProject); } catch (IllegalArgumentException ignored) {}
         }
         Repository saved = repositories.save(r);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
+    }
+
+    private RepositoryResponse toResponse(Repository r) {
+        RepositoryResponse resp = new RepositoryResponse();
+        resp.setId(r.getId());
+        resp.setName(r.getName());
+        resp.setDefaultBranch(r.getDefaultBranch());
+        if (r.getProject() != null) resp.setProjectId(r.getProject().getId());
+        resp.setCreatedAt(r.getCreatedAt());
+        return resp;
     }
 }
 
