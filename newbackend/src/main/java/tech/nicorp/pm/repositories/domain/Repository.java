@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.OffsetDateTime;
+import tech.nicorp.pm.projects.domain.Project;
 import java.util.UUID;
 
 @Entity
@@ -23,6 +24,10 @@ public class Repository {
 
     @Column(name = "default_branch")
     private String defaultBranch;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    private Project project;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
