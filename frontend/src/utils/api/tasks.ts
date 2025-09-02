@@ -42,7 +42,8 @@ export interface TaskMove {
 
 const tasksApi = {
   async create(taskData: TaskCreate, token: string) {
-    const response = await axios.post(`${API_BASE_URL}/tasks/`, taskData, {
+    const { project_id, ...rest } = taskData;
+    const response = await axios.post(`${API_BASE_URL}/projects/${project_id}/tasks`, rest, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -63,7 +64,7 @@ const tasksApi = {
   },
 
   async getByProject(projectId: string, token: string) {
-    const response = await axios.get(`${API_BASE_URL}/tasks/project/${projectId}`, {
+    const response = await axios.get(`${API_BASE_URL}/projects/${projectId}/tasks`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
