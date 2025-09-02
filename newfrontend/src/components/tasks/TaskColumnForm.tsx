@@ -6,6 +6,7 @@ export default function TaskColumnForm({ projectId, opened, onClose, column }: {
   const { addColumn, updateColumn } = useTaskBoard();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  void projectId;
 
   async function handleCreate() {
     setLoading(true);
