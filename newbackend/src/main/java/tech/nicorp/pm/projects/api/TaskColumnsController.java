@@ -30,7 +30,7 @@ public class TaskColumnsController {
 
     @GetMapping
     @Operation(summary = "Список колонок")
-    public ResponseEntity<List<TaskColumnResponse>> list(@PathVariable UUID projectId) {
+    public ResponseEntity<List<TaskColumnResponse>> list(@PathVariable("projectId") UUID projectId) {
         Project p = projects.findById(projectId).orElse(null);
         if (p == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(columns.findAll().stream()
@@ -40,7 +40,7 @@ public class TaskColumnsController {
 
     @PostMapping
     @Operation(summary = "Создать колонку")
-    public ResponseEntity<TaskColumnResponse> create(@PathVariable UUID projectId, @RequestBody TaskColumnCreateRequest body) {
+    public ResponseEntity<TaskColumnResponse> create(@PathVariable("projectId") UUID projectId, @RequestBody TaskColumnCreateRequest body) {
         Project p = projects.findById(projectId).orElse(null);
         if (p == null) return ResponseEntity.notFound().build();
         TaskColumn c = new TaskColumn();
@@ -53,7 +53,7 @@ public class TaskColumnsController {
 
     @DeleteMapping("/{columnId}")
     @Operation(summary = "Удалить колонку")
-    public ResponseEntity<Void> delete(@PathVariable UUID projectId, @PathVariable UUID columnId) {
+    public ResponseEntity<Void> delete(@PathVariable("projectId") UUID projectId, @PathVariable("columnId") UUID columnId) {
         if (!columns.existsById(columnId)) return ResponseEntity.notFound().build();
         columns.deleteById(columnId);
         return ResponseEntity.noContent().build();

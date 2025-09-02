@@ -31,7 +31,7 @@ public class CommentsController {
 
     @GetMapping("/tasks/{taskId}/comments")
     @Operation(summary = "Список комментариев к задаче")
-    public ResponseEntity<List<CommentResponse>> list(@PathVariable UUID taskId) {
+    public ResponseEntity<List<CommentResponse>> list(@PathVariable("taskId") UUID taskId) {
         return ResponseEntity.ok(comments.findByTaskIdOrderByCreatedAtAsc(taskId).stream().map(this::toResponse).toList());
     }
 

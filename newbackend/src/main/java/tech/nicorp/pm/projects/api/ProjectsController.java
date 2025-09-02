@@ -46,7 +46,7 @@ public class ProjectsController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Получить проект по идентификатору")
-    public ResponseEntity<ProjectResponse> get(@PathVariable UUID id) {
+    public ResponseEntity<ProjectResponse> get(@PathVariable("id") UUID id) {
         return projects.findById(id).map(p -> ResponseEntity.ok(toResponse(p))).orElse(ResponseEntity.notFound().build());
     }
 
@@ -75,7 +75,7 @@ public class ProjectsController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Обновить проект")
-    public ResponseEntity<ProjectResponse> update(@PathVariable UUID id, @RequestBody ProjectUpdateRequest body) {
+    public ResponseEntity<ProjectResponse> update(@PathVariable("id") UUID id, @RequestBody ProjectUpdateRequest body) {
         return projects.findById(id).map(p -> {
             if (body.getName() != null) p.setName(body.getName());
             if (body.getDescription() != null) p.setDescription(body.getDescription());
@@ -90,7 +90,7 @@ public class ProjectsController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить проект")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         if (!projects.existsById(id)) return ResponseEntity.notFound().build();
         projects.deleteById(id);
         return ResponseEntity.noContent().build();
@@ -98,7 +98,7 @@ public class ProjectsController {
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Обновить статус проекта")
-    public ResponseEntity<ProjectResponse> updateStatus(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<ProjectResponse> updateStatus(@PathVariable("id") UUID id, @RequestBody Map<String, String> body) {
         String status = body.get("status");
         if (status == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         return projects.findById(id).map(p -> {

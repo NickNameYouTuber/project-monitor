@@ -36,7 +36,7 @@ public class WhiteboardsController {
 
     @GetMapping("/whiteboards")
     @Operation(summary = "Получить или создать доску проекта")
-    public ResponseEntity<Whiteboard> getOrCreate(@RequestParam UUID project_id) {
+    public ResponseEntity<Whiteboard> getOrCreate(@RequestParam(name = "project_id") UUID project_id) {
         Project p = projects.findById(project_id).orElse(null);
         if (p == null) return ResponseEntity.notFound().build();
         Whiteboard b = boards.findByProject_Id(project_id).orElseGet(() -> {
@@ -49,13 +49,13 @@ public class WhiteboardsController {
 
     @GetMapping("/whiteboards/{boardId}")
     @Operation(summary = "Получить доску по идентификатору")
-    public ResponseEntity<Whiteboard> getBoard(@PathVariable UUID boardId) {
+    public ResponseEntity<Whiteboard> getBoard(@PathVariable("boardId") UUID boardId) {
         return boards.findById(boardId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/whiteboards/{boardId}/elements")
     @Operation(summary = "Создать элемент на доске")
-    public ResponseEntity<WhiteboardElement> createElement(@PathVariable UUID boardId, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<WhiteboardElement> createElement(@PathVariable("boardId") UUID boardId, @RequestBody Map<String, Object> body) {
         Whiteboard b = boards.findById(boardId).orElse(null);
         if (b == null) return ResponseEntity.notFound().build();
         WhiteboardElement el = new WhiteboardElement();
@@ -78,7 +78,7 @@ public class WhiteboardsController {
 
     @PatchMapping("/whiteboard-elements/{elementId}")
     @Operation(summary = "Обновить элемент доски")
-    public ResponseEntity<WhiteboardElement> updateElement(@PathVariable UUID elementId, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<WhiteboardElement> updateElement(@PathVariable("elementId") UUID elementId, @RequestBody Map<String, Object> body) {
         return elements.findById(elementId).map(el -> {
             if (body.get("type") != null) el.setType((String) body.get("type"));
             if (body.get("x") instanceof Number n) el.setX(n.intValue());
@@ -98,7 +98,7 @@ public class WhiteboardsController {
 
     @DeleteMapping("/whiteboard-elements/{elementId}")
     @Operation(summary = "Удалить элемент доски")
-    public ResponseEntity<Void> deleteElement(@PathVariable UUID elementId) {
+    public ResponseEntity<Void> deleteElement(@PathVariable("elementId") UUID elementId) {
         if (!elements.existsById(elementId)) return ResponseEntity.notFound().build();
         elements.deleteById(elementId);
         return ResponseEntity.noContent().build();
@@ -106,7 +106,7 @@ public class WhiteboardsController {
 
     @PostMapping("/whiteboards/{boardId}/connections")
     @Operation(summary = "Создать связь на доске")
-    public ResponseEntity<WhiteboardConnection> createConnection(@PathVariable UUID boardId, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<WhiteboardConnection> createConnection(@PathVariable("boardId") UUID boardId, @RequestBody Map<String, Object> body) {
         Whiteboard b = boards.findById(boardId).orElse(null);
         if (b == null) return ResponseEntity.notFound().build();
         WhiteboardConnection c = new WhiteboardConnection();
@@ -122,7 +122,7 @@ public class WhiteboardsController {
 
     @PatchMapping("/whiteboard-connections/{connectionId}")
     @Operation(summary = "Обновить связь на доске")
-    public ResponseEntity<WhiteboardConnection> updateConnection(@PathVariable UUID connectionId, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<WhiteboardConnection> updateConnection(@PathVariable("connectionId") UUID connectionId, @RequestBody Map<String, Object> body) {
         return connections.findById(connectionId).map(c -> {
             if (body.get("from_element_id") != null) elements.findById(UUID.fromString((String) body.get("from_element_id"))).ifPresent(c::setFromElement);
             if (body.get("to_element_id") != null) elements.findById(UUID.fromString((String) body.get("to_element_id"))).ifPresent(c::setToElement);
@@ -135,7 +135,7 @@ public class WhiteboardsController {
 
     @DeleteMapping("/whiteboard-connections/{connectionId}")
     @Operation(summary = "Удалить связь на доске")
-    public ResponseEntity<Void> deleteConnection(@PathVariable UUID connectionId) {
+    public ResponseEntity<Void> deleteConnection(@PathVariable("connectionId") UUID connectionId) {
         if (!connections.existsById(connectionId)) return ResponseEntity.notFound().build();
         connections.deleteById(connectionId);
         return ResponseEntity.noContent().build();
