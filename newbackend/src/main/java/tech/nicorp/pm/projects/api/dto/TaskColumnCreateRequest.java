@@ -8,6 +8,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TaskColumnCreateRequest {
+    @JsonProperty("project_id")
+    @Schema(example = "0f5fe59a-908c-4076-8b90-177e401eaf1b")
+    private java.util.UUID projectId;
     @Schema(example = "To Do")
     private String name;
 
