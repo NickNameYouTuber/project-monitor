@@ -1,12 +1,13 @@
 package tech.nicorp.pm.tasks.api;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import tech.nicorp.pm.tasks.domain.Task;
+import tech.nicorp.pm.tasks.repo.TaskRepository;
 
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -14,10 +15,16 @@ import java.util.UUID;
 @Tag(name = "Tasks (compat)", description = "Совместимость со старым API")
 public class LegacyTasksCompatController {
 
+    private final TaskRepository tasks;
+
+    public LegacyTasksCompatController(TaskRepository tasks) {
+        this.tasks = tasks;
+    }
+
     @GetMapping("/project/{projectId}")
     @Operation(summary = "Список задач проекта (legacy)")
-    public ResponseEntity<Object> listTasks(@PathVariable("projectId") UUID projectId) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(Map.of("message", "list tasks (compat)", "projectId", projectId));
+    public ResponseEntity<List<Task>> listTasks(@PathVariable("projectId") UUID projectId) {
+        return ResponseEntity.ok(tasks.findByProject_IdOrderByOrderIndexAsc(projectId));
     }
 }
 

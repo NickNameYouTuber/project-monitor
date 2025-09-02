@@ -13,12 +13,12 @@ interface TaskBoardContextType {
   error: string | null;
   selectedTask: Task | null;
   fetchColumns: (projectId: string) => Promise<void>;
-  addColumn: (columnData: { name: string; project_id: string }) => Promise<TaskColumn | undefined>;
+  addColumn: (columnData: { name: string }) => Promise<TaskColumn | undefined>;
   updateColumn: (columnId: string, updateData: { name?: string; order?: number }) => Promise<TaskColumn | undefined>;
   deleteColumn: (columnId: string) => Promise<void>;
   reorderColumns: (projectId: string, columnIds: string[]) => Promise<void>;
   fetchTasks: (projectId: string) => Promise<void>;
-  addTask: (taskData: { title: string; description?: string; column_id: string; project_id: string; assignee_ids?: string[]; reviewer_id?: string | null }) => Promise<Task | undefined>;
+  addTask: (taskData: { title: string; description?: string; column_id: string; assignee_ids?: string[]; reviewer_id?: string | null }) => Promise<Task | undefined>;
   updateTask: (taskId: string, updateData: { title?: string; description?: string; column_id?: string; order?: number; assignee_ids?: string[]; reviewer_id?: string | null; due_date?: string | null; estimate_minutes?: number | null }) => Promise<Task | undefined>;
   moveTask: (taskId: string, moveData: { column_id: string; order: number }) => Promise<Task | undefined>;
   deleteTask: (taskId: string) => Promise<void>;
@@ -54,10 +54,10 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     }
   }, []);
 
-  const addColumn = useCallback(async (columnData: { name: string; project_id: string }) => {
+  const addColumn = useCallback(async (columnData: { name: string }) => {
     try {
       setLoading(true);
-      const newColumn = await createTaskColumn(columnData);
+      const newColumn = await createTaskColumn(projectId, columnData);
       setColumns((prev) => [...prev, newColumn].sort((a, b) => a.order - b.order));
       setError(null);
       return newColumn;
@@ -66,12 +66,12 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectId]);
 
   const updateColumn = useCallback(async (columnId: string, updateData: { name?: string; order?: number }) => {
     try {
       setLoading(true);
-      const updated = await updateTaskColumn(columnId, updateData);
+      const updated = await updateTaskColumn(projectId, columnId, updateData);
       setColumns((prev) => prev.map((c) => (c.id === columnId ? updated : c)));
       setError(null);
       return updated;
@@ -85,7 +85,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
   const deleteColumn = useCallback(async (columnId: string) => {
     try {
       setLoading(true);
-      await deleteTaskColumn(columnId);
+      await deleteTaskColumn(projectId, columnId);
       setColumns((prev) => prev.filter((c) => c.id !== columnId));
       setTasks((prev) => prev.filter((t) => t.column_id !== columnId));
       setError(null);
@@ -94,7 +94,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectId]);
 
   const reorderColumnsFn = useCallback(async (pid: string, columnIds: string[]) => {
     try {
@@ -129,10 +129,10 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     }
   }, []);
 
-  const addTask = useCallback(async (taskData: { title: string; description?: string; column_id: string; project_id: string; assignee_ids?: string[]; reviewer_id?: string | null }) => {
+  const addTask = useCallback(async (taskData: { title: string; description?: string; column_id: string; assignee_ids?: string[]; reviewer_id?: string | null }) => {
     try {
       setLoading(true);
-      const newTask = await createTask(taskData);
+      const newTask = await createTask(projectId, taskData as any);
       setTasks((prev) => [...prev, newTask]);
       setError(null);
       return newTask;
@@ -141,12 +141,12 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectId]);
 
   const updateTaskFn = useCallback(async (taskId: string, updateData: { title?: string; description?: string; column_id?: string; order?: number; assignee_ids?: string[]; reviewer_id?: string | null; due_date?: string | null; estimate_minutes?: number | null }) => {
     try {
       setLoading(true);
-      const updated = await updateTask(taskId, updateData);
+      const updated = await updateTask(projectId, taskId, updateData);
       setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
       if (selectedTask?.id === taskId) setSelectedTask(updated);
       setError(null);
@@ -162,7 +162,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     try {
       setLoading(true);
       setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, column_id: moveData.column_id, order: moveData.order } : t)));
-      const updated = await apiMoveTask(taskId, moveData);
+      const updated = await apiMoveTask(projectId, taskId, moveData);
       setError(null);
       return updated;
     } catch (e: any) {
@@ -176,7 +176,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
   const deleteTaskFn = useCallback(async (taskId: string) => {
     try {
       setLoading(true);
-      await deleteTask(taskId);
+      await deleteTask(projectId, taskId);
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
       if (selectedTask?.id === taskId) setSelectedTask(null);
       setError(null);
@@ -185,7 +185,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
     } finally {
       setLoading(false);
     }
-  }, [selectedTask]);
+  }, [projectId, selectedTask]);
 
   const reorderTasks = useCallback(async (columnId: string, taskIds: string[]) => {
     try {
@@ -193,7 +193,7 @@ export function TaskBoardProvider({ children, projectId }: { children: ReactNode
       setTasks((prev) =>
         prev.map((t) => (t.column_id === columnId ? { ...t, order: taskIds.indexOf(t.id) } : t))
       );
-      await reorderColumnTasks(columnId, taskIds);
+      await reorderColumnTasks(projectId, columnId, taskIds);
       setError(null);
     } catch (e: any) {
       if (projectId) await fetchTasks(projectId);

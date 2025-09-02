@@ -38,6 +38,12 @@ public class LegacyTaskColumnsCompatController {
                 .map(this::toResponse).toList());
     }
 
+    @GetMapping("/{columnId}")
+    @Operation(summary = "Получить колонку (legacy)")
+    public ResponseEntity<TaskColumnResponse> get(@PathVariable("columnId") UUID columnId) {
+        return columns.findById(columnId).map(c -> ResponseEntity.ok(toResponse(c))).orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping(path = {"", "/"})
     @Operation(summary = "Создать колонку (legacy)")
     public ResponseEntity<TaskColumnResponse> create(@RequestBody TaskColumnCreateRequest body) {
@@ -92,6 +98,20 @@ public class LegacyTaskColumnsCompatController {
                 .map(this::toResponse)
                 .toList();
         return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/reorder")
+    @Operation(summary = "Переупорядочить колонки проекта (legacy, без projectId)")
+    public ResponseEntity<List<TaskColumnResponse>> reorderBody(@RequestBody java.util.Map<String, List<UUID>> body) {
+        List<UUID> ids = body.get("column_ids");
+        if (ids == null || ids.isEmpty()) return ResponseEntity.badRequest().build();
+        UUID projectId = null;
+        for (UUID id : ids) {
+            var opt = columns.findById(id);
+            if (opt.isPresent() && opt.get().getProject() != null) { projectId = opt.get().getProject().getId(); break; }
+        }
+        if (projectId == null) return ResponseEntity.badRequest().build();
+        return reorder(projectId, ids);
     }
 
     private TaskColumnResponse toResponse(TaskColumn c) {

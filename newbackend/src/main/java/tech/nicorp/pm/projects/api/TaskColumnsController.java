@@ -51,12 +51,51 @@ public class TaskColumnsController {
         return ResponseEntity.created(URI.create("/api/projects/" + projectId + "/task-columns/" + saved.getId())).body(toResponse(saved));
     }
 
+    @PutMapping("/{columnId}")
+    @Operation(summary = "Обновить колонку")
+    public ResponseEntity<TaskColumnResponse> update(@PathVariable("projectId") UUID projectId,
+                                                     @PathVariable("columnId") UUID columnId,
+                                                     @RequestBody java.util.Map<String, Object> body) {
+        return columns.findById(columnId).map(c -> {
+            if (body.get("name") != null) c.setName((String) body.get("name"));
+            Object orderVal = body.get("order");
+            if (orderVal instanceof Number n) c.setOrderIndex(n.intValue());
+            TaskColumn saved = columns.save(c);
+            return ResponseEntity.ok(toResponse(saved));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/{columnId}")
     @Operation(summary = "Удалить колонку")
     public ResponseEntity<Void> delete(@PathVariable("projectId") UUID projectId, @PathVariable("columnId") UUID columnId) {
         if (!columns.existsById(columnId)) return ResponseEntity.notFound().build();
         columns.deleteById(columnId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/reorder")
+    @Operation(summary = "Переупорядочить колонки проекта")
+    public ResponseEntity<List<TaskColumnResponse>> reorder(@PathVariable("projectId") UUID projectId,
+                                                            @RequestBody List<UUID> columnIds) {
+        Project p = projects.findById(projectId).orElse(null);
+        if (p == null) return ResponseEntity.notFound().build();
+        var byId = columns.findAll().stream()
+                .filter(c -> c.getProject() != null && projectId.equals(c.getProject().getId()))
+                .collect(java.util.stream.Collectors.toMap(TaskColumn::getId, c -> c));
+        int index = 0;
+        for (UUID id : columnIds) {
+            TaskColumn c = byId.get(id);
+            if (c != null) {
+                c.setOrderIndex(index++);
+                columns.save(c);
+            }
+        }
+        List<TaskColumnResponse> result = columns.findAll().stream()
+                .filter(c -> c.getProject() != null && projectId.equals(c.getProject().getId()))
+                .sorted(java.util.Comparator.comparing(c -> c.getOrderIndex() == null ? 0 : c.getOrderIndex()))
+                .map(this::toResponse)
+                .toList();
+        return ResponseEntity.ok(result);
     }
 
     private TaskColumnResponse toResponse(TaskColumn c) {
