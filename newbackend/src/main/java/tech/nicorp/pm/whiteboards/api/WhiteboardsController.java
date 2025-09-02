@@ -9,6 +9,9 @@ import tech.nicorp.pm.projects.repo.ProjectRepository;
 import tech.nicorp.pm.whiteboards.domain.Whiteboard;
 import tech.nicorp.pm.whiteboards.domain.WhiteboardConnection;
 import tech.nicorp.pm.whiteboards.domain.WhiteboardElement;
+import tech.nicorp.pm.whiteboards.api.dto.WhiteboardResponse;
+import tech.nicorp.pm.whiteboards.api.dto.WhiteboardElementResponse;
+import tech.nicorp.pm.whiteboards.api.dto.WhiteboardConnectionResponse;
 import tech.nicorp.pm.whiteboards.repo.WhiteboardConnectionRepository;
 import tech.nicorp.pm.whiteboards.repo.WhiteboardElementRepository;
 import tech.nicorp.pm.whiteboards.repo.WhiteboardRepository;
@@ -36,7 +39,7 @@ public class WhiteboardsController {
 
     @GetMapping("/whiteboards")
     @Operation(summary = "Получить или создать доску проекта")
-    public ResponseEntity<Whiteboard> getOrCreate(@RequestParam(name = "project_id") UUID project_id) {
+    public ResponseEntity<WhiteboardResponse> getOrCreate(@RequestParam(name = "project_id") UUID project_id) {
         Project p = projects.findById(project_id).orElse(null);
         if (p == null) return ResponseEntity.notFound().build();
         Whiteboard b = boards.findByProject_Id(project_id).orElseGet(() -> {
@@ -44,7 +47,18 @@ public class WhiteboardsController {
             w.setProject(p);
             return boards.save(w);
         });
-        return ResponseEntity.ok(b);
+        WhiteboardResponse resp = new WhiteboardResponse();
+        resp.setId(b.getId());
+        resp.setProjectId(project_id);
+        resp.setElements(elements.findAll().stream()
+                .filter(e -> e.getBoard() != null && b.getId().equals(e.getBoard().getId()))
+                .map(this::toElement)
+                .toList());
+        resp.setConnections(connections.findAll().stream()
+                .filter(c -> c.getBoard() != null && b.getId().equals(c.getBoard().getId()))
+                .map(this::toConnection)
+                .toList());
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/whiteboards/{boardId}")
@@ -118,6 +132,37 @@ public class WhiteboardsController {
         if (body.get("points") != null) c.setPoints((String) body.get("points"));
         WhiteboardConnection saved = connections.save(c);
         return ResponseEntity.created(URI.create("/api/whiteboards/" + boardId + "/connections/" + saved.getId())).body(saved);
+    }
+
+    private WhiteboardElementResponse toElement(WhiteboardElement el) {
+        WhiteboardElementResponse r = new WhiteboardElementResponse();
+        r.setId(el.getId());
+        if (el.getBoard() != null) r.setBoardId(el.getBoard().getId());
+        r.setType(el.getType());
+        r.setX(el.getX());
+        r.setY(el.getY());
+        r.setWidth(el.getWidth());
+        r.setHeight(el.getHeight());
+        r.setRotation(el.getRotation());
+        r.setZIndex(el.getZIndex());
+        r.setText(el.getText());
+        r.setFill(el.getFill());
+        r.setTextColor(el.getTextColor());
+        r.setFontFamily(el.getFontFamily());
+        r.setFontSize(el.getFontSize());
+        return r;
+    }
+
+    private WhiteboardConnectionResponse toConnection(WhiteboardConnection c) {
+        WhiteboardConnectionResponse r = new WhiteboardConnectionResponse();
+        r.setId(c.getId());
+        if (c.getBoard() != null) r.setBoardId(c.getBoard().getId());
+        if (c.getFromElement() != null) r.setFromElementId(c.getFromElement().getId());
+        if (c.getToElement() != null) r.setToElementId(c.getToElement().getId());
+        r.setStroke(c.getStroke());
+        r.setStrokeWidth(c.getStrokeWidth());
+        r.setPoints(c.getPoints());
+        return r;
     }
 
     @PatchMapping("/whiteboard-connections/{connectionId}")
