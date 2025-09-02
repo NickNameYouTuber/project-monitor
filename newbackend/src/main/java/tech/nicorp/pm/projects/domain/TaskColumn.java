@@ -24,7 +24,7 @@ public class TaskColumn {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @Column(name = "order", nullable = false)
+    @Column(name = "order_index", nullable = false)
     private int orderIndex = 0;
 }
 
