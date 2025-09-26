@@ -36,7 +36,9 @@ export class CallService {
     this.roomId = roomId;
     this.rtcConfig = {
       iceServers,
-      iceTransportPolicy: forceRelay ? 'relay' : undefined
+      iceTransportPolicy: forceRelay ? 'relay' : undefined,
+      bundlePolicy: 'max-bundle',
+      iceCandidatePoolSize: 4
     } as RTCConfiguration;
   }
 
@@ -354,13 +356,28 @@ export class CallService {
           } catch {}
         }
       };
-      pc.onconnectionstatechange = () => {
+      pc.onconnectionstatechange = async () => {
         console.info('[CallService] peer state', pid, pc?.connectionState);
         if (!pc) return;
-        if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+        if (pc.connectionState === 'disconnected') {
+          try { pc.restartIce(); } catch {}
+          try {
+            const offer = await pc.createOffer({ iceRestart: true });
+            await pc.setLocalDescription(offer);
+            this.send({ type: 'offer', to: pid, data: offer });
+          } catch {}
+        }
+        if (pc.connectionState === 'failed') {
+          try { pc.restartIce(); } catch {}
+          try {
+            const offer = await pc.createOffer({ iceRestart: true });
+            await pc.setLocalDescription(offer);
+            this.send({ type: 'offer', to: pid, data: offer });
+          } catch {}
+        }
+        if (pc.connectionState === 'closed') {
           this.closePeer(pid);
         }
-        // Для 'disconnected' дадим шанс на ICE рестарт/восстановление
       };
     }
     return pc;
