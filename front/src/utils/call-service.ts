@@ -18,6 +18,7 @@ export class CallService {
   private readonly roomId: string;
   private readonly rtcConfig: RTCConfiguration;
   private readonly peerConnections = new Map<PeerId, RTCPeerConnection>();
+  private readonly transceiversByPeer = new Map<PeerId, { audio?: RTCRtpTransceiver; video?: RTCRtpTransceiver; screen?: RTCRtpTransceiver }>();
   private streamCb: StreamCallback = () => {};
   public localStream: MediaStream | null = null;
   public localVideoTrack: MediaStreamTrack | null = null;
@@ -61,22 +62,17 @@ export class CallService {
     if (!videoTrack) return;
     this.localVideoTrack = videoTrack;
     try { this.localStream!.addTrack(videoTrack); } catch {}
-    // добавить трек во все RTCPeerConnection
-    for (const [, pc] of this.peerConnections) {
-      const existingSender = pc.getSenders().find(s => s.track && s.track.kind === 'video')
-        || pc.getSenders().find(s => !s.track && s.transport);
-      if (existingSender) {
-        try { await existingSender.replaceTrack(videoTrack); } catch {}
-      } else {
-        try { pc.addTrack(videoTrack, this.localStream!); } catch {}
-      }
-      // попытка пере-негоциации: отправим перезапрос offer
+    // заменить трек в заранее созданных трансиверах video
+    for (const [pid, pc] of this.peerConnections) {
       try {
-        const senders = pc.getSenders();
-        const vs = senders.find(s => s.track && s.track.kind === 'video');
-        if (vs && vs.getParameters) {
-          const params = vs.getParameters();
-          await vs.setParameters(params);
+        const trefs = this.transceiversByPeer.get(pid);
+        const v = trefs?.video;
+        if (v) await v.sender.replaceTrack(videoTrack);
+        else {
+          // fallback на случай отсутствия предсозданного трансивера
+          const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video')
+            || pc.getSenders().find(s => !s.track && s.transport);
+          if (sender) await sender.replaceTrack(videoTrack); else pc.addTrack(videoTrack, this.localStream!);
         }
       } catch {}
     }
@@ -86,11 +82,14 @@ export class CallService {
   async disableVideo() {
     if (!this.localVideoTrack) return;
     const trackToDisable = this.localVideoTrack;
-    for (const [, pc] of this.peerConnections) {
+    for (const [pid, pc] of this.peerConnections) {
       try {
-        const sender = pc.getSenders().find(s => s.track === trackToDisable);
-        if (sender) {
-          try { await sender.replaceTrack(null); } catch {}
+        const trefs = this.transceiversByPeer.get(pid);
+        const v = trefs?.video;
+        if (v) { try { await v.sender.replaceTrack(null); } catch {} }
+        else {
+          const sender = pc.getSenders().find(s => s.track === trackToDisable);
+          if (sender) { try { await sender.replaceTrack(null); } catch {} }
         }
       } catch {}
     }
@@ -122,8 +121,18 @@ export class CallService {
     this.localScreenTrack = screenTrack;
     this.localScreenStream = new MediaStream([screenTrack]);
     for (const [pid, pc] of this.peerConnections) {
-      try { pc.addTrack(screenTrack, this.localScreenStream); } catch {}
-      try { this.send({ type: 'screen-start', to: pid, data: { trackId: screenTrack.id } }); } catch {}
+      try {
+        const trefs = this.transceiversByPeer.get(pid);
+        const s = trefs?.screen;
+        if (s) { try { await s.sender.replaceTrack(screenTrack); } catch {} }
+        else {
+          // fallback если нет предсозданного трансивера
+          const sender = pc.getSenders().find(x => x.track && x.track.kind === 'video' && (x as any)._isScreen);
+          if (sender) { try { await sender.replaceTrack(screenTrack); } catch {} }
+          else { try { pc.addTrack(screenTrack, this.localScreenStream); } catch {} }
+        }
+        this.send({ type: 'screen-start', to: pid, data: { trackId: screenTrack.id } });
+      } catch {}
     }
     await this.setScreenQuality(this.screenQuality);
     const onEnded = () => { this.disableScreenShare().catch(() => {}); };
@@ -135,11 +144,13 @@ export class CallService {
     if (!this.localScreenTrack) return;
     for (const [pid, pc] of this.peerConnections) {
       try {
-        pc.getSenders().forEach(sender => {
-          if (sender.track === this.localScreenTrack) {
-            try { pc.removeTrack(sender); } catch {}
-          }
-        });
+        const trefs = this.transceiversByPeer.get(pid);
+        const s = trefs?.screen;
+        if (s) { try { await s.sender.replaceTrack(null); } catch {} }
+        else {
+          const sender = pc.getSenders().find(x => x.track === this.localScreenTrack);
+          if (sender) { try { await sender.replaceTrack(null); } catch {} }
+        }
       } catch {}
       try { this.send({ type: 'screen-stop', to: pid }); } catch {}
     }
@@ -278,12 +289,22 @@ export class CallService {
     if (!pc) {
       pc = new RTCPeerConnection(this.rtcConfig);
       this.peerConnections.set(pid, pc);
-      if (this.localStream) {
-        this.localStream.getTracks().forEach(track => pc!.addTrack(track, this.localStream!));
-      }
-      if (this.localScreenTrack && this.localScreenStream) {
-        try { pc!.addTrack(this.localScreenTrack, this.localScreenStream); } catch {}
-      }
+      // Предсоздаём трансиверы в фиксированном порядке: 0-audio, 1-video(camera), 2-video(screen)
+      const audioT = pc.addTransceiver('audio', { direction: 'sendrecv' });
+      const videoT = pc.addTransceiver('video', { direction: 'sendrecv' });
+      const screenT = pc.addTransceiver('video', { direction: 'sendrecv' });
+      this.transceiversByPeer.set(pid, { audio: audioT, video: videoT, screen: screenT });
+      // Заполняем локальными треками, если уже есть
+      try {
+        const audioTrack = this.localStream?.getAudioTracks()[0];
+        if (audioTrack) { await audioT.sender.replaceTrack(audioTrack); }
+      } catch {}
+      try {
+        if (this.localVideoTrack) { await videoT.sender.replaceTrack(this.localVideoTrack); }
+      } catch {}
+      try {
+        if (this.localScreenTrack) { await screenT.sender.replaceTrack(this.localScreenTrack); }
+      } catch {}
       pc.onnegotiationneeded = async () => {
         try {
           this.makingOffer.set(pid, true);
@@ -305,9 +326,11 @@ export class CallService {
         const track = e.track;
         const label = (track && (track.label || '')).toLowerCase();
         const expectedId = this.expectedScreenByPeer.get(pid);
+        const trefs = this.transceiversByPeer.get(pid);
+        const isScreenByMid = !!(trefs && e.transceiver && (e.transceiver === trefs.screen || (trefs.screen && e.transceiver.mid === trefs.screen.mid)));
         const looksLikeScreenByLabel = label.includes('screen') || label.includes('window') || label.includes('display');
         const looksLikeScreenByAudio = stream.getAudioTracks().length === 0;
-        const isScreen = track.kind === 'video' && (track.id === expectedId || looksLikeScreenByLabel || looksLikeScreenByAudio);
+        const isScreen = track.kind === 'video' && (isScreenByMid || track.id === expectedId || looksLikeScreenByLabel || looksLikeScreenByAudio);
         if (track.id === expectedId) this.expectedScreenByPeer.delete(pid);
         if (isScreen) {
           this.streamCb(`${pid}:screen`, stream);
@@ -347,7 +370,7 @@ export class CallService {
     // детерминированный инициатор — только тот, у кого selfId > pid
     if (!(this.selfId > pid)) return;
     const pc = await this.ensurePeer(pid);
-    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false } as any);
+    const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     this.send({ type: 'offer', to: pid, data: offer });
   }
