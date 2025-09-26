@@ -16,7 +16,7 @@ export class CallService {
   private ws!: WebSocket;
   private readonly wsUrl: string;
   private readonly roomId: string;
-  private readonly iceServers: RTCIceServer[];
+  private readonly rtcConfig: RTCConfiguration;
   private readonly peerConnections = new Map<PeerId, RTCPeerConnection>();
   private streamCb: StreamCallback = () => {};
   public localStream: MediaStream | null = null;
@@ -30,10 +30,13 @@ export class CallService {
   private expectedScreenByPeer = new Map<PeerId, string | null>();
   private makingOffer = new Map<PeerId, boolean>();
 
-  constructor(wsUrl: string, roomId: string, iceServers: RTCIceServer[]) {
+  constructor(wsUrl: string, roomId: string, iceServers: RTCIceServer[], forceRelay: boolean = false) {
     this.wsUrl = wsUrl;
     this.roomId = roomId;
-    this.iceServers = iceServers;
+    this.rtcConfig = {
+      iceServers,
+      iceTransportPolicy: forceRelay ? 'relay' : undefined
+    } as RTCConfiguration;
   }
 
   onStream(cb: StreamCallback) { this.streamCb = cb; }
@@ -273,7 +276,7 @@ export class CallService {
   private async ensurePeer(pid: PeerId): Promise<RTCPeerConnection> {
     let pc = this.peerConnections.get(pid);
     if (!pc) {
-      pc = new RTCPeerConnection({ iceServers: this.iceServers });
+      pc = new RTCPeerConnection(this.rtcConfig);
       this.peerConnections.set(pid, pc);
       if (this.localStream) {
         this.localStream.getTracks().forEach(track => pc!.addTrack(track, this.localStream!));

@@ -165,9 +165,19 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   const remoteVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const WS_URL = (import.meta as any).env?.VITE_SIGNALING_WS_URL || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/signaling`;
   const ROOM_ID = (import.meta as any).env?.VITE_SIGNALING_ROOM_ID || 'global-room';
-  const ICE_SERVERS: RTCIceServer[] = [
-    { urls: ['stun:stun.l.google.com:19302'] }
-  ];
+  const ICE_SERVERS: RTCIceServer[] = (() => {
+    const stunFromEnv = (import.meta as any).env?.VITE_STUN_URLS as string | undefined; // comma-separated
+    const turnFromEnv = (import.meta as any).env?.VITE_TURN_URLS as string | undefined; // comma-separated
+    const turnUser = (import.meta as any).env?.VITE_TURN_USERNAME as string | undefined;
+    const turnPass = (import.meta as any).env?.VITE_TURN_PASSWORD as string | undefined;
+    const stunList = (stunFromEnv?.split(',').map(s => s.trim()).filter(Boolean) || []);
+    const turnList = (turnFromEnv?.split(',').map(s => s.trim()).filter(Boolean) || []);
+    const servers: RTCIceServer[] = [];
+    if (stunList.length) servers.push({ urls: stunList }); else servers.push({ urls: ['stun:stun.l.google.com:19302'] });
+    if (turnList.length) servers.push({ urls: turnList, username: turnUser, credential: turnPass });
+    return servers;
+  })();
+  const FORCE_TURN = ((import.meta as any).env?.VITE_FORCE_TURN || '').toString() === 'true';
 
   const toggleMute = () => {
     const next = !callState.isMuted;
@@ -218,7 +228,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   };
 
   useEffect(() => {
-    const svc = new CallService(WS_URL, ROOM_ID, ICE_SERVERS);
+    const svc = new CallService(WS_URL, ROOM_ID, ICE_SERVERS, FORCE_TURN);
     serviceRef.current = svc;
     svc.onStream((peerId, stream) => {
       if (peerId === 'self') {
