@@ -3,7 +3,7 @@ version: "3.8"
 services:
   frontend:
     build: 
-      context: ./newfrontend
+      context: ./front
       dockerfile: Dockerfile
     container_name: project-monitor-frontend
     ports:
@@ -13,10 +13,6 @@ services:
     networks:
       - project-monitor-network
     restart: unless-stopped
-    environment:
-      - VITE_API_URL=http://backend:7671/api
-      - VITE_TELEGRAM_BOT_NAME=NIProjectMonitorBot
-      - NODE_ENV=production
 
   backend:
     build: 

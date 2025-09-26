@@ -38,6 +38,9 @@ public class Project {
     @Column(name = "order_index")
     private Integer orderIndex;
 
+    @Column(name = "color")
+    private String color;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;

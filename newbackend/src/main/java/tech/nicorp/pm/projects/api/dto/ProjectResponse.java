@@ -33,6 +33,9 @@ public class ProjectResponse {
     @Schema(example = "0")
     private Integer orderIndex;
 
+    @Schema(example = "#6366f1")
+    private String color;
+
     @Schema(example = "550e8400-e29b-41d4-a716-446655440000")
     private UUID ownerId;
 

@@ -60,6 +60,7 @@ public class ProjectsController {
         p.setPriority(body.getPriority() != null ? body.getPriority() : "medium");
         p.setAssignee(body.getAssignee());
         if (body.getOrderIndex() != null) p.setOrderIndex(body.getOrderIndex());
+        if (body.getColor() != null) p.setColor(body.getColor());
         if (auth != null && auth.getName() != null) {
             users.findById(UUID.fromString(auth.getName())).ifPresent(p::setOwner);
         }
@@ -83,6 +84,7 @@ public class ProjectsController {
             if (body.getPriority() != null) p.setPriority(body.getPriority());
             if (body.getAssignee() != null) p.setAssignee(body.getAssignee());
             if (body.getOrderIndex() != null) p.setOrderIndex(body.getOrderIndex());
+            if (body.getColor() != null) p.setColor(body.getColor());
             Project saved = projects.save(p);
             return ResponseEntity.ok(toResponse(saved));
         }).orElse(ResponseEntity.notFound().build());
@@ -117,6 +119,7 @@ public class ProjectsController {
         r.setPriority(p.getPriority());
         r.setAssignee(p.getAssignee());
         r.setOrderIndex(p.getOrderIndex());
+        r.setColor(p.getColor());
         r.setCreatedAt(p.getCreatedAt());
         if (p.getOwner() != null) r.setOwnerId(p.getOwner().getId());
         if (p.getDashboard() != null) r.setDashboardId(p.getDashboard().getId());

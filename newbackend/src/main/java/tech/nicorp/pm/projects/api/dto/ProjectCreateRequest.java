@@ -29,6 +29,9 @@ public class ProjectCreateRequest {
 
     @Schema(example = "2fcb5120-6b9d-4015-9f1f-9e51a4b0b4ce")
     private String dashboardId;
+
+    @Schema(example = "#6366f1")
+    private String color;
 }
 
 

@@ -32,7 +32,7 @@ public class CommentsController {
     @GetMapping("/tasks/{taskId}/comments")
     @Operation(summary = "Список комментариев к задаче")
     public ResponseEntity<List<CommentResponse>> list(@PathVariable("taskId") UUID taskId) {
-        return ResponseEntity.ok(comments.findByTaskIdOrderByCreatedAtAsc(taskId).stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(comments.findWithUserByTaskIdOrderByCreatedAtAsc(taskId).stream().map(this::toResponse).toList());
     }
 
     @PostMapping("/comments")
@@ -46,7 +46,9 @@ public class CommentsController {
         c.setTaskId(body.getTaskId());
         c.setUser(u);
         Comment saved = comments.save(c);
-        return ResponseEntity.created(URI.create("/api/comments/" + saved.getId())).body(toResponse(saved));
+        // Перечитываем с user, чтобы избежать lazy proxy при сериализации
+        Comment loaded = comments.findByIdFetchUser(saved.getId()).orElse(saved);
+        return ResponseEntity.created(URI.create("/api/comments/" + saved.getId())).body(toResponse(loaded));
     }
 
     private CommentResponse toResponse(Comment c) {
