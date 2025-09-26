@@ -163,7 +163,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   const serviceRef = useRef<CallService | null>(null);
   const remoteAudioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const remoteVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
-  const WS_URL = (import.meta as any).env?.VITE_SIGNALING_WS_URL || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:7671/ws/signaling`;
+  const WS_URL = (import.meta as any).env?.VITE_SIGNALING_WS_URL || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/signaling`;
   const ROOM_ID = (import.meta as any).env?.VITE_SIGNALING_ROOM_ID || 'global-room';
   const ICE_SERVERS: RTCIceServer[] = [
     { urls: ['stun:stun.l.google.com:19302'] }
