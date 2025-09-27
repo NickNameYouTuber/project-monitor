@@ -221,8 +221,15 @@
             const pc = new RTCPeerConnection({
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'turn:nit.n Grover.tech:3478', username: 'test', credential: 'test' },
-                    { urls: 'turn:nit.n Grover.tech:3478?transport=tcp', username: 'test', credential: 'test' }
+                    { 
+                        urls: [
+                            'turn:openrelay.metered.ca:80',
+                            'turn:openrelay.metered.ca:443',
+                            'turn:openrelay.metered.ca:443?transport=tcp'
+                        ],
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    }
                 ]
             });
             
