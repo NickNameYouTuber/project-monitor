@@ -22,12 +22,15 @@ app.get('/health', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id} from ${socket.handshake.address}`);
+  const address = socket.handshake && socket.handshake.address ? socket.handshake.address : 'unknown';
+  console.log(`User connected: ${socket.id} from ${address}`);
 
   socket.on('joinRoom', (roomId) => {
     socket.join(roomId);
     console.log(`${socket.id} joined room: ${roomId}`);
+
     socket.to(roomId).emit('userJoined', socket.id);
+
     const room = io.sockets.adapter.rooms.get(roomId);
     const existingUsers = Array.from(room || []).filter(id => id !== socket.id);
     socket.emit('existingUsers', existingUsers);

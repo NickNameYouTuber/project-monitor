@@ -37,8 +37,7 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { SocketIoCallService } from '../utils/socketio-call-service';
-import { io } from 'socket.io-client';
+import { CallSocketIOService } from '../utils/call-socketio';
 
 interface Meeting {
   id: string;
@@ -145,197 +144,6 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
   );
 }
 
-function DebugCallInterface({ ioUrl, iceServers, defaultRoom }: { ioUrl: string; iceServers: RTCIceServer[]; defaultRoom: string }) {
-  const [shareCamera, setShareCamera] = useState(true);
-  const [shareScreen, setShareScreen] = useState(true);
-  const [statusText, setStatusText] = useState('Status: Disconnected');
-  const [statusOk, setStatusOk] = useState(false);
-  const [roomId, setRoomId] = useState(defaultRoom || 'room1');
-  const [remoteStreams, setRemoteStreams] = useState<Record<string, { first?: MediaStream | null; second?: MediaStream | null }>>({});
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const localCameraRef = useRef<HTMLVideoElement | null>(null);
-  const localScreenRef = useRef<HTMLVideoElement | null>(null);
-  const socketRef = useRef<ReturnType<typeof io> | null>(null);
-  const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
-
-  useEffect(() => {
-    const socket = io(ioUrl, { withCredentials: true });
-    socketRef.current = socket;
-    const onConnect = () => { setStatusText('Status: Connected'); setStatusOk(true); };
-    const onConnectError = (err: any) => { setStatusText(`Status: Connection Failed - ${err?.message || 'error'}`); setStatusOk(false); };
-    const onDisconnect = () => { setStatusText('Status: Disconnected'); setStatusOk(false); };
-    socket.on('connect', onConnect);
-    socket.on('connect_error', onConnectError);
-    socket.on('disconnect', onDisconnect);
-
-    socket.on('existingUsers', async (users: string[]) => {
-      for (const peerId of users) {
-        const pc = createPeer(peerId);
-        if (!localStreamRef.current) {
-          pc.addTransceiver('audio', { direction: 'recvonly' });
-          pc.addTransceiver('video', { direction: 'recvonly' });
-          pc.addTransceiver('video', { direction: 'recvonly' });
-        }
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('offer', { to: peerId, offer: pc.localDescription });
-      }
-    });
-
-    socket.on('userJoined', async (peerId: string) => {
-      createPeer(peerId);
-    });
-
-    socket.on('offer', async ({ from, offer }: any) => {
-      const pc = createPeer(from);
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
-      if (!localStreamRef.current) pc.getTransceivers().forEach(t => { t.direction = 'recvonly'; });
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('answer', { to: from, answer: pc.localDescription });
-    });
-
-    socket.on('answer', async ({ from, answer }: any) => {
-      const pc = peersRef.current.get(from);
-      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    });
-
-    socket.on('candidate', async ({ from, candidate }: any) => {
-      const pc = peersRef.current.get(from);
-      if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    });
-
-    socket.on('userLeft', (peerId: string) => {
-      removePeer(peerId);
-    });
-
-    return () => {
-      try { socket.disconnect(); } catch {}
-      for (const [pid, pc] of peersRef.current) { try { pc.close(); } catch {}; }
-      peersRef.current.clear();
-      setRemoteStreams({});
-      const ls = localStreamRef.current;
-      if (ls) { ls.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ioUrl]);
-
-  const startLocal = async () => {
-    let cameraStream: MediaStream | null = null;
-    let screenStream: MediaStream | null = null;
-    try {
-      if (shareCamera) {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        if (localCameraRef.current) {
-          (localCameraRef.current as any).srcObject = cameraStream;
-          try { (localCameraRef.current as any).play?.(); } catch {}
-        }
-      }
-      if (shareScreen) {
-        screenStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true });
-        if (localScreenRef.current) {
-          (localScreenRef.current as any).srcObject = screenStream;
-          try { (localScreenRef.current as any).play?.(); } catch {}
-        }
-        const track = screenStream.getVideoTracks()[0];
-        if (track) track.onended = () => {};
-      }
-      const combined = new MediaStream([
-        ...(cameraStream ? cameraStream.getTracks() : []),
-        ...(screenStream ? screenStream.getTracks() : [])
-      ]);
-      localStreamRef.current = combined;
-      // Attach to existing peers if any
-      for (const [, pc] of peersRef.current) {
-        combined.getTracks().forEach(track => pc.addTrack(track, combined));
-      }
-    } catch (e) {
-      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-      if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-      localStreamRef.current = null;
-    }
-  };
-
-  const joinRoom = () => {
-    const r = (roomId || '').trim();
-    if (!r) return;
-    const s = socketRef.current; if (!s || !s.connected) return;
-    s.emit('joinRoom', r);
-    setStatusText(`Status: Connected - In Room ${r}`);
-  };
-
-  const createPeer = (peerId: string): RTCPeerConnection => {
-    const existing = peersRef.current.get(peerId);
-    if (existing) return existing;
-    const pc = new RTCPeerConnection({ iceServers });
-    peersRef.current.set(peerId, pc);
-    if (localStreamRef.current) localStreamRef.current.getTracks().forEach(t => pc.addTrack(t, localStreamRef.current!));
-    pc.onicecandidate = (e) => { if (e.candidate) socketRef.current?.emit('candidate', { to: peerId, candidate: e.candidate }); };
-    pc.ontrack = (e) => {
-      const [stream] = e.streams; if (!stream) return;
-      const videoTracks = stream.getVideoTracks();
-      const audioTracks = stream.getAudioTracks();
-      const first = videoTracks.length > 0 ? new MediaStream([videoTracks[0], ...(audioTracks[0] ? [audioTracks[0]] : [])]) : (audioTracks[0] ? new MediaStream([audioTracks[0]]) : null);
-      const second = videoTracks.length > 1 ? new MediaStream([videoTracks[1]]) : null;
-      setRemoteStreams(prev => ({ ...prev, [peerId]: { first, second } }));
-    };
-    pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'disconnected') removePeer(peerId);
-    };
-    return pc;
-  };
-
-  const removePeer = (peerId: string) => {
-    const pc = peersRef.current.get(peerId);
-    if (pc) { try { pc.close(); } catch {} }
-    peersRef.current.delete(peerId);
-    setRemoteStreams(prev => { const n = { ...prev }; delete n[peerId]; return n; });
-  };
-
-  return (
-    <div className="p-4 space-y-3">
-      <h2 className="text-white text-lg">WebRTC Multi-Peer with Signaling Server and Rooms</h2>
-      <p className="text-sm text-gray-300">Open in multiple tabs. Optionally share camera/screen, join a room. Viewer mode if nothing shared.</p>
-      <div id="status" className={statusOk ? 'connected text-green-500' : 'text-red-500'}>{statusText}</div>
-
-      <label className="block text-sm text-white"><input type="checkbox" checked={shareCamera} onChange={e => setShareCamera(e.target.checked)} /> Share Camera and Audio</label>
-      <label className="block text-sm text-white"><input type="checkbox" checked={shareScreen} onChange={e => setShareScreen(e.target.checked)} /> Share Screen</label>
-      <button onClick={startLocal} className="px-3 py-1 rounded bg-gray-700 text-white">Start Local Media (or Skip for Viewer Mode)</button>
-
-      <div className="videos flex flex-wrap">
-        <div id="localCameraContainer" className={!shareCamera ? 'hidden' : ''}>
-          <label className="block text-white text-sm">Local Camera</label>
-          <video ref={localCameraRef} autoPlay playsInline muted className="bg-black w-[300px] h-[200px] m-2" />
-        </div>
-        <div id="localScreenContainer" className={!shareScreen ? 'hidden' : ''}>
-          <label className="block text-white text-sm">Local Screen</label>
-          <video ref={localScreenRef} autoPlay playsInline muted className="bg-black w-[300px] h-[200px] m-2" />
-        </div>
-      </div>
-
-      <div className="text-white">
-        <label className="block">Room ID:</label>
-        <input value={roomId} onChange={e => setRoomId(e.target.value)} placeholder="Enter room ID (e.g., room1)" className="w-[400px] px-2 py-1 text-black" />
-        <button onClick={joinRoom} className="ml-2 px-3 py-1 rounded bg-gray-700 text-white">Join Room</button>
-      </div>
-
-      <h3 className="text-white text-base mt-2">Remote Peers</h3>
-      <div id="remotes" className="videos flex flex-wrap">
-        {Object.entries(remoteStreams).map(([peerId, media]) => (
-          <div key={peerId} className="peer-container border border-gray-400 p-2 m-2">
-            <label className="block text-white text-sm">Peer {peerId} Video 1 (Camera?)</label>
-            <video autoPlay playsInline className="bg-black w-[300px] h-[200px] m-2"
-              ref={(el) => { if (el) { try { (el as any).srcObject = media.first || null; } catch {} } }} />
-            <label className="block text-white text-sm">Peer {peerId} Video 2 (Screen?)</label>
-            <video autoPlay playsInline className="bg-black w-[300px] h-[200px] m-2"
-              ref={(el) => { if (el) { try { (el as any).srcObject = media.second || null; } catch {} } }} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   const [callState, setCallState] = useState<CallState>({
     isInCall: true,
@@ -352,7 +160,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   const [remoteVolumes, setRemoteVolumes] = useState<Record<string, number>>({});
   const selfAudioRef = useRef<HTMLAudioElement>(null);
   const selfVideoRef = useRef<HTMLVideoElement>(null);
-  const serviceRef = useRef<SocketIoCallService | null>(null);
+  const serviceRef = useRef<CallSocketIOService | null>(null);
   const remoteAudioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const remoteVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const IO_URL = (import.meta as any).env?.VITE_SIGNALING_IO_URL || `${location.protocol}//${location.host}`;
@@ -375,7 +183,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
     const next = !callState.isMuted;
     setCallState(prev => ({ ...prev, isMuted: next }));
     try {
-      const svc = serviceRef.current as SocketIoCallService;
+      const svc = serviceRef.current as CallService;
       const stream = svc?.localStream as MediaStream | null;
       if (stream) stream.getAudioTracks().forEach(t => t.enabled = !next);
     } catch {}
@@ -385,7 +193,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
     const next = !callState.isCameraOn;
     setCallState(prev => ({ ...prev, isCameraOn: next }));
     try {
-      const svc = serviceRef.current as SocketIoCallService;
+      const svc = serviceRef.current as CallService;
       if (next) {
         await svc?.enableVideo();
       } else {
@@ -397,7 +205,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   const toggleScreenShare = async () => {
     const wantEnable = !callState.isScreenSharing;
     try {
-      const svc = serviceRef.current as SocketIoCallService;
+      const svc = serviceRef.current as CallService;
       if (wantEnable) {
         await svc?.enableScreenShare();
         setActiveScreenPeer('self');
@@ -420,7 +228,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   };
 
   useEffect(() => {
-    const svc = new SocketIoCallService(IO_URL, ROOM_ID, ICE_SERVERS);
+    const svc = new CallSocketIOService(IO_URL, ROOM_ID, ICE_SERVERS);
     serviceRef.current = svc;
     svc.onStream((peerId, stream) => {
       if (peerId === 'self') {
@@ -484,10 +292,9 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
     });
     (async () => {
       try {
-        await svc.initLocalAudio();
+        await svc.startLocalMedia(true, false);
       } catch {}
-      await svc.connect();
-      await svc.joinRoom();
+      svc.connect();
     })();
     return () => {
       try { svc.disconnect(); } catch {}
@@ -650,7 +457,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
           >
             {(() => {
               const remoteIds = Object.keys(remoteStreams).slice(0, 8);
-              const tiles: any[] = [];
+              const tiles: React.ReactNode[] = [];
               tiles.push(
                 <div key="self" className="relative bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center min-h-0">
                   <video ref={selfVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
@@ -932,21 +739,7 @@ export function CallsPage() {
   };
 
   if (isInCall) {
-    const ioUrl = (import.meta as any).env?.VITE_SIGNALING_IO_URL || `${location.protocol}//${location.host}`;
-    const iceServers: RTCIceServer[] = (() => {
-      const stunFromEnv = (import.meta as any).env?.VITE_STUN_URLS as string | undefined;
-      const turnFromEnv = (import.meta as any).env?.VITE_TURN_URLS as string | undefined;
-      const turnUser = (import.meta as any).env?.VITE_TURN_USERNAME as string | undefined;
-      const turnPass = (import.meta as any).env?.VITE_TURN_PASSWORD as string | undefined;
-      const stunList = (stunFromEnv?.split(',').map((s: string) => s.trim()).filter(Boolean) || []);
-      const turnList = (turnFromEnv?.split(',').map((s: string) => s.trim()).filter(Boolean) || []);
-      const servers: RTCIceServer[] = [];
-      if (stunList.length) servers.push({ urls: stunList }); else servers.push({ urls: ['stun:stun.l.google.com:19302'] });
-      if (turnList.length) servers.push({ urls: turnList, username: turnUser, credential: turnPass });
-      return servers;
-    })();
-    const defaultRoom = (import.meta as any).env?.VITE_SIGNALING_ROOM_ID || 'room1';
-    return <DebugCallInterface ioUrl={ioUrl} iceServers={iceServers} defaultRoom={defaultRoom} />;
+    return <CallInterface onEndCall={endCall} />;
   }
 
   return (

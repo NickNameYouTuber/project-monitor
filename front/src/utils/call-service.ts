@@ -12,6 +12,8 @@ interface SignalingMessage {
 
 export type StreamCallback = (peerId: PeerId, stream: MediaStream | null) => void;
 
+// ВНИМАНИЕ: старая реализация WebSocket сигналинга больше не используется.
+// Файл остаётся, чтобы не ломать импорты. Логика будет перенесена в socket.io-версию.
 export class CallService {
   private ws!: WebSocket;
   private readonly wsUrl: string;
