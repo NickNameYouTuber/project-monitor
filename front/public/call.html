@@ -234,7 +234,7 @@
             
             pc.ontrack = (event) => {
                 console.log(`Received track from ${peerId}`);
-                handleRemoteStream(peerId, event.streams[0]);
+                handleRemoteTrack(peerId, event.track, event.streams);
             };
             
             pc.oniceconnectionstatechange = () => {
@@ -252,8 +252,7 @@
             return pc;
         }
         
-        function handleRemoteStream(peerId, remoteStream) {
-            console.log(`Handling remote stream from ${peerId}`);
+        function handleRemoteTrack(peerId, track, streams) {
             let peerDiv = document.getElementById('peer-' + peerId);
             if (!peerDiv) {
                 peerDiv = document.createElement('div');
@@ -267,21 +266,28 @@
                 `;
                 remotesContainer.appendChild(peerDiv);
             }
-            
             const vid1 = document.getElementById(`remote-vid1-${peerId}`);
             const vid2 = document.getElementById(`remote-vid2-${peerId}`);
-            
-            const videoTracks = remoteStream.getVideoTracks();
-            const audioTracks = remoteStream.getAudioTracks();
-            
-            if (videoTracks.length > 0) {
-                const audio = audioTracks.length > 0 ? [audioTracks[0]] : [];
-                vid1.srcObject = new MediaStream([videoTracks[0], ...audio]);
-                safePlay(vid1);
-            }
-            if (videoTracks.length > 1) {
-                vid2.srcObject = new MediaStream([videoTracks[1]]);
-                safePlay(vid2);
+            if (track.kind === 'video') {
+                const label = (track.label || '').toLowerCase();
+                const isScreen = label.includes('screen') || label.includes('display') || label.includes('window');
+                const target = isScreen ? vid2 : vid1;
+                const fallback = isScreen ? vid1 : vid2;
+                if (target) {
+                    const v = target.srcObject instanceof MediaStream ? target.srcObject.getAudioTracks() : [];
+                    target.srcObject = new MediaStream([track, ...v]);
+                    safePlay(target);
+                } else if (fallback) {
+                    const v = fallback.srcObject instanceof MediaStream ? fallback.srcObject.getAudioTracks() : [];
+                    fallback.srcObject = new MediaStream([track, ...v]);
+                    safePlay(fallback);
+                }
+            } else if (track.kind === 'audio') {
+                if (vid1) {
+                    const vids = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getVideoTracks() : [];
+                    vid1.srcObject = new MediaStream([...vids, track]);
+                    safePlay(vid1);
+                }
             }
         }
         
