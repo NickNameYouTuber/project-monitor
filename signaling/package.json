@@ -1,14 +1,16 @@
 {
-  "name": "pm-signaling",
+  "name": "signaling-service",
   "version": "1.0.0",
   "private": true,
-  "type": "commonjs",
-  "main": "signaling-server.js",
+  "main": "server.js",
+  "license": "MIT",
   "scripts": {
-    "start": "node signaling-server.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "ws": "^8.18.0"
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
   }
 }
 

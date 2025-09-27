@@ -1,11 +1,10 @@
-FROM node:20-alpine
+FROM node:18-alpine
 WORKDIR /app
-COPY package.json ./
-RUN npm install --omit=dev --no-audit --no-fund
-COPY signaling-server.js ./
-ENV PORT=7673
-ENV SIGNALING_PATH=/ws/signaling
-EXPOSE 7673
-CMD ["node", "signaling-server.js"]
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev || npm i --omit=dev
+COPY server.js ./
+ENV PORT=3000
+EXPOSE 3000
+CMD ["node", "server.js"]
 
 

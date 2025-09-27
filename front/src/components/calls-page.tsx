@@ -37,7 +37,7 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { CallService } from '../utils/call-service';
+import { SocketIoCallService } from '../utils/socketio-call-service';
 
 interface Meeting {
   id: string;
@@ -160,10 +160,10 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   const [remoteVolumes, setRemoteVolumes] = useState<Record<string, number>>({});
   const selfAudioRef = useRef<HTMLAudioElement>(null);
   const selfVideoRef = useRef<HTMLVideoElement>(null);
-  const serviceRef = useRef<CallService | null>(null);
+  const serviceRef = useRef<SocketIoCallService | null>(null);
   const remoteAudioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const remoteVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
-  const WS_URL = (import.meta as any).env?.VITE_SIGNALING_WS_URL || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/signaling`;
+  const IO_URL = (import.meta as any).env?.VITE_SIGNALING_IO_URL || `${location.protocol}//${location.host}`;
   const ROOM_ID = (import.meta as any).env?.VITE_SIGNALING_ROOM_ID || 'global-room';
   const ICE_SERVERS: RTCIceServer[] = (() => {
     const stunFromEnv = (import.meta as any).env?.VITE_STUN_URLS as string | undefined; // comma-separated
@@ -183,7 +183,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
     const next = !callState.isMuted;
     setCallState(prev => ({ ...prev, isMuted: next }));
     try {
-      const svc = serviceRef.current as CallService;
+      const svc = serviceRef.current as SocketIoCallService;
       const stream = svc?.localStream as MediaStream | null;
       if (stream) stream.getAudioTracks().forEach(t => t.enabled = !next);
     } catch {}
@@ -193,7 +193,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
     const next = !callState.isCameraOn;
     setCallState(prev => ({ ...prev, isCameraOn: next }));
     try {
-      const svc = serviceRef.current as CallService;
+      const svc = serviceRef.current as SocketIoCallService;
       if (next) {
         await svc?.enableVideo();
       } else {
@@ -205,7 +205,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   const toggleScreenShare = async () => {
     const wantEnable = !callState.isScreenSharing;
     try {
-      const svc = serviceRef.current as CallService;
+      const svc = serviceRef.current as SocketIoCallService;
       if (wantEnable) {
         await svc?.enableScreenShare();
         setActiveScreenPeer('self');
@@ -228,7 +228,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   };
 
   useEffect(() => {
-    const svc = new CallService(WS_URL, ROOM_ID, ICE_SERVERS, FORCE_TURN);
+    const svc = new SocketIoCallService(IO_URL, ROOM_ID, ICE_SERVERS);
     serviceRef.current = svc;
     svc.onStream((peerId, stream) => {
       if (peerId === 'self') {
@@ -295,6 +295,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
         await svc.initLocalAudio();
       } catch {}
       await svc.connect();
+      await svc.joinRoom();
     })();
     return () => {
       try { svc.disconnect(); } catch {}
@@ -457,7 +458,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
           >
             {(() => {
               const remoteIds = Object.keys(remoteStreams).slice(0, 8);
-              const tiles: React.ReactNode[] = [];
+              const tiles: any[] = [];
               tiles.push(
                 <div key="self" className="relative bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center min-h-0">
                   <video ref={selfVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
