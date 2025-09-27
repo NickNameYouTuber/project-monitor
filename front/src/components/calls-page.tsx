@@ -183,7 +183,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
     const next = !callState.isMuted;
     setCallState(prev => ({ ...prev, isMuted: next }));
     try {
-      const svc = serviceRef.current as CallService;
+      const svc = serviceRef.current as CallSocketIOService;
       const stream = svc?.localStream as MediaStream | null;
       if (stream) stream.getAudioTracks().forEach(t => t.enabled = !next);
     } catch {}
@@ -193,7 +193,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
     const next = !callState.isCameraOn;
     setCallState(prev => ({ ...prev, isCameraOn: next }));
     try {
-      const svc = serviceRef.current as CallService;
+      const svc = serviceRef.current as CallSocketIOService;
       if (next) {
         await svc?.enableVideo();
       } else {
@@ -205,7 +205,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   const toggleScreenShare = async () => {
     const wantEnable = !callState.isScreenSharing;
     try {
-      const svc = serviceRef.current as CallService;
+      const svc = serviceRef.current as CallSocketIOService;
       if (wantEnable) {
         await svc?.enableScreenShare();
         setActiveScreenPeer('self');
