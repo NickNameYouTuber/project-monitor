@@ -308,7 +308,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
       </div>
     </div>
   );
-}а
+}
 
 export function CallsPage() {
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
