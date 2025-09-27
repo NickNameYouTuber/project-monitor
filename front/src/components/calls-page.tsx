@@ -932,8 +932,21 @@ export function CallsPage() {
   };
 
   if (isInCall) {
+    const ioUrl = (import.meta as any).env?.VITE_SIGNALING_IO_URL || `${location.protocol}//${location.host}`;
+    const iceServers: RTCIceServer[] = (() => {
+      const stunFromEnv = (import.meta as any).env?.VITE_STUN_URLS as string | undefined;
+      const turnFromEnv = (import.meta as any).env?.VITE_TURN_URLS as string | undefined;
+      const turnUser = (import.meta as any).env?.VITE_TURN_USERNAME as string | undefined;
+      const turnPass = (import.meta as any).env?.VITE_TURN_PASSWORD as string | undefined;
+      const stunList = (stunFromEnv?.split(',').map((s: string) => s.trim()).filter(Boolean) || []);
+      const turnList = (turnFromEnv?.split(',').map((s: string) => s.trim()).filter(Boolean) || []);
+      const servers: RTCIceServer[] = [];
+      if (stunList.length) servers.push({ urls: stunList }); else servers.push({ urls: ['stun:stun.l.google.com:19302'] });
+      if (turnList.length) servers.push({ urls: turnList, username: turnUser, credential: turnPass });
+      return servers;
+    })();
     const defaultRoom = (import.meta as any).env?.VITE_SIGNALING_ROOM_ID || 'room1';
-    return <DebugCallInterface ioUrl={IO_URL} iceServers={ICE_SERVERS} defaultRoom={defaultRoom} />;
+    return <DebugCallInterface ioUrl={ioUrl} iceServers={iceServers} defaultRoom={defaultRoom} />;
   }
 
   return (
