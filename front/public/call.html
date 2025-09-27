@@ -180,7 +180,10 @@
         function createPeerConnection(peerId) {
             console.log(`Creating peer connection for ${peerId}`);
             const pc = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'turn:nit.nicorp.tech:3478', username: 'test', credential: 'test' }
+                ]
             });
             
             pc.onicecandidate = (event) => {

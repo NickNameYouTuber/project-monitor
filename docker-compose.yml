@@ -99,6 +99,26 @@ services:
       - project-monitor-network
     restart: unless-stopped
 
+  turn:
+    image: coturn/coturn:4.6.2
+    container_name: project-monitor-turn
+    command: [
+      "-c", "/etc/coturn/turnserver.conf",
+      "--no-cli",
+      "--no-tls",
+      "--no-dtls"
+    ]
+    environment:
+      - TURN_PORT=3478
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+    volumes:
+      - ./turn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
 networks:
   project-monitor-network:
     driver: bridge
