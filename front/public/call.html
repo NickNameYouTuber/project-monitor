@@ -92,6 +92,16 @@
         // Connect via relative path through Nginx proxy
         const socket = io('/', { path: '/socket.io' });
         const peers = {}; // Map of peerId to RTCPeerConnection
+
+        function safePlay(videoEl) {
+            if (!videoEl) return;
+            const p = videoEl.play();
+            if (p && typeof p.then === 'function') {
+                p.catch(() => {
+                    // autoplay может быть заблокирован; проигнорируем до первого пользовательского действия
+                });
+            }
+        }
         
         async function attachLocalToPeersAndRenegotiate() {
             if (!localStream) return;
@@ -210,7 +220,8 @@
             const pc = new RTCPeerConnection({
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'turn:nit.nicorp.tech:3478', username: 'test', credential: 'test' }
+                    { urls: 'turn:nit.nicorp.tech:3478', username: 'test', credential: 'test' },
+                    { urls: 'turn:nit.nicorp.tech:3478?transport=tcp', username: 'test', credential: 'test' }
                 ]
             });
             
@@ -266,9 +277,11 @@
             if (videoTracks.length > 0) {
                 const audio = audioTracks.length > 0 ? [audioTracks[0]] : [];
                 vid1.srcObject = new MediaStream([videoTracks[0], ...audio]);
+                safePlay(vid1);
             }
             if (videoTracks.length > 1) {
                 vid2.srcObject = new MediaStream([videoTracks[1]]);
+                safePlay(vid2);
             }
         }
         
