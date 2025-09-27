@@ -1,10 +1,3 @@
-### WebRTC signaling config
-
-Environment variables (Vite):
-
-- `VITE_SIGNALING_WS_URL` — опционально, URL WebSocket сигналинга. Если не задан, используется `ws(s)://<frontend-host>:\u003c7671\u003e/ws/signaling`.
-- `VITE_SIGNALING_ROOM_ID` — идентификатор комнаты (по умолчанию `global-room`).
-
 
   # NIGIt Teamwork Organizer
 

@@ -37,19 +37,6 @@ services:
       - db
       - git-http
 
-  signaling:
-    build:
-      context: ./signaling
-      dockerfile: Dockerfile
-    container_name: project-monitor-signaling
-    ports:
-      - "7673:7673"
-    networks:
-      - project-monitor-network
-    restart: unless-stopped
-    environment:
-      - PORT=7673
-
   git-http:
     image: gitea/gitea:1.21.10
     container_name: project-monitor-git-http
@@ -98,6 +85,18 @@ services:
       - project-monitor-network
     depends_on:
       - backend
+    restart: unless-stopped
+
+  signaling:
+    build:
+      context: ./signaling
+    container_name: project-monitor-signaling
+    environment:
+      - PORT=7673
+    ports:
+      - "7673:7673"
+    networks:
+      - project-monitor-network
     restart: unless-stopped
 
 networks:

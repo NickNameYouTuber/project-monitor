@@ -13,16 +13,18 @@ const io = new Server(server, {
         methods: ['GET', 'POST'],
         credentials: true
     },
-    allowEIO3: true
+    allowEIO3: true // For compatibility with older clients if needed
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // Just in case for any POST requests
 
+// Simple health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).send('Server is healthy');
 });
 
+// Rooms handling
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id} from ${socket.handshake.address}`);
 
@@ -63,9 +65,7 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 7673;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Signaling server running on port ${PORT}. Health check: http://localhost:${PORT}/health`);
 });
-
-

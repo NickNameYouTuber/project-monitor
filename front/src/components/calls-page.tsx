@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Calendar as CalendarIcon, 
   Video, 
@@ -37,7 +37,6 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { io, Socket } from 'socket.io-client';
 
 interface Meeting {
   id: string;
@@ -145,184 +144,171 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
 }
 
 function CallInterface({ onEndCall }: { onEndCall: () => void }) {
-  const [status, setStatus] = useState('Disconnected');
-  const [roomId, setRoomId] = useState((import.meta as any).env?.VITE_SIGNALING_ROOM_ID || 'global-room');
-  const [shareCamera, setShareCamera] = useState(true);
-  const [shareScreen, setShareScreen] = useState(true);
-  const localCameraRef = useRef<HTMLVideoElement>(null);
-  const localScreenRef = useRef<HTMLVideoElement>(null);
-  const socketRef = useRef<Socket | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const peersRef = useRef<Record<string, RTCPeerConnection>>({});
-  const remotesRef = useRef<Record<string, { stream: MediaStream }>>({});
-  const [remoteIds, setRemoteIds] = useState<string[]>([]);
-  const ICE_SERVERS: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
+  const [callState, setCallState] = useState<CallState>({
+    isInCall: true,
+    isMuted: false,
+    isCameraOn: true,
+    isScreenSharing: false,
+    isRecording: false,
+    isChatOpen: false
+  });
 
-  const attachRemoteStream = (peerId: string, stream: MediaStream) => {
-    remotesRef.current[peerId] = { stream };
-    setRemoteIds(Object.keys(remotesRef.current));
+  const [participants] = useState([
+    { name: 'John Doe', isMuted: false, isCameraOn: true },
+    { name: 'Jane Smith', isMuted: true, isCameraOn: true },
+    { name: 'Mike Johnson', isMuted: false, isCameraOn: false }
+  ]);
+
+  const toggleMute = () => {
+    setCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
   };
 
-  const removePeer = (peerId: string) => {
-    try { peersRef.current[peerId]?.close(); } catch {}
-    delete peersRef.current[peerId];
-    delete remotesRef.current[peerId];
-    setRemoteIds(Object.keys(remotesRef.current));
+  const toggleCamera = () => {
+    setCallState(prev => ({ ...prev, isCameraOn: !prev.isCameraOn }));
   };
 
-  const createPeerConnection = (peerId: string) => {
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        socketRef.current?.emit('candidate', { to: peerId, candidate: event.candidate });
-      }
-    };
-    pc.ontrack = (event) => {
-      attachRemoteStream(peerId, event.streams[0]);
-    };
-    pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
-        removePeer(peerId);
-      }
-    };
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current!));
-    }
-    peersRef.current[peerId] = pc;
-    return pc;
+  const toggleScreenShare = () => {
+    setCallState(prev => ({ ...prev, isScreenSharing: !prev.isScreenSharing }));
   };
 
-  const startLocal = async () => {
-    let cameraStream: MediaStream | null = null;
-    let screenStream: MediaStream | null = null;
-    try {
-      if (shareCamera) {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        if (localCameraRef.current) localCameraRef.current.srcObject = cameraStream;
-      } else {
-        if (localCameraRef.current) localCameraRef.current.srcObject = null;
-      }
-      if (shareScreen) {
-        screenStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true });
-        if (localScreenRef.current) localScreenRef.current.srcObject = screenStream;
-        const v = screenStream.getVideoTracks()[0];
-        if (v) v.onended = () => { /* noop */ };
-      } else {
-        if (localScreenRef.current) localScreenRef.current.srcObject = null;
-      }
-      const combined = new MediaStream([
-        ...(cameraStream ? cameraStream.getTracks() : []),
-        ...(screenStream ? screenStream.getTracks() : [])
-      ]);
-      localStreamRef.current = combined.getTracks().length ? combined : null;
-    } catch (e) {
-      localStreamRef.current = null;
-    }
+  const toggleRecording = () => {
+    setCallState(prev => ({ ...prev, isRecording: !prev.isRecording }));
   };
 
-  const joinRoom = () => {
-    const socket = io('/', { transports: ['websocket'] });
-    socketRef.current = socket;
-    socket.on('connect', () => {
-      setStatus('Connected');
-    });
-    socket.on('disconnect', () => {
-      setStatus('Disconnected');
-      Object.keys(peersRef.current).forEach(removePeer);
-    });
-    socket.emit('joinRoom', roomId);
-    socket.on('existingUsers', async (users: string[]) => {
-      for (const pid of users) {
-        const pc = createPeerConnection(pid);
-        if (!localStreamRef.current) {
-          pc.addTransceiver('audio', { direction: 'recvonly' });
-          pc.addTransceiver('video', { direction: 'recvonly' });
-          pc.addTransceiver('video', { direction: 'recvonly' });
-        }
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('offer', { to: pid, offer: pc.localDescription });
-      }
-    });
-    socket.on('userJoined', async (pid: string) => {
-      // Новый пользователь инициирует offer
-      if (!peersRef.current[pid]) createPeerConnection(pid);
-    });
-    socket.on('offer', async ({ from, offer }: any) => {
-      if (!peersRef.current[from]) createPeerConnection(from);
-      const pc = peersRef.current[from];
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
-      if (!localStreamRef.current) {
-        pc.getTransceivers().forEach(t => { t.direction = 'recvonly'; });
-      }
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('answer', { to: from, answer: pc.localDescription });
-    });
-    socket.on('answer', async ({ from, answer }: any) => {
-      const pc = peersRef.current[from];
-      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    });
-    socket.on('candidate', async ({ from, candidate }: any) => {
-      const pc = peersRef.current[from];
-      if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    });
-    socket.on('userLeft', (pid: string) => removePeer(pid));
+  const toggleChat = () => {
+    setCallState(prev => ({ ...prev, isChatOpen: !prev.isChatOpen }));
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-50 overflow-auto">
-      <div className="p-4 space-y-4 text-white">
-        <div id="status" className={`font-bold ${status === 'Connected' ? 'text-green-400' : 'text-red-400'}`}>Status: {status}</div>
-        <div className="flex items-center gap-4 flex-wrap">
-          <label className="flex items-center gap-2"><input type="checkbox" checked={shareCamera} onChange={(e) => setShareCamera(e.target.checked)} /> Share Camera and Audio</label>
-          <label className="flex items-center gap-2"><input type="checkbox" checked={shareScreen} onChange={(e) => setShareScreen(e.target.checked)} /> Share Screen</label>
-          <Button id="startLocal" onClick={startLocal}>Start Local Media (or Skip for Viewer Mode)</Button>
-        </div>
-        <div className="flex gap-6 flex-wrap">
-          <div>
-            <label className="block mb-2">Local Camera</label>
-            <video ref={localCameraRef} autoPlay playsInline muted className="w-[300px] h-[200px] bg-black" />
-          </div>
-          <div>
-            <label className="block mb-2">Local Screen</label>
-            <video ref={localScreenRef} autoPlay playsInline muted className="w-[300px] h-[200px] bg-black" />
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+      {/* Main video area */}
+      <div className="flex-1 relative bg-gray-900">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="w-32 h-32 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="w-16 h-16" />
+            </div>
+            <h3 className="text-xl mb-2">Team Standup</h3>
+            <p className="text-gray-400">3 participants</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Input value={roomId} onChange={(e) => setRoomId(e.target.value)} className="max-w-sm" placeholder="Enter room ID (e.g., room1)" />
-          <Button id="joinRoom" onClick={joinRoom}>Join Room</Button>
-          <Button variant="destructive" onClick={onEndCall} className="ml-auto">Leave</Button>
-        </div>
-        <h2 className="text-xl font-semibold mt-2">Remote Peers</h2>
-        <div id="remotes" className="flex flex-wrap">
-          {remoteIds.map(pid => {
-            const stream = remotesRef.current[pid]?.stream;
-            const videoTracks = stream ? stream.getVideoTracks() : [];
-            const audioTracks = stream ? stream.getAudioTracks() : [];
-            return (
-              <div key={pid} className="border border-gray-600 p-3 m-2">
-                <label className="block">Peer {pid} Video 1 (Camera?)</label>
-                <video autoPlay playsInline className="w-[300px] h-[200px] bg-black" ref={(el) => {
-                  if (!el || !stream) return;
-                  const a = audioTracks.length ? [audioTracks[0]] : [];
-                  const v1 = videoTracks[0] ? [videoTracks[0]] : [];
-                  (el as any).srcObject = new MediaStream([...v1, ...a]);
-                }} />
-                <label className="block mt-2">Peer {pid} Video 2 (Screen?)</label>
-                <video autoPlay playsInline className="w-[300px] h-[200px] bg-black" ref={(el) => {
-                  if (!el || !stream) return;
-                  const v2 = videoTracks[1] ? [videoTracks[1]] : [];
-                  (el as any).srcObject = new MediaStream([...v2]);
-                }} />
+
+        {/* Participants grid */}
+        <div className="absolute top-4 right-4 grid grid-cols-1 gap-2 max-w-xs">
+          {participants.map((participant, index) => (
+            <div key={index} className="relative bg-gray-800 rounded-lg aspect-video w-32">
+              <div className="absolute inset-0 flex items-center justify-center text-white text-xs">
+                {participant.isCameraOn ? (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                    <span>{participant.name.split(' ')[0]}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <VideoOff className="w-4 h-4 mb-1" />
+                    <span className="text-xs">{participant.name.split(' ')[0]}</span>
+                  </div>
+                )}
               </div>
-            );
-          })}
+              <div className="absolute bottom-1 left-1 flex gap-1">
+                {participant.isMuted && (
+                  <div className="bg-red-600 rounded-full p-1">
+                    <MicOff className="w-2 h-2" />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
+
+        {/* Recording indicator */}
+        {callState.isRecording && (
+          <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-full">
+            <Circle className="w-4 h-4 animate-pulse fill-current" />
+            <span className="text-sm">Recording</span>
+          </div>
+        )}
+
+        {/* Screen sharing indicator */}
+        {callState.isScreenSharing && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-full">
+            <span className="text-sm">You are sharing your screen</span>
+          </div>
+        )}
+
+        {/* Chat Panel */}
+        <ChatPanel 
+          isOpen={callState.isChatOpen} 
+          onClose={() => setCallState(prev => ({ ...prev, isChatOpen: false }))} 
+        />
+      </div>
+
+      {/* Call controls */}
+      <div className="bg-gray-900 p-4 flex items-center justify-center gap-4">
+        <Button
+          variant={callState.isMuted ? "destructive" : "secondary"}
+          size="icon"
+          className="h-12 w-12 rounded-full"
+          onClick={toggleMute}
+        >
+          {callState.isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+        </Button>
+
+        <Button
+          variant={callState.isCameraOn ? "secondary" : "destructive"}
+          size="icon"
+          className="h-12 w-12 rounded-full"
+          onClick={toggleCamera}
+        >
+          {callState.isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+        </Button>
+
+        <Button
+          variant={callState.isScreenSharing ? "default" : "secondary"}
+          size="icon"
+          className="h-12 w-12 rounded-full"
+          onClick={toggleScreenShare}
+        >
+          <Monitor className="w-6 h-6" />
+        </Button>
+
+        <Button
+          variant={callState.isChatOpen ? "default" : "secondary"}
+          size="icon"
+          className="h-12 w-12 rounded-full"
+          onClick={toggleChat}
+        >
+          <MessageCircle className="w-6 h-6" />
+        </Button>
+
+        <Button
+          variant={callState.isRecording ? "default" : "secondary"}
+          size="icon"
+          className="h-12 w-12 rounded-full"
+          onClick={toggleRecording}
+        >
+          {callState.isRecording ? <StopCircle className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
+        </Button>
+
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-12 w-12 rounded-full"
+        >
+          <MoreVertical className="w-6 h-6" />
+        </Button>
+
+        <Button
+          variant="destructive"
+          size="icon"
+          className="h-12 w-12 rounded-full ml-8"
+          onClick={onEndCall}
+        >
+          <PhoneCall className="w-6 h-6 rotate-180" />
+        </Button>
       </div>
     </div>
   );
-}
+}а
 
 export function CallsPage() {
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
@@ -409,7 +395,7 @@ export function CallsPage() {
   }; 
 
   const startCall = () => {
-    setIsInCall(true);
+    window.location.href = '/call.html';
   };
 
   const endCall = () => {
@@ -558,7 +544,6 @@ export function CallsPage() {
               </div>
             </DialogContent>
           </Dialog>
-
         </div>
         
         <div className="flex items-center gap-4">
@@ -574,10 +559,6 @@ export function CallsPage() {
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" />
             Filter
-          </Button>
-          <Button size="sm" onClick={() => setIsInCall(true)}>
-            <PhoneCall className="w-4 h-4 mr-2" />
-            JOIN ALL
           </Button>
         </div>
       </div>
@@ -619,7 +600,7 @@ export function CallsPage() {
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: meeting.color }} />
-                              {meeting.title}
+                        {meeting.title}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm text-muted-foreground">
