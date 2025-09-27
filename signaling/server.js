@@ -63,7 +63,7 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 7673;
 server.listen(PORT, () => {
     console.log(`Signaling server running on port ${PORT}. Health check: http://localhost:${PORT}/health`);
 });
