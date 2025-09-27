@@ -42,8 +42,6 @@ services:
       context: ./signaling
       dockerfile: Dockerfile
     container_name: project-monitor-signaling
-    environment:
-      - PORT=7673
     ports:
       - "7673:7673"
     networks:

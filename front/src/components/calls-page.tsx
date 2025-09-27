@@ -37,7 +37,7 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
-import { CallSocketIOService } from '../utils/call-socketio';
+import { io, Socket } from 'socket.io-client';
 
 interface Meeting {
   id: string;
@@ -145,502 +145,180 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
 }
 
 function CallInterface({ onEndCall }: { onEndCall: () => void }) {
-  const [callState, setCallState] = useState<CallState>({
-    isInCall: true,
-    isMuted: false,
-    isCameraOn: true,
-    isScreenSharing: false,
-    isRecording: false,
-    isChatOpen: false
-  });
+  const [status, setStatus] = useState('Disconnected');
+  const [roomId, setRoomId] = useState((import.meta as any).env?.VITE_SIGNALING_ROOM_ID || 'global-room');
+  const [shareCamera, setShareCamera] = useState(true);
+  const [shareScreen, setShareScreen] = useState(true);
+  const localCameraRef = useRef<HTMLVideoElement>(null);
+  const localScreenRef = useRef<HTMLVideoElement>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const peersRef = useRef<Record<string, RTCPeerConnection>>({});
+  const remotesRef = useRef<Record<string, { stream: MediaStream }>>({});
+  const [remoteIds, setRemoteIds] = useState<string[]>([]);
+  const ICE_SERVERS: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
 
-  const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
-  const [screenStreams, setScreenStreams] = useState<Record<string, MediaStream>>({});
-  const [activeScreenPeer, setActiveScreenPeer] = useState<string | null>(null);
-  const [remoteVolumes, setRemoteVolumes] = useState<Record<string, number>>({});
-  const selfAudioRef = useRef<HTMLAudioElement>(null);
-  const selfVideoRef = useRef<HTMLVideoElement>(null);
-  const serviceRef = useRef<CallSocketIOService | null>(null);
-  const remoteAudioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
-  const remoteVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
-  const IO_URL = (import.meta as any).env?.VITE_SIGNALING_IO_URL || `${location.protocol}//${location.host}`;
-  const ROOM_ID = (import.meta as any).env?.VITE_SIGNALING_ROOM_ID || 'global-room';
-  const ICE_SERVERS: RTCIceServer[] = (() => {
-    const stunFromEnv = (import.meta as any).env?.VITE_STUN_URLS as string | undefined; // comma-separated
-    const turnFromEnv = (import.meta as any).env?.VITE_TURN_URLS as string | undefined; // comma-separated
-    const turnUser = (import.meta as any).env?.VITE_TURN_USERNAME as string | undefined;
-    const turnPass = (import.meta as any).env?.VITE_TURN_PASSWORD as string | undefined;
-    const stunList = (stunFromEnv?.split(',').map(s => s.trim()).filter(Boolean) || []);
-    const turnList = (turnFromEnv?.split(',').map(s => s.trim()).filter(Boolean) || []);
-    const servers: RTCIceServer[] = [];
-    if (stunList.length) servers.push({ urls: stunList }); else servers.push({ urls: ['stun:stun.l.google.com:19302'] });
-    if (turnList.length) servers.push({ urls: turnList, username: turnUser, credential: turnPass });
-    return servers;
-  })();
-  const FORCE_TURN = ((import.meta as any).env?.VITE_FORCE_TURN || '').toString() === 'true';
-
-  const toggleMute = () => {
-    const next = !callState.isMuted;
-    setCallState(prev => ({ ...prev, isMuted: next }));
-    try {
-      const svc = serviceRef.current as CallSocketIOService;
-      const stream = svc?.localStream as MediaStream | null;
-      if (stream) stream.getAudioTracks().forEach(t => t.enabled = !next);
-    } catch {}
+  const attachRemoteStream = (peerId: string, stream: MediaStream) => {
+    remotesRef.current[peerId] = { stream };
+    setRemoteIds(Object.keys(remotesRef.current));
   };
 
-  const toggleCamera = async () => {
-    const next = !callState.isCameraOn;
-    setCallState(prev => ({ ...prev, isCameraOn: next }));
-    try {
-      const svc = serviceRef.current as CallSocketIOService;
-      if (next) {
-        await svc?.enableVideo();
-      } else {
-        await svc?.disableVideo();
-      }
-    } catch {}
+  const removePeer = (peerId: string) => {
+    try { peersRef.current[peerId]?.close(); } catch {}
+    delete peersRef.current[peerId];
+    delete remotesRef.current[peerId];
+    setRemoteIds(Object.keys(remotesRef.current));
   };
 
-  const toggleScreenShare = async () => {
-    const wantEnable = !callState.isScreenSharing;
-    try {
-      const svc = serviceRef.current as CallSocketIOService;
-      if (wantEnable) {
-        await svc?.enableScreenShare();
-        setActiveScreenPeer('self');
-        setCallState(prev => ({ ...prev, isScreenSharing: true }));
-      } else {
-        await svc?.disableScreenShare();
-        setCallState(prev => ({ ...prev, isScreenSharing: false }));
+  const createPeerConnection = (peerId: string) => {
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socketRef.current?.emit('candidate', { to: peerId, candidate: event.candidate });
       }
+    };
+    pc.ontrack = (event) => {
+      attachRemoteStream(peerId, event.streams[0]);
+    };
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+        removePeer(peerId);
+      }
+    };
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current!));
+    }
+    peersRef.current[peerId] = pc;
+    return pc;
+  };
+
+  const startLocal = async () => {
+    let cameraStream: MediaStream | null = null;
+    let screenStream: MediaStream | null = null;
+    try {
+      if (shareCamera) {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        if (localCameraRef.current) localCameraRef.current.srcObject = cameraStream;
+      } else {
+        if (localCameraRef.current) localCameraRef.current.srcObject = null;
+      }
+      if (shareScreen) {
+        screenStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true });
+        if (localScreenRef.current) localScreenRef.current.srcObject = screenStream;
+        const v = screenStream.getVideoTracks()[0];
+        if (v) v.onended = () => { /* noop */ };
+      } else {
+        if (localScreenRef.current) localScreenRef.current.srcObject = null;
+      }
+      const combined = new MediaStream([
+        ...(cameraStream ? cameraStream.getTracks() : []),
+        ...(screenStream ? screenStream.getTracks() : [])
+      ]);
+      localStreamRef.current = combined.getTracks().length ? combined : null;
     } catch (e) {
-      setCallState(prev => ({ ...prev, isScreenSharing: callState.isScreenSharing }));
+      localStreamRef.current = null;
     }
   };
 
-  const toggleRecording = () => {
-    setCallState(prev => ({ ...prev, isRecording: !prev.isRecording }));
+  const joinRoom = () => {
+    const socket = io('/', { transports: ['websocket'] });
+    socketRef.current = socket;
+    socket.on('connect', () => {
+      setStatus('Connected');
+    });
+    socket.on('disconnect', () => {
+      setStatus('Disconnected');
+      Object.keys(peersRef.current).forEach(removePeer);
+    });
+    socket.emit('joinRoom', roomId);
+    socket.on('existingUsers', async (users: string[]) => {
+      for (const pid of users) {
+        const pc = createPeerConnection(pid);
+        if (!localStreamRef.current) {
+          pc.addTransceiver('audio', { direction: 'recvonly' });
+          pc.addTransceiver('video', { direction: 'recvonly' });
+          pc.addTransceiver('video', { direction: 'recvonly' });
+        }
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('offer', { to: pid, offer: pc.localDescription });
+      }
+    });
+    socket.on('userJoined', async (pid: string) => {
+      // Новый пользователь инициирует offer
+      if (!peersRef.current[pid]) createPeerConnection(pid);
+    });
+    socket.on('offer', async ({ from, offer }: any) => {
+      if (!peersRef.current[from]) createPeerConnection(from);
+      const pc = peersRef.current[from];
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      if (!localStreamRef.current) {
+        pc.getTransceivers().forEach(t => { t.direction = 'recvonly'; });
+      }
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('answer', { to: from, answer: pc.localDescription });
+    });
+    socket.on('answer', async ({ from, answer }: any) => {
+      const pc = peersRef.current[from];
+      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+    socket.on('candidate', async ({ from, candidate }: any) => {
+      const pc = peersRef.current[from];
+      if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+    socket.on('userLeft', (pid: string) => removePeer(pid));
   };
-
-  const toggleChat = () => {
-    setCallState(prev => ({ ...prev, isChatOpen: !prev.isChatOpen }));
-  };
-
-  useEffect(() => {
-    const svc = new CallSocketIOService(IO_URL, ROOM_ID, ICE_SERVERS);
-    serviceRef.current = svc;
-    svc.onStream((peerId, stream) => {
-      if (peerId === 'self') {
-        if (selfAudioRef.current && stream) {
-          selfAudioRef.current.srcObject = stream;
-          selfAudioRef.current.muted = true;
-          try { selfAudioRef.current.play().catch(() => {}); } catch {}
-        }
-        if (selfVideoRef.current && stream) {
-          try {
-            (selfVideoRef.current as any).srcObject = stream;
-            (selfVideoRef.current as any).play?.();
-          } catch {}
-        }
-        return;
-      }
-      if (peerId === 'self:screen') {
-        setScreenStreams(prev => {
-          const next = { ...prev } as Record<string, MediaStream>;
-          if (stream) { next['self'] = stream; } else { delete next['self']; }
-          return next;
-        });
-        if (stream) {
-          setActiveScreenPeer(prev => prev ?? 'self');
-        } else {
-          setActiveScreenPeer(prev => (prev === 'self' ? null : prev));
-          setCallState(cs => ({ ...cs, isScreenSharing: false }));
-        }
-        return;
-      }
-      if (peerId.endsWith(':screen')) {
-        const baseId = peerId.replace(/:screen$/, '');
-        setScreenStreams(prev => {
-          const next = { ...prev } as Record<string, MediaStream>;
-          if (stream) { next[baseId] = stream; } else { delete next[baseId]; }
-          return next;
-        });
-        if (stream) {
-          setActiveScreenPeer(prev => prev ?? baseId);
-        } else {
-          setActiveScreenPeer(prev => (prev === baseId ? null : prev));
-        }
-        return;
-      }
-      setRemoteStreams(prev => {
-        const next = { ...prev } as Record<string, MediaStream>;
-        if (stream) {
-          next[peerId] = stream;
-          setRemoteVolumes(v => (peerId in v ? v : { ...v, [peerId]: 1 }));
-        } else {
-          delete next[peerId];
-          setRemoteVolumes(v => {
-            const nv = { ...v } as Record<string, number>;
-            delete nv[peerId];
-            return nv;
-          });
-          try { delete remoteAudioRefs.current[peerId]; } catch {}
-        }
-        return next;
-      });
-    });
-    (async () => {
-      try {
-        await svc.startLocalMedia(true, false);
-      } catch {}
-      svc.connect();
-    })();
-    return () => {
-      try { svc.disconnect(); } catch {}
-    };
-  }, []);
-
-  useEffect(() => {
-    const unlock = () => {
-      try { selfAudioRef.current?.play().catch(() => {}); } catch {}
-      try {
-        Object.values(remoteAudioRefs.current as Record<string, HTMLAudioElement | null>).forEach(el => el?.play().catch(() => {}));
-      } catch {}
-      window.removeEventListener('pointerdown', unlock);
-      window.removeEventListener('keydown', unlock);
-    };
-    window.addEventListener('pointerdown', unlock);
-    window.addEventListener('keydown', unlock);
-    return () => {
-      window.removeEventListener('pointerdown', unlock);
-      window.removeEventListener('keydown', unlock);
-    };
-  }, []);
-
-  useEffect(() => {
-    // применяем громкость к активным audio элементам
-    Object.entries(remoteAudioRefs.current as Record<string, HTMLAudioElement | null>).forEach(([pid, el]) => {
-      if (el) {
-        (el as HTMLAudioElement).volume = remoteVolumes[pid] ?? 1;
-      }
-    });
-  }, [remoteVolumes]);
-
-  // Если появился экран у кого-то, но активный не выбран — выбираем первый
-  useEffect(() => {
-    const keys = Object.keys(screenStreams);
-    setActiveScreenPeer(prev => {
-      if (prev && screenStreams[prev]) return prev;
-      return keys.length ? keys[0] : null;
-    });
-  }, [screenStreams]);
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
-      {/* Main video area */}
-      <div className="flex-1 relative bg-gray-900 min-h-0">
-        <audio ref={selfAudioRef} className="hidden" />
-        {Object.keys(screenStreams).length > 0 ? (
-          <div className="absolute inset-0 flex flex-col p-4 gap-4">
-            <div className="flex-1 relative rounded-lg overflow-hidden bg-gray-800">
-              <video
-                autoPlay
-                playsInline
-                className="absolute inset-0 w-full h-full object-contain bg-black"
-                ref={(el) => {
-                  if (!el) return;
-                  try {
-                    const activeId = (activeScreenPeer && screenStreams[activeScreenPeer]) ? activeScreenPeer : (Object.keys(screenStreams)[0] || null);
-                    const s = activeId ? (screenStreams[activeId] || null) : null;
-                    (el as any).srcObject = s;
-                    if (s && s.getVideoTracks().length === 0) {
-                      (el as any).srcObject = null;
-                    } else if (s) {
-                      (el as any).play?.();
-                    }
-                  } catch {}
-                }}
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-2 py-1">
-                <div className="flex items-center justify-between">
-                  <span className="truncate">{(activeScreenPeer || Object.keys(screenStreams)[0]) === 'self' ? 'You (Screen)' : `${activeScreenPeer || Object.keys(screenStreams)[0]} (Screen)`}</span>
-                  {Object.keys(screenStreams).length > 1 && (
-                    <div className="flex gap-2">
-                      {Object.keys(screenStreams).map(pid => (
-                        <Button key={pid} size="sm" variant={pid === activeScreenPeer ? 'default' : 'secondary'} onClick={() => setActiveScreenPeer(pid)}>
-                          {pid === 'self' ? 'You' : pid}
-                        </Button>
-                      ))}
-            </div>
-                  )}
+    <div className="fixed inset-0 bg-black z-50 overflow-auto">
+      <div className="p-4 space-y-4 text-white">
+        <div id="status" className={`font-bold ${status === 'Connected' ? 'text-green-400' : 'text-red-400'}`}>Status: {status}</div>
+        <div className="flex items-center gap-4 flex-wrap">
+          <label className="flex items-center gap-2"><input type="checkbox" checked={shareCamera} onChange={(e) => setShareCamera(e.target.checked)} /> Share Camera and Audio</label>
+          <label className="flex items-center gap-2"><input type="checkbox" checked={shareScreen} onChange={(e) => setShareScreen(e.target.checked)} /> Share Screen</label>
+          <Button id="startLocal" onClick={startLocal}>Start Local Media (or Skip for Viewer Mode)</Button>
+        </div>
+        <div className="flex gap-6 flex-wrap">
+          <div>
+            <label className="block mb-2">Local Camera</label>
+            <video ref={localCameraRef} autoPlay playsInline muted className="w-[300px] h-[200px] bg-black" />
+          </div>
+          <div>
+            <label className="block mb-2">Local Screen</label>
+            <video ref={localScreenRef} autoPlay playsInline muted className="w-[300px] h-[200px] bg-black" />
           </div>
         </div>
-                  </div>
-            {/* Лента камер снизу */}
-            <div className="shrink-0 h-32 flex items-stretch gap-3 overflow-x-auto">
-              {/* self camera */}
-              <div className="relative bg-gray-800 rounded-lg overflow-hidden w-48 h-28 flex items-center justify-center">
-                <video ref={selfVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[10px] px-2 py-0.5">You</div>
-              </div>
-              {Object.keys(remoteStreams).map((peerId) => {
-                const stream = remoteStreams[peerId];
-                const hasVideo = !!stream && stream.getVideoTracks().length > 0;
-                return (
-                  <div
-                    key={peerId}
-                    className="relative bg-gray-800 rounded-lg overflow-hidden w-48 h-28 flex items-center justify-center cursor-pointer"
-                    onClick={() => { if (screenStreams[peerId]) setActiveScreenPeer(peerId); }}
-                  >
-                    {hasVideo ? (
-                      <video
-                        autoPlay
-                        playsInline
-                        className="absolute inset-0 w-full h-full object-cover"
-                        ref={(el) => {
-                          remoteVideoRefs.current[peerId] = el;
-                          if (el) {
-                            try { (el as any).srcObject = stream; (el as any).play?.(); } catch {}
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-900">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback>{peerId.slice(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                  </div>
-                )}
-                    <audio
-                      autoPlay
-                      className="hidden"
-                      ref={(el) => {
-                        remoteAudioRefs.current[peerId] = el;
-                        if (el) {
-                          try {
-                            el.srcObject = stream;
-                            el.volume = remoteVolumes[peerId] ?? 1;
-                            el.play().catch(() => {});
-                          } catch {}
-                        }
-                      }}
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] px-2 py-0.5 flex items-center gap-2">
-                      <span className="truncate flex-1">{peerId}</span>
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={Math.round(((remoteVolumes[peerId] ?? 1) * 100) as number)}
-                        onChange={(e) => {
-                          const val = Math.max(0, Math.min(100, Number(e.target.value)));
-                          const vol = val / 100;
-                          setRemoteVolumes((prev) => ({ ...prev, [peerId]: vol }));
-                        }}
-                        className="w-16 h-1 accent-primary"
-                      />
-              </div>
-                  </div>
-                );
-              })}
-              </div>
-            </div>
-        ) : (
-          // GRID 3x3 как раньше
-          <div
-            className="absolute inset-0 p-4 grid gap-3 h-full"
-            style={{
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-              gridTemplateRows: 'repeat(3, minmax(0, 1fr))'
-            }}
-          >
-            {(() => {
-              const remoteIds = Object.keys(remoteStreams).slice(0, 8);
-              const tiles: React.ReactNode[] = [];
-              tiles.push(
-                <div key="self" className="relative bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center min-h-0">
-                  <video ref={selfVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-                  <div className="text-white text-lg font-medium select-none">You</div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-xs px-2 py-1">You</div>
+        <div className="flex items-center gap-2">
+          <Input value={roomId} onChange={(e) => setRoomId(e.target.value)} className="max-w-sm" placeholder="Enter room ID (e.g., room1)" />
+          <Button id="joinRoom" onClick={joinRoom}>Join Room</Button>
+          <Button variant="destructive" onClick={onEndCall} className="ml-auto">Leave</Button>
         </div>
-              );
-              remoteIds.forEach((peerId) => {
-                const stream = remoteStreams[peerId];
-                tiles.push(
-                  <div key={peerId} className="relative bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center min-h-0">
-                    <video
-                      autoPlay
-                      playsInline
-                      className="absolute inset-0 w-full h-full object-cover"
-                      ref={(el) => {
-                        remoteVideoRefs.current[peerId] = el;
-                        if (el) {
-                          try { (el as any).srcObject = stream; (el as any).play?.(); } catch {}
-                        }
-                      }}
-                    />
-                    <audio
-                      autoPlay
-                      className="hidden"
-                      ref={(el) => {
-                        remoteAudioRefs.current[peerId] = el;
-                        if (el) {
-                          try {
-                            el.srcObject = stream;
-                            el.volume = remoteVolumes[peerId] ?? 1;
-                            el.play().catch(() => {});
-                          } catch {}
-                        }
-                      }}
-                    />
-                    <div className="text-white text-sm font-medium select-none truncate px-2">
-                      {peerId}
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-2 py-1">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate flex-1">{peerId}</span>
-                        <input
-                          type="range"
-                          min={0}
-                          max={100}
-                          value={Math.round(((remoteVolumes[peerId] ?? 1) * 100) as number)}
-                          onChange={(e) => {
-                            const val = Math.max(0, Math.min(100, Number(e.target.value)));
-                            const vol = val / 100;
-                            setRemoteVolumes((prev) => ({ ...prev, [peerId]: vol }));
-                          }}
-                          className="w-24 h-1 accent-primary"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              });
-              const remaining = 9 - tiles.length;
-              for (let i = 0; i < remaining; i++) {
-                tiles.push(
-                  <div key={`empty-${i}`} className="relative bg-gray-900/60 rounded-lg border border-white/5 min-h-0" />
-                );
-              }
-              return tiles;
-            })()}
-          </div>
-        )}
-
-        {/* Recording indicator */}
-        {callState.isRecording && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-full">
-            <Circle className="w-4 h-4 animate-pulse fill-current" />
-            <span className="text-sm">Recording</span>
-          </div>
-        )}
-
-        {/* Screen sharing indicator */}
-        {callState.isScreenSharing && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-full">
-            <span className="text-sm">You are sharing your screen</span>
-          </div>
-        )}
-
-        {/* Chat Panel */}
-        <ChatPanel 
-          isOpen={callState.isChatOpen} 
-          onClose={() => setCallState(prev => ({ ...prev, isChatOpen: false }))} 
-        />
-      </div>
-
-      {/* Call controls */}
-      <div className="bg-gray-900 p-4 flex items-center justify-center gap-4">
-        {/* Autoplay unlock button (visible если звук выключен браузером) */}
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            try { selfAudioRef.current?.play().catch(() => {}); } catch {}
-            try {
-              Object.values(remoteAudioRefs.current as Record<string, HTMLAudioElement | null>).forEach(el => el?.play().catch(() => {}));
-            } catch {}
-          }}
-        >
-          Включить звук
-        </Button>
-
-        <Button
-          variant={callState.isMuted ? "destructive" : "secondary"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={toggleMute}
-        >
-          {callState.isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-        </Button>
-
-        <Button
-          variant={callState.isCameraOn ? "secondary" : "destructive"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={toggleCamera}
-        >
-          {callState.isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
-        </Button>
-
-        <Button
-          variant={callState.isScreenSharing ? "default" : "secondary"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={toggleScreenShare}
-        >
-          <Monitor className="w-6 h-6" />
-        </Button>
-
-        {/* Screen quality selector */}
-        <Select onValueChange={async (val) => {
-          try { await serviceRef.current?.setScreenQuality(val as any); } catch {}
-        }}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Quality" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button
-          variant={callState.isChatOpen ? "default" : "secondary"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={toggleChat}
-        >
-          <MessageCircle className="w-6 h-6" />
-        </Button>
-
-        <Button
-          variant={callState.isRecording ? "default" : "secondary"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={toggleRecording}
-        >
-          {callState.isRecording ? <StopCircle className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
-        </Button>
-
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-12 w-12 rounded-full"
-        >
-          <MoreVertical className="w-6 h-6" />
-        </Button>
-
-        <Button
-          variant="destructive"
-          size="icon"
-          className="h-12 w-12 rounded-full ml-8"
-          onClick={onEndCall}
-        >
-          <PhoneCall className="w-6 h-6 rotate-180" />
-        </Button>
+        <h2 className="text-xl font-semibold mt-2">Remote Peers</h2>
+        <div id="remotes" className="flex flex-wrap">
+          {remoteIds.map(pid => {
+            const stream = remotesRef.current[pid]?.stream;
+            const videoTracks = stream ? stream.getVideoTracks() : [];
+            const audioTracks = stream ? stream.getAudioTracks() : [];
+            return (
+              <div key={pid} className="border border-gray-600 p-3 m-2">
+                <label className="block">Peer {pid} Video 1 (Camera?)</label>
+                <video autoPlay playsInline className="w-[300px] h-[200px] bg-black" ref={(el) => {
+                  if (!el || !stream) return;
+                  const a = audioTracks.length ? [audioTracks[0]] : [];
+                  const v1 = videoTracks[0] ? [videoTracks[0]] : [];
+                  (el as any).srcObject = new MediaStream([...v1, ...a]);
+                }} />
+                <label className="block mt-2">Peer {pid} Video 2 (Screen?)</label>
+                <video autoPlay playsInline className="w-[300px] h-[200px] bg-black" ref={(el) => {
+                  if (!el || !stream) return;
+                  const v2 = videoTracks[1] ? [videoTracks[1]] : [];
+                  (el as any).srcObject = new MediaStream([...v2]);
+                }} />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
