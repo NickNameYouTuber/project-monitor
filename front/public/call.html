@@ -269,18 +269,32 @@
             const vid1 = document.getElementById(`remote-vid1-${peerId}`);
             const vid2 = document.getElementById(`remote-vid2-${peerId}`);
             if (track.kind === 'video') {
+                const hasVideo = (el) => !!(el && el.srcObject instanceof MediaStream && el.srcObject.getVideoTracks().length);
                 const label = (track.label || '').toLowerCase();
                 const isScreen = label.includes('screen') || label.includes('display') || label.includes('window');
-                const target = isScreen ? vid2 : vid1;
-                const fallback = isScreen ? vid1 : vid2;
-                if (target) {
-                    const v = target.srcObject instanceof MediaStream ? target.srcObject.getAudioTracks() : [];
-                    target.srcObject = new MediaStream([track, ...v]);
-                    safePlay(target);
-                } else if (fallback) {
-                    const v = fallback.srcObject instanceof MediaStream ? fallback.srcObject.getAudioTracks() : [];
-                    fallback.srcObject = new MediaStream([track, ...v]);
-                    safePlay(fallback);
+
+                // Prefer order-based placement: first video -> vid1, second -> vid2
+                if (!hasVideo(vid1)) {
+                    const aud = vid1 && vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
+                    vid1.srcObject = new MediaStream([track, ...(aud || [])]);
+                    safePlay(vid1);
+                    return;
+                }
+                if (!hasVideo(vid2)) {
+                    const aud2 = vid2 && vid2.srcObject instanceof MediaStream ? vid2.srcObject.getAudioTracks() : [];
+                    vid2.srcObject = new MediaStream([track, ...(aud2 || [])]);
+                    safePlay(vid2);
+                    return;
+                }
+                // If both occupied, replace screen into vid2 when detected, иначе обнови vid2
+                if (isScreen && vid2) {
+                    const aud2 = vid2.srcObject instanceof MediaStream ? vid2.srcObject.getAudioTracks() : [];
+                    vid2.srcObject = new MediaStream([track, ...aud2]);
+                    safePlay(vid2);
+                } else if (vid2) {
+                    const aud2 = vid2.srcObject instanceof MediaStream ? vid2.srcObject.getAudioTracks() : [];
+                    vid2.srcObject = new MediaStream([track, ...aud2]);
+                    safePlay(vid2);
                 }
             } else if (track.kind === 'audio') {
                 if (vid1) {
