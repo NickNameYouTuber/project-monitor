@@ -10,6 +10,9 @@ export class CallSocketIOService {
   private readonly roomId: string;
   private readonly iceServers: RTCIceServer[];
   private readonly peers = new Map<PeerId, RTCPeerConnection>();
+  private readonly transceivers = new Map<PeerId, { audio: RTCRtpTransceiver; camera: RTCRtpTransceiver; screen: RTCRtpTransceiver }>();
+  private readonly makingOffer = new Map<PeerId, boolean>();
+  private selfId: string = '';
   private streamCb: StreamCallback = () => {};
   public localStream: MediaStream | null = null;
   public localCameraTrack: MediaStreamTrack | null = null;
@@ -96,19 +99,19 @@ export class CallSocketIOService {
   connect() {
     this.socket = io(this.url, { transports: ['websocket'], withCredentials: true });
     this.socket.on('connect', () => {
+      this.selfId = this.socket.id || '';
       this.socket.emit('joinRoom', this.roomId);
     });
     this.socket.on('existingUsers', async (users: string[]) => {
       for (const peerId of users) {
         const pc = this.createPeer(peerId);
-        if (!this.localStream) {
-          pc.addTransceiver('audio', { direction: 'recvonly' });
-          pc.addTransceiver('video', { direction: 'recvonly' });
-          pc.addTransceiver('video', { direction: 'recvonly' });
+        // детерминированный инициатор — только у кого selfId > peerId
+        const initiator = (this.selfId || '') > peerId;
+        if (initiator) {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          this.socket.emit('offer', { to: peerId, offer: pc.localDescription });
         }
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        this.socket.emit('offer', { to: peerId, offer: pc.localDescription });
       }
     });
     this.socket.on('userJoined', async (peerId: string) => {
@@ -116,17 +119,28 @@ export class CallSocketIOService {
     });
     this.socket.on('offer', async ({ from, offer }: any) => {
       const pc = this.peers.get(from) || this.createPeer(from);
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
-      if (!this.localStream) {
-        pc.getTransceivers().forEach(t => t.direction = 'recvonly');
+      const polite = (this.selfId || '') > from;
+      try {
+        if (pc.signalingState !== 'stable') {
+          if (!polite && this.makingOffer.get(from)) {
+            return; // неполитный, сам делает offer — игнор
+          }
+          try { await pc.setLocalDescription({ type: 'rollback' } as any); } catch {}
+        }
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        this.socket.emit('answer', { to: from, answer: pc.localDescription });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[CallSocketIO] handle offer failed', e);
       }
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      this.socket.emit('answer', { to: from, answer: pc.localDescription });
     });
     this.socket.on('answer', async ({ from, answer }: any) => {
       const pc = this.peers.get(from);
-      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      if (!pc) return;
+      if (pc.signalingState !== 'have-local-offer') return;
+      try { await pc.setRemoteDescription(new RTCSessionDescription(answer)); } catch {}
     });
     this.socket.on('candidate', async ({ from, candidate }: any) => {
       const pc = this.peers.get(from);
@@ -149,29 +163,50 @@ export class CallSocketIOService {
 
   private createPeer(peerId: string) {
     const pc = new RTCPeerConnection({ iceServers: this.iceServers });
+    this.peers.set(peerId, pc);
+
+    // Предсоздаём трансиверы в фиксированном порядке: 0-audio, 1-video(camera), 2-video(screen)
+    const tAudio = pc.addTransceiver('audio', { direction: 'sendrecv' });
+    const tCamera = pc.addTransceiver('video', { direction: 'sendrecv' });
+    const tScreen = pc.addTransceiver('video', { direction: 'sendrecv' });
+    this.transceivers.set(peerId, { audio: tAudio, camera: tCamera, screen: tScreen });
+
+    // Привязываем локальные треки, если уже есть
+    const aTrack = this.localStream?.getAudioTracks()[0] || null;
+    if (aTrack) { try { tAudio.sender.replaceTrack(aTrack); } catch {} }
+    if (this.localCameraTrack) { try { tCamera.sender.replaceTrack(this.localCameraTrack); } catch {} }
+    if (this.localScreenTrack) { try { tScreen.sender.replaceTrack(this.localScreenTrack); } catch {} }
+
     pc.onicecandidate = (e) => {
       if (e.candidate) this.socket.emit('candidate', { to: peerId, candidate: e.candidate });
     };
     pc.onnegotiationneeded = async () => {
+      // Делаем оффер только детерминированному инициатору, чтобы избежать коллизий
+      const initiator = (this.selfId || '') > peerId;
+      if (!initiator) return;
       try {
+        this.makingOffer.set(peerId, true);
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         this.socket.emit('offer', { to: peerId, offer: pc.localDescription });
-      } catch {}
+      } catch {
+      } finally {
+        this.makingOffer.set(peerId, false);
+      }
     };
     pc.ontrack = (e) => {
       const stream = e.streams[0];
       if (!stream) return;
-      const videoTracks = stream.getVideoTracks();
-      const audioTracks = stream.getAudioTracks();
-      if (videoTracks.length > 1) {
-        this.streamCb(`${peerId}:screen`, new MediaStream([videoTracks[1]]));
+      const trefs = this.transceivers.get(peerId);
+      const isScreenByMid = !!(trefs && e.transceiver && (e.transceiver === trefs.screen || (trefs.screen && e.transceiver.mid === trefs.screen.mid)));
+      if (isScreenByMid) {
+        const v = stream.getVideoTracks()[0];
+        this.streamCb(`${peerId}:screen`, v ? new MediaStream([v]) : null);
+        return;
       }
-      if (videoTracks.length > 0) {
-        this.streamCb(peerId, new MediaStream([videoTracks[0], ...(audioTracks[0] ? [audioTracks[0]] : [])]));
-      } else if (audioTracks.length > 0) {
-        this.streamCb(peerId, new MediaStream([audioTracks[0]]));
-      }
+      const v = stream.getVideoTracks()[0];
+      const a = stream.getAudioTracks()[0];
+      if (v || a) this.streamCb(peerId, new MediaStream([...(v ? [v] : []), ...(a ? [a] : [])]));
     };
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') {
@@ -184,10 +219,6 @@ export class CallSocketIOService {
         }
       }
     };
-    if (this.localStream) {
-      this.localStream.getTracks().forEach(track => pc.addTrack(track, this.localStream!));
-    }
-    this.peers.set(peerId, pc);
     return pc;
   }
 }
