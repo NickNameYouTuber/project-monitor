@@ -93,6 +93,28 @@
         const socket = io('/', { path: '/socket.io' });
         const peers = {}; // Map of peerId to RTCPeerConnection
         
+        async function attachLocalToPeersAndRenegotiate() {
+            if (!localStream) return;
+            const entries = Object.entries(peers);
+            for (const [peerId, pc] of entries) {
+                if (!pc) continue;
+                // Ensure local tracks are added once per kind
+                for (const track of localStream.getTracks()) {
+                    const hasSender = pc.getSenders().some(s => s.track && s.track.kind === track.kind);
+                    if (!hasSender) {
+                        try { pc.addTrack(track, localStream); } catch (e) { console.warn('addTrack failed', e); }
+                    }
+                }
+                try {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    socket.emit('offer', { to: peerId, offer: pc.localDescription });
+                } catch (e) {
+                    console.warn('renegotiate failed', e);
+                }
+            }
+        }
+        
         // Socket connection handling
         socket.on('connect', () => {
             console.log('Connected to signaling server');
@@ -153,6 +175,8 @@
                     ...(cameraStream ? cameraStream.getTracks() : []),
                     ...(screenStream ? screenStream.getTracks() : [])
                 ]);
+                // attach to existing peer connections and renegotiate
+                await attachLocalToPeersAndRenegotiate();
             } catch (error) {
                 console.error('Error getting media:', error);
                 if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
@@ -161,7 +185,7 @@
             }
         }
         
-        function joinRoomFunc() {
+        async function joinRoomFunc() {
             const roomId = roomIdInput.value.trim();
             if (!roomId) {
                 alert('Enter a room ID');
@@ -170,6 +194,10 @@
             if (!socket.connected) {
                 alert('Not connected to server. Check server status.');
                 return;
+            }
+            // If user intends to share, ensure media is started before joining
+            if ((shareCameraCheckbox.checked || shareScreenCheckbox.checked) && !localStream) {
+                await startLocalMedia();
             }
             console.log(`Joining room: ${roomId}`);
             socket.emit('joinRoom', roomId);
@@ -206,7 +234,7 @@
             };
             
             if (localStream) {
-                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+                try { localStream.getTracks().forEach(track => pc.addTrack(track, localStream)); } catch {}
             }
             
             peers[peerId] = pc;
