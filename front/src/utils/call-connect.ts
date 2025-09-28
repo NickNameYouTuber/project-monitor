@@ -306,6 +306,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   screenPrevBtn?.addEventListener('click', () => { screenIndex = Math.max(0, screenIndex - 1); updateLayout(); });
   screenNextBtn?.addEventListener('click', () => { screenIndex += 1; updateLayout(); });
 
+  // UI may be hidden; handlers are optional
   startBtn?.addEventListener('click', () => { startLocalMedia(); });
   joinBtn?.addEventListener('click', () => { joinRoomFunc(); });
 

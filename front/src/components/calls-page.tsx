@@ -189,38 +189,16 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       <div className="flex-1 relative bg-gray-900">
+        {/* Minimal top bar: only status */}
         <div className="w-full p-4 flex items-center justify-between">
           <div id="status" className="text-sm text-white/80">Status: Disconnected</div>
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-white/80 text-sm">
-              <input id="shareCamera" type="checkbox" defaultChecked className="accent-indigo-500" />
-              Share Camera & Audio
-            </label>
-            <label className="flex items-center gap-2 text-white/80 text-sm">
-              <input id="shareScreen" type="checkbox" defaultChecked className="accent-indigo-500" />
-              Share Screen
-            </label>
-            <button id="startLocal" className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-sm">Start Local</button>
-          </div>
+          <div />
         </div>
 
         <div className="px-4">
-          <div className="flex flex-wrap gap-6">
-            <div>
-              <div className="mb-2 text-sm text-white/80">Local Camera</div>
-              <video id="localCamera" autoPlay playsInline muted className="w-80 aspect-video bg-black rounded-lg object-cover shadow" />
-            </div>
-            <div>
-              <div className="mb-2 text-sm text-white/80">Local Screen</div>
-              <video id="localScreen" autoPlay playsInline muted className="w-80 aspect-video bg-black rounded-lg object-cover shadow" />
-            </div>
-          </div>
+          {/* Local previews removed from UI to match minimal spec */}
 
-          <div className="mt-4 flex items-center gap-2">
-            <input id="roomId" placeholder="Enter room ID" className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white w-64" />
-            <button id="joinRoom" className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-sm">Join Room</button>
-            <button onClick={() => navigate('/calls')} className="px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm">Back</button>
-          </div>
+          {/* Join controls hidden in auto-join mode */}
 
           <div id="layoutRoot" className="mt-6">
             <div id="screenStage" className="hidden mb-4">
