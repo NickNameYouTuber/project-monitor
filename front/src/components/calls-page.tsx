@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Calendar as CalendarIcon, 
   Video, 
@@ -38,7 +38,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { initCallConnect } from '../utils/call-connect';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 interface Meeting {
   id: string;
@@ -146,9 +146,7 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
 }
 
 function CallInterface({ onEndCall }: { onEndCall: () => void }) {
-  const params = useParams();
-  const navigate = useNavigate();
-  const callRef = useRef<ReturnType<typeof initCallConnect> | null>(null);
+  const params = ({} as any) as { roomId?: string };
   const [callState, setCallState] = useState<CallState>({
     isInCall: true,
     isMuted: false,
@@ -159,12 +157,27 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   });
 
   useEffect(() => {
-    callRef.current = initCallConnect();
-    const roomId = (params as any)?.roomId as string | undefined;
-    if (roomId) {
-      callRef.current?.join(roomId);
-    }
-  }, [params?.roomId]);
+    const roomId = (window.location.pathname.match(/\/call\/(.+)$/) || [])[1];
+    const controls = initCallConnect({
+      roomId,
+      autoJoin: !!roomId,
+      enableCam: false,
+      enableMic: false,
+      enableScreen: false,
+      onPeerAdded: () => {},
+      onPeerCategoryChanged: () => {},
+      onPeerRemoved: () => {},
+    });
+    // wire control buttons
+    const micBtn = document.getElementById('btn-mic');
+    const camBtn = document.getElementById('btn-cam');
+    const scrBtn = document.getElementById('btn-screen');
+    const leaveBtn = document.getElementById('btn-leave');
+    micBtn?.addEventListener('click', () => { controls?.toggleMic(); setCallState(p => ({ ...p, isMuted: !p.isMuted })); });
+    camBtn?.addEventListener('click', () => { controls?.toggleCam(); setCallState(p => ({ ...p, isCameraOn: !p.isCameraOn })); });
+    scrBtn?.addEventListener('click', () => { controls?.toggleScreen(); setCallState(p => ({ ...p, isScreenSharing: !p.isScreenSharing })); });
+    leaveBtn?.addEventListener('click', () => { controls?.leave(); onEndCall(); });
+  }, []);
 
   const toggleMute = () => {
     setCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
@@ -189,34 +202,42 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       <div className="flex-1 relative bg-gray-900">
-        {/* Minimal top bar: only status */}
         <div className="w-full p-4 flex items-center justify-between">
           <div id="status" className="text-sm text-white/80">Status: Disconnected</div>
-          <div />
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-white/80 text-sm">
+              <input id="shareCamera" type="checkbox" defaultChecked className="accent-indigo-500" />
+              Share Camera & Audio
+            </label>
+            <label className="flex items-center gap-2 text-white/80 text-sm">
+              <input id="shareScreen" type="checkbox" defaultChecked className="accent-indigo-500" />
+              Share Screen
+            </label>
+            <button id="startLocal" className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-sm">Start Local</button>
+          </div>
         </div>
 
         <div className="px-4">
-          {/* Local previews removed from UI to match minimal spec */}
-
-          {/* Join controls hidden in auto-join mode */}
-
-          <div id="layoutRoot" className="mt-6">
-            <div id="screenStage" className="hidden mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <button id="screenPrev" className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">◀</button>
-                <div className="text-sm text-white/70">Screens</div>
-                <button id="screenNext" className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">▶</button>
-              </div>
-              <div id="screenContainer" className="w-full"></div>
+          <div className="flex flex-wrap gap-6">
+            <div>
+              <div className="mb-2 text-sm text-white/80">Local Camera</div>
+              <video id="localCamera" autoPlay playsInline muted className="w-80 aspect-video bg-black rounded-lg object-cover shadow" />
             </div>
-            <div className="flex items-center justify-between mb-2">
-              <button id="pagePrev" className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">◀</button>
-              <div className="text-sm text-white/70">Participants</div>
-              <button id="pageNext" className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">▶</button>
+            <div>
+              <div className="mb-2 text-sm text-white/80">Local Screen</div>
+              <video id="localScreen" autoPlay playsInline muted className="w-80 aspect-video bg-black rounded-lg object-cover shadow" />
             </div>
-            <div id="participantsGrid" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
-            <div id="remotes" className="hidden"></div>
           </div>
+
+          <div className="mt-4 flex items-center gap-2">
+            <input id="roomId" placeholder="Enter room ID" className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white w-64" />
+            <button id="joinRoom" className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-sm">Join Room</button>
+          </div>
+
+          {/* Screen shares container (top when any screens present) */}
+          <div id="screens" className="grid grid-cols-1 gap-4 mt-6" />
+          {/* Peers grid (3x3 with pagination planned) */}
+          <div id="peers" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6" />
         </div>
 
         {/* Recording indicator */}
@@ -244,43 +265,31 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
       {/* Call controls */}
       <div className="bg-gray-900 p-4 flex items-center justify-center gap-4">
         <Button
+          id="btn-mic"
           variant={callState.isMuted ? "destructive" : "secondary"}
           size="icon"
           className="h-12 w-12 rounded-full"
-          onClick={async () => {
-            try {
-              const on = await callRef.current?.toggleMic?.();
-              setCallState(prev => ({ ...prev, isMuted: !on }));
-            } catch {}
-          }}
+          onClick={toggleMute}
         >
           {callState.isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
         </Button>
 
         <Button
+          id="btn-cam"
           variant={callState.isCameraOn ? "secondary" : "destructive"}
           size="icon"
           className="h-12 w-12 rounded-full"
-          onClick={async () => {
-            try {
-              const on = await callRef.current?.toggleCamera?.();
-              setCallState(prev => ({ ...prev, isCameraOn: !!on }));
-            } catch {}
-          }}
+          onClick={toggleCamera}
         >
           {callState.isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
         </Button>
 
         <Button
+          id="btn-screen"
           variant={callState.isScreenSharing ? "default" : "secondary"}
           size="icon"
           className="h-12 w-12 rounded-full"
-          onClick={async () => {
-            try {
-              const on = await callRef.current?.toggleScreen?.();
-              setCallState(prev => ({ ...prev, isScreenSharing: !!on }));
-            } catch {}
-          }}
+          onClick={toggleScreenShare}
         >
           <Monitor className="w-6 h-6" />
         </Button>
@@ -312,10 +321,11 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
         </Button>
 
         <Button
+          id="btn-leave"
           variant="destructive"
           size="icon"
           className="h-12 w-12 rounded-full ml-8"
-          onClick={async () => { try { await callRef.current?.leave?.(); } catch {}; onEndCall(); }}
+          onClick={onEndCall}
         >
           <PhoneCall className="w-6 h-6 rotate-180" />
         </Button>
