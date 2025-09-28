@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebRTC Multi-Peer with Signaling Server and Rooms</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -48,7 +49,7 @@
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen bg-zinc-900 text-white">
     <h1>WebRTC Multi-Peer with Signaling Server and Rooms</h1>
     <p>Open in multiple tabs. Optionally start local media (choose what to share), join a room (same room ID for group). If no sharing selected, join as viewer (receive only).</p>
     
@@ -58,23 +59,23 @@
     <label><input type="checkbox" id="shareScreen" checked> Share Screen</label>
     <button id="startLocal">Start Local Media (or Skip for Viewer Mode)</button>
     
-    <div class="videos">
+    <div class="videos flex flex-wrap gap-4">
         <div id="localCameraContainer">
-            <label>Local Camera</label>
-            <video id="localCamera" autoplay playsinline muted></video>
+            <label class="block mb-2 text-sm text-zinc-300">Local Camera</label>
+            <video id="localCamera" autoplay playsinline muted class="w-80 aspect-video bg-black rounded-lg object-cover shadow"></video>
         </div>
         <div id="localScreenContainer">
-            <label>Local Screen</label>
-            <video id="localScreen" autoplay playsinline muted></video>
+            <label class="block mb-2 text-sm text-zinc-300">Local Screen</label>
+            <video id="localScreen" autoplay playsinline muted class="w-80 aspect-video bg-black rounded-lg object-cover shadow"></video>
         </div>
     </div>
     
     <label>Room ID:</label>
     <input id="roomId" placeholder="Enter room ID (e.g., room1)">
-    <button id="joinRoom">Join Room</button>
+    <button id="joinRoom" class="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition">Join Room</button>
     
     <h2>Remote Peers</h2>
-    <div id="remotes" class="videos"></div>
+    <div id="remotes" class="videos grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6"></div>
     
     <script>
         const localCamera = document.getElementById('localCamera');
