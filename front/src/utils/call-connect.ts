@@ -1,5 +1,6 @@
 /* eslint-disable */
 // NOTE: Порт перенесён из public/call.html. Этот модуль связывает DOM-элементы и логику сигналинга/RTC.
+import { io } from 'socket.io-client';
 
 export function initCallConnect(options?: { socketPath?: string; turnServers?: { urls: string; username?: string; credential?: string }[] }) {
   const localCamera = document.getElementById('localCamera') as HTMLVideoElement | null;
@@ -18,8 +19,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   let roomJoined = false;
 
   // Socket.IO
-  // @ts-ignore
-  const socket = (window as any).io('/', { path: options?.socketPath ?? '/socket.io' });
+  const socket = io('/', { path: options?.socketPath ?? '/socket.io' });
   const peers: Record<string, RTCPeerConnection> = {};
 
   function safePlay(videoEl: HTMLVideoElement | null) {
