@@ -365,6 +365,7 @@ export default function App() {
                 />
                 <Route path="/whiteboard" element={<WhiteboardPage project={selectedProject} />} />
                 <Route path="/calls" element={<CallsPage />} />
+                <Route path="/call/:roomId" element={<CallsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="/projects" replace />} />
               </Routes>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   Calendar as CalendarIcon, 
   Video, 
@@ -38,6 +38,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { initCallConnect } from '../utils/call-connect';
+import { useParams, useNavigate } from 'react-router-dom';
 
 interface Meeting {
   id: string;
@@ -145,6 +146,9 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
 }
 
 function CallInterface({ onEndCall }: { onEndCall: () => void }) {
+  const params = useParams();
+  const navigate = useNavigate();
+  const callRef = useRef<ReturnType<typeof initCallConnect> | null>(null);
   const [callState, setCallState] = useState<CallState>({
     isInCall: true,
     isMuted: false,
@@ -155,8 +159,12 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
   });
 
   useEffect(() => {
-    initCallConnect();
-  }, []);
+    callRef.current = initCallConnect();
+    const roomId = (params as any)?.roomId as string | undefined;
+    if (roomId) {
+      callRef.current?.join(roomId);
+    }
+  }, [params?.roomId]);
 
   const toggleMute = () => {
     setCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
@@ -211,9 +219,26 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
           <div className="mt-4 flex items-center gap-2">
             <input id="roomId" placeholder="Enter room ID" className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white w-64" />
             <button id="joinRoom" className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-sm">Join Room</button>
+            <button onClick={() => navigate('/calls')} className="px-3 py-2 rounded bg-gray-700 hover:bg-gray-600 text-sm">Back</button>
           </div>
 
-          <div id="remotes" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6" />
+          <div id="layoutRoot" className="mt-6">
+            <div id="screenStage" className="hidden mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <button id="screenPrev" className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">◀</button>
+                <div className="text-sm text-white/70">Screens</div>
+                <button id="screenNext" className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">▶</button>
+              </div>
+              <div id="screenContainer" className="w-full"></div>
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <button id="pagePrev" className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">◀</button>
+              <div className="text-sm text-white/70">Participants</div>
+              <button id="pageNext" className="px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">▶</button>
+            </div>
+            <div id="participantsGrid" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+            <div id="remotes" className="hidden"></div>
+          </div>
         </div>
 
         {/* Recording indicator */}
@@ -244,7 +269,12 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
           variant={callState.isMuted ? "destructive" : "secondary"}
           size="icon"
           className="h-12 w-12 rounded-full"
-          onClick={toggleMute}
+          onClick={async () => {
+            try {
+              const on = await callRef.current?.toggleMic?.();
+              setCallState(prev => ({ ...prev, isMuted: !on }));
+            } catch {}
+          }}
         >
           {callState.isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
         </Button>
@@ -253,7 +283,12 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
           variant={callState.isCameraOn ? "secondary" : "destructive"}
           size="icon"
           className="h-12 w-12 rounded-full"
-          onClick={toggleCamera}
+          onClick={async () => {
+            try {
+              const on = await callRef.current?.toggleCamera?.();
+              setCallState(prev => ({ ...prev, isCameraOn: !!on }));
+            } catch {}
+          }}
         >
           {callState.isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
         </Button>
@@ -262,7 +297,12 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
           variant={callState.isScreenSharing ? "default" : "secondary"}
           size="icon"
           className="h-12 w-12 rounded-full"
-          onClick={toggleScreenShare}
+          onClick={async () => {
+            try {
+              const on = await callRef.current?.toggleScreen?.();
+              setCallState(prev => ({ ...prev, isScreenSharing: !!on }));
+            } catch {}
+          }}
         >
           <Monitor className="w-6 h-6" />
         </Button>
@@ -297,7 +337,7 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
           variant="destructive"
           size="icon"
           className="h-12 w-12 rounded-full ml-8"
-          onClick={onEndCall}
+          onClick={async () => { try { await callRef.current?.leave?.(); } catch {}; onEndCall(); }}
         >
           <PhoneCall className="w-6 h-6 rotate-180" />
         </Button>
