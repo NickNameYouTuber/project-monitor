@@ -19,14 +19,22 @@ export function initCallConnect(options?: {
   const shareCameraCheckbox = document.getElementById('shareCamera') as HTMLInputElement | null;
   const shareScreenCheckbox = document.getElementById('shareScreen') as HTMLInputElement | null;
   const roomIdInput = document.getElementById('roomId') as HTMLInputElement | null;
-  const remotesContainer = document.getElementById('remotes') as HTMLElement | null;
-  const screensContainer = document.getElementById('screens') as HTMLElement | null;
-  const peersContainer = (document.getElementById('peers') as HTMLElement | null) || remotesContainer;
+  let remotesContainer = document.getElementById('remotes') as HTMLElement | null;
+  let screensContainer = document.getElementById('screens') as HTMLElement | null;
+  let peersContainer = (document.getElementById('peers') as HTMLElement | null) || remodesFallback();
   const statusDiv = document.getElementById('status') as HTMLElement | null;
   const startBtn = document.getElementById('startLocal');
   const joinBtn = document.getElementById('joinRoom');
 
-  if (!remotesContainer) throw new Error('remotes container not found');
+  function remodesFallback() {
+    const candidates = [document.getElementById('peers'), document.getElementById('remotes'), document.getElementById('screens')].filter(Boolean) as HTMLElement[];
+    if (candidates[0]) return candidates[0];
+    // Создаём дефолтный контейнер если ничего не найдено
+    const el = document.createElement('div');
+    el.id = 'peers';
+    document.body.appendChild(el);
+    return el;
+  }
 
   let localStream: MediaStream | null = null;
   let roomJoined = false;
