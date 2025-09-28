@@ -391,7 +391,7 @@ export function CallsPage() {
   }; 
 
   const startCall = () => {
-    window.location.href = '/call.html';
+    setIsInCall(true);
   };
 
   const endCall = () => {
