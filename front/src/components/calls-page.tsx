@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Calendar as CalendarIcon, 
   Video, 
@@ -37,6 +37,7 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
+import { initCallConnect } from '../utils/call-connect';
 
 interface Meeting {
   id: string;
@@ -153,11 +154,9 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
     isChatOpen: false
   });
 
-  const [participants] = useState([
-    { name: 'John Doe', isMuted: false, isCameraOn: true },
-    { name: 'Jane Smith', isMuted: true, isCameraOn: true },
-    { name: 'Mike Johnson', isMuted: false, isCameraOn: false }
-  ]);
+  useEffect(() => {
+    initCallConnect();
+  }, []);
 
   const toggleMute = () => {
     setCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
@@ -181,43 +180,40 @@ function CallInterface({ onEndCall }: { onEndCall: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
-      {/* Main video area */}
       <div className="flex-1 relative bg-gray-900">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-white">
-            <div className="w-32 h-32 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-16 h-16" />
-            </div>
-            <h3 className="text-xl mb-2">Team Standup</h3>
-            <p className="text-gray-400">3 participants</p>
+        <div className="w-full p-4 flex items-center justify-between">
+          <div id="status" className="text-sm text-white/80">Status: Disconnected</div>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-white/80 text-sm">
+              <input id="shareCamera" type="checkbox" defaultChecked className="accent-indigo-500" />
+              Share Camera & Audio
+            </label>
+            <label className="flex items-center gap-2 text-white/80 text-sm">
+              <input id="shareScreen" type="checkbox" defaultChecked className="accent-indigo-500" />
+              Share Screen
+            </label>
+            <button id="startLocal" className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-sm">Start Local</button>
           </div>
         </div>
 
-        {/* Participants grid */}
-        <div className="absolute top-4 right-4 grid grid-cols-1 gap-2 max-w-xs">
-          {participants.map((participant, index) => (
-            <div key={index} className="relative bg-gray-800 rounded-lg aspect-video w-32">
-              <div className="absolute inset-0 flex items-center justify-center text-white text-xs">
-                {participant.isCameraOn ? (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span>{participant.name.split(' ')[0]}</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center">
-                    <VideoOff className="w-4 h-4 mb-1" />
-                    <span className="text-xs">{participant.name.split(' ')[0]}</span>
-                  </div>
-                )}
-              </div>
-              <div className="absolute bottom-1 left-1 flex gap-1">
-                {participant.isMuted && (
-                  <div className="bg-red-600 rounded-full p-1">
-                    <MicOff className="w-2 h-2" />
-                  </div>
-                )}
-              </div>
+        <div className="px-4">
+          <div className="flex flex-wrap gap-6">
+            <div>
+              <div className="mb-2 text-sm text-white/80">Local Camera</div>
+              <video id="localCamera" autoPlay playsInline muted className="w-80 aspect-video bg-black rounded-lg object-cover shadow" />
             </div>
-          ))}
+            <div>
+              <div className="mb-2 text-sm text-white/80">Local Screen</div>
+              <video id="localScreen" autoPlay playsInline muted className="w-80 aspect-video bg-black rounded-lg object-cover shadow" />
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center gap-2">
+            <input id="roomId" placeholder="Enter room ID" className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white w-64" />
+            <button id="joinRoom" className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-sm">Join Room</button>
+          </div>
+
+          <div id="remotes" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6" />
         </div>
 
         {/* Recording indicator */}
