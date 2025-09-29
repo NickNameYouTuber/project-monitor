@@ -24,19 +24,22 @@ export default function CallPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col p-6 transition-all duration-300" style={{ backgroundColor: '#0B0B0D' }}>
-      <div className="flex-1 min-h-0 flex flex-col mx-auto w-full max-w-none pb-24">
+    <div className="h-screen w-screen overflow-hidden flex flex-col transition-all duration-300" style={{ backgroundColor: '#0B0B0D' }}>
+      {/* Main content area */}
+      <div className="flex-1 min-h-0 p-4 flex flex-col">
         {/* Active Screen (top) */}
-        <div id="activeScreenWrap" className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 mb-4 h-0 transition-all duration-300">
-          <video id="activeScreen" autoPlay playsInline className="w-full h-full object-contain bg-black hidden" />
+        <div className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 mb-4 flex-shrink-0">
+          <video id="activeScreen" autoPlay playsInline className="w-full aspect-video bg-black hidden" />
         </div>
-        {/* Bottom strip (participants) */}
-        <div id="remotes" className="flex-1 min-h-0 overflow-y-auto grid gap-4 p-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]" />
+        {/* Participants grid - takes remaining space */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <div id="remotes" className="h-full grid gap-2 auto-rows-fr" />
+        </div>
       </div>
 
       {/* Navigation Controls + hidden DOM hooks for RTC */}
-      <div className="fixed bottom-2 left-4 right-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="flex-shrink-0 p-4">
+        <div className="max-w-4xl mx-auto">
           <div className="rounded-xl px-4 py-2 border" style={{ backgroundColor: '#16171A', borderColor: '#2A2D32' }}>
             <NavigationControls
               participantCount={0}

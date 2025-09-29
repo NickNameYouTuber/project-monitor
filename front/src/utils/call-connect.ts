@@ -45,20 +45,37 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   function updateLayoutForScreen(active: boolean) {
     const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
-    const activeScreenWrap = document.getElementById('activeScreenWrap') as HTMLElement | null;
     const remotesEl = document.getElementById('remotes') as HTMLElement | null;
     if (!remotesEl) return;
     if (active) {
       // Показать верхний экран и сделать нижнюю полосу горизонтальной
       if (activeScreenEl) activeScreenEl.classList.remove('hidden');
-      if (activeScreenWrap) activeScreenWrap.style.height = '45vh';
-      remotesEl.className = 'flex flex-wrap justify-center items-center gap-4 p-4';
+      remotesEl.className = 'h-full flex flex-wrap justify-center items-center gap-2';
     } else {
-      // Спрятать верхний экран и включить сетку 3x2
+      // Спрятать верхний экран и включить адаптивную сетку по высоте
       if (activeScreenEl) activeScreenEl.classList.add('hidden');
-      if (activeScreenWrap) activeScreenWrap.style.height = '0px';
-      remotesEl.className = 'flex-1 min-h-0 overflow-y-auto grid gap-4 p-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]';
+      remotesEl.className = 'h-full grid gap-2 auto-rows-fr';
     }
+    // Обновляем колонки в зависимости от количества участников
+    updateGridColumns();
+  }
+
+  function updateGridColumns() {
+    const remotesEl = document.getElementById('remotes') as HTMLElement | null;
+    if (!remotesEl) return;
+    
+    const participantCount = remotesEl.children.length;
+    if (participantCount === 0) return;
+    
+    // Определяем оптимальную сетку в зависимости от количества участников
+    let columns: number;
+    if (participantCount <= 2) columns = participantCount;
+    else if (participantCount <= 4) columns = 2;
+    else if (participantCount <= 6) columns = 3;
+    else if (participantCount <= 9) columns = 3;
+    else columns = 4;
+    
+    remotesEl.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
   }
 
   function ensurePeerTile(peerId: string) {
@@ -67,13 +84,15 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     if (!peerDiv) {
       peerDiv = document.createElement('div');
       peerDiv.id = 'peer-' + peerId;
-      peerDiv.className = 'rounded-xl overflow-hidden ring-1 ring-[#2A2D32] bg-[#16171A] aspect-video w-full relative flex items-center justify-center';
+      peerDiv.className = 'rounded-xl overflow-hidden ring-1 ring-[#2A2D32] bg-[#16171A] w-full h-full relative flex items-center justify-center';
       peerDiv.innerHTML = `
         <video id="remote-vid1-${peerId}" autoplay playsinline class="absolute inset-0 w-full h-full object-cover bg-black hidden"></video>
         <div id="placeholder-${peerId}" class="text-[#AAB0B6] text-xs">${peerId === 'me' ? 'You' : peerId}</div>
       `;
       participantsContainer.appendChild(peerDiv);
       try { console.log('[CALL] tile created for', peerId); } catch {}
+      // Обновляем сетку при добавлении участника
+      updateGridColumns();
     }
     return peerDiv;
   }
@@ -169,16 +188,13 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     // Обновляем превью экрана
     try {
       const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
-      const activeScreenWrap = document.getElementById('activeScreenWrap') as HTMLElement | null;
       if (activeScreenEl) {
         if (screenStream) {
           activeScreenEl.srcObject = screenStream;
           safePlay(activeScreenEl);
           console.log('[CALL] local screen preview updated');
-          if (activeScreenWrap) activeScreenWrap.style.height = '45vh';
         } else {
           activeScreenEl.srcObject = new MediaStream();
-          if (activeScreenWrap) activeScreenWrap.style.height = '0px';
         }
       }
     } catch {}
@@ -555,7 +571,11 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     }
     
     const peerDiv = document.getElementById('peer-' + peerId);
-    if (peerDiv) peerDiv.remove();
+    if (peerDiv) {
+      peerDiv.remove();
+      // Обновляем сетку при удалении участника
+      updateGridColumns();
+    }
     
     // Если это был пир который показывал экран, убираем activeScreen
     const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
