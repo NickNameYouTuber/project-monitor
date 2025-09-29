@@ -30,7 +30,7 @@ export default function CallPage() {
         {/* Active Screen (top) - скрыт по умолчанию, появляется только при демонстрации */}
         <div id="activeScreenContainer" className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 hidden" style={{ flex: '1 1 0', minHeight: 0 }}>
           <div className="w-full h-full flex items-center justify-center">
-            <video id="activeScreen" autoPlay playsInline className="max-w-full max-h-full object-contain bg-black" />
+            <video id="activeScreen" autoPlay playsInline className="h-full w-auto object-contain bg-black" />
           </div>
         </div>
         {/* Participants grid - takes remaining space or all space when no screen */}
