@@ -150,13 +150,18 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     // Обновляем превью экрана
     try {
       const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+      const remotes = document.getElementById('remotes') as HTMLElement | null;
       if (activeScreenEl) {
         if (screenStream) {
           activeScreenEl.srcObject = screenStream;
           safePlay(activeScreenEl);
+          try { (activeScreenEl as any).style.display = 'block'; } catch {}
+          if (remotes) remotes.classList.add('flex');
           console.log('[CALL] local screen preview updated');
         } else {
           activeScreenEl.srcObject = new MediaStream();
+          try { (activeScreenEl as any).style.display = 'none'; } catch {}
+          if (remotes) remotes.classList.add('flex');
         }
       }
     } catch {}
@@ -447,12 +452,10 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     };
 
     // Ensure receivers exist
-    try {
-      pc.addTransceiver('audio', { direction: 'recvonly' });
-    } catch {}
-    try {
-      pc.addTransceiver('video', { direction: 'recvonly' });
-    } catch {}
+    try { pc.addTransceiver('audio', { direction: 'recvonly' }); } catch {}
+    // Всегда резервируем два видео-приёмника: для камеры и для экрана
+    try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
+    try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
     if (localStream) {
       try { localStream.getTracks().forEach((track) => pc.addTrack(track, localStream!)); } catch {}
     }
@@ -485,6 +488,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
           activeScreenEl.srcObject = new MediaStream([track]);
           safePlay(activeScreenEl);
           emitScreenActive(true);
+          try { (activeScreenEl as any).style.display = 'block'; } catch {}
         }
       } else if (trackSource === 'camera') {
         // Это камера - всегда в плитку участника
