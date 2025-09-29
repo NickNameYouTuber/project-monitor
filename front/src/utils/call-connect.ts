@@ -229,8 +229,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     } else if (audioSender) {
       // Удаляем аудио если его больше нет
       try {
-        pc.removeTrack(audioSender);
-        console.log(`[CALL] removed audio track`);
+        await audioSender.replaceTrack(null);
+        console.log(`[CALL] cleared audio track`);
       } catch {}
     }
     
@@ -260,11 +260,11 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       }
     }
     
-    // Удаляем лишние видео senders
+    // Очищаем лишние видео senders (заменяем на null вместо удаления)
     for (let i = newVideoTracks.length; i < videoSenders.length; i++) {
       try {
-        pc.removeTrack(videoSenders[i]);
-        console.log(`[CALL] removed extra video sender ${i}`);
+        await videoSenders[i].replaceTrack(null);
+        console.log(`[CALL] cleared video sender ${i}`);
       } catch {}
     }
   }
@@ -344,13 +344,22 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       console.log('[CALL] stopping camera stream');
       cameraStream.getTracks().forEach(t => t.stop());
       cameraStream = null;
-      rebuildLocalStream();
+      await rebuildLocalStream();
+      
+      // Очищаем локальное превью
+      try {
+        const selfVideo = document.getElementById('remote-vid1-me') as HTMLVideoElement | null;
+        if (selfVideo) {
+          selfVideo.srcObject = new MediaStream();
+          selfVideo.classList.add('hidden');
+        }
+        const placeholder = document.getElementById('placeholder-me');
+        if (placeholder) placeholder.classList.remove('hidden');
+      } catch {}
     }
     
     camEnabled = enable;
     emitLocalStatus();
-    // Сообщаем в комнату про состояние камеры
-    try { if (currentRoomId) socket.emit('cameraState', { roomId: currentRoomId, active: enable }); } catch {}
   }
 
   async function setScreenEnabled(enable: boolean) {
@@ -371,7 +380,15 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       console.log('[CALL] stopping screen stream');
       screenStream.getTracks().forEach(t => t.stop());
       screenStream = null;
-      rebuildLocalStream();
+      await rebuildLocalStream();
+      
+      // Очищаем локальное превью экрана
+      try {
+        const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+        if (activeScreenEl) {
+          activeScreenEl.srcObject = new MediaStream();
+        }
+      } catch {}
     }
     
     screenEnabled = enable;
@@ -596,10 +613,11 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     for (const peerId of users) {
       ensurePeerTile(peerId);
       const pc = createPeerConnection(peerId);
-      // Всегда резервируем приемники, чтобы новый участник сразу получил 2 видео трека
-      try { pc.addTransceiver('audio', { direction: 'recvonly' }); } catch {}
-      try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
-      try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
+      // Всегда добавляем приёмники для получения треков от существующих пиров
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       socket.emit('offer', { to: peerId, offer: pc.localDescription });
@@ -646,22 +664,6 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     peerScreenState[from] = !!active;
     try { console.log('[CALL] peer screen state', from, active); } catch {}
     try { updateLayoutForScreen(!!active); } catch {}
-  });
-
-  // Состояние камеры у других пиров
-  socket.on('cameraState', ({ from, active }: any) => {
-    try {
-      const vid1 = document.getElementById(`remote-vid1-${from}`) as HTMLVideoElement | null;
-      const placeholder = document.getElementById(`placeholder-${from}`);
-      if (vid1) {
-        if (!active) {
-          // Камера выключена: очищаем видео, показываем плейсхолдер
-          vid1.srcObject = new MediaStream();
-          try { vid1.classList.add('hidden'); } catch {}
-          if (placeholder) placeholder.classList.remove('hidden');
-        }
-      }
-    } catch {}
   });
 
   socket.on('userLeft', (peerId: string) => removePeer(peerId));
