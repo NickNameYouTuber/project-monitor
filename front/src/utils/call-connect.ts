@@ -530,11 +530,42 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       ? 'screen'
       : realTrackSource;
       
-    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (real: ${realTrackSource}, peerScreen: ${!!peerScreenState[peerId]})`);
+    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (real: ${realTrackSource}, peerScreen: ${!!peerScreenState[peerId]}, muted: ${track.muted}, enabled: ${track.enabled})`);
     
     let peerDiv = ensurePeerTile(peerId) as HTMLElement;
     const vid1 = document.getElementById(`remote-vid1-${peerId}`) as HTMLVideoElement | null;
     const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+    
+    // Слушаем событие mute/unmute для скрытия/показа видео
+    track.onmute = () => {
+      console.log(`[CALL] track muted from ${peerId}: ${track.kind}`);
+      if (track.kind === 'video' && trackSource === 'camera' && vid1) {
+        vid1.srcObject = new MediaStream();
+        vid1.classList.add('hidden');
+        const placeholder = document.getElementById(`placeholder-${peerId}`);
+        if (placeholder) placeholder.classList.remove('hidden');
+      } else if (track.kind === 'video' && trackSource === 'screen' && activeScreenEl) {
+        activeScreenEl.srcObject = new MediaStream();
+        emitScreenActive(false);
+      }
+    };
+    
+    track.onunmute = () => {
+      console.log(`[CALL] track unmuted from ${peerId}: ${track.kind}`);
+    };
+    
+    track.onended = () => {
+      console.log(`[CALL] track ended from ${peerId}: ${track.kind}`);
+      if (track.kind === 'video' && trackSource === 'camera' && vid1) {
+        vid1.srcObject = new MediaStream();
+        vid1.classList.add('hidden');
+        const placeholder = document.getElementById(`placeholder-${peerId}`);
+        if (placeholder) placeholder.classList.remove('hidden');
+      } else if (track.kind === 'video' && trackSource === 'screen' && activeScreenEl) {
+        activeScreenEl.srcObject = new MediaStream();
+        emitScreenActive(false);
+      }
+    };
     
     if (track.kind === 'video') {
       if (trackSource === 'screen') {
@@ -626,13 +657,19 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   socket.on('userJoined', async (peerId: string) => {
     ensurePeerTile(peerId);
-    createPeerConnection(peerId);
+    const pc = createPeerConnection(peerId);
+    
     // Передаём текущее состояние экрана вновь подключившемуся
     try {
       if (currentRoomId) {
         socket.emit('screenState', { roomId: currentRoomId, active: screenEnabled });
       }
     } catch {}
+    
+    // Если у нас есть локальные треки, новый пир должен их получить через offer/answer
+    // Ждём чтобы новый пир успел отправить свой offer
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // Подстраховка: инициируем локальную пере-офферизацию, чтобы треки точно поехали
     try { await attachLocalToPeersAndRenegotiate(); } catch {}
   });
