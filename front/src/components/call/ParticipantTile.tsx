@@ -34,9 +34,9 @@ export function ParticipantTile({
   const [showMenu, setShowMenu] = useState(false);
 
   const sizeClasses = {
-    small: 'aspect-video w-full min-w-[140px] min-h-[90px]',
-    medium: 'aspect-video w-full min-w-[200px] min-h-[120px]',
-    large: 'aspect-video w-full min-w-[260px] min-h-[160px]'
+    small: 'h-32 w-44', // 128px x 176px for bottom strip in 1+3 mode
+    medium: 'aspect-video w-full', // Rectangular aspect ratio for 3x3 grid
+    large: 'h-80 w-96'
   };
 
   const getInitials = (name: string) => {

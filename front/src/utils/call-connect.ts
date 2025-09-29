@@ -50,11 +50,11 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     if (active) {
       // Показать верхний экран и сделать нижнюю полосу горизонтальной
       if (activeScreenEl) activeScreenEl.classList.remove('hidden');
-      remotesEl.className = 'flex justify-center items-center gap-4 p-4';
+      remotesEl.className = 'flex flex-wrap justify-center items-center gap-4 p-4';
     } else {
       // Спрятать верхний экран и включить сетку 3x2
       if (activeScreenEl) activeScreenEl.classList.add('hidden');
-      remotesEl.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4';
+      remotesEl.className = 'grid gap-4 p-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]';
     }
   }
 
@@ -64,9 +64,9 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     if (!peerDiv) {
       peerDiv = document.createElement('div');
       peerDiv.id = 'peer-' + peerId;
-      peerDiv.className = 'rounded-xl overflow-hidden ring-1 ring-[#2A2D32] bg-[#16171A] w-full relative flex items-center justify-center';
+      peerDiv.className = 'rounded-xl overflow-hidden ring-1 ring-[#2A2D32] bg-[#16171A] aspect-video w-full relative flex items-center justify-center';
       peerDiv.innerHTML = `
-        <video id="remote-vid1-${peerId}" autoplay playsinline class="absolute inset-0 w-full h-full object-cover bg-black hidden" style="aspect-ratio:16/9"></video>
+        <video id="remote-vid1-${peerId}" autoplay playsinline class="absolute inset-0 w-full h-full object-cover bg-black hidden"></video>
         <div id="placeholder-${peerId}" class="text-[#AAB0B6] text-xs">${peerId === 'me' ? 'You' : peerId}</div>
       `;
       participantsContainer.appendChild(peerDiv);
