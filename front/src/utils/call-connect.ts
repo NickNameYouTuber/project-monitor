@@ -41,8 +41,6 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   const participantsContainer = remotesContainer; // 3x2 grid
   let currentRoomId: string | null = null;
   const peerScreenState: Record<string, boolean> = {};
-  const peerHasScreenTrack: Record<string, boolean> = {};
-  const peerVideoRole: Record<string, Record<string, 'camera' | 'screen'>> = {};
 
   function ensurePeerTile(peerId: string) {
     if (!participantsContainer) return;
@@ -87,7 +85,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     if (label.includes('screen') || label.includes('display') || label.includes('window') || label.includes('monitor')) {
       return 'screen';
     }
-    return track.kind === 'video' ? 'camera' : 'unknown';
+    // По умолчанию не считаем неизвестное видео камерой, чтобы не путать экран
+    return 'unknown';
   }
 
   // Пересобираем localStream из доступных потоков (как в call.html)
@@ -464,42 +463,49 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
 
   function handleRemoteTrack(peerId: string, track: MediaStreamTrack, streams: MediaStream[]) {
-    if (!peerVideoRole[peerId]) peerVideoRole[peerId] = {};
+    // Сначала определяем реальный источник трека
     const realTrackSource = getTrackSource(track);
-    let role: 'camera' | 'screen' | 'unknown' = realTrackSource as any;
-
-    // Если роль уже назначена этому track.id — используем её, чтобы не прыгало
-    if (peerVideoRole[peerId][track.id]) {
-      role = peerVideoRole[peerId][track.id];
-    } else if (track.kind === 'video') {
-      // Если экран активен у пира и ещё не занимали зону экрана — этот видеотрек экран
-      if (peerScreenState[peerId] && !peerHasScreenTrack[peerId] && realTrackSource !== 'camera') {
-        role = 'screen';
-        peerHasScreenTrack[peerId] = true;
-      } else if (realTrackSource === 'screen') {
-        role = 'screen';
-        peerHasScreenTrack[peerId] = true;
-      } else if (realTrackSource === 'camera' || !peerVideoRole[peerId][track.id]) {
-        role = 'camera';
-      }
-      peerVideoRole[peerId][track.id] = role as any;
-    }
-
-    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [role=${role}] (real=${realTrackSource}, screenActive=${!!peerScreenState[peerId]})`);
-
+    
+    // Если у пира активен экран И это неопределённый видео трек, считаем его экраном
+    const trackSource = peerScreenState[peerId] && track.kind === 'video' && realTrackSource === 'unknown'
+      ? 'screen'
+      : realTrackSource;
+      
+    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (real: ${realTrackSource}, peerScreen: ${!!peerScreenState[peerId]})`);
+    
     let peerDiv = ensurePeerTile(peerId) as HTMLElement;
     const vid1 = document.getElementById(`remote-vid1-${peerId}`) as HTMLVideoElement | null;
     const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
-
+    
     if (track.kind === 'video') {
-      if (role === 'screen') {
+      if (trackSource === 'screen') {
+        // Это экран - всегда в activeScreen
         if (activeScreenEl) {
+          console.log(`[CALL] screen track to activeScreen for ${peerId}`);
           activeScreenEl.srcObject = new MediaStream([track]);
           safePlay(activeScreenEl);
           emitScreenActive(true);
         }
-      } else if (role === 'camera') {
+      } else if (trackSource === 'camera') {
+        // Это камера - всегда в плитку участника
         if (vid1) {
+          console.log(`[CALL] camera track to participant tile for ${peerId}`);
+          const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
+          vid1.srcObject = new MediaStream([track, ...aud]);
+          safePlay(vid1);
+          try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
+          const placeholder = document.getElementById(`placeholder-${peerId}`);
+          if (placeholder) placeholder.classList.add('hidden');
+        }
+      } else {
+        // Неопределённые видеотреки при активном экране считаем экраном, иначе камерой
+        if (peerScreenState[peerId] && activeScreenEl) {
+          console.log(`[CALL] unknown->screen due to peer screen active for ${peerId}`);
+          activeScreenEl.srcObject = new MediaStream([track]);
+          safePlay(activeScreenEl);
+          emitScreenActive(true);
+        } else if (vid1) {
+          console.log(`[CALL] unknown->camera for ${peerId}`);
           const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
           vid1.srcObject = new MediaStream([track, ...aud]);
           safePlay(vid1);
@@ -509,6 +515,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         }
       }
     } else if (track.kind === 'audio') {
+      console.log(`[CALL] audio track for ${peerId}`);
       if (vid1) {
         const vids = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getVideoTracks() : [];
         vid1.srcObject = new MediaStream([...vids, track]);
@@ -536,11 +543,6 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         emitScreenActive(false);
       }
     }
-
-    // Сброс ролей и флагов для пира
-    delete peerScreenState[peerId];
-    delete peerHasScreenTrack[peerId];
-    delete peerVideoRole[peerId];
   }
 
   // Socket events
@@ -589,12 +591,6 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   // Получаем состояние экрана других пиров
   socket.on('screenState', ({ from, active }: any) => {
     peerScreenState[from] = !!active;
-    if (!peerVideoRole[from]) peerVideoRole[from] = {};
-    if (!active) {
-      // Сброс роли экрана, чтобы следующий экран занял верхнюю зону
-      peerHasScreenTrack[from] = false;
-      // Не трогаем роли камеры, чтобы камеры не мигали
-    }
     try { console.log('[CALL] peer screen state', from, active); } catch {}
   });
 
