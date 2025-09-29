@@ -461,16 +461,41 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   }
 
 
+  // Счётчик видео треков для каждого пира (для правильного порядка)
+  const peerVideoTrackCount: Record<string, number> = {};
+
   function handleRemoteTrack(peerId: string, track: MediaStreamTrack, streams: MediaStream[]) {
-    // Сначала определяем реальный источник трека
-    const realTrackSource = getTrackSource(track);
+    // Инициализируем счётчик для нового пира
+    if (!peerVideoTrackCount[peerId]) {
+      peerVideoTrackCount[peerId] = 0;
+    }
     
-    // Если у пира активен экран И это неопределённый видео трек, считаем его экраном
-    const trackSource = peerScreenState[peerId] && track.kind === 'video' && realTrackSource === 'unknown'
-      ? 'screen'
-      : realTrackSource;
+    let trackSource = getTrackSource(track);
+    
+    // Для видео треков используем логику порядка + состояние экрана
+    if (track.kind === 'video') {
+      const videoTrackIndex = peerVideoTrackCount[peerId];
+      peerVideoTrackCount[peerId]++;
       
-    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (real: ${realTrackSource}, peerScreen: ${!!peerScreenState[peerId]})`);
+      // Определяем источник по порядку и состоянию пира
+      if (peerScreenState[peerId]) {
+        // Если у пира активен экран:
+        // - Первый видео трек = экран (если он не помечен как камера)
+        // - Второй видео трек = камера
+        if (videoTrackIndex === 0 && trackSource !== 'camera') {
+          trackSource = 'screen';
+        } else {
+          trackSource = 'camera';
+        }
+      } else {
+        // Если экран неактивен, все видео = камера (кроме явно помеченных как экран)
+        if (trackSource !== 'screen') {
+          trackSource = 'camera';
+        }
+      }
+    }
+      
+    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (videoIdx: ${track.kind === 'video' ? peerVideoTrackCount[peerId] - 1 : 'N/A'}, peerScreen: ${!!peerScreenState[peerId]})`);
     
     let peerDiv = ensurePeerTile(peerId) as HTMLElement;
     const vid1 = document.getElementById(`remote-vid1-${peerId}`) as HTMLVideoElement | null;
@@ -531,6 +556,10 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       try { peers[peerId].close(); } catch {}
       delete peers[peerId];
     }
+    
+    // Очищаем состояние пира
+    delete peerScreenState[peerId];
+    delete peerVideoTrackCount[peerId];
     
     const peerDiv = document.getElementById('peer-' + peerId);
     if (peerDiv) peerDiv.remove();
