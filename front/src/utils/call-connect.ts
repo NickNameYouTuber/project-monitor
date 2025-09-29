@@ -462,18 +462,19 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
 
   function handleRemoteTrack(peerId: string, track: MediaStreamTrack, streams: MediaStream[]) {
-    // Если у пира активен экран, первый видеотрек трактуем как экран,
-    // последующие видеотреки — как камера (чтобы камера не терялась).
-    const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
-    const screenOccupied = !!(activeScreenEl && activeScreenEl.srcObject instanceof MediaStream && activeScreenEl.srcObject.getVideoTracks().length);
-    const inferredSource = getTrackSource(track);
-    const trackSource = peerScreenState[peerId] && track.kind === 'video'
-      ? (screenOccupied ? 'camera' : 'screen')
-      : inferredSource;
-    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}]`);
+    // Сначала определяем реальный источник трека
+    const realTrackSource = getTrackSource(track);
+    
+    // Если у пира активен экран И это неопределённый видео трек, считаем его экраном
+    const trackSource = peerScreenState[peerId] && track.kind === 'video' && realTrackSource === 'unknown'
+      ? 'screen'
+      : realTrackSource;
+      
+    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (real: ${realTrackSource}, peerScreen: ${!!peerScreenState[peerId]})`);
     
     let peerDiv = ensurePeerTile(peerId) as HTMLElement;
     const vid1 = document.getElementById(`remote-vid1-${peerId}`) as HTMLVideoElement | null;
+    const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
     
     if (track.kind === 'video') {
       if (trackSource === 'screen') {
