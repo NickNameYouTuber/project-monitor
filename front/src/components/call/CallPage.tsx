@@ -24,14 +24,14 @@ export default function CallPage() {
   }, []);
 
   return (
-    <div className="min-h-screen p-6 transition-all duration-300" style={{ backgroundColor: '#0B0B0D' }}>
-      <div className="mx-auto w-full max-w-none pb-24">
+    <div className="min-h-screen flex flex-col p-6 transition-all duration-300" style={{ backgroundColor: '#0B0B0D' }}>
+      <div className="flex-1 min-h-0 flex flex-col mx-auto w-full max-w-none pb-24">
         {/* Active Screen (top) */}
-        <div className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 mb-4">
-          <video id="activeScreen" autoPlay playsInline className="w-full aspect-video bg-black hidden" />
+        <div id="activeScreenWrap" className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 mb-4 h-0 transition-all duration-300">
+          <video id="activeScreen" autoPlay playsInline className="w-full h-full object-contain bg-black hidden" />
         </div>
         {/* Bottom strip (participants) */}
-        <div id="remotes" className="grid gap-4 p-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]" />
+        <div id="remotes" className="flex-1 min-h-0 overflow-y-auto grid gap-4 p-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]" />
       </div>
 
       {/* Navigation Controls + hidden DOM hooks for RTC */}

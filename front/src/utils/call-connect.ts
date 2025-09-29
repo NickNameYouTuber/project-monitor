@@ -45,16 +45,19 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   function updateLayoutForScreen(active: boolean) {
     const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+    const activeScreenWrap = document.getElementById('activeScreenWrap') as HTMLElement | null;
     const remotesEl = document.getElementById('remotes') as HTMLElement | null;
     if (!remotesEl) return;
     if (active) {
       // Показать верхний экран и сделать нижнюю полосу горизонтальной
       if (activeScreenEl) activeScreenEl.classList.remove('hidden');
+      if (activeScreenWrap) activeScreenWrap.style.height = '45vh';
       remotesEl.className = 'flex flex-wrap justify-center items-center gap-4 p-4';
     } else {
       // Спрятать верхний экран и включить сетку 3x2
       if (activeScreenEl) activeScreenEl.classList.add('hidden');
-      remotesEl.className = 'grid gap-4 p-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]';
+      if (activeScreenWrap) activeScreenWrap.style.height = '0px';
+      remotesEl.className = 'flex-1 min-h-0 overflow-y-auto grid gap-4 p-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]';
     }
   }
 
@@ -166,13 +169,16 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     // Обновляем превью экрана
     try {
       const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+      const activeScreenWrap = document.getElementById('activeScreenWrap') as HTMLElement | null;
       if (activeScreenEl) {
         if (screenStream) {
           activeScreenEl.srcObject = screenStream;
           safePlay(activeScreenEl);
           console.log('[CALL] local screen preview updated');
+          if (activeScreenWrap) activeScreenWrap.style.height = '45vh';
         } else {
           activeScreenEl.srcObject = new MediaStream();
+          if (activeScreenWrap) activeScreenWrap.style.height = '0px';
         }
       }
     } catch {}
