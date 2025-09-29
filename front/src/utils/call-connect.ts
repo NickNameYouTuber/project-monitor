@@ -349,6 +349,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     
     camEnabled = enable;
     emitLocalStatus();
+    // Сообщаем в комнату про состояние камеры
+    try { if (currentRoomId) socket.emit('cameraState', { roomId: currentRoomId, active: enable }); } catch {}
   }
 
   async function setScreenEnabled(enable: boolean) {
@@ -594,11 +596,10 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     for (const peerId of users) {
       ensurePeerTile(peerId);
       const pc = createPeerConnection(peerId);
-      if (!localStream) {
-        pc.addTransceiver('audio', { direction: 'recvonly' });
-        pc.addTransceiver('video', { direction: 'recvonly' });
-        pc.addTransceiver('video', { direction: 'recvonly' });
-      }
+      // Всегда резервируем приемники, чтобы новый участник сразу получил 2 видео трека
+      try { pc.addTransceiver('audio', { direction: 'recvonly' }); } catch {}
+      try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
+      try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       socket.emit('offer', { to: peerId, offer: pc.localDescription });
@@ -645,6 +646,22 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     peerScreenState[from] = !!active;
     try { console.log('[CALL] peer screen state', from, active); } catch {}
     try { updateLayoutForScreen(!!active); } catch {}
+  });
+
+  // Состояние камеры у других пиров
+  socket.on('cameraState', ({ from, active }: any) => {
+    try {
+      const vid1 = document.getElementById(`remote-vid1-${from}`) as HTMLVideoElement | null;
+      const placeholder = document.getElementById(`placeholder-${from}`);
+      if (vid1) {
+        if (!active) {
+          // Камера выключена: очищаем видео, показываем плейсхолдер
+          vid1.srcObject = new MediaStream();
+          try { vid1.classList.add('hidden'); } catch {}
+          if (placeholder) placeholder.classList.remove('hidden');
+        }
+      }
+    } catch {}
   });
 
   socket.on('userLeft', (peerId: string) => removePeer(peerId));

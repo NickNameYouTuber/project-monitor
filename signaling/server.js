@@ -63,6 +63,14 @@ io.on('connection', (socket) => {
         } catch {}
     });
 
+    // Camera state broadcast within room
+    socket.on('cameraState', ({ roomId, active }) => {
+        try {
+            console.log(`Camera state from ${socket.id} in ${roomId}: ${active}`);
+            socket.to(roomId).emit('cameraState', { from: socket.id, active });
+        } catch {}
+    });
+
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${socket.id}`);
         for (const roomId of socket.rooms) {
