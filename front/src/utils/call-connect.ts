@@ -65,17 +65,52 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     }
   }
 
+  // Маркируем треки по источнику
+  function markTrackSource(track: MediaStreamTrack, source: 'camera' | 'screen' | 'audio') {
+    // Добавляем метку к треку
+    (track as any)._source = source;
+    console.log(`[CALL] marked track ${track.kind} as ${source} (label: ${track.label})`);
+  }
+
+  function getTrackSource(track: MediaStreamTrack): 'camera' | 'screen' | 'audio' | 'unknown' {
+    // Проверяем метку
+    const source = (track as any)._source;
+    if (source) return source;
+    
+    // Fallback: определяем по метке
+    const label = (track.label || '').toLowerCase();
+    if (track.kind === 'audio') return 'audio';
+    if (label.includes('screen') || label.includes('display') || label.includes('window') || label.includes('monitor')) {
+      return 'screen';
+    }
+    return track.kind === 'video' ? 'camera' : 'unknown';
+  }
+
   // Пересобираем localStream из доступных потоков (как в call.html)
   async function rebuildLocalStream() {
     console.log('[CALL] rebuilding localStream, cameraStream:', !!cameraStream, 'screenStream:', !!screenStream);
     
     const oldStream = localStream;
-    localStream = new MediaStream([
-      ...(cameraStream ? cameraStream.getTracks() : []),
-      ...(screenStream ? screenStream.getTracks() : [])
-    ]);
+    const allTracks: MediaStreamTrack[] = [];
     
-    console.log('[CALL] new localStream tracks:', localStream.getTracks().map(t => `${t.kind}(${t.label})`));
+    // Добавляем треки с маркировкой
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => {
+        markTrackSource(track, track.kind === 'audio' ? 'audio' : 'camera');
+        allTracks.push(track);
+      });
+    }
+    
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => {
+        markTrackSource(track, 'screen');
+        allTracks.push(track);
+      });
+    }
+    
+    localStream = new MediaStream(allTracks);
+    
+    console.log('[CALL] new localStream tracks:', localStream.getTracks().map(t => `${t.kind}(${t.label}) [${getTrackSource(t)}]`));
     
     // Обновляем локальные превью
     updateLocalPreviews();
@@ -419,46 +454,52 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
 
   function handleRemoteTrack(peerId: string, track: MediaStreamTrack, streams: MediaStream[]) {
-    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'})`);
+    const trackSource = getTrackSource(track);
+    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}]`);
     
     let peerDiv = ensurePeerTile(peerId) as HTMLElement;
     const vid1 = document.getElementById(`remote-vid1-${peerId}`) as HTMLVideoElement | null;
     const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
     
     if (track.kind === 'video') {
-      const hasVideo = (el: HTMLVideoElement | null) => !!(el && el.srcObject instanceof MediaStream && el.srcObject.getVideoTracks().length);
-      const label = (track.label || '').toLowerCase();
-      const isScreen = label.includes('screen') || label.includes('display') || label.includes('window');
+      if (trackSource === 'screen') {
+        // Это экран - всегда в activeScreen
+        if (activeScreenEl) {
+          console.log(`[CALL] screen track to activeScreen for ${peerId}`);
+          activeScreenEl.srcObject = new MediaStream([track]);
+          safePlay(activeScreenEl);
+          emitScreenActive(true);
+        }
+      } else if (trackSource === 'camera') {
+        // Это камера - всегда в плитку участника
+        if (vid1) {
+          console.log(`[CALL] camera track to participant tile for ${peerId}`);
+          const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
+          vid1.srcObject = new MediaStream([track, ...aud]);
+          safePlay(vid1);
+          try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
+          const placeholder = document.getElementById(`placeholder-${peerId}`);
+          if (placeholder) placeholder.classList.add('hidden');
+        }
+      } else {
+        // Fallback для неопределённых треков: используем старую логику
+        const hasVideo = (el: HTMLVideoElement | null) => !!(el && el.srcObject instanceof MediaStream && el.srcObject.getVideoTracks().length);
+        console.log(`[CALL] unknown video track, using fallback logic for ${peerId}`);
 
-      console.log(`[CALL] video track analysis: isScreen=${isScreen}, label="${track.label}", hasVideo(vid1)=${hasVideo(vid1)}`);
-
-      // ТОЧНАЯ ЛОГИКА ИЗ call.html: первый видео -> vid1, второй -> activeScreen
-      if (!hasVideo(vid1) && vid1) {
-        console.log(`[CALL] first video track to participant tile for ${peerId}`);
-        const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
-        vid1.srcObject = new MediaStream([track, ...(aud || [])]);
-        safePlay(vid1);
-        try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
-        const placeholder = document.getElementById(`placeholder-${peerId}`);
-        if (placeholder) placeholder.classList.add('hidden');
-        return;
-      }
-      
-      if (activeScreenEl) {
-        console.log(`[CALL] second video track to activeScreen for ${peerId}`);
-        activeScreenEl.srcObject = new MediaStream([track]);
-        safePlay(activeScreenEl);
-        emitScreenActive(true);
-        return;
-      }
-      
-      // Fallback: если activeScreen нет, заменяем vid1
-      if (vid1) {
-        console.log(`[CALL] fallback: updating video in participant tile for ${peerId}`);
-        const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
-        vid1.srcObject = new MediaStream([track, ...(aud || [])]);
-        safePlay(vid1);
-        try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
+        if (!hasVideo(vid1) && vid1) {
+          console.log(`[CALL] fallback: first video track to participant tile for ${peerId}`);
+          const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
+          vid1.srcObject = new MediaStream([track, ...(aud || [])]);
+          safePlay(vid1);
+          try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
+          const placeholder = document.getElementById(`placeholder-${peerId}`);
+          if (placeholder) placeholder.classList.add('hidden');
+        } else if (activeScreenEl) {
+          console.log(`[CALL] fallback: second video track to activeScreen for ${peerId}`);
+          activeScreenEl.srcObject = new MediaStream([track]);
+          safePlay(activeScreenEl);
+          emitScreenActive(true);
+        }
       }
     } else if (track.kind === 'audio') {
       console.log(`[CALL] audio track for ${peerId}`);
