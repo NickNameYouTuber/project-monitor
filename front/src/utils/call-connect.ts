@@ -56,19 +56,19 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         // Экран занимает flex-1, участники тоже flex-1, делим пространство
       }
       
-      // Контейнер участников становится фиксированной высоты (1/3 от доступного)
+      // Контейнер участников становится фиксированной высоты (меньше чем раньше)
       remotesContainer.style.flex = '0 0 auto';
-      remotesContainer.style.height = '25vh'; // Фиксированная высота для горизонтальной полосы
+      remotesContainer.style.height = '16vh'; // Уменьшили в 1.5 раза (было 25vh)
       
       // Делаем горизонтальную прокручиваемую полосу
       remotesEl.className = 'h-full flex flex-nowrap justify-start items-center gap-2 overflow-x-auto overflow-y-hidden';
       
-      // Каждая плитка участника в горизонтальном режиме
+      // Каждая плитка участника в горизонтальном режиме - прямоугольная как в сетке
       const tiles = remotesEl.querySelectorAll('[id^="peer-"]');
       tiles.forEach((tile) => {
         (tile as HTMLElement).style.flexShrink = '0';
         (tile as HTMLElement).style.height = '100%';
-        (tile as HTMLElement).style.aspectRatio = '9/16';
+        (tile as HTMLElement).style.aspectRatio = '16/9'; // Прямоугольная как в сетке
         (tile as HTMLElement).style.width = 'auto';
         (tile as HTMLElement).style.maxWidth = 'none';
       });
