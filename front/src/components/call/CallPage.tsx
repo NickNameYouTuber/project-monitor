@@ -28,10 +28,11 @@ export default function CallPage() {
       <div className="max-w-7xl mx-auto pb-24">
         {/* Active Screen (top) */}
         <div className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 mb-4">
-          <video id="activeScreen" autoPlay playsInline className="w-full aspect-video bg-black hidden" />
+          <video id="activeScreen" autoPlay playsInline className="w-full bg-black hidden" style={{ aspectRatio: '16 / 9', maxHeight: '48vh' }} />
         </div>
         {/* Bottom strip (participants) */}
-        <div id="remotes" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4" />
+        <div id="remotes" className="grid gap-4 p-4"
+             style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }} />
       </div>
 
       {/* Navigation Controls + hidden DOM hooks for RTC */}
