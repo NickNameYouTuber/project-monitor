@@ -45,30 +45,51 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   function updateLayoutForScreen(active: boolean) {
     const activeScreenContainer = document.getElementById('activeScreenContainer') as HTMLElement | null;
+    const remotesContainer = document.getElementById('remotesContainer') as HTMLElement | null;
     const remotesEl = document.getElementById('remotes') as HTMLElement | null;
-    if (!remotesEl) return;
+    if (!remotesEl || !remotesContainer) return;
+    
     if (active) {
-      // Показать верхний контейнер экрана и сделать нижнюю полосу горизонтальной с максимальной высотой
-      if (activeScreenContainer) activeScreenContainer.classList.remove('hidden');
-      remotesEl.className = 'h-full flex flex-nowrap justify-start items-center gap-2 overflow-x-auto';
-      // Каждая плитка участника в горизонтальном режиме должна быть фиксированной высоты
+      // Показать верхний контейнер экрана
+      if (activeScreenContainer) {
+        activeScreenContainer.classList.remove('hidden');
+        // Экран занимает flex-1, участники тоже flex-1, делим пространство
+      }
+      
+      // Контейнер участников становится фиксированной высоты (1/3 от доступного)
+      remotesContainer.style.flex = '0 0 auto';
+      remotesContainer.style.height = '25vh'; // Фиксированная высота для горизонтальной полосы
+      
+      // Делаем горизонтальную прокручиваемую полосу
+      remotesEl.className = 'h-full flex flex-nowrap justify-start items-center gap-2 overflow-x-auto overflow-y-hidden';
+      
+      // Каждая плитка участника в горизонтальном режиме
       const tiles = remotesEl.querySelectorAll('[id^="peer-"]');
       tiles.forEach((tile) => {
         (tile as HTMLElement).style.flexShrink = '0';
         (tile as HTMLElement).style.height = '100%';
         (tile as HTMLElement).style.aspectRatio = '9/16';
-        (tile as HTMLElement).style.maxWidth = 'calc(100% / 4)';
+        (tile as HTMLElement).style.width = 'auto';
+        (tile as HTMLElement).style.maxWidth = 'none';
       });
     } else {
-      // Спрятать верхний контейнер экрана и включить адаптивную сетку по высоте
+      // Спрятать верхний контейнер экрана
       if (activeScreenContainer) activeScreenContainer.classList.add('hidden');
+      
+      // Контейнер участников занимает всё доступное пространство
+      remotesContainer.style.flex = '';
+      remotesContainer.style.height = '';
+      
+      // Включить адаптивную сетку по высоте
       remotesEl.className = 'h-full grid gap-2 auto-rows-fr';
+      
       // Убираем inline стили для сеточного режима
       const tiles = remotesEl.querySelectorAll('[id^="peer-"]');
       tiles.forEach((tile) => {
         (tile as HTMLElement).style.flexShrink = '';
         (tile as HTMLElement).style.height = '';
         (tile as HTMLElement).style.aspectRatio = '';
+        (tile as HTMLElement).style.width = '';
         (tile as HTMLElement).style.maxWidth = '';
       });
     }

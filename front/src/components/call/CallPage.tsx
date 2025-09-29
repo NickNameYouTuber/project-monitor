@@ -26,13 +26,13 @@ export default function CallPage() {
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col transition-all duration-300" style={{ backgroundColor: '#0B0B0D' }}>
       {/* Main content area */}
-      <div className="flex-1 min-h-0 p-4 flex flex-col">
+      <div className="flex-1 min-h-0 p-4 flex flex-col gap-4">
         {/* Active Screen (top) - скрыт по умолчанию, появляется только при демонстрации */}
-        <div id="activeScreenContainer" className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 mb-4 flex-shrink-0 hidden">
-          <video id="activeScreen" autoPlay playsInline className="w-full aspect-video bg-black" />
+        <div id="activeScreenContainer" className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 flex-1 min-h-0 hidden">
+          <video id="activeScreen" autoPlay playsInline className="w-full h-full object-contain bg-black" />
         </div>
-        {/* Participants grid - takes remaining space */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        {/* Participants grid - takes remaining space or all space when no screen */}
+        <div id="remotesContainer" className="flex-1 min-h-0 overflow-hidden">
           <div id="remotes" className="h-full grid gap-2 auto-rows-fr" />
         </div>
       </div>
