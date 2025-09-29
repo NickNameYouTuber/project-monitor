@@ -39,6 +39,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   const socket = io('/', { path: options?.socketPath ?? '/socket.io' });
   const peers: Record<string, RTCPeerConnection> = {};
   const participantsContainer = remotesContainer; // 3x2 grid
+  let currentRoomId: string | null = null;
+  const peerScreenState: Record<string, boolean> = {};
 
   function ensurePeerTile(peerId: string) {
     if (!participantsContainer) return;
@@ -332,6 +334,11 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     screenEnabled = enable;
     emitLocalStatus();
     emitScreenActive(enable);
+    try {
+      if (currentRoomId) {
+        socket.emit('screenState', { roomId: currentRoomId, active: enable });
+      }
+    } catch {}
   }
 
   socket.on('connect', () => {
@@ -410,6 +417,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     }
     socket.emit('joinRoom', roomId);
     roomJoined = true;
+    currentRoomId = roomId;
     if (statusDiv) statusDiv.textContent = `Status: Connected - In Room ${roomId}`;
     try { console.log('[CALL] joined room', roomId); } catch {}
     // Ensure self tile even as viewer
@@ -454,7 +462,9 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
 
   function handleRemoteTrack(peerId: string, track: MediaStreamTrack, streams: MediaStream[]) {
-    const trackSource = getTrackSource(track);
+    const trackSource = peerScreenState[peerId]
+      ? (track.kind === 'video' ? 'screen' : getTrackSource(track))
+      : getTrackSource(track);
     console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}]`);
     
     let peerDiv = ensurePeerTile(peerId) as HTMLElement;
@@ -573,6 +583,12 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   socket.on('candidate', async ({ from, candidate }: any) => {
     const pc = peers[from];
     if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+  });
+
+  // Получаем состояние экрана других пиров
+  socket.on('screenState', ({ from, active }: any) => {
+    peerScreenState[from] = !!active;
+    try { console.log('[CALL] peer screen state', from, active); } catch {}
   });
 
   socket.on('userLeft', (peerId: string) => removePeer(peerId));

@@ -55,6 +55,14 @@ io.on('connection', (socket) => {
         io.to(to).emit('candidate', { from: socket.id, candidate });
     });
 
+    // Screen sharing state broadcast within room
+    socket.on('screenState', ({ roomId, active }) => {
+        try {
+            console.log(`Screen state from ${socket.id} in ${roomId}: ${active}`);
+            socket.to(roomId).emit('screenState', { from: socket.id, active });
+        } catch {}
+    });
+
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${socket.id}`);
         for (const roomId of socket.rooms) {
