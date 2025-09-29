@@ -44,17 +44,33 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   const peerScreenState: Record<string, boolean> = {};
 
   function updateLayoutForScreen(active: boolean) {
-    const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+    const activeScreenContainer = document.getElementById('activeScreenContainer') as HTMLElement | null;
     const remotesEl = document.getElementById('remotes') as HTMLElement | null;
     if (!remotesEl) return;
     if (active) {
-      // Показать верхний экран и сделать нижнюю полосу горизонтальной
-      if (activeScreenEl) activeScreenEl.classList.remove('hidden');
-      remotesEl.className = 'h-full flex flex-wrap justify-center items-center gap-2';
+      // Показать верхний контейнер экрана и сделать нижнюю полосу горизонтальной с максимальной высотой
+      if (activeScreenContainer) activeScreenContainer.classList.remove('hidden');
+      remotesEl.className = 'h-full flex flex-nowrap justify-start items-center gap-2 overflow-x-auto';
+      // Каждая плитка участника в горизонтальном режиме должна быть фиксированной высоты
+      const tiles = remotesEl.querySelectorAll('[id^="peer-"]');
+      tiles.forEach((tile) => {
+        (tile as HTMLElement).style.flexShrink = '0';
+        (tile as HTMLElement).style.height = '100%';
+        (tile as HTMLElement).style.aspectRatio = '9/16';
+        (tile as HTMLElement).style.maxWidth = 'calc(100% / 4)';
+      });
     } else {
-      // Спрятать верхний экран и включить адаптивную сетку по высоте
-      if (activeScreenEl) activeScreenEl.classList.add('hidden');
+      // Спрятать верхний контейнер экрана и включить адаптивную сетку по высоте
+      if (activeScreenContainer) activeScreenContainer.classList.add('hidden');
       remotesEl.className = 'h-full grid gap-2 auto-rows-fr';
+      // Убираем inline стили для сеточного режима
+      const tiles = remotesEl.querySelectorAll('[id^="peer-"]');
+      tiles.forEach((tile) => {
+        (tile as HTMLElement).style.flexShrink = '';
+        (tile as HTMLElement).style.height = '';
+        (tile as HTMLElement).style.aspectRatio = '';
+        (tile as HTMLElement).style.maxWidth = '';
+      });
     }
     // Обновляем колонки в зависимости от количества участников
     updateGridColumns();

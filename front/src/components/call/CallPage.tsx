@@ -27,9 +27,9 @@ export default function CallPage() {
     <div className="h-screen w-screen overflow-hidden flex flex-col transition-all duration-300" style={{ backgroundColor: '#0B0B0D' }}>
       {/* Main content area */}
       <div className="flex-1 min-h-0 p-4 flex flex-col">
-        {/* Active Screen (top) */}
-        <div className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 mb-4 flex-shrink-0">
-          <video id="activeScreen" autoPlay playsInline className="w-full aspect-video bg-black hidden" />
+        {/* Active Screen (top) - скрыт по умолчанию, появляется только при демонстрации */}
+        <div id="activeScreenContainer" className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 mb-4 flex-shrink-0 hidden">
+          <video id="activeScreen" autoPlay playsInline className="w-full aspect-video bg-black" />
         </div>
         {/* Participants grid - takes remaining space */}
         <div className="flex-1 min-h-0 overflow-hidden">
