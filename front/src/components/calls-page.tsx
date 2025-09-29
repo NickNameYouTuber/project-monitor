@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Calendar as CalendarIcon, 
   Video, 
@@ -39,6 +39,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { initCallConnect } from '../utils/call-connect';
+import CallPage from './call/CallPage';
 
 interface Meeting {
   id: string;
@@ -145,253 +146,79 @@ function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
   );
 }
 
-function CallInterface({ onEndCall }: { onEndCall: () => void }) {
-  const { roomId } = useParams();
-  const remotesRef = useRef<HTMLDivElement | null>(null);
-  const [gridPage, setGridPage] = useState(0);
-  const [gridPagesTotal, setGridPagesTotal] = useState(1);
-  const [isScreenMode, setIsScreenMode] = useState(false);
-  const [screenIndex, setScreenIndex] = useState(0);
-  const [screenCount, setScreenCount] = useState(0);
-  const [callState, setCallState] = useState<CallState>({
-    isInCall: true,
-    isMuted: false,
-    isCameraOn: true,
-    isScreenSharing: false,
-    isRecording: false,
-    isChatOpen: false
-  });
-
-  useEffect(() => {
-    initCallConnect({ autoJoinRoomId: roomId, viewerOnly: true, startWithCamera: false, startWithScreen: false });
-  }, [roomId]);
-
-  // Manage pagination for 3x3 grid and detect screenshares
-  useEffect(() => {
-    const remotes = document.getElementById('remotes');
-    remotesRef.current = remotes as HTMLDivElement | null;
-    if (!remotes) return;
-
-    const updateLayout = () => {
-      const children = Array.from(remotes.children) as HTMLElement[];
-      const total = children.length;
-      const pages = Math.max(1, Math.ceil(total / 9));
-      setGridPagesTotal(pages);
-      const start = gridPage * 9;
-      const end = start + 9;
-      children.forEach((el, idx) => {
-        el.style.display = idx >= start && idx < end ? '' : 'none';
-      });
-
-      // Detect screenshare video elements (second video in each peer tile)
-      const screenVideos: HTMLVideoElement[] = [];
-      children.forEach((tile) => {
-        const vid2 = tile.querySelector('video[id^="remote-vid2-"]') as HTMLVideoElement | null;
-        if (vid2 && vid2.srcObject instanceof MediaStream && vid2.srcObject.getVideoTracks().length) {
-          screenVideos.push(vid2);
-        }
-      });
-      setScreenCount(screenVideos.length);
-      setIsScreenMode(screenVideos.length > 0);
-      // Update active screen preview
-      const active = document.getElementById('activeScreen') as HTMLVideoElement | null;
-      if (active) {
-        const idx = Math.min(screenIndex, Math.max(0, screenVideos.length - 1));
-        const src = screenVideos[idx]?.srcObject as MediaStream | undefined;
-        if (src && active.srcObject !== src) {
-          active.srcObject = src;
-          // @ts-ignore
-          active.play?.().catch?.(() => {});
-        }
-      }
-    };
-
-    const mo = new MutationObserver(() => updateLayout());
-    mo.observe(remotes, { childList: true, subtree: true, attributes: true, attributeFilter: ['src', 'srcObject'] as any });
-    const interval = window.setInterval(updateLayout, 1000);
-    updateLayout();
-    return () => {
-      mo.disconnect();
-      window.clearInterval(interval);
-    };
-  }, [gridPage, screenIndex]);
-
-  const toggleMute = () => {
-    setCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
-  };
-
-  const toggleCamera = () => {
-    setCallState(prev => ({ ...prev, isCameraOn: !prev.isCameraOn }));
-  };
-
-  const toggleScreenShare = () => {
-    setCallState(prev => ({ ...prev, isScreenSharing: !prev.isScreenSharing }));
-  };
-
-  const toggleRecording = () => {
-    setCallState(prev => ({ ...prev, isRecording: !prev.isRecording }));
-  };
-
-  const toggleChat = () => {
-    setCallState(prev => ({ ...prev, isChatOpen: !prev.isChatOpen }));
-  };
-
+function CallInterface({ onEndCall, autoJoinRoomId }: { onEndCall: () => void; autoJoinRoomId?: string }) {
+  // TODO: call page here
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
-      <div className="flex-1 relative bg-gray-900">
-        <div className="w-full p-4 flex items-center justify-between">
-          <div id="status" className="text-sm text-white/80">Status: Disconnected</div>
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-white/80 text-sm">
-              <input id="shareCamera" type="checkbox" defaultChecked className="accent-indigo-500" />
-              Share Camera & Audio
-            </label>
-            <label className="flex items-center gap-2 text-white/80 text-sm">
-              <input id="shareScreen" type="checkbox" defaultChecked className="accent-indigo-500" />
-              Share Screen
-            </label>
-            <button id="startLocal" className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-sm">Start Local</button>
-          </div>
+      <div className="w-full p-4 flex items-center justify-between">
+        <div id="status" className="text-sm text-white/80">Status: Disconnected</div>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-white/80 text-sm">
+            <input id="shareCamera" type="checkbox" className="accent-indigo-500" /> Cam+Mic
+          </label>
+          <label className="flex items-center gap-2 text-white/80 text-sm">
+            <input id="shareScreen" type="checkbox" className="accent-indigo-500" /> Screen
+          </label>
+          <input id="roomId" placeholder="Room ID" className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-48" />
+          <button id="startLocal" className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-sm">Start</button>
+          <button id="joinRoom" className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-sm">Join</button>
         </div>
-
-        <div className="px-4">
-          {/* Local preview */}
-          <div className="flex flex-wrap gap-6">
-            <div>
-              <div className="mb-2 text-sm text-white/80">Local Camera</div>
-              <video id="localCamera" autoPlay playsInline muted className="w-80 aspect-video bg-black rounded-lg object-cover shadow" />
-            </div>
-            <div>
-              <div className="mb-2 text-sm text-white/80">Local Screen</div>
-              <video id="localScreen" autoPlay playsInline muted className="w-80 aspect-video bg-black rounded-lg object-cover shadow" />
-            </div>
-          </div>
-
-          {/* Auto-join input (still visible for copy) */}
-          <div className="mt-4 flex items-center gap-2">
-            <input id="roomId" placeholder="Enter room ID" className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white w-64" />
-            <button id="joinRoom" className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-sm">Join Room</button>
-          </div>
-
-          {/* Screen mode */}
-          {isScreenMode ? (
-            <div className="mt-6">
-              <div className="rounded-lg overflow-hidden bg-black">
-                <video id="activeScreen" autoPlay playsInline className="w-full max-h-[60vh] object-contain bg-black" />
-              </div>
-              <div className="mt-3 flex items-center justify-between">
-                <div className="text-sm text-white/70">Screens: {screenIndex + 1} / {Math.max(1, screenCount)}</div>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setScreenIndex(i => Math.max(0, i - 1))}>{'<'} Prev</Button>
-                  <Button size="sm" variant="outline" onClick={() => setScreenIndex(i => Math.min(Math.max(0, screenCount - 1), i + 1))}>Next {'>'}</Button>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                <div id="remotes" className="contents" />
-              </div>
-            </div>
-          ) : (
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm text-white/70">Page {gridPage + 1} / {gridPagesTotal}</div>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setGridPage(p => Math.max(0, p - 1))}>{'<'} Prev</Button>
-                  <Button size="sm" variant="outline" onClick={() => setGridPage(p => Math.min(gridPagesTotal - 1, p + 1))}>Next {'>'}</Button>
-                </div>
-              </div>
-              <div id="remotes" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" />
-            </div>
-          )}
-        </div>
-
-        {/* Recording indicator */}
-        {callState.isRecording && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-full">
-            <Circle className="w-4 h-4 animate-pulse fill-current" />
-            <span className="text-sm">Recording</span>
-          </div>
-        )}
-
-        {/* Screen sharing indicator */}
-        {callState.isScreenSharing && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-full">
-            <span className="text-sm">You are sharing your screen</span>
-          </div>
-        )}
-
-        {/* Chat Panel */}
-        <ChatPanel 
-          isOpen={callState.isChatOpen} 
-          onClose={() => setCallState(prev => ({ ...prev, isChatOpen: false }))} 
-        />
       </div>
 
-      {/* Call controls */}
+      {/* Active screen share (1 in 1+3) */}
+      <div className="px-4">
+        <div className="rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 mb-3">
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-xs text-white/70">Active Screen</span>
+            <div className="flex items-center gap-2">
+              <button id="screenPrev" className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-xs">◀</button>
+              <button id="screenNext" className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-xs">▶</button>
+            </div>
+          </div>
+          <video id="activeScreen" autoPlay playsInline className="w-full aspect-video bg-black" />
+        </div>
+      </div>
+
+      {/* Participants grid (3x3 or 1x3 strip) */}
+      <div className="px-4 flex-1 min-h-0">
+        <div id="remotes" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" />
+        <div className="flex items-center justify-center gap-2 py-3">
+          <button id="peersPrev" className="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-sm">◀ Prev</button>
+          <button id="peersNext" className="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-sm">Next ▶</button>
+        </div>
+      </div>
+
+      {/* Media controls */}
       <div className="bg-gray-900 p-4 flex items-center justify-center gap-4">
-        <Button
-          variant={callState.isMuted ? "destructive" : "secondary"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={() => { (window as any).callController?.setMic(!callState.isMuted); toggleMute(); }}
-        >
-          {callState.isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+        <Button id="ctrlMic" variant="secondary" size="icon" className="h-12 w-12 rounded-full">
+          <Mic className="w-6 h-6" />
         </Button>
-
-        <Button
-          variant={callState.isCameraOn ? "secondary" : "destructive"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={() => { (window as any).callController?.setCam(!callState.isCameraOn); toggleCamera(); }}
-        >
-          {callState.isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+        <Button id="ctrlCam" variant="secondary" size="icon" className="h-12 w-12 rounded-full">
+          <Video className="w-6 h-6" />
         </Button>
-
-        <Button
-          variant={callState.isScreenSharing ? "default" : "secondary"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={() => { callState.isScreenSharing ? (window as any).callController?.stopScreen() : (window as any).callController?.startScreen(); toggleScreenShare(); }}
-        >
+        <Button id="ctrlScreen" variant="secondary" size="icon" className="h-12 w-12 rounded-full">
           <Monitor className="w-6 h-6" />
         </Button>
-
-        <Button
-          variant={callState.isChatOpen ? "default" : "secondary"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={toggleChat}
-        >
-          <MessageCircle className="w-6 h-6" />
-        </Button>
-
-        <Button
-          variant={callState.isRecording ? "default" : "secondary"}
-          size="icon"
-          className="h-12 w-12 rounded-full"
-          onClick={toggleRecording}
-        >
-          {callState.isRecording ? <StopCircle className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
-        </Button>
-
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-12 w-12 rounded-full"
-        >
-          <MoreVertical className="w-6 h-6" />
-        </Button>
-
-        <Button
-          variant="destructive"
-          size="icon"
-          className="h-12 w-12 rounded-full ml-8"
-          onClick={onEndCall}
-        >
+        <Button id="ctrlLeave" variant="destructive" size="icon" className="h-12 w-12 rounded-full ml-6" onClick={onEndCall}>
           <PhoneCall className="w-6 h-6 rotate-180" />
         </Button>
       </div>
     </div>
   );
+  useEffect(() => {
+    initCallConnect();
+    if (autoJoinRoomId) {
+      const roomInput = document.getElementById('roomId') as HTMLInputElement | null;
+      const joinBtn = document.getElementById('joinRoom') as HTMLButtonElement | null;
+      const mic = document.getElementById('shareCamera') as HTMLInputElement | null;
+      const screen = document.getElementById('shareScreen') as HTMLInputElement | null;
+      if (mic) mic.checked = false;
+      if (screen) screen.checked = false;
+      if (roomInput) roomInput.value = autoJoinRoomId;
+      setTimeout(() => { joinBtn?.click(); }, 0);
+    }
+  }, [autoJoinRoomId]);
+  return null;
 }
 
 export function CallsPage() {
@@ -421,6 +248,14 @@ export function CallsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isInCall, setIsInCall] = useState(false);
+  const { roomId } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (roomId) {
+      setIsInCall(true);
+    }
+  }, [roomId]);
   const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
 
   const [newMeeting, setNewMeeting] = useState({
@@ -479,15 +314,21 @@ export function CallsPage() {
   }; 
 
   const startCall = () => {
-    setIsInCall(true);
+    navigate('/call/test');
   };
 
   const endCall = () => {
     setIsInCall(false);
+    navigate('/calls');
   };
 
   if (isInCall) {
-    return <CallInterface onEndCall={endCall} />;
+    return (
+      <div className="h-full w-full">
+        <CallPage />
+        <Initializer roomId={roomId} onLeave={endCall} />
+      </div>
+    );
   }
 
   return (
@@ -752,4 +593,25 @@ export function CallsPage() {
       </div>
     </div>
   );
+}
+
+function Initializer({ roomId, onLeave }: { roomId?: string; onLeave: () => void }) {
+  useEffect(() => {
+    initCallConnect();
+    if (roomId) {
+      const roomInput = document.getElementById('roomId') as HTMLInputElement | null;
+      const joinBtn = document.getElementById('joinRoom') as HTMLButtonElement | null;
+      const mic = document.getElementById('shareCamera') as HTMLInputElement | null;
+      const screen = document.getElementById('shareScreen') as HTMLInputElement | null;
+      if (mic) mic.checked = false;
+      if (screen) screen.checked = false;
+      if (roomInput) roomInput.value = roomId;
+      setTimeout(() => { joinBtn?.click(); }, 0);
+    }
+    const leaveBtn = document.getElementById('ctrlLeave') as HTMLButtonElement | null;
+    if (leaveBtn) {
+      leaveBtn.onclick = onLeave;
+    }
+  }, [roomId, onLeave]);
+  return null;
 }

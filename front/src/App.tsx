@@ -287,6 +287,7 @@ export default function App() {
   }, [isAuthenticated]);
 
   const location = useLocation();
+  const isStandaloneCall = location.pathname.startsWith('/call');
   
   // Обновляем currentPage на основе URL
   useEffect(() => {
@@ -315,10 +316,10 @@ export default function App() {
           <AuthPage onLogin={() => setIsAuthenticated(true)} />
         ) : (
           <div className="flex h-screen">
-            {currentPage !== 'projects' && (
+            {!isStandaloneCall && currentPage !== 'projects' && (
               <Sidebar currentPage={currentPage} onNavigate={handleNavigate} selectedProject={selectedProject} />
             )}
-            <main className={`flex-1 overflow-hidden ${currentPage === 'projects' ? 'w-full' : ''}`}>
+            <main className={`flex-1 overflow-hidden ${currentPage === 'projects' || isStandaloneCall ? 'w-full' : ''}`}>
               <Routes>
                 <Route path="/" element={<Navigate to="/projects" replace />} />
                 <Route path="/projects" element={

@@ -2,15 +2,7 @@
 // NOTE: Порт перенесён из public/call.html. Этот модуль связывает DOM-элементы и логику сигналинга/RTC.
 import { io } from 'socket.io-client';
 
-export function initCallConnect(options?: {
-  socketPath?: string;
-  turnServers?: { urls: string; username?: string; credential?: string }[];
-  autoJoinRoomId?: string;
-  startWithCamera?: boolean;
-  startWithAudio?: boolean;
-  startWithScreen?: boolean;
-  viewerOnly?: boolean;
-}) {
+export function initCallConnect(options?: { socketPath?: string; turnServers?: { urls: string; username?: string; credential?: string }[] }) {
   const localCamera = document.getElementById('localCamera') as HTMLVideoElement | null;
   const localScreen = document.getElementById('localScreen') as HTMLVideoElement | null;
   const shareCameraCheckbox = document.getElementById('shareCamera') as HTMLInputElement | null;
@@ -25,10 +17,45 @@ export function initCallConnect(options?: {
 
   let localStream: MediaStream | null = null;
   let roomJoined = false;
+  let micEnabled = false;
+  let camEnabled = false;
+  let screenEnabled = false;
+  let cameraStream: MediaStream | null = null;
+  let screenStream: MediaStream | null = null;
+
+  function emitLocalStatus() {
+    try {
+      window.dispatchEvent(new CustomEvent('call:localStatus', { detail: { micEnabled, camEnabled, screenEnabled } }));
+    } catch {}
+  }
+
+  function emitScreenActive(active: boolean) {
+    try {
+      window.dispatchEvent(new CustomEvent('call:screenActive', { detail: { active } }));
+    } catch {}
+  }
 
   // Socket.IO
   const socket = io('/', { path: options?.socketPath ?? '/socket.io' });
   const peers: Record<string, RTCPeerConnection> = {};
+  const participantsContainer = remotesContainer; // 3x2 grid
+
+  function ensurePeerTile(peerId: string) {
+    if (!participantsContainer) return;
+    let peerDiv = document.getElementById('peer-' + peerId) as HTMLElement | null;
+    if (!peerDiv) {
+      peerDiv = document.createElement('div');
+      peerDiv.id = 'peer-' + peerId;
+      peerDiv.className = 'rounded-xl overflow-hidden ring-1 ring-[#2A2D32] bg-[#16171A] aspect-video w-full relative flex items-center justify-center';
+      peerDiv.innerHTML = `
+        <video id="remote-vid1-${peerId}" autoplay playsinline class="absolute inset-0 w-full h-full object-cover bg-black hidden"></video>
+        <div id="placeholder-${peerId}" class="text-[#AAB0B6] text-xs">${peerId === 'me' ? 'You' : peerId}</div>
+      `;
+      participantsContainer.appendChild(peerDiv);
+      try { console.log('[CALL] tile created for', peerId); } catch {}
+    }
+    return peerDiv;
+  }
 
   function safePlay(videoEl: HTMLVideoElement | null) {
     if (!videoEl) return;
@@ -38,16 +65,138 @@ export function initCallConnect(options?: {
     }
   }
 
+  // Пересобираем localStream из доступных потоков (как в call.html)
+  async function rebuildLocalStream() {
+    console.log('[CALL] rebuilding localStream, cameraStream:', !!cameraStream, 'screenStream:', !!screenStream);
+    
+    const oldStream = localStream;
+    localStream = new MediaStream([
+      ...(cameraStream ? cameraStream.getTracks() : []),
+      ...(screenStream ? screenStream.getTracks() : [])
+    ]);
+    
+    console.log('[CALL] new localStream tracks:', localStream.getTracks().map(t => `${t.kind}(${t.label})`));
+    
+    // Обновляем локальные превью
+    updateLocalPreviews();
+    
+    // Заменяем треки во всех пирах
+    for (const [peerId, pc] of Object.entries(peers)) {
+      await replaceTracksInPeer(pc, oldStream, localStream);
+    }
+    
+    attachLocalToPeersAndRenegotiate();
+  }
+
+  function updateLocalPreviews() {
+    // Обновляем превью камеры
+    try {
+      ensurePeerTile('me');
+      const selfVideo = document.getElementById('remote-vid1-me') as HTMLVideoElement | null;
+      if (selfVideo) {
+        if (cameraStream) {
+          selfVideo.srcObject = cameraStream;
+          selfVideo.muted = true;
+          safePlay(selfVideo);
+          try { selfVideo.classList.remove('hidden'); (selfVideo as any).style.display = 'block'; } catch {}
+          const placeholder = document.getElementById('placeholder-me');
+          if (placeholder) placeholder.classList.add('hidden');
+        } else {
+          selfVideo.srcObject = new MediaStream();
+          const placeholder = document.getElementById('placeholder-me');
+          if (placeholder) placeholder.classList.remove('hidden');
+        }
+      }
+    } catch {}
+
+    // Обновляем превью экрана
+    try {
+      const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+      if (activeScreenEl) {
+        if (screenStream) {
+          activeScreenEl.srcObject = screenStream;
+          safePlay(activeScreenEl);
+          console.log('[CALL] local screen preview updated');
+        } else {
+          activeScreenEl.srcObject = new MediaStream();
+        }
+      }
+    } catch {}
+  }
+
+  async function replaceTracksInPeer(pc: RTCPeerConnection, oldStream: MediaStream | null, newStream: MediaStream) {
+    const senders = pc.getSenders();
+    const newTracks = newStream.getTracks();
+    
+    // Группируем треки по типу
+    const newAudioTracks = newTracks.filter(t => t.kind === 'audio');
+    const newVideoTracks = newTracks.filter(t => t.kind === 'video');
+    
+    // Обрабатываем аудио (может быть только один)
+    const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+    if (newAudioTracks.length > 0) {
+      if (audioSender) {
+        try {
+          await audioSender.replaceTrack(newAudioTracks[0]);
+          console.log(`[CALL] replaced audio track (${newAudioTracks[0].label})`);
+        } catch (e) {
+          console.warn(`[CALL] failed to replace audio track:`, e);
+        }
+      } else {
+        try {
+          pc.addTrack(newAudioTracks[0], newStream);
+          console.log(`[CALL] added new audio track (${newAudioTracks[0].label})`);
+        } catch (e) {
+          console.warn(`[CALL] failed to add audio track:`, e);
+        }
+      }
+    } else if (audioSender) {
+      // Удаляем аудио если его больше нет
+      try {
+        pc.removeTrack(audioSender);
+        console.log(`[CALL] removed audio track`);
+      } catch {}
+    }
+    
+    // Обрабатываем видео (может быть несколько)
+    const videoSenders = senders.filter(s => s.track && s.track.kind === 'video');
+    
+    // Заменяем/добавляем видео треки
+    for (let i = 0; i < newVideoTracks.length; i++) {
+      const track = newVideoTracks[i];
+      
+      if (i < videoSenders.length) {
+        // Заменяем существующий sender
+        try {
+          await videoSenders[i].replaceTrack(track);
+          console.log(`[CALL] replaced video track ${i} (${track.label})`);
+        } catch (e) {
+          console.warn(`[CALL] failed to replace video track ${i}:`, e);
+        }
+      } else {
+        // Добавляем новый sender
+        try {
+          pc.addTrack(track, newStream);
+          console.log(`[CALL] added new video track ${i} (${track.label})`);
+        } catch (e) {
+          console.warn(`[CALL] failed to add video track ${i}:`, e);
+        }
+      }
+    }
+    
+    // Удаляем лишние видео senders
+    for (let i = newVideoTracks.length; i < videoSenders.length; i++) {
+      try {
+        pc.removeTrack(videoSenders[i]);
+        console.log(`[CALL] removed extra video sender ${i}`);
+      } catch {}
+    }
+  }
+
   async function attachLocalToPeersAndRenegotiate() {
     if (!localStream) return;
     for (const [peerId, pc] of Object.entries(peers)) {
       if (!pc) continue;
-      for (const track of localStream.getTracks()) {
-        const hasSender = pc.getSenders().some((s) => s.track && s.track.kind === track.kind);
-        if (!hasSender) {
-          try { pc.addTrack(track, localStream); } catch {}
-        }
-      }
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -56,11 +205,106 @@ export function initCallConnect(options?: {
     }
   }
 
+  function getSenderByKind(pc: RTCPeerConnection, kind: 'audio' | 'video') {
+    return pc.getSenders().find((s) => s.track && s.track.kind === kind);
+  }
+
+  function getLocalTrack(kind: 'audio' | 'video'): MediaStreamTrack | null {
+    if (!localStream) return null;
+    if (kind === 'audio') return localStream.getAudioTracks()[0] || null;
+    return localStream.getVideoTracks()[0] || null;
+  }
+
+  function removeLocalTrack(kind: 'audio' | 'video') {
+    if (!localStream) return;
+    const tracks = kind === 'audio' ? localStream.getAudioTracks() : localStream.getVideoTracks();
+    tracks.forEach((t) => {
+      try { t.stop(); } catch {}
+      localStream!.removeTrack(t);
+    });
+  }
+
+  async function setAudioEnabled(enable: boolean) {
+    try { console.log('[CALL] mic toggle', enable); } catch {}
+    if (enable) {
+      if (!getLocalTrack('audio')) {
+        const aud = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const aTrack = aud.getAudioTracks()[0];
+        if (!localStream) localStream = new MediaStream();
+        localStream.addTrack(aTrack);
+      }
+    } else {
+      removeLocalTrack('audio');
+    }
+    for (const pc of Object.values(peers)) {
+      const sender = getSenderByKind(pc, 'audio');
+      const track = getLocalTrack('audio');
+      if (sender) {
+        await sender.replaceTrack(track || null);
+      } else if (track) {
+        try { pc.addTrack(track, localStream!); } catch {}
+      }
+    }
+    await attachLocalToPeersAndRenegotiate();
+    micEnabled = enable;
+    emitLocalStatus();
+  }
+
+  async function setCameraEnabled(enable: boolean) {
+    try { console.log('[CALL] camera toggle', enable, 'current cameraStream:', !!cameraStream); } catch {}
+    
+    if (enable && !cameraStream) {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        console.log('[CALL] camera stream created');
+        await rebuildLocalStream();
+      } catch (e) {
+        console.error('[CALL] failed to get camera:', e);
+        return;
+      }
+    } else if (!enable && cameraStream) {
+      console.log('[CALL] stopping camera stream');
+      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream = null;
+      rebuildLocalStream();
+    }
+    
+    camEnabled = enable;
+    emitLocalStatus();
+  }
+
+  async function setScreenEnabled(enable: boolean) {
+    try { console.log('[CALL] screen toggle', enable, 'current screenStream:', !!screenStream); } catch {}
+    
+    if (enable && !screenStream) {
+      try {
+        // @ts-ignore
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        screenStream.getVideoTracks()[0].onended = () => { setScreenEnabled(false); };
+        console.log('[CALL] screen stream created');
+        await rebuildLocalStream();
+      } catch (e) {
+        console.error('[CALL] failed to get screen:', e);
+        return;
+      }
+    } else if (!enable && screenStream) {
+      console.log('[CALL] stopping screen stream');
+      screenStream.getTracks().forEach(t => t.stop());
+      screenStream = null;
+      rebuildLocalStream();
+    }
+    
+    screenEnabled = enable;
+    emitLocalStatus();
+    emitScreenActive(enable);
+  }
+
   socket.on('connect', () => {
     if (statusDiv) {
       statusDiv.textContent = 'Status: Connected';
       statusDiv.classList.add('connected');
     }
+    try { console.log('[CALL] signaling connected', socket.id); } catch {}
   });
   socket.on('disconnect', () => {
     if (statusDiv) {
@@ -68,13 +312,14 @@ export function initCallConnect(options?: {
       statusDiv.classList.remove('connected');
     }
     roomJoined = false;
+    try { console.log('[CALL] signaling disconnected'); } catch {}
   });
 
   async function startLocalMedia() {
     let cameraStream: MediaStream | null = null;
     let screenStream: MediaStream | null = null;
-    const shareCamera = options?.startWithCamera ?? !!shareCameraCheckbox?.checked;
-    const shareScreen = options?.startWithScreen ?? !!shareScreenCheckbox?.checked;
+    const shareCamera = !!shareCameraCheckbox?.checked;
+    const shareScreen = !!shareScreenCheckbox?.checked;
 
     if (!shareCamera && !shareScreen) return;
     try {
@@ -91,7 +336,29 @@ export function initCallConnect(options?: {
         ...(cameraStream ? cameraStream.getTracks() : []),
         ...(screenStream ? screenStream.getTracks() : [])
       ]);
+      // Render self tile
+      try {
+        ensurePeerTile('me');
+        const selfVideo = document.getElementById('remote-vid1-me') as HTMLVideoElement | null;
+        if (selfVideo) {
+          // Prefer camera video if present, else screen
+          const vids = localStream.getVideoTracks();
+          const auds = [] as MediaStreamTrack[]; // do not add mic to avoid echo on self preview
+          if (vids.length) {
+            selfVideo.srcObject = new MediaStream([vids[0], ...auds]);
+          } else {
+            selfVideo.srcObject = new MediaStream([]);
+          }
+          selfVideo.muted = true;
+          safePlay(selfVideo);
+          const placeholder = document.getElementById('placeholder-me');
+          if (placeholder) placeholder.classList.add('hidden');
+        }
+      } catch {}
       await attachLocalToPeersAndRenegotiate();
+      micEnabled = !!shareCameraCheckbox?.checked; // mic included with cam request above
+      camEnabled = !!shareCameraCheckbox?.checked;
+      screenEnabled = !!shareScreenCheckbox?.checked;
     } catch (e) {
       localStream = null;
       cameraStream?.getTracks().forEach((t) => t.stop());
@@ -103,12 +370,15 @@ export function initCallConnect(options?: {
     const roomId = roomIdInput?.value?.trim();
     if (!roomId) return;
     // If sharing planned, start media first
-    if (!options?.viewerOnly && (shareCameraCheckbox?.checked || shareScreenCheckbox?.checked || options?.startWithCamera || options?.startWithScreen) && !localStream) {
+    if ((shareCameraCheckbox?.checked || shareScreenCheckbox?.checked) && !localStream) {
       await startLocalMedia();
     }
     socket.emit('joinRoom', roomId);
     roomJoined = true;
     if (statusDiv) statusDiv.textContent = `Status: Connected - In Room ${roomId}`;
+    try { console.log('[CALL] joined room', roomId); } catch {}
+    // Ensure self tile even as viewer
+    try { ensurePeerTile('me'); } catch {}
   }
 
   function createPeerConnection(peerId: string) {
@@ -125,12 +395,20 @@ export function initCallConnect(options?: {
 
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') removePeer(peerId);
+      try { console.log('[CALL] ice state', peerId, pc.iceConnectionState); } catch {}
     };
 
     pc.ontrack = (event) => {
-      handleRemoteTrack(peerId, event.track, event.streams);
+      handleRemoteTrack(peerId, event.track, Array.from(event.streams));
     };
 
+    // Ensure receivers exist
+    try {
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+    } catch {}
+    try {
+      pc.addTransceiver('video', { direction: 'recvonly' });
+    } catch {}
     if (localStream) {
       try { localStream.getTracks().forEach((track) => pc.addTrack(track, localStream!)); } catch {}
     }
@@ -139,40 +417,51 @@ export function initCallConnect(options?: {
     return pc;
   }
 
+
   function handleRemoteTrack(peerId: string, track: MediaStreamTrack, streams: MediaStream[]) {
-    let peerDiv = document.getElementById('peer-' + peerId) as HTMLElement | null;
-    if (!peerDiv) {
-      peerDiv = document.createElement('div');
-      peerDiv.id = 'peer-' + peerId;
-      peerDiv.className = 'peer-container';
-      peerDiv.innerHTML = `
-        <label>Peer ${peerId} Video 1 (Camera?)</label>
-        <video id="remote-vid1-${peerId}" autoplay playsinline></video>
-        <label>Peer ${peerId} Video 2 (Screen?)</label>
-        <video id="remote-vid2-${peerId}" autoplay playsinline></video>
-      `;
-      remotesContainer!.appendChild(peerDiv);
-    }
+    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'})`);
+    
+    let peerDiv = ensurePeerTile(peerId) as HTMLElement;
     const vid1 = document.getElementById(`remote-vid1-${peerId}`) as HTMLVideoElement | null;
-    const vid2 = document.getElementById(`remote-vid2-${peerId}`) as HTMLVideoElement | null;
+    const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+    
     if (track.kind === 'video') {
       const hasVideo = (el: HTMLVideoElement | null) => !!(el && el.srcObject instanceof MediaStream && el.srcObject.getVideoTracks().length);
-      if (!hasVideo(vid1)) {
-        const aud = vid1 && vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
-        vid1!.srcObject = new MediaStream([track, ...(aud || [])]);
+      const label = (track.label || '').toLowerCase();
+      const isScreen = label.includes('screen') || label.includes('display') || label.includes('window');
+
+      console.log(`[CALL] video track analysis: isScreen=${isScreen}, label="${track.label}", hasVideo(vid1)=${hasVideo(vid1)}`);
+
+      // ТОЧНАЯ ЛОГИКА ИЗ call.html: первый видео -> vid1, второй -> activeScreen
+      if (!hasVideo(vid1) && vid1) {
+        console.log(`[CALL] first video track to participant tile for ${peerId}`);
+        const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
+        vid1.srcObject = new MediaStream([track, ...(aud || [])]);
         safePlay(vid1);
+        try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
+        const placeholder = document.getElementById(`placeholder-${peerId}`);
+        if (placeholder) placeholder.classList.add('hidden');
         return;
       }
-      if (!hasVideo(vid2)) {
-        const aud2 = vid2 && vid2.srcObject instanceof MediaStream ? vid2.srcObject.getAudioTracks() : [];
-        vid2!.srcObject = new MediaStream([track, ...(aud2 || [])]);
-        safePlay(vid2);
+      
+      if (activeScreenEl) {
+        console.log(`[CALL] second video track to activeScreen for ${peerId}`);
+        activeScreenEl.srcObject = new MediaStream([track]);
+        safePlay(activeScreenEl);
+        emitScreenActive(true);
         return;
       }
-      const aud2 = vid2 && vid2.srcObject instanceof MediaStream ? vid2.srcObject.getAudioTracks() : [];
-      vid2!.srcObject = new MediaStream([track, ...(aud2 || [])]);
-      safePlay(vid2);
+      
+      // Fallback: если activeScreen нет, заменяем vid1
+      if (vid1) {
+        console.log(`[CALL] fallback: updating video in participant tile for ${peerId}`);
+        const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
+        vid1.srcObject = new MediaStream([track, ...(aud || [])]);
+        safePlay(vid1);
+        try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
+      }
     } else if (track.kind === 'audio') {
+      console.log(`[CALL] audio track for ${peerId}`);
       if (vid1) {
         const vids = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getVideoTracks() : [];
         vid1.srcObject = new MediaStream([...vids, track]);
@@ -186,13 +475,26 @@ export function initCallConnect(options?: {
       try { peers[peerId].close(); } catch {}
       delete peers[peerId];
     }
+    
     const peerDiv = document.getElementById('peer-' + peerId);
     if (peerDiv) peerDiv.remove();
+    
+    // Если это был пир который показывал экран, убираем activeScreen
+    const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+    if (activeScreenEl && activeScreenEl.srcObject) {
+      // Проверяем остались ли другие пиры
+      const remainingPeers = Object.keys(peers).length;
+      if (remainingPeers === 0) {
+        activeScreenEl.srcObject = new MediaStream();
+        emitScreenActive(false);
+      }
+    }
   }
 
   // Socket events
   socket.on('existingUsers', async (users: string[]) => {
     for (const peerId of users) {
+      ensurePeerTile(peerId);
       const pc = createPeerConnection(peerId);
       if (!localStream) {
         pc.addTransceiver('audio', { direction: 'recvonly' });
@@ -206,6 +508,7 @@ export function initCallConnect(options?: {
   });
 
   socket.on('userJoined', async (peerId: string) => {
+    ensurePeerTile(peerId);
     createPeerConnection(peerId);
   });
 
@@ -236,110 +539,14 @@ export function initCallConnect(options?: {
   startBtn?.addEventListener('click', () => { startLocalMedia(); });
   joinBtn?.addEventListener('click', () => { joinRoomFunc(); });
 
-  // Auto-join by URL/options
-  if (options?.autoJoinRoomId) {
-    if (roomIdInput) roomIdInput.value = options.autoJoinRoomId;
-    if (typeof options.startWithCamera === 'boolean' && shareCameraCheckbox) shareCameraCheckbox.checked = options.startWithCamera;
-    if (typeof options.startWithScreen === 'boolean' && shareScreenCheckbox) shareScreenCheckbox.checked = options.startWithScreen;
-    // Delay to ensure DOM is ready
-    setTimeout(() => { joinRoomFunc(); }, 0);
-  }
-
-  // ---- Media control API for host UI ----
-  const renegotiateAll = async () => {
-    for (const [peerId, pc] of Object.entries(peers)) {
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('offer', { to: peerId, offer: pc.localDescription });
-      } catch {}
-    }
-  };
-
-  const replaceTrackForAll = async (match: (s: RTCRtpSender) => boolean, track: MediaStreamTrack | null) => {
-    for (const pc of Object.values(peers)) {
-      try {
-        const senders = pc.getSenders().filter(match);
-        if (senders.length === 0 && track) {
-          pc.addTrack(track, new MediaStream([track]));
-        } else {
-          for (const s of senders) {
-            await s.replaceTrack(track);
-          }
-        }
-      } catch {}
-    }
-    await renegotiateAll();
-  };
-
-  async function setMic(enabled: boolean) {
-    try {
-      if (enabled) {
-        let audio: MediaStreamTrack | null = localStream?.getAudioTracks()[0] || null;
-        if (!audio) {
-          const s = await navigator.mediaDevices.getUserMedia({ audio: true });
-          audio = s.getAudioTracks()[0] || null;
-          if (!localStream) localStream = new MediaStream();
-          if (audio) localStream.addTrack(audio);
-        }
-        await replaceTrackForAll((s) => s.track?.kind === 'audio', audio);
-      } else {
-        const audio = localStream?.getAudioTracks()[0] || null;
-        await replaceTrackForAll((s) => s.track?.kind === 'audio', null);
-        try { audio?.stop(); } catch {}
-        audio && localStream?.removeTrack(audio);
-      }
-    } catch {}
-  }
-
-  async function setCam(enabled: boolean) {
-    try {
-      // Distinguish camera vs screen by label heuristic
-      const isCamera = (t: MediaStreamTrack) => t.kind === 'video' && !(t.label.toLowerCase().includes('screen') || t.label.toLowerCase().includes('display') || t.label.toLowerCase().includes('window'));
-      if (enabled) {
-        let cam: MediaStreamTrack | null = localStream?.getVideoTracks().find(isCamera) || null;
-        if (!cam) {
-          const s = await navigator.mediaDevices.getUserMedia({ video: true });
-          cam = s.getVideoTracks()[0] || null;
-          if (!localStream) localStream = new MediaStream();
-          if (cam) localStream.addTrack(cam);
-          if (localCamera && cam) localCamera.srcObject = new MediaStream([cam]);
-        }
-        await replaceTrackForAll((s) => s.track?.kind === 'video' && isCamera(s.track!), cam);
-      } else {
-        const cam = localStream?.getVideoTracks().find(isCamera) || null;
-        await replaceTrackForAll((s) => s.track?.id === cam?.id, null);
-        try { cam?.stop(); } catch {}
-        cam && localStream?.removeTrack(cam);
-      }
-    } catch {}
-  }
-
-  async function startScreen() {
-    try {
-      // @ts-ignore
-      const ds: MediaStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true });
-      const track = ds.getVideoTracks()[0];
-      if (!localStream) localStream = new MediaStream();
-      localStream.addTrack(track);
-      for (const pc of Object.values(peers)) {
-        try { pc.addTrack(track, new MediaStream([track])); } catch {}
-      }
-      await renegotiateAll();
-      if (localScreen) localScreen.srcObject = ds;
-      (track as any).onended = async () => { await stopScreen(); };
-    } catch {}
-  }
-
-  async function stopScreen() {
-    try {
-      const screen = localStream?.getVideoTracks().find(t => t.label.toLowerCase().includes('screen') || t.label.toLowerCase().includes('display') || t.label.toLowerCase().includes('window')) || null;
-      await replaceTrackForAll((s) => s.track?.id === screen?.id, null);
-      try { screen?.stop(); } catch {}
-      screen && localStream?.removeTrack(screen);
-      await renegotiateAll();
-    } catch {}
-  }
-
-  (window as any).callController = { setMic, setCam, startScreen, stopScreen };
+  // Media toggle buttons
+  (document.getElementById('ctrlMic') as HTMLButtonElement | null)?.addEventListener('click', async () => {
+    await setAudioEnabled(!micEnabled);
+  });
+  (document.getElementById('ctrlCam') as HTMLButtonElement | null)?.addEventListener('click', async () => {
+    await setCameraEnabled(!camEnabled);
+  });
+  (document.getElementById('ctrlScreen') as HTMLButtonElement | null)?.addEventListener('click', async () => {
+    await setScreenEnabled(!screenEnabled);
+  });
 }
