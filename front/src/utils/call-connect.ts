@@ -33,6 +33,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     try {
       window.dispatchEvent(new CustomEvent('call:screenActive', { detail: { active } }));
     } catch {}
+    try { updateLayoutForScreen(active); } catch {}
   }
 
   // Socket.IO
@@ -41,6 +42,21 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   const participantsContainer = remotesContainer; // 3x2 grid
   let currentRoomId: string | null = null;
   const peerScreenState: Record<string, boolean> = {};
+
+  function updateLayoutForScreen(active: boolean) {
+    const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+    const remotesEl = document.getElementById('remotes') as HTMLElement | null;
+    if (!remotesEl) return;
+    if (active) {
+      // Показать верхний экран и сделать нижнюю полосу горизонтальной
+      if (activeScreenEl) activeScreenEl.classList.remove('hidden');
+      remotesEl.className = 'flex justify-center items-center gap-4 p-4';
+    } else {
+      // Спрятать верхний экран и включить сетку 3x2
+      if (activeScreenEl) activeScreenEl.classList.add('hidden');
+      remotesEl.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4';
+    }
+  }
 
   function ensurePeerTile(peerId: string) {
     if (!participantsContainer) return;
@@ -150,18 +166,13 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     // Обновляем превью экрана
     try {
       const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
-      const remotes = document.getElementById('remotes') as HTMLElement | null;
       if (activeScreenEl) {
         if (screenStream) {
           activeScreenEl.srcObject = screenStream;
           safePlay(activeScreenEl);
-          try { (activeScreenEl as any).style.display = 'block'; } catch {}
-          if (remotes) remotes.classList.add('flex');
           console.log('[CALL] local screen preview updated');
         } else {
           activeScreenEl.srcObject = new MediaStream();
-          try { (activeScreenEl as any).style.display = 'none'; } catch {}
-          if (remotes) remotes.classList.add('flex');
         }
       }
     } catch {}
@@ -240,6 +251,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     if (!localStream) return;
     for (const [peerId, pc] of Object.entries(peers)) {
       if (!pc) continue;
+      // Гарантируем, что у нового пира есть приёмники для двух видео
+      try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -452,10 +465,12 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     };
 
     // Ensure receivers exist
-    try { pc.addTransceiver('audio', { direction: 'recvonly' }); } catch {}
-    // Всегда резервируем два видео-приёмника: для камеры и для экрана
-    try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
-    try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
+    try {
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+    } catch {}
+    try {
+      pc.addTransceiver('video', { direction: 'recvonly' });
+    } catch {}
     if (localStream) {
       try { localStream.getTracks().forEach((track) => pc.addTrack(track, localStream!)); } catch {}
     }
@@ -488,7 +503,6 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
           activeScreenEl.srcObject = new MediaStream([track]);
           safePlay(activeScreenEl);
           emitScreenActive(true);
-          try { (activeScreenEl as any).style.display = 'block'; } catch {}
         }
       } else if (trackSource === 'camera') {
         // Это камера - всегда в плитку участника
@@ -568,6 +582,14 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   socket.on('userJoined', async (peerId: string) => {
     ensurePeerTile(peerId);
     createPeerConnection(peerId);
+    // Передаём текущее состояние экрана вновь подключившемуся
+    try {
+      if (currentRoomId) {
+        socket.emit('screenState', { roomId: currentRoomId, active: screenEnabled });
+      }
+    } catch {}
+    // Подстраховка: инициируем локальную пере-офферизацию, чтобы треки точно поехали
+    try { await attachLocalToPeersAndRenegotiate(); } catch {}
   });
 
   socket.on('offer', async ({ from, offer }: any) => {
@@ -596,6 +618,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   socket.on('screenState', ({ from, active }: any) => {
     peerScreenState[from] = !!active;
     try { console.log('[CALL] peer screen state', from, active); } catch {}
+    try { updateLayoutForScreen(!!active); } catch {}
   });
 
   socket.on('userLeft', (peerId: string) => removePeer(peerId));
