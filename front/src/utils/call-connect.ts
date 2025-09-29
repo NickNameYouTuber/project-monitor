@@ -5,36 +5,23 @@ import { io } from 'socket.io-client';
 export function initCallConnect(options?: {
   socketPath?: string;
   turnServers?: { urls: string; username?: string; credential?: string }[];
-  roomId?: string;
-  autoJoin?: boolean;
-  enableMic?: boolean;
-  enableCam?: boolean;
-  enableScreen?: boolean;
-  onPeerAdded?: (peerId: string, el: HTMLElement, isScreen: boolean) => void;
-  onPeerCategoryChanged?: (peerId: string, isScreen: boolean) => void;
-  onPeerRemoved?: (peerId: string) => void;
+  autoJoinRoomId?: string;
+  startWithCamera?: boolean;
+  startWithAudio?: boolean;
+  startWithScreen?: boolean;
+  viewerOnly?: boolean;
 }) {
   const localCamera = document.getElementById('localCamera') as HTMLVideoElement | null;
   const localScreen = document.getElementById('localScreen') as HTMLVideoElement | null;
   const shareCameraCheckbox = document.getElementById('shareCamera') as HTMLInputElement | null;
   const shareScreenCheckbox = document.getElementById('shareScreen') as HTMLInputElement | null;
   const roomIdInput = document.getElementById('roomId') as HTMLInputElement | null;
-  let remotesContainer = document.getElementById('remotes') as HTMLElement | null;
-  let screensContainer = document.getElementById('screens') as HTMLElement | null;
-  let peersContainer = (document.getElementById('peers') as HTMLElement | null) || remodesFallback();
+  const remotesContainer = document.getElementById('remotes') as HTMLElement | null;
   const statusDiv = document.getElementById('status') as HTMLElement | null;
   const startBtn = document.getElementById('startLocal');
   const joinBtn = document.getElementById('joinRoom');
 
-  function remodesFallback() {
-    const candidates = [document.getElementById('peers'), document.getElementById('remotes'), document.getElementById('screens')].filter(Boolean) as HTMLElement[];
-    if (candidates[0]) return candidates[0];
-    // Создаём дефолтный контейнер если ничего не найдено
-    const el = document.createElement('div');
-    el.id = 'peers';
-    document.body.appendChild(el);
-    return el;
-  }
+  if (!remotesContainer) throw new Error('remotes container not found');
 
   let localStream: MediaStream | null = null;
   let roomJoined = false;
@@ -83,16 +70,11 @@ export function initCallConnect(options?: {
     roomJoined = false;
   });
 
-  function setDeviceCheckboxes() {
-    if (shareCameraCheckbox) shareCameraCheckbox.checked = !!options?.enableCam;
-    if (shareScreenCheckbox) shareScreenCheckbox.checked = !!options?.enableScreen;
-  }
-
   async function startLocalMedia() {
     let cameraStream: MediaStream | null = null;
     let screenStream: MediaStream | null = null;
-    const shareCamera = !!shareCameraCheckbox?.checked;
-    const shareScreen = !!shareScreenCheckbox?.checked;
+    const shareCamera = options?.startWithCamera ?? !!shareCameraCheckbox?.checked;
+    const shareScreen = options?.startWithScreen ?? !!shareScreenCheckbox?.checked;
 
     if (!shareCamera && !shareScreen) return;
     try {
@@ -121,7 +103,7 @@ export function initCallConnect(options?: {
     const roomId = roomIdInput?.value?.trim();
     if (!roomId) return;
     // If sharing planned, start media first
-    if ((shareCameraCheckbox?.checked || shareScreenCheckbox?.checked) && !localStream) {
+    if (!options?.viewerOnly && (shareCameraCheckbox?.checked || shareScreenCheckbox?.checked || options?.startWithCamera || options?.startWithScreen) && !localStream) {
       await startLocalMedia();
     }
     socket.emit('joinRoom', roomId);
@@ -163,34 +145,18 @@ export function initCallConnect(options?: {
       peerDiv = document.createElement('div');
       peerDiv.id = 'peer-' + peerId;
       peerDiv.className = 'peer-container';
-      peerDiv.setAttribute('data-peerid', peerId);
       peerDiv.innerHTML = `
         <label>Peer ${peerId} Video 1 (Camera?)</label>
         <video id="remote-vid1-${peerId}" autoplay playsinline></video>
         <label>Peer ${peerId} Video 2 (Screen?)</label>
         <video id="remote-vid2-${peerId}" autoplay playsinline></video>
       `;
-      (peersContainer || remotesContainer)!.appendChild(peerDiv);
-      try {
-        options?.onPeerAdded?.(peerId, peerDiv, false);
-      } catch {}
+      remotesContainer!.appendChild(peerDiv);
     }
     const vid1 = document.getElementById(`remote-vid1-${peerId}`) as HTMLVideoElement | null;
     const vid2 = document.getElementById(`remote-vid2-${peerId}`) as HTMLVideoElement | null;
     if (track.kind === 'video') {
       const hasVideo = (el: HTMLVideoElement | null) => !!(el && el.srcObject instanceof MediaStream && el.srcObject.getVideoTracks().length);
-      // Determine screen by label
-      const label = (track.label || '').toLowerCase();
-      const isScreen = label.includes('screen') || label.includes('display') || label.includes('window');
-      // Move peer tile into appropriate container
-      if (isScreen && screensContainer && peerDiv?.parentElement !== screensContainer) {
-        screensContainer.appendChild(peerDiv!);
-        try { options?.onPeerCategoryChanged?.(peerId, true); } catch {}
-      } else if (!isScreen && peersContainer && peerDiv?.parentElement !== peersContainer) {
-        peersContainer.appendChild(peerDiv!);
-        try { options?.onPeerCategoryChanged?.(peerId, false); } catch {}
-      }
-
       if (!hasVideo(vid1)) {
         const aud = vid1 && vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
         vid1!.srcObject = new MediaStream([track, ...(aud || [])]);
@@ -206,11 +172,6 @@ export function initCallConnect(options?: {
       const aud2 = vid2 && vid2.srcObject instanceof MediaStream ? vid2.srcObject.getAudioTracks() : [];
       vid2!.srcObject = new MediaStream([track, ...(aud2 || [])]);
       safePlay(vid2);
-      // If this was a screen track, ensure tile is in screens container
-      if (isScreen && screensContainer && peerDiv?.parentElement !== screensContainer) {
-        screensContainer.appendChild(peerDiv!);
-        try { options?.onPeerCategoryChanged?.(peerId, true); } catch {}
-      }
     } else if (track.kind === 'audio') {
       if (vid1) {
         const vids = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getVideoTracks() : [];
@@ -227,7 +188,6 @@ export function initCallConnect(options?: {
     }
     const peerDiv = document.getElementById('peer-' + peerId);
     if (peerDiv) peerDiv.remove();
-    try { options?.onPeerRemoved?.(peerId); } catch {}
   }
 
   // Socket events
@@ -276,84 +236,110 @@ export function initCallConnect(options?: {
   startBtn?.addEventListener('click', () => { startLocalMedia(); });
   joinBtn?.addEventListener('click', () => { joinRoomFunc(); });
 
-  // Initialize device defaults
-  setDeviceCheckboxes();
-  // Auto-join support
-  if (options?.roomId) {
-    if (roomIdInput) roomIdInput.value = options.roomId;
-    if (options.autoJoin) {
-      joinRoomFunc();
+  // Auto-join by URL/options
+  if (options?.autoJoinRoomId) {
+    if (roomIdInput) roomIdInput.value = options.autoJoinRoomId;
+    if (typeof options.startWithCamera === 'boolean' && shareCameraCheckbox) shareCameraCheckbox.checked = options.startWithCamera;
+    if (typeof options.startWithScreen === 'boolean' && shareScreenCheckbox) shareScreenCheckbox.checked = options.startWithScreen;
+    // Delay to ensure DOM is ready
+    setTimeout(() => { joinRoomFunc(); }, 0);
+  }
+
+  // ---- Media control API for host UI ----
+  const renegotiateAll = async () => {
+    for (const [peerId, pc] of Object.entries(peers)) {
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('offer', { to: peerId, offer: pc.localDescription });
+      } catch {}
     }
-  }
+  };
 
-  // Controls API for React UI
-  const getAudioTrack = () => localStream?.getAudioTracks()?.[0];
-  const getCameraTrack = () => (localStream?.getVideoTracks() || []).find(t => !(t.label||'').toLowerCase().includes('screen'));
-  const getScreenTrack = () => (localStream?.getVideoTracks() || []).find(t => (t.label||'').toLowerCase().includes('screen'));
+  const replaceTrackForAll = async (match: (s: RTCRtpSender) => boolean, track: MediaStreamTrack | null) => {
+    for (const pc of Object.values(peers)) {
+      try {
+        const senders = pc.getSenders().filter(match);
+        if (senders.length === 0 && track) {
+          pc.addTrack(track, new MediaStream([track]));
+        } else {
+          for (const s of senders) {
+            await s.replaceTrack(track);
+          }
+        }
+      } catch {}
+    }
+    await renegotiateAll();
+  };
 
-  async function toggleMic() {
-    const t = getAudioTrack();
-    if (t) { t.enabled = !t.enabled; return t.enabled; }
-    // no audio present → start only audio
+  async function setMic(enabled: boolean) {
     try {
-      const a = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (!localStream) localStream = new MediaStream();
-      a.getAudioTracks().forEach(tr => localStream!.addTrack(tr));
-      await attachLocalToPeersAndRenegotiate();
-      return true;
-    } catch { return false; }
-  }
-
-  async function toggleCam() {
-    const t = getCameraTrack();
-    if (t) { t.enabled = !t.enabled; return t.enabled; }
-    try {
-      const v = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (!localStream) localStream = new MediaStream();
-      v.getVideoTracks().forEach(tr => localStream!.addTrack(tr));
-      await attachLocalToPeersAndRenegotiate();
-      return true;
-    } catch { return false; }
-  }
-
-  async function toggleScreen() {
-    const t = getScreenTrack();
-    if (t) {
-      // stop screen track
-      t.stop();
-      if (localStream) {
-        localStream.removeTrack(t);
-        await attachLocalToPeersAndRenegotiate();
+      if (enabled) {
+        let audio: MediaStreamTrack | null = localStream?.getAudioTracks()[0] || null;
+        if (!audio) {
+          const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audio = s.getAudioTracks()[0] || null;
+          if (!localStream) localStream = new MediaStream();
+          if (audio) localStream.addTrack(audio);
+        }
+        await replaceTrackForAll((s) => s.track?.kind === 'audio', audio);
+      } else {
+        const audio = localStream?.getAudioTracks()[0] || null;
+        await replaceTrackForAll((s) => s.track?.kind === 'audio', null);
+        try { audio?.stop(); } catch {}
+        audio && localStream?.removeTrack(audio);
       }
-      return false;
-    }
+    } catch {}
+  }
+
+  async function setCam(enabled: boolean) {
+    try {
+      // Distinguish camera vs screen by label heuristic
+      const isCamera = (t: MediaStreamTrack) => t.kind === 'video' && !(t.label.toLowerCase().includes('screen') || t.label.toLowerCase().includes('display') || t.label.toLowerCase().includes('window'));
+      if (enabled) {
+        let cam: MediaStreamTrack | null = localStream?.getVideoTracks().find(isCamera) || null;
+        if (!cam) {
+          const s = await navigator.mediaDevices.getUserMedia({ video: true });
+          cam = s.getVideoTracks()[0] || null;
+          if (!localStream) localStream = new MediaStream();
+          if (cam) localStream.addTrack(cam);
+          if (localCamera && cam) localCamera.srcObject = new MediaStream([cam]);
+        }
+        await replaceTrackForAll((s) => s.track?.kind === 'video' && isCamera(s.track!), cam);
+      } else {
+        const cam = localStream?.getVideoTracks().find(isCamera) || null;
+        await replaceTrackForAll((s) => s.track?.id === cam?.id, null);
+        try { cam?.stop(); } catch {}
+        cam && localStream?.removeTrack(cam);
+      }
+    } catch {}
+  }
+
+  async function startScreen() {
     try {
       // @ts-ignore
-      const s = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const ds: MediaStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true });
+      const track = ds.getVideoTracks()[0];
       if (!localStream) localStream = new MediaStream();
-      const track = s.getVideoTracks()[0];
       localStream.addTrack(track);
-      track.onended = async () => {
-        if (localStream) {
-          localStream.removeTrack(track);
-          await attachLocalToPeersAndRenegotiate();
-        }
-      };
-      await attachLocalToPeersAndRenegotiate();
-      return true;
-    } catch { return false; }
+      for (const pc of Object.values(peers)) {
+        try { pc.addTrack(track, new MediaStream([track])); } catch {}
+      }
+      await renegotiateAll();
+      if (localScreen) localScreen.srcObject = ds;
+      (track as any).onended = async () => { await stopScreen(); };
+    } catch {}
   }
 
-  function leave() {
-    Object.values(peers).forEach(pc => { try { pc.close(); } catch {} });
-    for (const tr of (localStream?.getTracks() || [])) { try { tr.stop(); } catch {} }
-    localStream = null;
+  async function stopScreen() {
+    try {
+      const screen = localStream?.getVideoTracks().find(t => t.label.toLowerCase().includes('screen') || t.label.toLowerCase().includes('display') || t.label.toLowerCase().includes('window')) || null;
+      await replaceTrackForAll((s) => s.track?.id === screen?.id, null);
+      try { screen?.stop(); } catch {}
+      screen && localStream?.removeTrack(screen);
+      await renegotiateAll();
+    } catch {}
   }
 
-  function join(room?: string) {
-    if (room && roomIdInput) roomIdInput.value = room;
-    joinRoomFunc();
-  }
-
-  return { toggleMic, toggleCam, toggleScreen, leave, join, startLocal: startLocalMedia };
+  (window as any).callController = { setMic, setCam, startScreen, stopScreen };
 }
