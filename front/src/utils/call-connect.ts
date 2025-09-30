@@ -407,6 +407,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
           };
           loop();
         }
+      } else if (tile) {
+        tile.classList.remove('ring-2', 'ring-emerald-500');
       }
     } catch {}
     emitLocalStatus();
@@ -432,6 +434,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       
       // Очищаем локальное превью
       try {
+        ensurePeerTile('me');
         const selfVideo = document.getElementById('remote-vid1-me') as HTMLVideoElement | null;
         if (selfVideo) {
           selfVideo.srcObject = new MediaStream();
@@ -439,8 +442,25 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         }
         const placeholder = document.getElementById('placeholder-me');
         if (placeholder) placeholder.classList.remove('hidden');
+        setNameVisible('me', false);
       } catch {}
     }
+    
+    // Принудительно очистим видеосендёры (replaceTrack(null)), чтобы у собеседников пропала картинка
+    try {
+      for (const pc of Object.values(peers)) {
+        const senders = pc.getSenders().filter(s => s.track && s.track.kind === 'video');
+        for (const s of senders) {
+          try { await s.replaceTrack(getLocalTrack('video')); } catch {}
+        }
+        // Если видеотрека нет вообще — очистим все видео-сендёры
+        if (!getLocalTrack('video')) {
+          for (const s of senders) {
+            try { await s.replaceTrack(null); } catch {}
+          }
+        }
+      }
+    } catch {}
     
     camEnabled = enable;
     emitLocalStatus();
