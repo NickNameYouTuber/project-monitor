@@ -45,7 +45,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject }: SidebarPro
     <div className="w-64 bg-card border-r border-border flex flex-col">
       <div className="p-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-transparent rounded-lg flex items-center justify-center">
             <img src="/nigit-logo.svg" alt="NIGIT" className="w-8 h-8" draggable={false} />
           </div>
           <div>
