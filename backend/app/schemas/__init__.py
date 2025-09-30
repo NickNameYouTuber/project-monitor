@@ -12,4 +12,3 @@ from .token import PATBase, PATCreate, PATResponse, PAT, PATList
 from .whiteboard import WhiteboardResponse, WhiteboardElementResponse, WhiteboardConnectionResponse, WhiteboardElementCreate, WhiteboardElementUpdate, WhiteboardConnectionCreate, WhiteboardConnectionUpdate
 from .merge_request import MergeRequestBase, MergeRequestCreate, MergeRequest, MergeRequestApproval, MergeRequestCommentCreate, MergeRequestComment
 from .pipeline import Pipeline, PipelineListItem
-from . import call

@@ -6,7 +6,7 @@ from starlette.routing import Route, Mount
 from .database import engine, SQLALCHEMY_DATABASE_URL
 from sqlalchemy import text
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards, merge_requests, pipelines, calls
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards, merge_requests, pipelines
 from .utils.telegram_notify import notify_task_event_silent
 import subprocess
 import os
@@ -29,7 +29,6 @@ for base in [
     models.merge_request.Base,
     models.whiteboard.Base,
     models.pipeline.Base,
-    models.call.Base,
 ]:
     base.metadata.create_all(bind=engine)
 
@@ -214,7 +213,6 @@ app.include_router(tokens.router, prefix=f"{api_prefix}/tokens", tags=["tokens"]
 app.include_router(whiteboards.router, prefix=f"{api_prefix}", tags=["whiteboards"])
 app.include_router(merge_requests.router, prefix=f"{api_prefix}", tags=["merge_requests"])
 app.include_router(pipelines.router, prefix=f"{api_prefix}", tags=["pipelines"])
-app.include_router(calls.router, prefix=f"{api_prefix}", tags=["calls"])
 
 # Catch-all routes for Git HTTP protocol to handle URLs with .git and subpaths
 @app.get("/api/git/{repository_id:path}")

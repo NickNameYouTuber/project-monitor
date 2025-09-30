@@ -14,7 +14,6 @@ import Initializer from './calls/Initializer';
 import MeetingsList from './calls/MeetingsList';
 import UpcomingPanel from './calls/UpcomingPanel';
 import SearchBar from './calls/SearchBar';
-import { listCalls, createCall } from '../api/calls';
 
 interface Meeting {
   id: string;
@@ -41,27 +40,28 @@ const MEETING_COLORS = [
 
 export function CallsPage() {
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await listCalls();
-        const mapped: Meeting[] = data.map(c => ({
-          id: c.id,
-          title: c.title,
-          date: c.scheduled_start ? new Date(c.scheduled_start) : new Date(),
-          duration: c.duration_minutes || 30,
-          participants: [],
-          type: 'video',
-          status: 'scheduled',
-          color: MEETING_COLORS[0].value,
-          description: c.description || ''
-        }));
-        setMeetings(mapped);
-      } catch {}
-    })();
-  }, []);
+  const [meetings, setMeetings] = useState<Meeting[]>([
+  {
+    id: '1',
+      title: 'Daily Standup',
+      date: new Date(new Date().setHours(9, 0, 0, 0)),
+    duration: 30,
+      participants: ['John Doe', 'Jane Smith'],
+    type: 'video',
+    status: 'scheduled',
+    color: MEETING_COLORS[0].value
+  },
+  {
+    id: '2',
+    title: 'Project Review',
+      date: new Date(new Date().setHours(14, 30, 0, 0)),
+    duration: 60,
+      participants: ['Mike Johnson', 'Sarah Wilson'],
+    type: 'video',
+    status: 'scheduled',
+    color: MEETING_COLORS[1].value
+    }
+  ]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isInCall, setIsInCall] = useState(false);
@@ -91,34 +91,24 @@ export function CallsPage() {
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 5);
 
-  const handleCreateMeeting = async () => {
+  const handleCreateMeeting = () => {
     const [hours, minutes] = newMeeting.time.split(':').map(Number);
     const meetingDate = new Date(newMeeting.date);
     meetingDate.setHours(hours, minutes);
 
-    try {
-      const created = await createCall({
-        title: newMeeting.title || 'Untitled',
-        description: newMeeting.description || '',
-        scheduled_start: meetingDate.toISOString(),
-        duration_minutes: newMeeting.duration,
-        participant_ids: [],
-      });
-      setMeetings(prev => [
-        ...prev,
-        {
-          id: created.id,
-          title: created.title,
-          date: created.scheduled_start ? new Date(created.scheduled_start) : meetingDate,
-          duration: created.duration_minutes || newMeeting.duration,
-          participants: [],
-          type: 'video',
+    const meeting: Meeting = {
+      id: Date.now().toString(),
+      title: newMeeting.title,
+      date: meetingDate,
+      duration: newMeeting.duration,
+      participants: newMeeting.participants.split(',').map(p => p.trim()).filter(Boolean),
+      type: newMeeting.type,
       status: 'scheduled',
       description: newMeeting.description,
       color: newMeeting.color
-        }
-      ]);
-    } catch {}
+    };
+
+    setMeetings(prev => [...prev, meeting]);
     setNewMeeting({
       title: '',
       date: new Date(),
