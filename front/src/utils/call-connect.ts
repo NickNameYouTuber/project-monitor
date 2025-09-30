@@ -395,6 +395,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         source.connect(analyser);
         const data = new Uint8Array(analyser.frequencyBinCount);
         console.log('[CALL] voice detection loop started');
+        let lastLog = 0;
         const loop = () => {
           analyser.getByteTimeDomainData(data);
           let sum = 0;
@@ -403,8 +404,14 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
             sum += v * v;
           }
           const rms = Math.sqrt(sum / data.length);
+          const now = Date.now();
+          if (now - lastLog > 500) {
+            console.log('[CALL] voice level:', rms.toFixed(3), 'threshold: 0.06', rms > 0.06 ? 'SPEAKING' : 'silent');
+            lastLog = now;
+          }
           if (rms > 0.06) {
             tile.classList.add('ring-2', 'ring-emerald-500');
+            console.log('[CALL] adding voice indicator ring');
           } else {
             tile.classList.remove('ring-2', 'ring-emerald-500');
           }
