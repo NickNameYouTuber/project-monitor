@@ -288,7 +288,7 @@ export default function App() {
   }, [isAuthenticated]);
 
   const location = useLocation();
-  const isStandaloneCall = location.pathname.startsWith('/call');
+  const isStandaloneCall = location.pathname.startsWith('/call/');
   
   // Обновляем currentPage на основе URL
   useEffect(() => {
