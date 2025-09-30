@@ -900,6 +900,21 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   (window as any).leaveCallConnect = async () => {
     await leaveCallInternal();
   };
+
+  // Программная установка состояний микрофона/камеры без кликов по UI
+  (window as any).callSetMedia = async (opts: { mic?: boolean; cam?: boolean; screen?: boolean }) => {
+    try {
+      if (typeof opts.mic === 'boolean' && opts.mic !== micEnabled) {
+        await setAudioEnabled(opts.mic);
+      }
+      if (typeof opts.cam === 'boolean' && opts.cam !== camEnabled) {
+        await setCameraEnabled(opts.cam);
+      }
+      if (typeof opts.screen === 'boolean' && opts.screen !== screenEnabled) {
+        await setScreenEnabled(opts.screen);
+      }
+    } catch {}
+  };
 }
 
 export async function leaveCall() {

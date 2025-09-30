@@ -24,14 +24,12 @@ export default function Initializer({ roomId, onLeave }: { roomId?: string; onLe
       if (screen) screen.checked = false;
       if (roomInput) roomInput.value = roomId;
       setTimeout(() => { joinBtn?.click(); }, 0);
-      // Применяем состояния микрофона и камеры ПОСЛЕ включения
+      // Применяем состояния микрофона и камеры ПОСЛЕ включения (программно)
       setTimeout(() => {
-        const ctrlMic = document.getElementById('ctrlMic') as HTMLButtonElement | null;
-        const ctrlCam = document.getElementById('ctrlCam') as HTMLButtonElement | null;
-        // Если pre-join выключил микрофон/камеру, кликаем на выключение
-        if (pre.micEnabled === false && ctrlMic) ctrlMic.click();
-        if (pre.camEnabled === false && ctrlCam) ctrlCam.click();
-      }, 500);
+        try {
+          (window as any).callSetMedia?.({ mic: pre.micEnabled !== false, cam: pre.camEnabled !== false });
+        } catch {}
+      }, 600);
     }
     const leaveBtn = document.getElementById('ctrlLeave') as HTMLButtonElement | null;
     if (leaveBtn) {
