@@ -230,10 +230,14 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
           try { selfVideo.classList.remove('hidden'); (selfVideo as any).style.display = 'block'; } catch {}
           const placeholder = document.getElementById('placeholder-me');
           if (placeholder) placeholder.classList.add('hidden');
+          // Показать ник при включённой камере
+          try { setNameVisible('me', true); } catch {}
         } else {
           selfVideo.srcObject = new MediaStream();
           const placeholder = document.getElementById('placeholder-me');
           if (placeholder) placeholder.classList.remove('hidden');
+          // Скрыть ник при выключенной камере
+          try { setNameVisible('me', false); } catch {}
         }
       }
     } catch {}
