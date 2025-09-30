@@ -46,7 +46,8 @@ export function Sidebar({ currentPage, onNavigate, selectedProject }: SidebarPro
       <div className="p-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
+            {/* logo nigit-logo.svg */}
+            <img src="/nit-logo.svg" alt="NIT Logo" className="w-full h-full" />
           </div>
           <div>
             <h1 className="text-xl font-semibold">NIGIt</h1>
