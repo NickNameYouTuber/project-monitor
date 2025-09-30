@@ -141,6 +141,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         <video id="remote-vid1-${peerId}" autoplay playsinline class="absolute inset-0 w-full h-full object-cover bg-black hidden"></video>
         <div id="placeholder-${peerId}" class="text-[#AAB0B6] text-xs">${peerId === 'me' ? 'You' : peerId}</div>
         <div class="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/50 text-white text-xs hidden" id="name-${peerId}">${peerNames[peerId] || (peerId === 'me' ? 'You' : peerId)}</div>
+        <div id="voice-${peerId}" class="pointer-events-none absolute inset-0 ring-2 ring-emerald-500 rounded-xl hidden"></div>
       `;
       participantsContainer.appendChild(peerDiv);
       try { console.log('[CALL] tile created for', peerId); } catch {}
@@ -409,11 +410,13 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
             console.log('[CALL] voice level:', rms.toFixed(3), 'threshold: 0.06', rms > 0.06 ? 'SPEAKING' : 'silent');
             lastLog = now;
           }
-          if (rms > 0.06) {
-            tile.classList.add('ring-2', 'ring-emerald-500');
-            console.log('[CALL] adding voice indicator ring');
-          } else {
-            tile.classList.remove('ring-2', 'ring-emerald-500');
+          const overlay = document.getElementById('voice-me') as HTMLElement | null;
+          if (overlay) {
+            if (rms > 0.06) {
+              overlay.classList.remove('hidden');
+            } else {
+              overlay.classList.add('hidden');
+            }
           }
           if (micEnabled) requestAnimationFrame(loop);
         };
@@ -758,8 +761,11 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
               sum += v * v;
             }
             const rms = Math.sqrt(sum / data.length);
-            if (rms > 0.06) tile.classList.add('ring-2', 'ring-emerald-500'); else tile.classList.remove('ring-2', 'ring-emerald-500');
-            voiceAnalyzers[peerId] = { ctx, analyser, rafId: requestAnimationFrame(loop) } as any;
+          const overlay = document.getElementById('voice-' + peerId) as HTMLElement | null;
+          if (overlay) {
+            if (rms > 0.06) overlay.classList.remove('hidden'); else overlay.classList.add('hidden');
+          }
+          voiceAnalyzers[peerId] = { ctx, analyser, rafId: requestAnimationFrame(loop) } as any;
           };
           loop();
         }
