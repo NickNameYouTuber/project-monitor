@@ -434,7 +434,6 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       
       // Очищаем локальное превью
       try {
-        ensurePeerTile('me');
         const selfVideo = document.getElementById('remote-vid1-me') as HTMLVideoElement | null;
         if (selfVideo) {
           selfVideo.srcObject = new MediaStream();
@@ -444,23 +443,20 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         if (placeholder) placeholder.classList.remove('hidden');
         setNameVisible('me', false);
       } catch {}
-    }
-    
-    // Принудительно очистим видеосендёры (replaceTrack(null)), чтобы у собеседников пропала картинка
-    try {
-      for (const pc of Object.values(peers)) {
-        const senders = pc.getSenders().filter(s => s.track && s.track.kind === 'video');
-        for (const s of senders) {
-          try { await s.replaceTrack(getLocalTrack('video')); } catch {}
-        }
-        // Если видеотрека нет вообще — очистим все видео-сендёры
-        if (!getLocalTrack('video')) {
-          for (const s of senders) {
-            try { await s.replaceTrack(null); } catch {}
+      
+      // Принудительно очистим видеосендёры (replaceTrack(null)), чтобы у собеседников пропала картинка
+      try {
+        for (const pc of Object.values(peers)) {
+          const senders = pc.getSenders().filter(s => s.track && s.track.kind === 'video');
+          // Если видеотрека нет вообще — очистим все видео-сендёры
+          if (!cameraStream && !screenStream) {
+            for (const s of senders) {
+              try { await s.replaceTrack(null); } catch {}
+            }
           }
         }
-      }
-    } catch {}
+      } catch {}
+    }
     
     camEnabled = enable;
     emitLocalStatus();
