@@ -3,6 +3,11 @@
 import { io } from 'socket.io-client';
 
 export function initCallConnect(options?: { socketPath?: string; turnServers?: { urls: string; username?: string; credential?: string }[] }) {
+  if ((window as any).__callConnectInit) {
+    try { console.warn('[CALL] initCallConnect skipped: already initialized'); } catch {}
+    return;
+  }
+  (window as any).__callConnectInit = true;
   const localCamera = document.getElementById('localCamera') as HTMLVideoElement | null;
   const localScreen = document.getElementById('localScreen') as HTMLVideoElement | null;
   const shareCameraCheckbox = document.getElementById('shareCamera') as HTMLInputElement | null;
@@ -962,6 +967,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   (window as any).leaveCallConnect = async () => {
     await leaveCallInternal();
+    try { (window as any).__callConnectInit = false; } catch {}
   };
 }
 

@@ -1,9 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { initCallConnect } from '../../utils/call-connect';
 import { getCurrentUser } from '../../api/users';
 
 export default function Initializer({ roomId, onLeave }: { roomId?: string; onLeave: () => void }) {
+  const initializedRef = useRef(false);
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     (async () => {
       try {
         const me = await getCurrentUser();
