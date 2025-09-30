@@ -131,41 +131,55 @@ const screen = await navigator.mediaDevices.getDisplayMedia({ video: true });
 screen.getVideoTracks().forEach(t => markTrackSource(t, 'screen'));
 ```
 
-### 4. Stable M-Line Order
+### 4. Stable M-Line Order & Transceiver Management
 
-**Проблема**: При каждом `createOffer()` порядок m-lines (audio, video, video) мог меняться, что приводило к ошибке "The order of m-lines in answer doesn't match order in offer".
+**Проблема**: 
+- При каждом `createOffer()` порядок m-lines (audio, video, video) мог меняться, что приводило к ошибке "The order of m-lines in answer doesn't match order in offer".
+- При collision (оба пира создают offer одновременно), transceivers дублировались — offerer создавал [0,1,2], затем answerer при `setRemoteDescription()` создавал ещё [3,4,5] из SDP.
 
-**Решение**: При создании `RTCPeerConnection` сразу добавляем 3 transceiver'а в фиксированном порядке:
+**Решение**: Создавать transceivers **только для offerer**, для answerer они создаются автоматически из remote SDP:
 
 ```typescript
-function createPeerConnection(peerId: string) {
+function createPeerConnection(peerId: string, isOfferer: boolean = false) {
   const pc = new RTCPeerConnection({ iceServers });
   
-  // Фиксированный порядок m-lines
-  pc.addTransceiver('audio', { direction: 'sendrecv' });
-  pc.addTransceiver('video', { direction: 'sendrecv' }); // Camera
-  pc.addTransceiver('video', { direction: 'sendrecv' }); // Screen
+  if (isOfferer) {
+    // Создаём transceivers в фиксированном порядке
+    const ta = pc.addTransceiver('audio', { direction: 'sendrecv' });
+    const tv1 = pc.addTransceiver('video', { direction: 'sendrecv' }); // Camera
+    const tv2 = pc.addTransceiver('video', { direction: 'sendrecv' }); // Screen
+    peerSenders[peerId] = { audio: ta.sender, v1: tv1.sender, v2: tv2.sender };
+  } else {
+    // Для answerer transceivers создадутся из remote SDP
+    // После setRemoteDescription сохраняем senders из transceivers
+  }
   
   peers[peerId] = pc;
   return pc;
 }
 ```
 
+Вызов:
+```typescript
+// Existing user creates offer for new user
+createPeerConnection(peerId, true); // isOfferer = true
+
+// New user receives offer
+createPeerConnection(peerId, false); // isOfferer = false, transceivers from SDP
+```
+
 Затем треки назначаются в строгом порядке:
 
 ```typescript
-async function assignLocalTracksToPeer(peerId: string, pc: RTCPeerConnection) {
-  const senders = pc.getSenders();
-  const audioTrack = localStream?.getAudioTracks()[0] || null;
-  const cameraTrack = localStream?.getVideoTracks().find(t => getTrackSource(t) === 'camera') || null;
-  const screenTrack = localStream?.getVideoTracks().find(t => getTrackSource(t) === 'screen') || null;
+function assignLocalTracksToPeer(peerId: string, pc: RTCPeerConnection) {
+  const senders = peerSenders[peerId] || {};
   
   // Слот 0: audio
-  await senders[0].replaceTrack(audioTrack);
+  await senders.audio?.replaceTrack(audioTrack || null);
   // Слот 1: camera video
-  await senders[1].replaceTrack(cameraTrack);
+  await senders.v1?.replaceTrack(cameraTrack || null);
   // Слот 2: screen video
-  await senders[2].replaceTrack(screenTrack);
+  await senders.v2?.replaceTrack(screenTrack || null);
 }
 ```
 
@@ -217,8 +231,17 @@ async function assignLocalTracksToPeer(peerId: string, pc: RTCPeerConnection) {
 - `[CALL] camera toggle {true/false}` - переключение камеры
 - `[CALL] marked track {kind} as {source}` - маркировка трека
 - `[CALL] rebuilding localStream` - пересборка локального потока
+- `[CALL] created transceivers for {peerId} (offerer)` - создали transceivers как offerer
+- `[CALL] skipped transceivers for {peerId} (answerer, will use remote SDP)` - пропустили, будем answerer
+- `[CALL] saved senders from remote SDP for {peerId}` - сохранили senders из remote SDP после setRemoteDescription
+- `[CALL] track from {peerId} mapped by transceiver[{index}] -> {source}` - трек определён по индексу transceiver
 - `[CALL] received track from {peerId}: {kind} [{source}]` - получен трек от пира
-- `[CALL] skip offer for {peerId}` - пропущен offer (уже идёт переговор)
+- `[CALL] sent offer to {peerId}` - отправили offer
+- `[CALL] sent answer to {peerId}` - отправили answer
+- `[CALL] received answer from {peerId}` - получили answer
+- `[CALL] skip offer for {peerId} (already making offer)` - пропущен offer (уже создаём offer)
+- `[CALL] skip offer for {peerId} (state: {state})` - пропущен offer (не в stable state)
+- `[CALL] ignoring offer from {peerId} (collision, we are impolite)` - игнорируем offer из-за collision
 - `[CALL] renegotiate error for {peerId}` - ошибка renegotiation
 
 ### Типичные ошибки

@@ -637,7 +637,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     } catch {}
   }
 
-  function createPeerConnection(peerId: string) {
+  function createPeerConnection(peerId: string, isOfferer: boolean = false) {
     const iceServers = options?.turnServers ?? [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'turn:nit.nicorp.tech:3478', username: 'test', credential: 'test' },
@@ -659,13 +659,19 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       setTileName(peerId, peerNames[peerId] || null);
     };
 
-    // Создаём стабильные transceiver'ы в фиксированном порядке (audio, video1, video2)
-    try {
-      const ta = pc.addTransceiver('audio', { direction: 'sendrecv' });
-      const tv1 = pc.addTransceiver('video', { direction: 'sendrecv' });
-      const tv2 = pc.addTransceiver('video', { direction: 'sendrecv' });
-      peerSenders[peerId] = { audio: ta.sender, v1: tv1.sender, v2: tv2.sender };
-    } catch {}
+    // Создаём transceivers только если МЫ будем создавать offer
+    // Если получаем offer, transceivers создадутся автоматически из SDP
+    if (isOfferer) {
+      try {
+        const ta = pc.addTransceiver('audio', { direction: 'sendrecv' });
+        const tv1 = pc.addTransceiver('video', { direction: 'sendrecv' });
+        const tv2 = pc.addTransceiver('video', { direction: 'sendrecv' });
+        peerSenders[peerId] = { audio: ta.sender, v1: tv1.sender, v2: tv2.sender };
+        try { console.log('[CALL] created transceivers for', peerId, '(offerer)'); } catch {}
+      } catch {}
+    } else {
+      try { console.log('[CALL] skipped transceivers for', peerId, '(answerer, will use remote SDP)'); } catch {}
+    }
     
     pc._makingOffer = false;
     pc._ignoreOffer = false;
@@ -857,7 +863,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   socket.on('existingUsers', async (users: string[]) => {
     for (const peerId of users) {
       ensurePeerTile(peerId);
-      createPeerConnection(peerId);
+      createPeerConnection(peerId, true); // We are offerer
       await makeOffer(peerId);
     }
   });
@@ -879,7 +885,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   socket.on('userJoined', async (peerId: string) => {
     ensurePeerTile(peerId);
-    createPeerConnection(peerId);
+    createPeerConnection(peerId, true); // We are offerer (existing user sends offer to new user)
     
     // Передаём текущее состояние экрана вновь подключившемуся
     try {
@@ -895,7 +901,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   socket.on('offer', async ({ from, offer }: any) => {
     if (!peers[from]) {
       ensurePeerTile(from);
-      createPeerConnection(from);
+      createPeerConnection(from, false); // We are answerer (receiving offer from remote)
     }
     const pc = peers[from] as RTCPeerConnection & { _makingOffer?: boolean; _ignoreOffer?: boolean };
     
@@ -911,6 +917,18 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      
+      // После setRemoteDescription transceivers уже созданы из SDP, сохраняем senders
+      if (!peerSenders[from]) {
+        const transceivers = pc.getTransceivers();
+        peerSenders[from] = {
+          audio: transceivers[0]?.sender,
+          v1: transceivers[1]?.sender,
+          v2: transceivers[2]?.sender,
+        };
+        try { console.log('[CALL] saved senders from remote SDP for', from); } catch {}
+      }
+      
       await assignLocalTracksToPeer(from, pc);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
