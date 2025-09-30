@@ -969,6 +969,11 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     await leaveCallInternal();
     try { (window as any).__callConnectInit = false; } catch {}
   };
+
+  // Если сокет был отключён, разрешим повторную инициализацию
+  try {
+    (window as any).__callConnectAllowReinit = () => { (window as any).__callConnectInit = false; };
+  } catch {}
 }
 
 export async function leaveCall() {
