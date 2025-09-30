@@ -1,15 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Mic, MicOff, Video, VideoOff, Monitor, ArrowRight } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 export default function PreJoinPage() {
   const navigate = useNavigate();
   const { roomId } = useParams();
+  const location = useLocation() as any;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [micEnabled, setMicEnabled] = useState(false);
   const [camEnabled, setCamEnabled] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const meetingTitle = location.state?.title as string | undefined;
+  const meetingStartIso = location.state?.start as string | undefined;
+  const meetingDuration = location.state?.duration as number | undefined;
+  const timeframe = (() => {
+    if (!meetingStartIso || !meetingDuration) return '';
+    const start = new Date(meetingStartIso);
+    const end = new Date(start.getTime() + meetingDuration * 60000);
+    const fmt = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${fmt(start)}–${fmt(end)}`;
+  })();
 
   useEffect(() => {
     (async () => {
@@ -49,7 +60,8 @@ export default function PreJoinPage() {
           <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover bg-black" muted />
         </div>
         <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-6 flex flex-col gap-4">
-          <h2 className="text-lg font-semibold">Device check</h2>
+          <h2 className="text-lg font-semibold">{meetingTitle || 'Device check'}</h2>
+          {timeframe && <div className="text-sm text-white/70">{timeframe}</div>}
           <div className="flex gap-3">
             <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full" onClick={() => setMicEnabled(v => !v)}>
               {micEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}

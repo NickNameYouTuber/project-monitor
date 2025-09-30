@@ -134,8 +134,12 @@ export function CallsPage() {
     } catch {}
   }; 
 
-  const startCall = () => {
-    navigate('/prejoin/test');
+  const startCall = (meeting?: Meeting) => {
+    if (meeting) {
+      navigate(`/prejoin/${meeting.id}`, { state: { title: meeting.title, start: meeting.date.toISOString(), duration: meeting.duration } });
+    } else {
+      navigate('/prejoin/test');
+    }
   };
 
   const endCall = () => {
@@ -203,7 +207,10 @@ export function CallsPage() {
         </Tabs>
 
         {/* Sliding Upcoming Meetings Panel */}
-        <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={() => startCall()} />
+        <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={(id) => {
+          const m = meetings.find(mm => mm.id === id);
+          startCall(m);
+        }} />
         
         {/* Overlay when panel is open */}
         <UpcomingOverlay open={isUpcomingOpen} onClick={() => setIsUpcomingOpen(false)} />

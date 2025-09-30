@@ -793,6 +793,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   socket.on('userIntro', ({ id, name }: { id: string; name: string | null }) => {
     peerNames[id] = name || '';
     setTileName(id, name || null);
+    if (id === 'me') setTileName('me', name || null);
   });
 
   socket.on('userJoined', async (peerId: string) => {

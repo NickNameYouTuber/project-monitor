@@ -38,7 +38,7 @@ io.on('connection', (socket) => {
         socket.to(roomId).emit('userJoined', socket.id);
 
         const room = io.sockets.adapter.rooms.get(roomId);
-        const existingUsers = Array.from(room || []).filter(id => id !== socket.id);
+    const existingUsers = Array.from(room || []).filter(id => id !== socket.id);
     socket.emit('existingUsers', existingUsers);
     // send names for existing users if known
     const namesMap = roomNames.get(roomId) || new Map();
@@ -51,7 +51,8 @@ io.on('connection', (socket) => {
     try {
       if (!roomNames.has(roomId)) roomNames.set(roomId, new Map());
       roomNames.get(roomId).set(socket.id, name || null);
-      socket.to(roomId).emit('userIntro', { id: socket.id, name: name || null });
+      // Шлём обновление всем, включая себя — для унификации отображения
+      io.to(roomId).emit('userIntro', { id: socket.id, name: name || null });
     } catch {}
   });
 
