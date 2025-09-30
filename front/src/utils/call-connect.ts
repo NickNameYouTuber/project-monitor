@@ -385,32 +385,38 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     // Детекция голоса и подсветка рамкой для "me"
     try {
       const tile = document.getElementById('peer-me');
-      if (tile && micEnabled) {
+      console.log('[CALL] voice detection setup: tile exists?', !!tile, 'micEnabled?', micEnabled, 'localStream?', !!localStream);
+      if (tile && micEnabled && localStream && localStream.getAudioTracks().length > 0) {
         const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const stream = localStream;
-        if (stream) {
-          const source = audioCtx.createMediaStreamSource(stream);
-          const analyser = audioCtx.createAnalyser();
-          analyser.fftSize = 512;
-          source.connect(analyser);
-          const data = new Uint8Array(analyser.frequencyBinCount);
-          const loop = () => {
-            analyser.getByteTimeDomainData(data);
-            let sum = 0;
-            for (let i = 0; i < data.length; i++) {
-              const v = (data[i] - 128) / 128;
-              sum += v * v;
-            }
-            const rms = Math.sqrt(sum / data.length);
-            if (rms > 0.06) tile.classList.add('ring-2', 'ring-emerald-500'); else tile.classList.remove('ring-2', 'ring-emerald-500');
-            requestAnimationFrame(loop);
-          };
-          loop();
-        }
+        const source = audioCtx.createMediaStreamSource(stream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        console.log('[CALL] voice detection loop started');
+        const loop = () => {
+          analyser.getByteTimeDomainData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            const v = (data[i] - 128) / 128;
+            sum += v * v;
+          }
+          const rms = Math.sqrt(sum / data.length);
+          if (rms > 0.06) {
+            tile.classList.add('ring-2', 'ring-emerald-500');
+          } else {
+            tile.classList.remove('ring-2', 'ring-emerald-500');
+          }
+          if (micEnabled) requestAnimationFrame(loop);
+        };
+        loop();
       } else if (tile) {
         tile.classList.remove('ring-2', 'ring-emerald-500');
       }
-    } catch {}
+    } catch (e) {
+      console.error('[CALL] voice detection error:', e);
+    }
     emitLocalStatus();
   }
 
@@ -438,6 +444,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         if (selfVideo) {
           selfVideo.srcObject = new MediaStream();
           selfVideo.classList.add('hidden');
+          (selfVideo as any).style.display = 'none';
         }
         const placeholder = document.getElementById('placeholder-me');
         if (placeholder) placeholder.classList.remove('hidden');
