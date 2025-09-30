@@ -357,27 +357,9 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   async function setAudioEnabled(enable: boolean) {
     try { console.log('[CALL] mic toggle', enable); } catch {}
-    if (enable) {
-      if (!getLocalTrack('audio')) {
-        const aud = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const aTrack = aud.getAudioTracks()[0];
-        if (!localStream) localStream = new MediaStream();
-        localStream.addTrack(aTrack);
-      }
-    } else {
-      removeLocalTrack('audio');
-    }
-    for (const pc of Object.values(peers)) {
-      const sender = getSenderByKind(pc, 'audio');
-      const track = getLocalTrack('audio');
-      if (sender) {
-        await sender.replaceTrack(track || null);
-      } else if (track) {
-        try { pc.addTrack(track, localStream!); } catch {}
-      }
-    }
-    await attachLocalToPeersAndRenegotiate();
     micEnabled = enable;
+    // Пересобираем общую локальную медиа-сессию с учётом micEnabled
+    await rebuildLocalStream();
     // Детекция голоса и подсветка рамкой для "me"
     try {
       const tile = document.getElementById('peer-me');
