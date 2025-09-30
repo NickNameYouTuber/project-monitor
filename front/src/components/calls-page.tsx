@@ -26,6 +26,7 @@ interface Meeting {
   status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
   description?: string;
   color?: string;
+  roomId?: string;
 }
 
 // Predefined meeting colors with transparency
@@ -83,6 +84,7 @@ export function CallsPage() {
             type: 'video' as const,
             status: 'scheduled' as const,
             color: MEETING_COLORS[1].value,
+            roomId: c.room_id,
           })));
         }
       } catch {}
@@ -114,6 +116,7 @@ export function CallsPage() {
     const meetingDate = new Date(newMeeting.date);
     meetingDate.setHours(hours, minutes);
 
+    const roomId = Date.now().toString();
     const meeting: Meeting = {
       id: Date.now().toString(),
       title: newMeeting.title,
@@ -123,14 +126,15 @@ export function CallsPage() {
       type: newMeeting.type,
       status: 'scheduled',
       description: newMeeting.description,
-      color: newMeeting.color
+      color: newMeeting.color,
+      roomId,
     };
 
     setMeetings(prev => [...prev, meeting]);
     // Пишем на бэк
     try {
       createCall({
-        room_id: meeting.id,
+        room_id: roomId,
         title: meeting.title,
         description: meeting.description,
         start_at: meeting.date.toISOString(),
@@ -164,9 +168,10 @@ export function CallsPage() {
 
   const startCall = (meeting?: Meeting) => {
     if (meeting) {
-      navigate(`/prejoin/${meeting.id}`, { state: { title: meeting.title, start: meeting.date.toISOString(), duration: meeting.duration } });
+      navigate(`/prejoin/${meeting.roomId || meeting.id}`, { state: { title: meeting.title, start: meeting.date.toISOString(), duration: meeting.duration } });
     } else {
-      navigate('/prejoin/test');
+      const rid = Date.now().toString();
+      navigate(`/prejoin/${rid}`);
     }
   };
 
