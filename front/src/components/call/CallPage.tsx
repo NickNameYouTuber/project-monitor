@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './globals.css';
 import './index.css';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ParticipantTile } from './ParticipantTile';
-// import { ScreenShareArea } from './ScreenShareArea';
-// import { Pagination } from './Pagination';
 import { NavigationControls } from './NavigationControls';
 
 export default function CallPage() {

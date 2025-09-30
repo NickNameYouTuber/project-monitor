@@ -848,4 +848,54 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   (document.getElementById('ctrlScreen') as HTMLButtonElement | null)?.addEventListener('click', async () => {
     await setScreenEnabled(!screenEnabled);
   });
+  (document.getElementById('ctrlLeave') as HTMLButtonElement | null)?.addEventListener('click', async () => {
+    try { await leaveCallInternal(); } catch {}
+  });
+
+  async function leaveCallInternal() {
+    try {
+      for (const [peerId, pc] of Object.entries(peers)) {
+        try { pc.close(); } catch {}
+        delete peers[peerId];
+      }
+      if (localStream) {
+        try { localStream.getTracks().forEach(t => t.stop()); } catch {}
+      }
+      if (cameraStream) {
+        try { cameraStream.getTracks().forEach(t => t.stop()); } catch {}
+      }
+      if (screenStream) {
+        try { screenStream.getTracks().forEach(t => t.stop()); } catch {}
+      }
+      localStream = null;
+      cameraStream = null;
+      screenStream = null;
+      micEnabled = false;
+      camEnabled = false;
+      screenEnabled = false;
+      emitLocalStatus();
+      const activeScreenEl = document.getElementById('activeScreen') as HTMLVideoElement | null;
+      if (activeScreenEl) activeScreenEl.srcObject = new MediaStream();
+      emitScreenActive(false);
+      const remotesEl = document.getElementById('remotes') as HTMLElement | null;
+      if (remotesEl) remotesEl.innerHTML = '';
+      if (socket && socket.connected) {
+        try { socket.disconnect(); } catch {}
+      }
+      roomJoined = false;
+      currentRoomId = null;
+    } catch {}
+  }
+
+  (window as any).leaveCallConnect = async () => {
+    await leaveCallInternal();
+  };
+}
+
+export async function leaveCall() {
+  try {
+    if (typeof (window as any).leaveCallConnect === 'function') {
+      await (window as any).leaveCallConnect();
+    }
+  } catch {}
 }
