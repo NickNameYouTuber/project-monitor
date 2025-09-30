@@ -9,7 +9,7 @@ import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import NewMeetingDialog from './calls/NewMeetingDialog';
 import UpcomingOverlay from './calls/UpcomingOverlay';
-import CallPage from './call/CallPage';
+import CallPage from './call/CallPage';И
 import Initializer from './calls/Initializer';
 import MeetingsList from './calls/MeetingsList';
 import UpcomingPanel from './calls/UpcomingPanel';
@@ -170,11 +170,9 @@ export function CallsPage() {
         <SearchBar value={searchQuery} onChange={setSearchQuery} onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)} upcomingCount={upcomingMeetings.length} />
       </div>
 
-      <div className="flex-1 relative min-h-0 flex">
-        {/* Левая панель с табами */}
-        <div className="flex-1 min-h-0">
-          <Tabs defaultValue="list" className="flex-1 min-h-0 flex flex-col h-full">
-            <div className="border-b bg-background p-4 shrink-0">
+      <div className="flex-1 relative min-h-0">
+        <Tabs defaultValue="calendar" className="flex-1 min-h-0 flex flex-col">
+          <div className="flex items-center justify-between border-b bg-background p-4 shrink-0">
             <TabsList className="justify-start rounded-none bg-transparent p-0">
               <TabsTrigger value="calendar" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                 Calendar View
@@ -183,17 +181,28 @@ export function CallsPage() {
                 List View
               </TabsTrigger>
             </TabsList>
-            </div>
             
-            {/* Calendar view removed */}
-            
-            <TabsContent value="list" className="flex-1 min-h-0 m-0 p-6">
-              <MeetingsList items={meetings} />
-            </TabsContent>
-          </Tabs>
-        </div>
+            {/* Upcoming Meetings Toggle Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
+              className="flex items-center gap-2"
+            >
+              <Clock className="w-4 h-4" />
+              Upcoming ({upcomingMeetings.length})
+              <ChevronRight className={`w-4 h-4 transition-transform ${isUpcomingOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </div>
+          
+          {/* Calendar view removed */}
+          
+          <TabsContent value="list" className="flex-1 min-h-0 m-0 p-6">
+            <MeetingsList items={meetings} />
+          </TabsContent>
+        </Tabs>
 
-        {/* Правая панель Upcoming */}
+        {/* Sliding Upcoming Meetings Panel */}
         <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={() => startCall()} />
         
         {/* Overlay when panel is open */}

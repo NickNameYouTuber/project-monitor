@@ -7,14 +7,16 @@ export default function PreJoinPage() {
   const navigate = useNavigate();
   const { roomId } = useParams();
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [micEnabled, setMicEnabled] = useState(true);
-  const [camEnabled, setCamEnabled] = useState(true);
+  const [micEnabled, setMicEnabled] = useState(false);
+  const [camEnabled, setCamEnabled] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
         const s = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        s.getAudioTracks().forEach(t => t.enabled = micEnabled);
+        s.getVideoTracks().forEach(t => t.enabled = camEnabled);
         setStream(s);
         if (videoRef.current) {
           videoRef.current.srcObject = s;

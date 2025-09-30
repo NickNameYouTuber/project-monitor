@@ -317,7 +317,7 @@ export default function App() {
           <AuthPage onLogin={() => setIsAuthenticated(true)} />
         ) : (
           <div className="flex h-screen">
-            {!isStandaloneCall && currentPage !== 'projects' && (
+            {!isStandaloneCall && (
               <Sidebar currentPage={currentPage} onNavigate={handleNavigate} selectedProject={selectedProject} />
             )}
             <main className={`flex-1 overflow-hidden ${currentPage === 'projects' || isStandaloneCall ? 'w-full' : ''}`}>

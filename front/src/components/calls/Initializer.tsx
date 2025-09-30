@@ -20,16 +20,16 @@ export default function Initializer({ roomId, onLeave }: { roomId?: string; onLe
       const screen = document.getElementById('shareScreen') as HTMLInputElement | null;
       // Применяем настройки из pre-join
       let pre: any = (window as any).prejoinSettings || {};
-      if (mic) mic.checked = pre.camEnabled !== false; // cam+mic чекбокс (по умолчанию true)
+      if (mic) mic.checked = !!pre.camEnabled; // cam+mic чекбокс
       if (screen) screen.checked = false;
       if (roomInput) roomInput.value = roomId;
       setTimeout(() => { joinBtn?.click(); }, 0);
-      // Применяем состояния микрофона и камеры ПОСЛЕ включения (программно)
+      // Применяем состояния микрофона и камеры точно
       setTimeout(() => {
         try {
-          (window as any).callSetMedia?.({ mic: pre.micEnabled !== false, cam: pre.camEnabled !== false });
+          (window as any).callApplyPrejoin?.(!!pre.micEnabled, !!pre.camEnabled);
         } catch {}
-      }, 600);
+      }, 500);
     }
     const leaveBtn = document.getElementById('ctrlLeave') as HTMLButtonElement | null;
     if (leaveBtn) {
