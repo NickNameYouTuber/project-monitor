@@ -46,6 +46,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   // Socket.IO
   const socket = io('/', { path: options?.socketPath ?? '/socket.io' });
   const peers: Record<string, RTCPeerConnection> = {};
+  const peerSenders: Record<string, { audio?: RTCRtpSender; v1?: RTCRtpSender; v2?: RTCRtpSender }> = {};
   const participantsContainer = remotesContainer; // 3x2 grid
   let currentRoomId: string | null = null;
   const peerScreenState: Record<string, boolean> = {};
@@ -215,9 +216,9 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     // Обновляем локальные превью
     updateLocalPreviews();
     
-    // Заменяем треки во всех пирах
+    // Заменяем треки во всех пирах в стабильные слоты
     for (const [peerId, pc] of Object.entries(peers)) {
-      await replaceTracksInPeer(pc, oldStream, localStream);
+      try { assignLocalTracksToPeer(peerId, pc); } catch {}
     }
     
     attachLocalToPeersAndRenegotiate();
@@ -639,19 +640,32 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       setTileName(peerId, peerNames[peerId] || null);
     };
 
-    // Ensure receivers exist
+    // Создаём стабильные transceiver'ы в фиксированном порядке (audio, video1, video2)
     try {
-      pc.addTransceiver('audio', { direction: 'recvonly' });
+      const ta = pc.addTransceiver('audio', { direction: 'sendrecv' });
+      const tv1 = pc.addTransceiver('video', { direction: 'sendrecv' });
+      const tv2 = pc.addTransceiver('video', { direction: 'sendrecv' });
+      peerSenders[peerId] = { audio: ta.sender, v1: tv1.sender, v2: tv2.sender };
     } catch {}
-    try {
-      pc.addTransceiver('video', { direction: 'recvonly' });
-    } catch {}
-    if (localStream) {
-      try { localStream.getTracks().forEach((track) => pc.addTrack(track, localStream!)); } catch {}
-    }
+    // Назначаем локальные треки на отправители согласно источникам
+    try { assignLocalTracksToPeer(peerId, pc); } catch {}
 
     peers[peerId] = pc;
     return pc;
+  }
+
+  function assignLocalTracksToPeer(peerId: string, pc: RTCPeerConnection) {
+    const senders = peerSenders[peerId] || {};
+    // audio
+    const aTrack = getLocalTrack('audio');
+    if (senders.audio) {
+      senders.audio.replaceTrack(aTrack || null).catch(() => {});
+    }
+    // video: v1 -> camera, v2 -> screen
+    const camTrack = cameraStream ? cameraStream.getVideoTracks()[0] || null : null;
+    const scrTrack = screenStream ? screenStream.getVideoTracks()[0] || null : null;
+    if (senders.v1) senders.v1.replaceTrack(camTrack || null).catch(() => {});
+    if (senders.v2) senders.v2.replaceTrack(scrTrack || null).catch(() => {});
   }
 
 
@@ -829,12 +843,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     for (const peerId of users) {
       ensurePeerTile(peerId);
       const pc = createPeerConnection(peerId);
-      // Всегда добавляем приёмники для получения треков от существующих пиров
-      pc.addTransceiver('audio', { direction: 'recvonly' });
-      pc.addTransceiver('video', { direction: 'recvonly' });
-      pc.addTransceiver('video', { direction: 'recvonly' });
-      
-      const offer = await pc.createOffer();
+      const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
       await pc.setLocalDescription(offer);
       socket.emit('offer', { to: peerId, offer: pc.localDescription });
     }
@@ -866,9 +875,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       }
     } catch {}
     
-    // Если у нас есть локальные треки, новый пир должен их получить через offer/answer
-    // Ждём чтобы новый пир успел отправить свой offer
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Ждём минимально чтобы пир успел поднять приёмники
+    await new Promise(resolve => setTimeout(resolve, 50));
     
     // Подстраховка: инициируем локальную пере-офферизацию, чтобы треки точно поехали
     try { await attachLocalToPeersAndRenegotiate(); } catch {}
@@ -878,9 +886,6 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     if (!peers[from]) createPeerConnection(from);
     const pc = peers[from];
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    if (!localStream) {
-      pc.getTransceivers().forEach((t) => { t.direction = 'recvonly'; });
-    }
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
     socket.emit('answer', { to: from, answer: pc.localDescription });
