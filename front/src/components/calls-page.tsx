@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { DialogTrigger } from './ui/dialog';
+// убираем DialogTrigger чтобы избегать ошибки использования вне Dialog
 import NewMeetingDialog from './calls/NewMeetingDialog';
 import UpcomingOverlay from './calls/UpcomingOverlay';
 import CallPage from './call/CallPage';
@@ -161,12 +161,10 @@ export function CallsPage() {
             <h1>Calls & Meetings</h1>
             <p className="text-muted-foreground">Schedule and manage your team meetings</p>
           </div>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsCreateMeetingOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Meeting
-            </Button>
-          </DialogTrigger>
+          <Button onClick={() => setIsCreateMeetingOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Meeting
+          </Button>
           <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
         </div>
         
