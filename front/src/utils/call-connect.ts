@@ -862,6 +862,10 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   // Socket events
   socket.on('existingUsers', async (users: string[]) => {
     for (const peerId of users) {
+      if (peers[peerId]) {
+        try { console.log('[CALL] skip existingUsers for', peerId, '(already connected)'); } catch {}
+        continue;
+      }
       ensurePeerTile(peerId);
       createPeerConnection(peerId, true); // We are offerer
       await makeOffer(peerId);
@@ -884,6 +888,11 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   });
 
   socket.on('userJoined', async (peerId: string) => {
+    if (peers[peerId]) {
+      try { console.log('[CALL] skip userJoined for', peerId, '(already connected)'); } catch {}
+      return;
+    }
+    
     ensurePeerTile(peerId);
     createPeerConnection(peerId, true); // We are offerer (existing user sends offer to new user)
     
