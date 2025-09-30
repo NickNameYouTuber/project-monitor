@@ -334,16 +334,16 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   }
 
   async function attachLocalToPeersAndRenegotiate() {
-    if (!localStream) return;
     for (const [peerId, pc] of Object.entries(peers)) {
-      if (!pc) continue;
-      // Гарантируем, что у нового пира есть приёмники для двух видео
-      try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
+      if (!pc || pc.signalingState !== 'stable') continue;
       try {
+        await assignLocalTracksToPeer(peerId, pc);
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         socket.emit('offer', { to: peerId, offer: pc.localDescription });
-      } catch {}
+      } catch (e) {
+        console.error('[CALL] renegotiate error for', peerId, e);
+      }
     }
   }
 
@@ -844,7 +844,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     for (const peerId of users) {
       ensurePeerTile(peerId);
       const pc = createPeerConnection(peerId);
-      const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+      await assignLocalTracksToPeer(peerId, pc);
+      const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       socket.emit('offer', { to: peerId, offer: pc.localDescription });
     }
@@ -876,11 +877,11 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       }
     } catch {}
     
-    // Ждём минимально чтобы пир успел поднять приёмники
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    // Подстраховка: инициируем локальную пере-офферизацию, чтобы треки точно поехали
-    try { await attachLocalToPeersAndRenegotiate(); } catch {}
+    // Назначаем локальные треки в новый peer и создаём offer
+    await assignLocalTracksToPeer(peerId, pc);
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    socket.emit('offer', { to: peerId, offer: pc.localDescription });
   });
 
   socket.on('offer', async ({ from, offer }: any) => {
