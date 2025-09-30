@@ -14,6 +14,7 @@ import Initializer from './calls/Initializer';
 import MeetingsList from './calls/MeetingsList';
 import UpcomingPanel from './calls/UpcomingPanel';
 import SearchBar from './calls/SearchBar';
+import { listCalls, createCall } from '../api/calls';
 
 interface Meeting {
   id: string;
@@ -69,6 +70,23 @@ export function CallsPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    (async () => {
+      try {
+        const fromApi = await listCalls();
+        if (fromApi && fromApi.length) {
+          setMeetings(fromApi.map(c => ({
+            id: c.id,
+            title: c.title || c.room_id,
+            date: c.start_at ? new Date(c.start_at) : new Date(),
+            duration: c.end_at && c.start_at ? Math.max(1, Math.round((new Date(c.end_at).getTime() - new Date(c.start_at).getTime()) / 60000)) : 30,
+            participants: [],
+            type: 'video' as const,
+            status: 'scheduled' as const,
+            color: MEETING_COLORS[1].value,
+          })));
+        }
+      } catch {}
+    })();
     if (roomId) {
       setIsInCall(true);
     }
@@ -109,6 +127,16 @@ export function CallsPage() {
     };
 
     setMeetings(prev => [...prev, meeting]);
+    // Пишем на бэк
+    try {
+      createCall({
+        room_id: meeting.id,
+        title: meeting.title,
+        description: meeting.description,
+        start_at: meeting.date.toISOString(),
+        end_at: new Date(meetingDate.getTime() + meeting.duration * 60000).toISOString(),
+      }).catch(()=>{});
+    } catch {}
     setNewMeeting({
       title: '',
       date: new Date(),
