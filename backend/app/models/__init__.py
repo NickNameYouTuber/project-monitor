@@ -11,3 +11,4 @@ from .token import PersonalAccessToken
 from .whiteboard import Whiteboard, WhiteboardElement, WhiteboardConnection
 from .merge_request import MergeRequest, MergeRequestApproval, MergeRequestComment, MergeRequestStatus
 from .pipeline import Pipeline, PipelineJob, PipelineArtifact, PipelineLogChunk, Runner, PipelineStatus, JobStatus, PipelineSource
+from .call import Call
