@@ -79,6 +79,15 @@ io.on('connection', (socket) => {
         } catch {}
     });
 
+    socket.on('leaveRoom', (roomId) => {
+        try {
+            socket.leave(roomId);
+            socket.to(roomId).emit('userLeft', socket.id);
+            const names = roomNames.get(roomId);
+            if (names) names.delete(socket.id);
+        } catch {}
+    });
+
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${socket.id}`);
         for (const roomId of socket.rooms) {

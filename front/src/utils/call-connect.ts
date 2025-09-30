@@ -602,6 +602,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     if ((shareCameraCheckbox?.checked || shareScreenCheckbox?.checked) && !localStream) {
       await startLocalMedia();
     }
+    try { if (socket.disconnected) socket.connect(); } catch {}
     socket.emit('joinRoom', roomId);
     roomJoined = true;
     currentRoomId = roomId;
@@ -937,6 +938,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   async function leaveCallInternal() {
     try {
+      // Уведомляем комнату о выходе (если используется серверная отписка по socket.leave - здесь просто отключаемся)
+      try { socket.disconnect(); } catch {}
       for (const [peerId, pc] of Object.entries(peers)) {
         try { pc.close(); } catch {}
         delete peers[peerId];
@@ -962,15 +965,13 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       emitScreenActive(false);
       const remotesEl = document.getElementById('remotes') as HTMLElement | null;
       if (remotesEl) remotesEl.innerHTML = '';
-      if (socket && socket.connected) {
-        try { socket.disconnect(); } catch {}
-      }
       roomJoined = false;
       currentRoomId = null;
     } catch {}
   }
 
   (window as any).leaveCallConnect = async () => {
+    try { if (currentRoomId) socket.emit('leaveRoom', currentRoomId); } catch {}
     await leaveCallInternal();
     try { (window as any).__callConnectInit = false; } catch {}
   };
