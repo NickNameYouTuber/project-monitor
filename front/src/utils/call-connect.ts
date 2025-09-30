@@ -333,17 +333,35 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     }
   }
 
+  async function makeOffer(peerId: string) {
+    const pc = peers[peerId] as (RTCPeerConnection & { _makingOffer?: boolean }) | undefined;
+    if (!pc) return;
+    if (pc._makingOffer) {
+      try { console.log('[CALL] skip offer for', peerId, '(already making offer)'); } catch {}
+      return;
+    }
+    if (pc.signalingState !== 'stable') {
+      try { console.log('[CALL] skip offer for', peerId, '(state:', pc.signalingState + ')'); } catch {}
+      return;
+    }
+    
+    pc._makingOffer = true;
+    try {
+      await assignLocalTracksToPeer(peerId, pc);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit('offer', { to: peerId, offer: pc.localDescription });
+      try { console.log('[CALL] sent offer to', peerId); } catch {}
+    } catch (e) {
+      console.error('[CALL] makeOffer error for', peerId, e);
+    } finally {
+      pc._makingOffer = false;
+    }
+  }
+
   async function attachLocalToPeersAndRenegotiate() {
-    for (const [peerId, pc] of Object.entries(peers)) {
-      if (!pc || pc.signalingState !== 'stable') continue;
-      try {
-        await assignLocalTracksToPeer(peerId, pc);
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('offer', { to: peerId, offer: pc.localDescription });
-      } catch (e) {
-        console.error('[CALL] renegotiate error for', peerId, e);
-      }
+    for (const [peerId] of Object.entries(peers)) {
+      await makeOffer(peerId);
     }
   }
 
@@ -625,7 +643,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       { urls: 'turn:nit.nicorp.tech:3478', username: 'test', credential: 'test' },
       { urls: 'turn:nit.nicorp.tech:3478?transport=tcp', username: 'test', credential: 'test' }
     ];
-    const pc = new RTCPeerConnection({ iceServers });
+    const pc = new RTCPeerConnection({ iceServers }) as RTCPeerConnection & { _makingOffer?: boolean; _ignoreOffer?: boolean };
 
     pc.onicecandidate = (event) => {
       if (event.candidate) socket.emit('candidate', { to: peerId, candidate: event.candidate });
@@ -648,8 +666,9 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       const tv2 = pc.addTransceiver('video', { direction: 'sendrecv' });
       peerSenders[peerId] = { audio: ta.sender, v1: tv1.sender, v2: tv2.sender };
     } catch {}
-    // Назначаем локальные треки на отправители согласно источникам
-    try { assignLocalTracksToPeer(peerId, pc); } catch {}
+    
+    pc._makingOffer = false;
+    pc._ignoreOffer = false;
 
     peers[peerId] = pc;
     return pc;
@@ -843,11 +862,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   socket.on('existingUsers', async (users: string[]) => {
     for (const peerId of users) {
       ensurePeerTile(peerId);
-      const pc = createPeerConnection(peerId);
-      await assignLocalTracksToPeer(peerId, pc);
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit('offer', { to: peerId, offer: pc.localDescription });
+      createPeerConnection(peerId);
+      await makeOffer(peerId);
     }
   });
 
@@ -868,7 +884,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   socket.on('userJoined', async (peerId: string) => {
     ensurePeerTile(peerId);
-    const pc = createPeerConnection(peerId);
+    createPeerConnection(peerId);
     
     // Передаём текущее состояние экрана вновь подключившемуся
     try {
@@ -877,25 +893,48 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       }
     } catch {}
     
-    // Назначаем локальные треки в новый peer и создаём offer
-    await assignLocalTracksToPeer(peerId, pc);
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    socket.emit('offer', { to: peerId, offer: pc.localDescription });
+    // Создаём offer для нового участника (polite peer - он ответит answer)
+    await makeOffer(peerId);
   });
 
   socket.on('offer', async ({ from, offer }: any) => {
-    if (!peers[from]) createPeerConnection(from);
-    const pc = peers[from];
-    await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    socket.emit('answer', { to: from, answer: pc.localDescription });
+    if (!peers[from]) {
+      ensurePeerTile(from);
+      createPeerConnection(from);
+    }
+    const pc = peers[from] as RTCPeerConnection & { _makingOffer?: boolean; _ignoreOffer?: boolean };
+    
+    // Perfect negotiation: check for collision
+    const offerCollision = pc.signalingState !== 'stable' || !!pc._makingOffer;
+    const isPolite = (socket.id || 'a') > from; // Lexicographical comparison to decide polite peer
+    
+    pc._ignoreOffer = !isPolite && offerCollision;
+    if (pc._ignoreOffer) {
+      try { console.log('[CALL] ignoring offer from', from, '(collision, we are impolite)'); } catch {}
+      return;
+    }
+    
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      await assignLocalTracksToPeer(from, pc);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('answer', { to: from, answer: pc.localDescription });
+      try { console.log('[CALL] sent answer to', from); } catch {}
+    } catch (e) {
+      console.error('[CALL] offer handling error for', from, e);
+    }
   });
 
   socket.on('answer', async ({ from, answer }: any) => {
     const pc = peers[from];
-    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    if (!pc) return;
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      try { console.log('[CALL] received answer from', from); } catch {}
+    } catch (e) {
+      console.error('[CALL] answer handling error for', from, e);
+    }
   });
 
   socket.on('candidate', async ({ from, candidate }: any) => {
