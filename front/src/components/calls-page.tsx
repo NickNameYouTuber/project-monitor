@@ -9,7 +9,7 @@ import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import NewMeetingDialog from './calls/NewMeetingDialog';
 import UpcomingOverlay from './calls/UpcomingOverlay';
-import CallPage from './call/CallPage';И
+import CallPage from './call/CallPage';
 import Initializer from './calls/Initializer';
 import MeetingsList from './calls/MeetingsList';
 import UpcomingPanel from './calls/UpcomingPanel';
