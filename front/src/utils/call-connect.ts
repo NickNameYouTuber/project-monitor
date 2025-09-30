@@ -690,15 +690,29 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
 
   function handleRemoteTrack(peerId: string, track: MediaStreamTrack, streams: MediaStream[]) {
-    // Сначала определяем реальный источник трека
-    const realTrackSource = getTrackSource(track);
+    // Определяем источник трека по порядку transceivers в peer connection
+    const pc = peers[peerId];
+    let trackSource: 'audio' | 'camera' | 'screen' | 'unknown' = getTrackSource(track);
     
-    // Если у пира активен экран И это неопределённый видео трек, считаем его экраном
-    const trackSource = peerScreenState[peerId] && track.kind === 'video' && realTrackSource === 'unknown'
-      ? 'screen'
-      : realTrackSource;
+    if (trackSource === 'unknown' && pc) {
+      // Находим transceiver для этого трека
+      const transceivers = pc.getTransceivers();
+      const transceiverIndex = transceivers.findIndex(t => t.receiver.track === track);
       
-    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (real: ${realTrackSource}, peerScreen: ${!!peerScreenState[peerId]}, muted: ${track.muted}, enabled: ${track.enabled})`);
+      if (transceiverIndex === 0) {
+        trackSource = 'audio'; // Transceiver 0 всегда audio
+      } else if (transceiverIndex === 1) {
+        trackSource = 'camera'; // Transceiver 1 всегда camera
+      } else if (transceiverIndex === 2) {
+        trackSource = 'screen'; // Transceiver 2 всегда screen
+      }
+      
+      try {
+        console.log(`[CALL] track from ${peerId} mapped by transceiver[${transceiverIndex}] -> ${trackSource}`);
+      } catch {}
+    }
+    
+    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (muted: ${track.muted}, enabled: ${track.enabled})`);
     
     let peerDiv = ensurePeerTile(peerId) as HTMLElement;
     const vid1 = document.getElementById(`remote-vid1-${peerId}`) as HTMLVideoElement | null;
@@ -737,44 +751,25 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       }
     };
     
-    if (track.kind === 'video') {
-      if (trackSource === 'screen') {
-        // Это экран - всегда в activeScreen
-        if (activeScreenEl) {
-          console.log(`[CALL] screen track to activeScreen for ${peerId}`);
-          activeScreenEl.srcObject = new MediaStream([track]);
-          safePlay(activeScreenEl);
-          emitScreenActive(true);
-        }
-      } else if (trackSource === 'camera') {
-        // Это камера - всегда в плитку участника
-        if (vid1) {
-          console.log(`[CALL] camera track to participant tile for ${peerId}`);
-          const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
-          vid1.srcObject = new MediaStream([track, ...aud]);
-          safePlay(vid1);
-          try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
-          const placeholder = document.getElementById(`placeholder-${peerId}`);
-          if (placeholder) placeholder.classList.add('hidden');
-          setNameVisible(peerId, true);
-        }
-      } else {
-        // Неопределённые видеотреки при активном экране считаем экраном, иначе камерой
-        if (peerScreenState[peerId] && activeScreenEl) {
-          console.log(`[CALL] unknown->screen due to peer screen active for ${peerId}`);
-          activeScreenEl.srcObject = new MediaStream([track]);
-          safePlay(activeScreenEl);
-          emitScreenActive(true);
-        } else if (vid1) {
-          console.log(`[CALL] unknown->camera for ${peerId}`);
-          const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
-          vid1.srcObject = new MediaStream([track, ...aud]);
-          safePlay(vid1);
-          try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
-          const placeholder = document.getElementById(`placeholder-${peerId}`);
-          if (placeholder) placeholder.classList.add('hidden');
-          setNameVisible(peerId, true);
-        }
+    if (track.kind === 'video' && trackSource === 'screen') {
+      // Это экран - всегда в activeScreen
+      if (activeScreenEl) {
+        console.log(`[CALL] screen track to activeScreen for ${peerId}`);
+        activeScreenEl.srcObject = new MediaStream([track]);
+        safePlay(activeScreenEl);
+        emitScreenActive(true);
+      }
+    } else if (track.kind === 'video' && trackSource === 'camera') {
+      // Это камера - всегда в плитку участника
+      if (vid1) {
+        console.log(`[CALL] camera track to participant tile for ${peerId}`);
+        const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
+        vid1.srcObject = new MediaStream([track, ...aud]);
+        safePlay(vid1);
+        try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
+        const placeholder = document.getElementById(`placeholder-${peerId}`);
+        if (placeholder) placeholder.classList.add('hidden');
+        setNameVisible(peerId, true);
       }
     } else if (track.kind === 'audio') {
       console.log(`[CALL] audio track for ${peerId}`);
