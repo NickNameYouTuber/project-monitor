@@ -25,12 +25,21 @@ export default function PreJoinPage() {
   useEffect(() => {
     (async () => {
       try {
-        const s = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        s.getAudioTracks().forEach(t => t.enabled = micEnabled);
-        s.getVideoTracks().forEach(t => t.enabled = camEnabled);
+        // Запрашиваем устройства по необходимости
+        let s: MediaStream | null = null;
+        if (micEnabled || camEnabled) {
+          s = await navigator.mediaDevices.getUserMedia({ audio: micEnabled, video: camEnabled });
+        } else {
+          // Ничего не запрашиваем — показываем заглушку
+          s = await navigator.mediaDevices.getUserMedia({ audio: false, video: false }).catch(() => null);
+        }
+        if (s) {
+          s.getAudioTracks().forEach(t => t.enabled = micEnabled);
+          s.getVideoTracks().forEach(t => t.enabled = camEnabled);
+        }
         setStream(s);
         if (videoRef.current) {
-          videoRef.current.srcObject = s;
+          videoRef.current.srcObject = s || null;
           await videoRef.current.play().catch(() => {});
         }
       } catch {}
@@ -41,10 +50,32 @@ export default function PreJoinPage() {
   }, []);
 
   useEffect(() => {
-    if (!stream) return;
-    stream.getAudioTracks().forEach(t => t.enabled = micEnabled);
-    stream.getVideoTracks().forEach(t => t.enabled = camEnabled);
-  }, [micEnabled, camEnabled, stream]);
+    (async () => {
+      // Если треков нет, а включили — запрашиваем
+      if ((micEnabled || camEnabled) && !stream) {
+        try {
+          const s = await navigator.mediaDevices.getUserMedia({ audio: micEnabled, video: camEnabled });
+          setStream(s);
+          if (videoRef.current) {
+            videoRef.current.srcObject = s;
+            await videoRef.current.play().catch(() => {});
+          }
+          return;
+        } catch {}
+      }
+      // Если есть стрим — обновляем enabled или останавливаем/убираем треки
+      if (stream) {
+        if (!micEnabled) stream.getAudioTracks().forEach(t => { t.stop(); stream.removeTrack(t); });
+        if (!camEnabled) stream.getVideoTracks().forEach(t => { t.stop(); stream.removeTrack(t); });
+        if (micEnabled && stream.getAudioTracks().length === 0) {
+          try { const aud = await navigator.mediaDevices.getUserMedia({ audio: true }); stream.addTrack(aud.getAudioTracks()[0]); } catch {}
+        }
+        if (camEnabled && stream.getVideoTracks().length === 0) {
+          try { const vid = await navigator.mediaDevices.getUserMedia({ video: true }); stream.addTrack(vid.getVideoTracks()[0]); } catch {}
+        }
+      }
+    })();
+  }, [micEnabled, camEnabled]);
 
   const proceed = () => {
     try {

@@ -413,7 +413,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     
     if (enable && !cameraStream) {
       try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         console.log('[CALL] camera stream created');
         await rebuildLocalStream();
       } catch (e) {
@@ -422,7 +422,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       }
     } else if (!enable && cameraStream) {
       console.log('[CALL] stopping camera stream');
-      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream.getTracks().forEach(t => { try { t.stop(); } catch {} });
       cameraStream = null;
       await rebuildLocalStream();
       
@@ -793,7 +793,9 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   socket.on('userIntro', ({ id, name }: { id: string; name: string | null }) => {
     peerNames[id] = name || '';
     setTileName(id, name || null);
-    if (id === 'me') setTileName('me', name || null);
+    try {
+      if (id === socket.id) setTileName('me', name || null);
+    } catch {}
   });
 
   socket.on('userJoined', async (peerId: string) => {
