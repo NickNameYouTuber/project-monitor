@@ -50,6 +50,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   const participantsContainer = remotesContainer; // 3x2 grid
   let currentRoomId: string | null = null;
   const peerScreenState: Record<string, boolean> = {};
+  const creatingPeers: Set<string> = new Set(); // Guard against concurrent peer creation
 
   function updateLayoutForScreen(active: boolean) {
     const activeScreenContainer = document.getElementById('activeScreenContainer') as HTMLElement | null;
@@ -638,6 +639,19 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   }
 
   function createPeerConnection(peerId: string, isOfferer: boolean = false) {
+    // Guard against concurrent creation
+    if (creatingPeers.has(peerId)) {
+      try { console.log('[CALL] skip createPeerConnection for', peerId, '(already creating)'); } catch {}
+      return peers[peerId];
+    }
+    if (peers[peerId]) {
+      try { console.log('[CALL] skip createPeerConnection for', peerId, '(already exists)'); } catch {}
+      return peers[peerId];
+    }
+    
+    creatingPeers.add(peerId);
+    try { console.log('[CALL] creating peer connection for', peerId, 'isOfferer:', isOfferer); } catch {}
+    
     const iceServers = options?.turnServers ?? [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'turn:nit.nicorp.tech:3478', username: 'test', credential: 'test' },
@@ -677,6 +691,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     pc._ignoreOffer = false;
 
     peers[peerId] = pc;
+    creatingPeers.delete(peerId);
     return pc;
   }
 
@@ -862,13 +877,9 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   // Socket events
   socket.on('existingUsers', async (users: string[]) => {
     for (const peerId of users) {
-      if (peers[peerId]) {
-        try { console.log('[CALL] skip existingUsers for', peerId, '(already connected)'); } catch {}
-        continue;
-      }
       ensurePeerTile(peerId);
-      createPeerConnection(peerId, true); // We are offerer
-      await makeOffer(peerId);
+      const pc = createPeerConnection(peerId, true); // We are offerer
+      if (pc) await makeOffer(peerId);
     }
   });
 
@@ -888,13 +899,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   });
 
   socket.on('userJoined', async (peerId: string) => {
-    if (peers[peerId]) {
-      try { console.log('[CALL] skip userJoined for', peerId, '(already connected)'); } catch {}
-      return;
-    }
-    
     ensurePeerTile(peerId);
-    createPeerConnection(peerId, true); // We are offerer (existing user sends offer to new user)
+    const pc = createPeerConnection(peerId, true); // We are offerer (existing user sends offer to new user)
     
     // Передаём текущее состояние экрана вновь подключившемуся
     try {
@@ -904,22 +910,23 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     } catch {}
     
     // Создаём offer для нового участника (polite peer - он ответит answer)
-    await makeOffer(peerId);
+    if (pc) await makeOffer(peerId);
   });
 
   socket.on('offer', async ({ from, offer }: any) => {
-    if (!peers[from]) {
-      ensurePeerTile(from);
-      createPeerConnection(from, false); // We are answerer (receiving offer from remote)
-    }
-    const pc = peers[from] as RTCPeerConnection & { _makingOffer?: boolean; _ignoreOffer?: boolean };
+    ensurePeerTile(from);
+    const pc = createPeerConnection(from, false); // We are answerer (receiving offer from remote)
+    
+    if (!pc) return; // Guard failed
+    
+    const pcTyped = pc as RTCPeerConnection & { _makingOffer?: boolean; _ignoreOffer?: boolean };
     
     // Perfect negotiation: check for collision
-    const offerCollision = pc.signalingState !== 'stable' || !!pc._makingOffer;
+    const offerCollision = pcTyped.signalingState !== 'stable' || !!pcTyped._makingOffer;
     const isPolite = (socket.id || 'a') > from; // Lexicographical comparison to decide polite peer
     
-    pc._ignoreOffer = !isPolite && offerCollision;
-    if (pc._ignoreOffer) {
+    pcTyped._ignoreOffer = !isPolite && offerCollision;
+    if (pcTyped._ignoreOffer) {
       try { console.log('[CALL] ignoring offer from', from, '(collision, we are impolite)'); } catch {}
       return;
     }
