@@ -106,6 +106,12 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     }
   }
 
+  function setNameVisible(peerId: string, visible: boolean) {
+    const el = document.getElementById('name-' + peerId);
+    if (!el) return;
+    if (visible) el.classList.remove('hidden'); else el.classList.add('hidden');
+  }
+
   function updateGridColumns() {
     const remotesEl = document.getElementById('remotes') as HTMLElement | null;
     if (!remotesEl) return;
@@ -134,7 +140,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       peerDiv.innerHTML = `
         <video id="remote-vid1-${peerId}" autoplay playsinline class="absolute inset-0 w-full h-full object-cover bg-black hidden"></video>
         <div id="placeholder-${peerId}" class="text-[#AAB0B6] text-xs">${peerId === 'me' ? 'You' : peerId}</div>
-        <div class="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/50 text-white text-xs" id="name-${peerId}">${peerNames[peerId] || (peerId === 'me' ? 'You' : peerId)}</div>
+        <div class="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/50 text-white text-xs hidden" id="name-${peerId}">${peerNames[peerId] || (peerId === 'me' ? 'You' : peerId)}</div>
       `;
       participantsContainer.appendChild(peerDiv);
       try { console.log('[CALL] tile created for', peerId); } catch {}
@@ -626,6 +632,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         vid1.classList.add('hidden');
         const placeholder = document.getElementById(`placeholder-${peerId}`);
         if (placeholder) placeholder.classList.remove('hidden');
+        setNameVisible(peerId, false);
       } else if (track.kind === 'video' && trackSource === 'screen' && activeScreenEl) {
         activeScreenEl.srcObject = new MediaStream();
         emitScreenActive(false);
@@ -643,6 +650,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         vid1.classList.add('hidden');
         const placeholder = document.getElementById(`placeholder-${peerId}`);
         if (placeholder) placeholder.classList.remove('hidden');
+        setNameVisible(peerId, false);
       } else if (track.kind === 'video' && trackSource === 'screen' && activeScreenEl) {
         activeScreenEl.srcObject = new MediaStream();
         emitScreenActive(false);
@@ -668,6 +676,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
           try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
           const placeholder = document.getElementById(`placeholder-${peerId}`);
           if (placeholder) placeholder.classList.add('hidden');
+          setNameVisible(peerId, true);
         }
       } else {
         // Неопределённые видеотреки при активном экране считаем экраном, иначе камерой
@@ -684,6 +693,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
           try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
           const placeholder = document.getElementById(`placeholder-${peerId}`);
           if (placeholder) placeholder.classList.add('hidden');
+          setNameVisible(peerId, true);
         }
       }
     } else if (track.kind === 'audio') {
