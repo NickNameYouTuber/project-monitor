@@ -22,6 +22,8 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   let screenEnabled = false;
   let cameraStream: MediaStream | null = null;
   let screenStream: MediaStream | null = null;
+  const peerNames: Record<string, string> = {};
+  const voiceAnalyzers: Record<string, { ctx: AudioContext; analyser: AnalyserNode; rafId?: number }> = {};
 
   function emitLocalStatus() {
     try {
@@ -97,6 +99,13 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     updateGridColumns();
   }
 
+  function setTileName(peerId: string, name: string | null) {
+    const el = document.getElementById('name-' + peerId);
+    if (el) {
+      el.textContent = name || (peerId === 'me' ? 'You' : peerId);
+    }
+  }
+
   function updateGridColumns() {
     const remotesEl = document.getElementById('remotes') as HTMLElement | null;
     if (!remotesEl) return;
@@ -125,6 +134,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       peerDiv.innerHTML = `
         <video id="remote-vid1-${peerId}" autoplay playsinline class="absolute inset-0 w-full h-full object-cover bg-black hidden"></video>
         <div id="placeholder-${peerId}" class="text-[#AAB0B6] text-xs">${peerId === 'me' ? 'You' : peerId}</div>
+        <div class="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/50 text-white text-xs" id="name-${peerId}">${peerNames[peerId] || (peerId === 'me' ? 'You' : peerId)}</div>
       `;
       participantsContainer.appendChild(peerDiv);
       try { console.log('[CALL] tile created for', peerId); } catch {}
@@ -362,6 +372,33 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     }
     await attachLocalToPeersAndRenegotiate();
     micEnabled = enable;
+    // Детекция голоса и подсветка рамкой для "me"
+    try {
+      const tile = document.getElementById('peer-me');
+      if (tile && micEnabled) {
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const stream = localStream;
+        if (stream) {
+          const source = audioCtx.createMediaStreamSource(stream);
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 512;
+          source.connect(analyser);
+          const data = new Uint8Array(analyser.frequencyBinCount);
+          const loop = () => {
+            analyser.getByteTimeDomainData(data);
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) {
+              const v = (data[i] - 128) / 128;
+              sum += v * v;
+            }
+            const rms = Math.sqrt(sum / data.length);
+            if (rms > 0.06) tile.classList.add('ring-2', 'ring-emerald-500'); else tile.classList.remove('ring-2', 'ring-emerald-500');
+            requestAnimationFrame(loop);
+          };
+          loop();
+        }
+      }
+    } catch {}
     emitLocalStatus();
   }
 
@@ -519,6 +556,13 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     try { console.log('[CALL] joined room', roomId); } catch {}
     // Ensure self tile even as viewer
     try { ensurePeerTile('me'); } catch {}
+    // Отправляем своё имя для отображения никнейма
+    try {
+      const name = (window as any).currentUserDisplayName || (window as any).currentUserName || null;
+      socket.emit('intro', { roomId, name });
+      peerNames['me'] = name || 'You';
+      setTileName('me', name || 'You');
+    } catch {}
   }
 
   function createPeerConnection(peerId: string) {
@@ -540,6 +584,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
     pc.ontrack = (event) => {
       handleRemoteTrack(peerId, event.track, Array.from(event.streams));
+      setTileName(peerId, peerNames[peerId] || null);
     };
 
     // Ensure receivers exist
@@ -649,6 +694,33 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
         safePlay(vid1);
       }
     }
+    if (track.kind === 'audio') {
+      // Подсветка рамки по голосу для удалённого пользователя
+      try {
+        const tile = document.getElementById('peer-' + peerId) as HTMLElement | null;
+        const stream = streams && streams[0] ? streams[0] : new MediaStream([track]);
+        if (tile && stream) {
+          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const source = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 512;
+          source.connect(analyser);
+          const data = new Uint8Array(analyser.frequencyBinCount);
+          const loop = () => {
+            analyser.getByteTimeDomainData(data);
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) {
+              const v = (data[i] - 128) / 128;
+              sum += v * v;
+            }
+            const rms = Math.sqrt(sum / data.length);
+            if (rms > 0.06) tile.classList.add('ring-2', 'ring-emerald-500'); else tile.classList.remove('ring-2', 'ring-emerald-500');
+            voiceAnalyzers[peerId] = { ctx, analyser, rafId: requestAnimationFrame(loop) } as any;
+          };
+          loop();
+        }
+      } catch {}
+    }
   }
 
   function removePeer(peerId: string) {
@@ -656,6 +728,15 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       try { peers[peerId].close(); } catch {}
       delete peers[peerId];
     }
+    // Отключаем анализатор голоса
+    try {
+      const v = voiceAnalyzers[peerId];
+      if (v) {
+        if (v.rafId) cancelAnimationFrame(v.rafId);
+        v.ctx.close();
+        delete voiceAnalyzers[peerId];
+      }
+    } catch {}
     
     const peerDiv = document.getElementById('peer-' + peerId);
     if (peerDiv) {
@@ -690,6 +771,18 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       await pc.setLocalDescription(offer);
       socket.emit('offer', { to: peerId, offer: pc.localDescription });
     }
+  });
+
+  socket.on('existingUsersInfo', (list: { id: string; name: string | null }[]) => {
+    for (const { id, name } of list) {
+      peerNames[id] = name || '';
+      setTileName(id, name || null);
+    }
+  });
+
+  socket.on('userIntro', ({ id, name }: { id: string; name: string | null }) => {
+    peerNames[id] = name || '';
+    setTileName(id, name || null);
   });
 
   socket.on('userJoined', async (peerId: string) => {

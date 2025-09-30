@@ -19,6 +19,9 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json()); // Just in case for any POST requests
 
+// roomId -> Map(socketId -> displayName)
+const roomNames = new Map();
+
 // Simple health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).send('Server is healthy');
@@ -36,9 +39,21 @@ io.on('connection', (socket) => {
 
         const room = io.sockets.adapter.rooms.get(roomId);
         const existingUsers = Array.from(room || []).filter(id => id !== socket.id);
-        socket.emit('existingUsers', existingUsers);
+    socket.emit('existingUsers', existingUsers);
+    // send names for existing users if known
+    const namesMap = roomNames.get(roomId) || new Map();
+    const existingUsersInfo = existingUsers.map(id => ({ id, name: namesMap.get(id) || null }));
+    socket.emit('existingUsersInfo', existingUsersInfo);
         console.log(`Existing users sent to ${socket.id}: ${existingUsers}`);
     });
+
+  socket.on('intro', ({ roomId, name }) => {
+    try {
+      if (!roomNames.has(roomId)) roomNames.set(roomId, new Map());
+      roomNames.get(roomId).set(socket.id, name || null);
+      socket.to(roomId).emit('userIntro', { id: socket.id, name: name || null });
+    } catch {}
+  });
 
     socket.on('offer', ({ to, offer }) => {
         console.log(`Offer from ${socket.id} to ${to}`);
@@ -68,6 +83,10 @@ io.on('connection', (socket) => {
         for (const roomId of socket.rooms) {
             if (roomId !== socket.id) {
                 socket.to(roomId).emit('userLeft', socket.id);
+        try {
+          const names = roomNames.get(roomId);
+          if (names) names.delete(socket.id);
+        } catch {}
             }
         }
     });
