@@ -20,23 +20,18 @@ export default function Initializer({ roomId, onLeave }: { roomId?: string; onLe
       const screen = document.getElementById('shareScreen') as HTMLInputElement | null;
       // Применяем настройки из pre-join
       let pre: any = (window as any).prejoinSettings || {};
-      if (mic) mic.checked = false; // не стартуем локальные треки чекбоксом
+      if (mic) mic.checked = pre.camEnabled !== false; // cam+mic чекбокс (по умолчанию true)
       if (screen) screen.checked = false;
       if (roomInput) roomInput.value = roomId;
       setTimeout(() => { joinBtn?.click(); }, 0);
-      // Включаем по выбору пользователя (true => кликаем, т.к. дефолт false)
-      if (pre && pre.micEnabled === true) {
-        setTimeout(() => {
-          const ctrlMic = document.getElementById('ctrlMic') as HTMLButtonElement | null;
-          ctrlMic?.click();
-        }, 300);
-      }
-      if (pre && pre.camEnabled === true) {
-        setTimeout(() => {
-          const ctrlCam = document.getElementById('ctrlCam') as HTMLButtonElement | null;
-          ctrlCam?.click();
-        }, 400);
-      }
+      // Применяем состояния микрофона и камеры ПОСЛЕ включения
+      setTimeout(() => {
+        const ctrlMic = document.getElementById('ctrlMic') as HTMLButtonElement | null;
+        const ctrlCam = document.getElementById('ctrlCam') as HTMLButtonElement | null;
+        // Если pre-join выключил микрофон/камеру, кликаем на выключение
+        if (pre.micEnabled === false && ctrlMic) ctrlMic.click();
+        if (pre.camEnabled === false && ctrlCam) ctrlCam.click();
+      }, 500);
     }
     const leaveBtn = document.getElementById('ctrlLeave') as HTMLButtonElement | null;
     if (leaveBtn) {
