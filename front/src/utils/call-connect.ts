@@ -411,11 +411,15 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
             lastLog = now;
           }
           const overlay = document.getElementById('voice-me') as HTMLElement | null;
+          const rootTile = document.getElementById('peer-me') as HTMLElement | null;
           if (overlay) {
+            if (rms > 0.06) overlay.classList.remove('hidden'); else overlay.classList.add('hidden');
+          }
+          if (rootTile) {
             if (rms > 0.06) {
-              overlay.classList.remove('hidden');
+              (rootTile as any).style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.9)';
             } else {
-              overlay.classList.add('hidden');
+              (rootTile as any).style.boxShadow = '';
             }
           }
           if (micEnabled) requestAnimationFrame(loop);
@@ -761,11 +765,19 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
               sum += v * v;
             }
             const rms = Math.sqrt(sum / data.length);
-          const overlay = document.getElementById('voice-' + peerId) as HTMLElement | null;
-          if (overlay) {
-            if (rms > 0.06) overlay.classList.remove('hidden'); else overlay.classList.add('hidden');
-          }
-          voiceAnalyzers[peerId] = { ctx, analyser, rafId: requestAnimationFrame(loop) } as any;
+            const overlay = document.getElementById('voice-' + peerId) as HTMLElement | null;
+            if (overlay) {
+              if (rms > 0.06) overlay.classList.remove('hidden'); else overlay.classList.add('hidden');
+            }
+            const rootTile = document.getElementById('peer-' + peerId) as HTMLElement | null;
+            if (rootTile) {
+              if (rms > 0.06) {
+                (rootTile as any).style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.9)';
+              } else {
+                (rootTile as any).style.boxShadow = '';
+              }
+            }
+            voiceAnalyzers[peerId] = { ctx, analyser, rafId: requestAnimationFrame(loop) } as any;
           };
           loop();
         }
