@@ -46,11 +46,9 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   // Socket.IO
   const socket = io('/', { path: options?.socketPath ?? '/socket.io' });
   const peers: Record<string, RTCPeerConnection> = {};
-  const peerSenders: Record<string, { audio?: RTCRtpSender; v1?: RTCRtpSender; v2?: RTCRtpSender }> = {};
   const participantsContainer = remotesContainer; // 3x2 grid
   let currentRoomId: string | null = null;
   const peerScreenState: Record<string, boolean> = {};
-  const creatingPeers: Set<string> = new Set(); // Guard against concurrent peer creation
 
   function updateLayoutForScreen(active: boolean) {
     const activeScreenContainer = document.getElementById('activeScreenContainer') as HTMLElement | null;
@@ -217,9 +215,9 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     // Обновляем локальные превью
     updateLocalPreviews();
     
-    // Заменяем треки во всех пирах в стабильные слоты
+    // Заменяем треки во всех пирах
     for (const [peerId, pc] of Object.entries(peers)) {
-      try { assignLocalTracksToPeer(peerId, pc); } catch {}
+      await replaceTracksInPeer(pc, oldStream, localStream);
     }
     
     attachLocalToPeersAndRenegotiate();
@@ -334,35 +332,17 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     }
   }
 
-  async function makeOffer(peerId: string) {
-    const pc = peers[peerId] as (RTCPeerConnection & { _makingOffer?: boolean }) | undefined;
-    if (!pc) return;
-    if (pc._makingOffer) {
-      try { console.log('[CALL] skip offer for', peerId, '(already making offer)'); } catch {}
-      return;
-    }
-    if (pc.signalingState !== 'stable') {
-      try { console.log('[CALL] skip offer for', peerId, '(state:', pc.signalingState + ')'); } catch {}
-      return;
-    }
-    
-    pc._makingOffer = true;
-    try {
-      await assignLocalTracksToPeer(peerId, pc);
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit('offer', { to: peerId, offer: pc.localDescription });
-      try { console.log('[CALL] sent offer to', peerId); } catch {}
-    } catch (e) {
-      console.error('[CALL] makeOffer error for', peerId, e);
-    } finally {
-      pc._makingOffer = false;
-    }
-  }
-
   async function attachLocalToPeersAndRenegotiate() {
-    for (const [peerId] of Object.entries(peers)) {
-      await makeOffer(peerId);
+    if (!localStream) return;
+    for (const [peerId, pc] of Object.entries(peers)) {
+      if (!pc) continue;
+      // Гарантируем, что у нового пира есть приёмники для двух видео
+      try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch {}
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('offer', { to: peerId, offer: pc.localDescription });
+      } catch {}
     }
   }
 
@@ -621,7 +601,6 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     if ((shareCameraCheckbox?.checked || shareScreenCheckbox?.checked) && !localStream) {
       await startLocalMedia();
     }
-    try { if (socket.disconnected) socket.connect(); } catch {}
     socket.emit('joinRoom', roomId);
     roomJoined = true;
     currentRoomId = roomId;
@@ -638,26 +617,13 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
     } catch {}
   }
 
-  function createPeerConnection(peerId: string, isOfferer: boolean = false) {
-    // Guard against concurrent creation
-    if (creatingPeers.has(peerId)) {
-      try { console.log('[CALL] skip createPeerConnection for', peerId, '(already creating)'); } catch {}
-      return peers[peerId];
-    }
-    if (peers[peerId]) {
-      try { console.log('[CALL] skip createPeerConnection for', peerId, '(already exists)'); } catch {}
-      return peers[peerId];
-    }
-    
-    creatingPeers.add(peerId);
-    try { console.log('[CALL] creating peer connection for', peerId, 'isOfferer:', isOfferer); } catch {}
-    
+  function createPeerConnection(peerId: string) {
     const iceServers = options?.turnServers ?? [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'turn:nit.nicorp.tech:3478', username: 'test', credential: 'test' },
       { urls: 'turn:nit.nicorp.tech:3478?transport=tcp', username: 'test', credential: 'test' }
     ];
-    const pc = new RTCPeerConnection({ iceServers }) as RTCPeerConnection & { _makingOffer?: boolean; _ignoreOffer?: boolean };
+    const pc = new RTCPeerConnection({ iceServers });
 
     pc.onicecandidate = (event) => {
       if (event.candidate) socket.emit('candidate', { to: peerId, candidate: event.candidate });
@@ -673,67 +639,32 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       setTileName(peerId, peerNames[peerId] || null);
     };
 
-    // Создаём transceivers только если МЫ будем создавать offer
-    // Если получаем offer, transceivers создадутся автоматически из SDP
-    if (isOfferer) {
-      try {
-        const ta = pc.addTransceiver('audio', { direction: 'sendrecv' });
-        const tv1 = pc.addTransceiver('video', { direction: 'sendrecv' });
-        const tv2 = pc.addTransceiver('video', { direction: 'sendrecv' });
-        peerSenders[peerId] = { audio: ta.sender, v1: tv1.sender, v2: tv2.sender };
-        try { console.log('[CALL] created transceivers for', peerId, '(offerer)'); } catch {}
-      } catch {}
-    } else {
-      try { console.log('[CALL] skipped transceivers for', peerId, '(answerer, will use remote SDP)'); } catch {}
+    // Ensure receivers exist
+    try {
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+    } catch {}
+    try {
+      pc.addTransceiver('video', { direction: 'recvonly' });
+    } catch {}
+    if (localStream) {
+      try { localStream.getTracks().forEach((track) => pc.addTrack(track, localStream!)); } catch {}
     }
-    
-    pc._makingOffer = false;
-    pc._ignoreOffer = false;
 
     peers[peerId] = pc;
-    creatingPeers.delete(peerId);
     return pc;
-  }
-
-  function assignLocalTracksToPeer(peerId: string, pc: RTCPeerConnection) {
-    const senders = peerSenders[peerId] || {};
-    // audio
-    const aTrack = getLocalTrack('audio');
-    if (senders.audio) {
-      senders.audio.replaceTrack(aTrack || null).catch(() => {});
-    }
-    // video: v1 -> camera, v2 -> screen
-    const camTrack = cameraStream ? cameraStream.getVideoTracks()[0] || null : null;
-    const scrTrack = screenStream ? screenStream.getVideoTracks()[0] || null : null;
-    if (senders.v1) senders.v1.replaceTrack(camTrack || null).catch(() => {});
-    if (senders.v2) senders.v2.replaceTrack(scrTrack || null).catch(() => {});
   }
 
 
   function handleRemoteTrack(peerId: string, track: MediaStreamTrack, streams: MediaStream[]) {
-    // Определяем источник трека по порядку transceivers в peer connection
-    const pc = peers[peerId];
-    let trackSource: 'audio' | 'camera' | 'screen' | 'unknown' = getTrackSource(track);
+    // Сначала определяем реальный источник трека
+    const realTrackSource = getTrackSource(track);
     
-    if (trackSource === 'unknown' && pc) {
-      // Находим transceiver для этого трека
-      const transceivers = pc.getTransceivers();
-      const transceiverIndex = transceivers.findIndex(t => t.receiver.track === track);
+    // Если у пира активен экран И это неопределённый видео трек, считаем его экраном
+    const trackSource = peerScreenState[peerId] && track.kind === 'video' && realTrackSource === 'unknown'
+      ? 'screen'
+      : realTrackSource;
       
-      if (transceiverIndex === 0) {
-        trackSource = 'audio'; // Transceiver 0 всегда audio
-      } else if (transceiverIndex === 1) {
-        trackSource = 'camera'; // Transceiver 1 всегда camera
-      } else if (transceiverIndex === 2) {
-        trackSource = 'screen'; // Transceiver 2 всегда screen
-      }
-      
-      try {
-        console.log(`[CALL] track from ${peerId} mapped by transceiver[${transceiverIndex}] -> ${trackSource}`);
-      } catch {}
-    }
-    
-    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (muted: ${track.muted}, enabled: ${track.enabled})`);
+    console.log(`[CALL] received track from ${peerId}: ${track.kind} (${track.label || 'no-label'}) [${trackSource}] (real: ${realTrackSource}, peerScreen: ${!!peerScreenState[peerId]}, muted: ${track.muted}, enabled: ${track.enabled})`);
     
     let peerDiv = ensurePeerTile(peerId) as HTMLElement;
     const vid1 = document.getElementById(`remote-vid1-${peerId}`) as HTMLVideoElement | null;
@@ -772,25 +703,44 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       }
     };
     
-    if (track.kind === 'video' && trackSource === 'screen') {
-      // Это экран - всегда в activeScreen
-      if (activeScreenEl) {
-        console.log(`[CALL] screen track to activeScreen for ${peerId}`);
-        activeScreenEl.srcObject = new MediaStream([track]);
-        safePlay(activeScreenEl);
-        emitScreenActive(true);
-      }
-    } else if (track.kind === 'video' && trackSource === 'camera') {
-      // Это камера - всегда в плитку участника
-      if (vid1) {
-        console.log(`[CALL] camera track to participant tile for ${peerId}`);
-        const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
-        vid1.srcObject = new MediaStream([track, ...aud]);
-        safePlay(vid1);
-        try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
-        const placeholder = document.getElementById(`placeholder-${peerId}`);
-        if (placeholder) placeholder.classList.add('hidden');
-        setNameVisible(peerId, true);
+    if (track.kind === 'video') {
+      if (trackSource === 'screen') {
+        // Это экран - всегда в activeScreen
+        if (activeScreenEl) {
+          console.log(`[CALL] screen track to activeScreen for ${peerId}`);
+          activeScreenEl.srcObject = new MediaStream([track]);
+          safePlay(activeScreenEl);
+          emitScreenActive(true);
+        }
+      } else if (trackSource === 'camera') {
+        // Это камера - всегда в плитку участника
+        if (vid1) {
+          console.log(`[CALL] camera track to participant tile for ${peerId}`);
+          const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
+          vid1.srcObject = new MediaStream([track, ...aud]);
+          safePlay(vid1);
+          try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
+          const placeholder = document.getElementById(`placeholder-${peerId}`);
+          if (placeholder) placeholder.classList.add('hidden');
+          setNameVisible(peerId, true);
+        }
+      } else {
+        // Неопределённые видеотреки при активном экране считаем экраном, иначе камерой
+        if (peerScreenState[peerId] && activeScreenEl) {
+          console.log(`[CALL] unknown->screen due to peer screen active for ${peerId}`);
+          activeScreenEl.srcObject = new MediaStream([track]);
+          safePlay(activeScreenEl);
+          emitScreenActive(true);
+        } else if (vid1) {
+          console.log(`[CALL] unknown->camera for ${peerId}`);
+          const aud = vid1.srcObject instanceof MediaStream ? vid1.srcObject.getAudioTracks() : [];
+          vid1.srcObject = new MediaStream([track, ...aud]);
+          safePlay(vid1);
+          try { vid1.classList.remove('hidden'); (vid1 as any).style.display = 'block'; } catch {}
+          const placeholder = document.getElementById(`placeholder-${peerId}`);
+          if (placeholder) placeholder.classList.add('hidden');
+          setNameVisible(peerId, true);
+        }
       }
     } else if (track.kind === 'audio') {
       console.log(`[CALL] audio track for ${peerId}`);
@@ -878,8 +828,15 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
   socket.on('existingUsers', async (users: string[]) => {
     for (const peerId of users) {
       ensurePeerTile(peerId);
-      const pc = createPeerConnection(peerId, true); // We are offerer
-      if (pc) await makeOffer(peerId);
+      const pc = createPeerConnection(peerId);
+      // Всегда добавляем приёмники для получения треков от существующих пиров
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit('offer', { to: peerId, offer: pc.localDescription });
     }
   });
 
@@ -900,7 +857,7 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   socket.on('userJoined', async (peerId: string) => {
     ensurePeerTile(peerId);
-    const pc = createPeerConnection(peerId, true); // We are offerer (existing user sends offer to new user)
+    const pc = createPeerConnection(peerId);
     
     // Передаём текущее состояние экрана вновь подключившемуся
     try {
@@ -909,61 +866,29 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       }
     } catch {}
     
-    // Создаём offer для нового участника (polite peer - он ответит answer)
-    if (pc) await makeOffer(peerId);
+    // Если у нас есть локальные треки, новый пир должен их получить через offer/answer
+    // Ждём чтобы новый пир успел отправить свой offer
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Подстраховка: инициируем локальную пере-офферизацию, чтобы треки точно поехали
+    try { await attachLocalToPeersAndRenegotiate(); } catch {}
   });
 
   socket.on('offer', async ({ from, offer }: any) => {
-    ensurePeerTile(from);
-    const pc = createPeerConnection(from, false); // We are answerer (receiving offer from remote)
-    
-    if (!pc) return; // Guard failed
-    
-    const pcTyped = pc as RTCPeerConnection & { _makingOffer?: boolean; _ignoreOffer?: boolean };
-    
-    // Perfect negotiation: check for collision
-    const offerCollision = pcTyped.signalingState !== 'stable' || !!pcTyped._makingOffer;
-    const isPolite = (socket.id || 'a') > from; // Lexicographical comparison to decide polite peer
-    
-    pcTyped._ignoreOffer = !isPolite && offerCollision;
-    if (pcTyped._ignoreOffer) {
-      try { console.log('[CALL] ignoring offer from', from, '(collision, we are impolite)'); } catch {}
-      return;
+    if (!peers[from]) createPeerConnection(from);
+    const pc = peers[from];
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+    if (!localStream) {
+      pc.getTransceivers().forEach((t) => { t.direction = 'recvonly'; });
     }
-    
-    try {
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
-      
-      // После setRemoteDescription transceivers уже созданы из SDP, сохраняем senders
-      if (!peerSenders[from]) {
-        const transceivers = pc.getTransceivers();
-        peerSenders[from] = {
-          audio: transceivers[0]?.sender,
-          v1: transceivers[1]?.sender,
-          v2: transceivers[2]?.sender,
-        };
-        try { console.log('[CALL] saved senders from remote SDP for', from); } catch {}
-      }
-      
-      await assignLocalTracksToPeer(from, pc);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('answer', { to: from, answer: pc.localDescription });
-      try { console.log('[CALL] sent answer to', from); } catch {}
-    } catch (e) {
-      console.error('[CALL] offer handling error for', from, e);
-    }
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    socket.emit('answer', { to: from, answer: pc.localDescription });
   });
 
   socket.on('answer', async ({ from, answer }: any) => {
     const pc = peers[from];
-    if (!pc) return;
-    try {
-      await pc.setRemoteDescription(new RTCSessionDescription(answer));
-      try { console.log('[CALL] received answer from', from); } catch {}
-    } catch (e) {
-      console.error('[CALL] answer handling error for', from, e);
-    }
+    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
   });
 
   socket.on('candidate', async ({ from, candidate }: any) => {
@@ -1007,8 +932,6 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
 
   async function leaveCallInternal() {
     try {
-      // Уведомляем комнату о выходе (если используется серверная отписка по socket.leave - здесь просто отключаемся)
-      try { socket.disconnect(); } catch {}
       for (const [peerId, pc] of Object.entries(peers)) {
         try { pc.close(); } catch {}
         delete peers[peerId];
@@ -1034,21 +957,18 @@ export function initCallConnect(options?: { socketPath?: string; turnServers?: {
       emitScreenActive(false);
       const remotesEl = document.getElementById('remotes') as HTMLElement | null;
       if (remotesEl) remotesEl.innerHTML = '';
+      if (socket && socket.connected) {
+        try { socket.disconnect(); } catch {}
+      }
       roomJoined = false;
       currentRoomId = null;
     } catch {}
   }
 
   (window as any).leaveCallConnect = async () => {
-    try { if (currentRoomId) socket.emit('leaveRoom', currentRoomId); } catch {}
     await leaveCallInternal();
     try { (window as any).__callConnectInit = false; } catch {}
   };
-
-  // Если сокет был отключён, разрешим повторную инициализацию
-  try {
-    (window as any).__callConnectAllowReinit = () => { (window as any).__callConnectInit = false; };
-  } catch {}
 }
 
 export async function leaveCall() {

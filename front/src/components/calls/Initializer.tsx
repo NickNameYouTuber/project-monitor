@@ -38,10 +38,6 @@ export default function Initializer({ roomId, onLeave }: { roomId?: string; onLe
     if (leaveBtn) {
       leaveBtn.onclick = onLeave;
     }
-    return () => {
-      try { (window as any).leaveCallConnect?.(); } catch {}
-      initializedRef.current = false;
-    };
   }, [roomId, onLeave]);
   return null;
 }
