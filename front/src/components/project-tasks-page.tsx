@@ -17,6 +17,7 @@ import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { LoadingSpinner } from './loading-spinner';
 import { useNavigate } from 'react-router-dom';
+import { ActiveCallIndicator } from './active-call-indicator';
 import type { Project, Task, Column } from '../App';
 
 interface ProjectTasksPageProps {
@@ -441,6 +442,9 @@ export function ProjectTasksPage({
             Start Call
           </Button>
         </div>
+        
+        {/* Индикатор активных звонков */}
+        <ActiveCallIndicator projectId={project.id} className="mb-4" />
         
         <div className="flex items-center gap-4">
           <div className="relative flex-1">

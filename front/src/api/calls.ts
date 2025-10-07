@@ -38,3 +38,27 @@ export async function listCalls(): Promise<CallResponse[]> {
   const response = await apiClient.get('/api/calls');
   return response.data;
 }
+
+export interface RoomParticipant {
+  socketId: string;
+  userId: string;
+  username: string;
+  mediaState: {
+    camera: boolean;
+    microphone: boolean;
+    screen: boolean;
+  };
+  joinedAt: string;
+  lastSeen: string;
+}
+
+export interface RoomParticipantsResponse {
+  roomId: string;
+  count: number;
+  participants: RoomParticipant[];
+}
+
+export async function getRoomParticipants(roomId: string): Promise<RoomParticipantsResponse> {
+  const response = await apiClient.get(`/meet-api/rooms/${roomId}/participants`);
+  return response.data;
+}

@@ -11,8 +11,7 @@ const roomSchema = new mongoose.Schema({
     default: '',
   },
   ownerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String, // Изменено на String для совместимости с PM (PostgreSQL UUID)
     required: false, // Разрешаем null для гостевых комнат
     default: null,
   },

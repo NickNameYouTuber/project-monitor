@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Calendar, User, GitBranch, AlertCircle, MessageSquare, Plus, Send, GitCommit } from 'lucide-react';
+import { X, Calendar, User, GitBranch, AlertCircle, MessageSquare, Plus, Send, GitCommit, Video } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
@@ -7,6 +7,8 @@ import { Textarea } from './ui/textarea';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import { useNavigate } from 'react-router-dom';
+import { ActiveCallIndicator } from './active-call-indicator';
 import type { Task } from '../App';
 
 interface Comment {
@@ -24,6 +26,7 @@ interface TaskDetailSidebarProps {
 }
 
 export function TaskDetailSidebar({ task, isOpen, onClose }: TaskDetailSidebarProps) {
+  const navigate = useNavigate();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [branches, setBranches] = useState<{ name: string; createdAt: Date }[]>([]);
@@ -96,6 +99,38 @@ export function TaskDetailSidebar({ task, isOpen, onClose }: TaskDetailSidebarPr
             <div>
               <h3 className="font-medium text-lg">{task.title}</h3>
               <p className="text-muted-foreground mt-1">{task.description}</p>
+              <Button 
+                variant="default" 
+                size="sm"
+                className="mt-3 w-full"
+                onClick={async () => {
+                  const roomId = `task-${task.id}-${Date.now()}`;
+                  try {
+                    // Создаем звонок в БД
+                    const { createCall } = await import('../api/calls');
+                    await createCall({
+                      room_id: roomId,
+                      title: `Звонок: ${task.title}`,
+                      description: `Звонок по задаче ${task.title}`,
+                      task_id: task.id,
+                      project_id: task.projectId,
+                    });
+                  } catch (error) {
+                    console.error('Ошибка создания звонка:', error);
+                  }
+                  // Переходим на страницу звонка
+                  navigate(`/call/${roomId}`);
+                  onClose();
+                }}
+              >
+                <Video className="w-4 h-4 mr-2" />
+                Start Call
+              </Button>
+              
+              {/* Индикатор активных звонков для задачи */}
+              <div className="mt-3">
+                <ActiveCallIndicator taskId={task.id} />
+              </div>
             </div>
 
             {/* Task Meta */}

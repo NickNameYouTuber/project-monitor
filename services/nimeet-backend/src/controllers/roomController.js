@@ -234,3 +234,36 @@ exports.updateRoom = async (req, res) => {
   }
 };
 
+// Получить участников комнаты
+exports.getRoomParticipants = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const ActiveConnection = require('../models/ActiveConnection');
+
+    // Получаем активные подключения для комнаты
+    const connections = await ActiveConnection.find({ 
+      roomId, 
+      isActive: true 
+    }).sort({ createdAt: 1 });
+
+    // Формируем список участников
+    const participants = connections.map(conn => ({
+      socketId: conn.socketId,
+      userId: conn.userId,
+      username: conn.username,
+      mediaState: conn.mediaState,
+      joinedAt: conn.createdAt,
+      lastSeen: conn.lastSeen,
+    }));
+
+    res.json({
+      roomId,
+      count: participants.length,
+      participants,
+    });
+  } catch (error) {
+    console.error('Ошибка получения участников комнаты:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
