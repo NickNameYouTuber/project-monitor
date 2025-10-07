@@ -23,28 +23,41 @@ const PreCallSetup: React.FC<PreCallSetupProps> = ({ roomId, onJoin }) => {
     let mounted = true;
     
     const initPreview = async () => {
+      // Останавливаем предыдущий поток
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
       }
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: cameraEnabled ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
+        const constraints: MediaStreamConstraints = {
+          video: cameraEnabled ? { 
+            width: { ideal: 1280 }, 
+            height: { ideal: 720 },
+            facingMode: 'user'
+          } : false,
           audio: microphoneEnabled,
-        });
+        };
+
+        console.log('🎥 Запрашиваем медиа устройства:', constraints);
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log('✅ Получен поток:', stream.getTracks().map(t => `${t.kind}: ${t.label}`));
         
         if (mounted) {
           streamRef.current = stream;
           setPreviewStream(stream);
-          if (videoRef.current && stream) {
+          
+          // Устанавливаем поток в видео элемент
+          if (videoRef.current) {
             videoRef.current.srcObject = stream;
+            // Принудительно запускаем воспроизведение
+            videoRef.current.play().catch(e => console.warn('Ошибка автовоспроизведения:', e));
           }
         } else {
           stream.getTracks().forEach(track => track.stop());
         }
       } catch (error) {
-        console.warn('Медиа устройства недоступны для превью:', error);
+        console.error('❌ Ошибка доступа к медиа устройствам:', error);
         if (mounted) {
           const emptyStream = new MediaStream();
           streamRef.current = emptyStream;
@@ -86,9 +99,9 @@ const PreCallSetup: React.FC<PreCallSetupProps> = ({ roomId, onJoin }) => {
 
   return (
     <div className="h-full flex items-center justify-center bg-background p-6">
-      <div className="grid grid-cols-2 gap-6 w-full max-w-4xl">
-        {/* Левая плитка - только превью камеры */}
-        <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ height: '400px' }}>
+      <div className="grid grid-cols-2 gap-6 w-full max-w-5xl">
+        {/* Левая плитка - только превью камеры (16:10) */}
+        <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ aspectRatio: '16/10' }}>
           <div className="relative w-full h-full bg-muted">
             {hasVideo ? (
               <video
@@ -110,8 +123,8 @@ const PreCallSetup: React.FC<PreCallSetupProps> = ({ roomId, onJoin }) => {
           </div>
         </div>
 
-        {/* Правая плитка - информация и контролы */}
-        <div className="bg-card rounded-lg border border-border p-6 flex flex-col justify-between" style={{ height: '400px' }}>
+        {/* Правая плитка - информация и контролы (16:10) */}
+        <div className="bg-card rounded-lg border border-border p-6 flex flex-col justify-between" style={{ aspectRatio: '16/10' }}>
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Информация о звонке</h2>
             
