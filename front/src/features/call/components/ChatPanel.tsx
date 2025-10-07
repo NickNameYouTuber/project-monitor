@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, MessageCircle, Image as ImageIcon, Paperclip, Plus, FileText, CheckSquare, Calendar, User, Edit2, Check } from 'lucide-react';
+import { X, Send, MessageCircle, Image as ImageIcon, Paperclip, Plus, FileText, CheckSquare, Calendar as CalendarIcon, User, Edit2, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createTaskFromChat } from '../../../api/tasks';
+import { listProjects, type ProjectDto } from '../../../api/projects';
+import { listTaskColumns, type TaskColumnDto } from '../../../api/task-columns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import { Label } from '../../../components/ui/label';
+import { Input } from '../../../components/ui/input';
+import { Textarea } from '../../../components/ui/textarea';
+import { Calendar } from '../../../components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover';
+import { Button } from '../../../components/ui/button';
+import { AutocompleteInput } from '../../../components/autocomplete-input';
 
 interface ChatMessage {
   id: string;
@@ -58,10 +68,17 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   const [taskForm, setTaskForm] = useState({
     title: '',
     description: '',
+    selectedProjectId: projectId || '',
+    status: '',
+    priority: 'medium' as 'low' | 'medium' | 'high',
     assignee: '',
-    watcher: '',
-    deadline: '',
+    dueDate: undefined as Date | undefined,
+    repositoryBranch: '',
   });
+  const [projects, setProjects] = useState<ProjectDto[]>([]);
+  const [columns, setColumns] = useState<TaskColumnDto[]>([]);
+  const [assigneeSuggestions] = useState<string[]>(['']);
+  const [branchSuggestions] = useState<string[]>(['']);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,6 +95,37 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  // Загружаем проекты при открытии модалки
+  useEffect(() => {
+    if (isTaskModalOpen && projects.length === 0) {
+      (async () => {
+        try {
+          const projectsData = await listProjects();
+          setProjects(projectsData);
+        } catch (error) {
+          console.error('Ошибка загрузки проектов:', error);
+        }
+      })();
+    }
+  }, [isTaskModalOpen, projects.length]);
+
+  // Загружаем колонки при выборе проекта
+  useEffect(() => {
+    if (taskForm.selectedProjectId) {
+      (async () => {
+        try {
+          const columnsData = await listTaskColumns(taskForm.selectedProjectId);
+          setColumns(columnsData);
+          if (columnsData.length > 0 && !taskForm.status) {
+            setTaskForm(prev => ({ ...prev, status: columnsData[0].id }));
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки колонок:', error);
+        }
+      })();
+    }
+  }, [taskForm.selectedProjectId]);
 
   // Закрытие dropdown при клике вне его
   useEffect(() => {
@@ -154,18 +202,20 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     setTaskForm({
       title: '',
       description: '',
+      selectedProjectId: projectId || '',
+      status: '',
+      priority: 'medium',
       assignee: '',
-      watcher: '',
-      deadline: '',
+      dueDate: undefined,
+      repositoryBranch: '',
     });
   };
 
-  const handleTaskFormChange = (field: string, value: string) => {
-    setTaskForm(prev => ({ ...prev, [field]: value }));
-  };
-
   const handleCreateTask = async () => {
-    if (!taskForm.title.trim()) return;
+    if (!taskForm.title.trim() || !taskForm.selectedProjectId) {
+      alert('Пожалуйста, заполните название задачи и выберите проект');
+      return;
+    }
 
     if (editingTaskId) {
       // Редактирование существующей задачи (пока не поддерживается)
@@ -179,9 +229,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         title: taskForm.title,
         description: taskForm.description || undefined,
         assignee_username: taskForm.assignee || undefined,
-        watcher_username: taskForm.watcher || undefined,
-        deadline: taskForm.deadline || undefined,
-        project_id: projectId,
+        watcher_username: undefined, // Убираем watcher, его нет в основной модалке
+        deadline: taskForm.dueDate ? taskForm.dueDate.toISOString() : undefined,
+        project_id: taskForm.selectedProjectId,
         parent_task_id: taskId,
         room_id: roomId,
       });
@@ -194,8 +244,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         title: taskForm.title,
         description: taskForm.description || undefined,
         assignee: taskForm.assignee || undefined,
-        watcher: taskForm.watcher || undefined,
-        deadline: taskForm.deadline || undefined,
+        deadline: taskForm.dueDate ? taskForm.dueDate.toISOString() : undefined,
       };
       
       const taskMessage = `[TASK]${JSON.stringify(taskData)}`;
@@ -542,7 +591,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             {/* Заголовок */}
             <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
               <h3 className="text-foreground font-semibold">
-                {editingTaskId ? 'Редактировать задачу' : 'Создать задачу'}
+                Создать задачу
               </h3>
               <button
                 onClick={handleCloseTaskModal}
@@ -555,97 +604,159 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
             {/* Форма */}
             <div className="p-4 space-y-4">
+              {/* Выбор проекта */}
+              <div className="space-y-2">
+                <Label>Проект</Label>
+                <Select 
+                  value={taskForm.selectedProjectId} 
+                  onValueChange={(value) => setTaskForm(prev => ({ ...prev, selectedProjectId: value, status: '' }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите проект" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map(project => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Название */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">
-                  Название задачи
-                </label>
-                <input
-                  type="text"
+                <Label htmlFor="title">Название задачи</Label>
+                <Input
+                  id="title"
                   value={taskForm.title}
-                  onChange={(e) => handleTaskFormChange('title', e.target.value)}
+                  onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="Введите название задачи"
-                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition placeholder-muted-foreground"
-                  maxLength={100}
                   required
                 />
               </div>
 
               {/* Описание */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">
-                  Описание
-                </label>
-                <textarea
+                <Label htmlFor="description">Описание</Label>
+                <Textarea
+                  id="description"
                   value={taskForm.description}
-                  onChange={(e) => handleTaskFormChange('description', e.target.value)}
+                  onChange={(e) => setTaskForm(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Введите описание задачи"
-                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition placeholder-muted-foreground resize-none"
                   rows={3}
-                  maxLength={500}
                 />
+              </div>
+
+              {/* Статус и Приоритет */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Статус</Label>
+                  <Select 
+                    value={taskForm.status} 
+                    onValueChange={(value) => setTaskForm(prev => ({ ...prev, status: value }))}
+                    disabled={!taskForm.selectedProjectId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите статус" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {columns.map(column => (
+                        <SelectItem key={column.id} value={column.id}>
+                          {column.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Приоритет</Label>
+                  <Select 
+                    value={taskForm.priority} 
+                    onValueChange={(value: 'low' | 'medium' | 'high') => setTaskForm(prev => ({ ...prev, priority: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Исполнитель */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">
-                  Исполнитель
-                </label>
-                <input
-                  type="text"
+                <Label htmlFor="assignee">Исполнитель</Label>
+                <AutocompleteInput
                   value={taskForm.assignee}
-                  onChange={(e) => handleTaskFormChange('assignee', e.target.value)}
+                  onChange={(value) => setTaskForm(prev => ({ ...prev, assignee: value }))}
+                  suggestions={assigneeSuggestions}
                   placeholder="Введите имя исполнителя"
-                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition placeholder-muted-foreground"
-                  maxLength={50}
-                />
-              </div>
-
-              {/* Смотрящий (Reviewer) */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">
-                  Смотрящий
-                </label>
-                <input
-                  type="text"
-                  value={taskForm.watcher}
-                  onChange={(e) => handleTaskFormChange('watcher', e.target.value)}
-                  placeholder="Введите имя смотрящего"
-                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition placeholder-muted-foreground"
-                  maxLength={50}
                 />
               </div>
 
               {/* Срок выполнения */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">
-                  Срок выполнения
-                </label>
-                <input
-                  type="datetime-local"
-                  value={taskForm.deadline}
-                  onChange={(e) => handleTaskFormChange('deadline', e.target.value)}
-                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition"
+                <Label>Срок выполнения</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {taskForm.dueDate ? taskForm.dueDate.toLocaleDateString('ru-RU', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : "Выберите дату"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={taskForm.dueDate}
+                      onSelect={(date) => setTaskForm(prev => ({ ...prev, dueDate: date }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Ветка репозитория */}
+              <div className="space-y-2">
+                <Label htmlFor="branch">Ветка репозитория</Label>
+                <AutocompleteInput
+                  value={taskForm.repositoryBranch}
+                  onChange={(value) => setTaskForm(prev => ({ ...prev, repositoryBranch: value }))}
+                  suggestions={branchSuggestions}
+                  placeholder="например, feature/task-implementation"
                 />
               </div>
 
               {/* Кнопки */}
               <div className="flex gap-3 pt-4">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={handleCloseTaskModal}
-                  className="flex-1 bg-background hover:bg-muted text-foreground py-2 rounded-lg font-medium transition border border-border"
+                  className="flex-1"
                 >
                   Отмена
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   onClick={handleCreateTask}
-                  disabled={!taskForm.title.trim()}
-                  className="flex-1 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground py-2 rounded-lg font-medium transition"
+                  disabled={!taskForm.title.trim() || !taskForm.selectedProjectId}
+                  className="flex-1"
                 >
                   Создать задачу
-                </button>
+                </Button>
               </div>
             </div>
           </div>
