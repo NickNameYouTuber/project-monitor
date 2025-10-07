@@ -243,7 +243,7 @@ class WebRTCService {
     return peerConnection;
   }
 
-  private getPeerConnection(remoteSocketId: string, connectionType: ConnectionType): RTCPeerConnection {
+  getPeerConnection(remoteSocketId: string, connectionType: ConnectionType): RTCPeerConnection {
     let bundle = this.peerConnections.get(remoteSocketId);
     if (!bundle) {
       bundle = {

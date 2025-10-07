@@ -245,6 +245,31 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
       webrtcService.createOffer(participant.socketId, 'video');
       webrtcService.createOffer(participant.socketId, 'audio');
       
+      // Дополнительная пересылка через 500мс для надежности передачи треков
+      setTimeout(() => {
+        console.log('🔄 Повторная отправка треков новому участнику:', participant.socketId);
+        
+        // Проверяем, что соединение еще активно
+        const pcVideo = webrtcService.getPeerConnection(participant.socketId, 'video');
+        if (pcVideo && pcVideo.connectionState !== 'closed' && pcVideo.connectionState !== 'failed') {
+          // Принудительно пересылаем видео трек
+          const localStream = webrtcService.getLocalStream();
+          if (localStream) {
+            const videoTrack = localStream.getVideoTracks()[0];
+            if (videoTrack && videoTrack.enabled) {
+              console.log('📹 Форсируем отправку видео трека');
+              const sender = pcVideo.getSenders().find(s => s.track?.kind === 'video');
+              if (sender && sender.track !== videoTrack) {
+                sender.replaceTrack(videoTrack).catch(e => console.error('Ошибка замены видео трека:', e));
+              } else if (sender && sender.track === videoTrack) {
+                // Трек уже правильный, но создаем новый offer для гарантии
+                webrtcService.createOffer(participant.socketId, 'video');
+              }
+            }
+          }
+        }
+      }, 500);
+      
       // Если у нас активен screen share, отправляем screen offer
       // Проверяем напрямую в webrtcService, а не через state (который может запаздывать)
       const hasScreenStream = webrtcService.getLocalScreenStream();
