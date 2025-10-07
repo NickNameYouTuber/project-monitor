@@ -7,9 +7,31 @@ export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
-    setIsAuthenticated(authService.isAuthenticated());
+    // Получаем реальные данные пользователя из PM
+    const token = authService.getToken();
+    
+    if (token) {
+      try {
+        // Декодируем JWT токен для получения данных пользователя
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        
+        const userData: User = {
+          id: payload.sub || payload.userId || payload.id,
+          username: payload.username || payload.login || 'User',
+          displayName: payload.displayName || payload.username || 'User'
+        };
+        
+        setUser(userData);
+        setIsAuthenticated(true);
+      } catch (e) {
+        console.warn('Не удалось декодировать токен:', e);
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    } else {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
   }, []);
 
   return {

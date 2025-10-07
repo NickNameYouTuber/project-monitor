@@ -17,6 +17,8 @@ public class CallResponse {
     private String description;
     @JsonProperty("project_id")
     private UUID projectId;
+    @JsonProperty("task_id")
+    private UUID taskId;
     @JsonProperty("created_by")
     private UUID createdBy;
     @JsonProperty("start_at")

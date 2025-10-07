@@ -192,23 +192,28 @@ const { createAdapter } = require('@socket.io/redis-adapter');
         }
 
         // Проверяем есть ли у пользователя связь с этой комнатой
-        let userRoom = await UserRoom.findOne({ userId: userData.userId, roomId });
-        
-        if (!userRoom) {
-          // Определяем роль: owner если комната новая, member если существующая
-          const role = isNewRoom ? 'owner' : 'member';
+        // Пропускаем для гостей, так как у них нет валидного ObjectId
+        if (userData.userId !== 'guest' && !userData.userId.startsWith('guest-')) {
+          let userRoom = await UserRoom.findOne({ userId: userData.userId, roomId });
           
-          userRoom = await UserRoom.create({
-            userId: userData.userId,
-            roomId,
-            role,
-            customName: room.name,
-          });
-          console.log(`✅ Создана связь UserRoom: ${userData.username} → ${roomId} (${role})`);
+          if (!userRoom) {
+            // Определяем роль: owner если комната новая, member если существующая
+            const role = isNewRoom ? 'owner' : 'member';
+            
+            userRoom = await UserRoom.create({
+              userId: userData.userId,
+              roomId,
+              role,
+              customName: room.name,
+            });
+            console.log(`✅ Создана связь UserRoom: ${userData.username} → ${roomId} (${role})`);
+          } else {
+            // Обновляем lastAccessed
+            userRoom.lastAccessed = new Date();
+            await userRoom.save();
+          }
         } else {
-          // Обновляем lastAccessed
-          userRoom.lastAccessed = new Date();
-          await userRoom.save();
+          console.log(`⚠️ Пропускаем создание UserRoom для гостя: ${userData.username}`);
         }
 
         // ВАЖНО: Присоединяемся к Socket.IO комнате

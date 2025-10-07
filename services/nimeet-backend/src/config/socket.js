@@ -37,16 +37,30 @@ const initializeSocket = (httpServer) => {
       if (!token) {
         console.log('Гостевое подключение Socket.IO');
         socket.isGuest = true;
+        socket.userId = null;
+        socket.username = 'Guest';
         return next();
       }
 
+      // Декодируем JWT токен из Project Monitor
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.userId = decoded.userId;
+      
+      // Извлекаем данные пользователя из токена PM
+      // Токен PM содержит: { sub: userId, username: "...", ... }
+      socket.userId = decoded.sub || decoded.userId || decoded.id;
+      socket.username = decoded.username || decoded.login || 'User';
       socket.isGuest = false;
+      
+      console.log(`✅ Авторизован пользователь PM: ${socket.username} (ID: ${socket.userId})`);
       next();
     } catch (error) {
-      console.error('Ошибка аутентификации socket:', error);
-      next(new Error('Неверный токен'));
+      console.error('Ошибка аутентификации socket:', error.message);
+      // Разрешаем подключение как гость при ошибке токена
+      console.log('⚠️ Невалидный токен, подключаем как гостя');
+      socket.isGuest = true;
+      socket.userId = null;
+      socket.username = 'Guest';
+      next();
     }
   });
 

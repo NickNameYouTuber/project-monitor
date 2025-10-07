@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const userRoomSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String, // Изменено на String для совместимости с PM (PostgreSQL UUID/Long)
     required: true,
   },
   roomId: {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDrop, useDrag } from 'react-dnd';
-import { ArrowLeft, Plus, Search, Filter, Settings, Edit, Trash2, GripVertical, X } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Filter, Settings, Edit, Trash2, GripVertical, X, Video } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { LoadingSpinner } from './loading-spinner';
+import { useNavigate } from 'react-router-dom';
 import type { Project, Task, Column } from '../App';
 
 interface ProjectTasksPageProps {
@@ -146,6 +147,7 @@ export function ProjectTasksPage({
   branchSuggestions,
   onBack 
 }: ProjectTasksPageProps) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -410,10 +412,34 @@ export function ProjectTasksPage({
             className="w-3 h-3 rounded-full"
             style={{ backgroundColor: project.color }}
           />
-          <div>
+          <div className="flex-1">
             <h1>{project.title}</h1>
             <p className="text-muted-foreground">{project.description}</p>
           </div>
+          <Button 
+            variant="default" 
+            size="sm"
+            onClick={async () => {
+              const roomId = `project-${project.id}-${Date.now()}`;
+              try {
+                // Создаем звонок в БД
+                const { createCall } = await import('../api/calls');
+                await createCall({
+                  room_id: roomId,
+                  title: `Звонок: ${project.title}`,
+                  description: `Звонок по проекту ${project.title}`,
+                  project_id: project.id,
+                });
+              } catch (error) {
+                console.error('Ошибка создания звонка:', error);
+              }
+              // Переходим на страницу звонка
+              navigate(`/call/${roomId}`);
+            }}
+          >
+            <Video className="w-4 h-4 mr-2" />
+            Start Call
+          </Button>
         </div>
         
         <div className="flex items-center gap-4">

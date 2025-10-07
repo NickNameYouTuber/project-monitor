@@ -16,6 +16,8 @@ public class CallCreateRequest {
     private String description;
     @JsonProperty("project_id")
     private UUID projectId;
+    @JsonProperty("task_id")
+    private UUID taskId;
     @JsonProperty("start_at")
     private OffsetDateTime startAt;
     @JsonProperty("end_at")

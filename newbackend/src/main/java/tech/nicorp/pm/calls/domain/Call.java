@@ -34,6 +34,10 @@ public class Call {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id")
+    private tech.nicorp.pm.tasks.domain.Task task;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
 

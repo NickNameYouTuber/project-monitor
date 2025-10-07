@@ -45,6 +45,7 @@ public class CallsController {
         c.setTitle(body.getTitle());
         c.setDescription(body.getDescription());
         c.setProject(service.resolveProject(body.getProjectId()));
+        c.setTask(service.resolveTask(body.getTaskId()));
         c.setStartAt(body.getStartAt());
         c.setEndAt(body.getEndAt());
         Call saved = service.save(c);
@@ -82,6 +83,7 @@ public class CallsController {
         r.setStartAt(c.getStartAt());
         r.setEndAt(c.getEndAt());
         if (c.getProject() != null) r.setProjectId(c.getProject().getId());
+        if (c.getTask() != null) r.setTaskId(c.getTask().getId());
         if (c.getCreatedBy() != null) r.setCreatedBy(c.getCreatedBy().getId());
         return r;
     }

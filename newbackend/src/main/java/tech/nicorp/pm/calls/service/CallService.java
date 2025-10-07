@@ -5,6 +5,8 @@ import tech.nicorp.pm.calls.domain.Call;
 import tech.nicorp.pm.calls.repo.CallRepository;
 import tech.nicorp.pm.projects.domain.Project;
 import tech.nicorp.pm.projects.repo.ProjectRepository;
+import tech.nicorp.pm.tasks.domain.Task;
+import tech.nicorp.pm.tasks.repo.TaskRepository;
 import tech.nicorp.pm.users.domain.User;
 import tech.nicorp.pm.users.repo.UserRepository;
 
@@ -16,11 +18,13 @@ import java.util.UUID;
 public class CallService {
     private final CallRepository calls;
     private final ProjectRepository projects;
+    private final TaskRepository tasks;
     private final UserRepository users;
 
-    public CallService(CallRepository calls, ProjectRepository projects, UserRepository users) {
+    public CallService(CallRepository calls, ProjectRepository projects, TaskRepository tasks, UserRepository users) {
         this.calls = calls;
         this.projects = projects;
+        this.tasks = tasks;
         this.users = users;
     }
 
@@ -31,6 +35,7 @@ public class CallService {
     public void delete(UUID id) { calls.deleteById(id); }
 
     public Project resolveProject(UUID id) { return id == null ? null : projects.findById(id).orElse(null); }
+    public Task resolveTask(UUID id) { return id == null ? null : tasks.findById(id).orElse(null); }
     public User resolveUser(UUID id) { return id == null ? null : users.findById(id).orElse(null); }
 }
 
