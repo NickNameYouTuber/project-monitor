@@ -127,64 +127,70 @@ const CallPage: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Большой плеер для screen share */}
         {hasScreenShare && currentScreen && (
-          <div 
-            className="w-full bg-muted flex-shrink-0 border-b border-border relative transition-all duration-300" 
-            style={{ height: isParticipantsVisible ? '60vh' : '85vh' }}
-          >
-            <video
-              className="w-full h-full object-contain bg-muted"
-              autoPlay
-              playsInline
-              ref={(el) => { if (el && currentScreen.stream) el.srcObject = currentScreen.stream; }}
-            />
-            
-            {/* Информация о владельце */}
-            <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-sm">
-              <span className="text-foreground text-sm font-medium">{getScreenOwnerName()}</span>
+          <>
+            <div 
+              className="w-full bg-muted flex-shrink-0 relative transition-all duration-300" 
+              style={{ height: isParticipantsVisible ? 'calc(100% - 200px - 56px)' : 'calc(100% - 56px)' }}
+            >
+              <video
+                className="w-full h-full object-contain bg-muted"
+                autoPlay
+                playsInline
+                ref={(el) => { if (el && currentScreen.stream) el.srcObject = currentScreen.stream; }}
+              />
+              
+              {/* Информация о владельце */}
+              <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-sm">
+                <span className="text-foreground text-sm font-medium">{getScreenOwnerName()}</span>
+              </div>
+
+              {/* Навигация между screen streams (если их несколько) */}
+              {allScreenStreams.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevScreen}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm hover:bg-background border border-border text-foreground p-3 rounded-full transition shadow-sm"
+                    aria-label="Предыдущая демонстрация"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={handleNextScreen}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm hover:bg-background border border-border text-foreground p-3 rounded-full transition shadow-sm"
+                    aria-label="Следующая демонстрация"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                  
+                  {/* Индикатор количества */}
+                  <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-lg border border-border shadow-sm">
+                    <span className="text-foreground text-sm">
+                      {currentScreenIndex + 1} / {allScreenStreams.length}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Навигация между screen streams (если их несколько) */}
-            {allScreenStreams.length > 1 && (
-              <>
-                <button
-                  onClick={handlePrevScreen}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm hover:bg-background border border-border text-foreground p-3 rounded-full transition shadow-sm"
-                  aria-label="Предыдущая демонстрация"
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={handleNextScreen}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm hover:bg-background border border-border text-foreground p-3 rounded-full transition shadow-sm"
-                  aria-label="Следующая демонстрация"
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-                
-                {/* Индикатор количества */}
-                <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-lg border border-border shadow-sm">
-                  <span className="text-foreground text-sm">
-                    {currentScreenIndex + 1} / {allScreenStreams.length}
-                  </span>
-                </div>
-              </>
-            )}
-
-            {/* Кнопка-шторка для сворачивания списка участников */}
+            {/* Полоска-шторка для сворачивания списка участников */}
             <button
               onClick={() => setIsParticipantsVisible(!isParticipantsVisible)}
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-background/95 backdrop-blur-sm hover:bg-background border border-border text-foreground px-6 py-1.5 rounded-full transition shadow-lg z-10"
+              className="w-full bg-card hover:bg-muted border-y border-border transition-colors duration-200 flex items-center justify-center py-1 cursor-pointer group"
               title={isParticipantsVisible ? 'Скрыть участников' : 'Показать участников'}
             >
-              {isParticipantsVisible ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+              <div className="flex items-center gap-2 text-muted-foreground group-hover:text-foreground transition-colors">
+                <div className="w-8 h-0.5 bg-border group-hover:bg-foreground transition-colors rounded-full" />
+                {isParticipantsVisible ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                <div className="w-8 h-0.5 bg-border group-hover:bg-foreground transition-colors rounded-full" />
+              </div>
             </button>
-          </div>
+          </>
         )}
 
         {/* Полоса с камерами (режим зависит от наличия screen share) */}
         <div 
-          className={`overflow-hidden pb-14 transition-all duration-300 ${
-            hasScreenShare && !isParticipantsVisible ? 'h-0' : 'flex-1'
+          className={`overflow-hidden transition-all duration-300 ${
+            hasScreenShare && !isParticipantsVisible ? 'h-0' : hasScreenShare ? 'h-[200px]' : 'flex-1 pb-14'
           }`}
         >
           <VideoGrid
