@@ -84,7 +84,11 @@ const CallPage: React.FC = () => {
   };
 
   if (!hasJoined) {
-    return <PreCallSetup roomId={callId || ''} onJoin={handleJoinCall} />;
+    return (
+      <div className="h-full overflow-auto">
+        <PreCallSetup roomId={callId || ''} onJoin={handleJoinCall} />
+      </div>
+    );
   }
 
   if (error) {

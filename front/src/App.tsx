@@ -367,7 +367,17 @@ export default function App() {
                 />
                 <Route path="/whiteboard" element={<WhiteboardPage project={selectedProject} />} />
                 <Route path="/calls" element={<CallsPage />} />
-                <Route path="/call/:callId" element={<CallPage />} />
+                <Route 
+                  path="/call/:callId" 
+                  element={
+                    <div className="flex h-screen">
+                      <Sidebar currentPage="calls" onNavigate={handleNavigate} selectedProject={selectedProject} />
+                      <main className="flex-1 overflow-hidden">
+                        <CallPage />
+                      </main>
+                    </div>
+                  } 
+                />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="/projects" replace />} />
               </Routes>
