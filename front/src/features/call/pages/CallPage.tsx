@@ -143,15 +143,6 @@ const CallPage: React.FC = () => {
               <span className="text-foreground text-sm font-medium">{getScreenOwnerName()}</span>
             </div>
 
-            {/* Кнопка сворачивания списка участников */}
-            <button
-              onClick={() => setIsParticipantsVisible(!isParticipantsVisible)}
-              className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm hover:bg-background border border-border text-foreground p-2 rounded-lg transition shadow-sm"
-              title={isParticipantsVisible ? 'Скрыть участников' : 'Показать участников'}
-            >
-              {isParticipantsVisible ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-            </button>
-
             {/* Навигация между screen streams (если их несколько) */}
             {allScreenStreams.length > 1 && (
               <>
@@ -178,6 +169,15 @@ const CallPage: React.FC = () => {
                 </div>
               </>
             )}
+
+            {/* Кнопка-шторка для сворачивания списка участников */}
+            <button
+              onClick={() => setIsParticipantsVisible(!isParticipantsVisible)}
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-background/95 backdrop-blur-sm hover:bg-background border border-border text-foreground px-6 py-1.5 rounded-full transition shadow-lg z-10"
+              title={isParticipantsVisible ? 'Скрыть участников' : 'Показать участников'}
+            >
+              {isParticipantsVisible ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+            </button>
           </div>
         )}
 
