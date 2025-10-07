@@ -25,17 +25,17 @@ export interface CallResponse {
 }
 
 export async function createCall(data: CallCreateRequest): Promise<CallResponse> {
-  const response = await apiClient.post('/api/calls', data);
+  const response = await apiClient.post('/calls', data);
   return response.data;
 }
 
 export async function getCallByRoomId(roomId: string): Promise<CallResponse> {
-  const response = await apiClient.get(`/api/calls/by-room/${roomId}`);
+  const response = await apiClient.get(`/calls/by-room/${roomId}`);
   return response.data;
 }
 
 export async function listCalls(): Promise<CallResponse[]> {
-  const response = await apiClient.get('/api/calls');
+  const response = await apiClient.get('/calls');
   return response.data;
 }
 
