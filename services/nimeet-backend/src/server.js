@@ -17,11 +17,14 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:7677',
   'http://localhost:7676',
+  'http://localhost:7670',
   'http://localhost:8080',
   'http://localhost:5173',
   'http://localhost:4173',
   'https://meet.nicorp.tech',
   'http://meet.nicorp.tech',
+  'https://nit.nicorp.tech',
+  'http://nit.nicorp.tech',
   'tauri://localhost',
   'http://tauri.localhost'
 ];

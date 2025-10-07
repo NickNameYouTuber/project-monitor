@@ -8,6 +8,7 @@ const initializeSocket = (httpServer) => {
     'http://localhost:7677',
     'https://meet.nicorp.tech',
     'http://meet.nicorp.tech',
+    'https://nit.nicorp.tech',
     'http://nit.nicorp.tech'
   ];
 

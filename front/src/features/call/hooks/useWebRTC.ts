@@ -151,10 +151,11 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
       }
     });
 
+    // ВРЕМЕННО: всегда используем гостевое подключение, пока не интегрируем JWT PM
     const token = authService.getToken();
-    const isGuest = !user;
-    const userIdToUse = isGuest ? guestId.current : user!.id;
-    const usernameToUse = isGuest ? guestName! : user!.username;
+    const isGuest = true; // !user; // Временно всегда гость
+    const userIdToUse = user?.id || guestId.current;
+    const usernameToUse = user?.username || guestName || 'Guest';
 
     console.log('🔍 WebRTC инициализация:', {
       hasToken: !!token,
@@ -164,9 +165,9 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
       roomId
     });
 
-    if (token || isGuest) {
-      console.log('✅ Условие подключения выполнено, подключаемся к Socket.IO');
-      const socket = isGuest ? socketService.connectAsGuest() : socketService.connect(token!);
+    if (isGuest || token) {
+      console.log('✅ Условие подключения выполнено, подключаемся к Socket.IO (гостевой режим)');
+      const socket = socketService.connectAsGuest(); // isGuest ? socketService.connectAsGuest() : socketService.connect(token!);
       
       // Присоединяемся к комнате (socketService автоматически повторит при переподключении)
       console.log('🔌 Присоединяюсь к комнате:', roomId);
