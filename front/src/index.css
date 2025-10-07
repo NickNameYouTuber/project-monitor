@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /*! tailwindcss v4.1.3 | MIT License | https://tailwindcss.com */
 @layer properties {
   @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
@@ -3496,4 +3500,27 @@ html {
     opacity: var(--tw-exit-opacity, 1);
     transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0));
   }
+}
+
+/* ========== Дополнительные стили для NIMeet компонентов ========== */
+
+/* Темный фон для страниц звонков */
+.call-page-dark {
+  background-color: #0a0a0a !important;
+}
+
+/* Улучшенная поддержка мобильных устройств */
+@supports (height: 100dvh) {
+  .call-page-dark .h-screen {
+    height: 100dvh !important;
+  }
+}
+
+/* Touch оптимизации для звонков */
+.call-page-dark button, 
+.call-page-dark a, 
+.call-page-dark input, 
+.call-page-dark textarea {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }

@@ -13,7 +13,7 @@ import { SettingsPage } from './components/settings-page';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
 import { setAccessToken } from './api/client';
-import PreJoinPage from './pages/PreJoinPage';
+import CallPage from './features/call/pages/CallPage';
 
 export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'settings' | 'merge-request';
 
@@ -367,8 +367,7 @@ export default function App() {
                 />
                 <Route path="/whiteboard" element={<WhiteboardPage project={selectedProject} />} />
                 <Route path="/calls" element={<CallsPage />} />
-                <Route path="/prejoin/:roomId" element={<PreJoinPage />} />
-                <Route path="/call/:roomId" element={<CallsPage />} />
+                <Route path="/call/:callId" element={<CallPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="/projects" replace />} />
               </Routes>

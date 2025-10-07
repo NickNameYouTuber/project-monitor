@@ -87,14 +87,42 @@ services:
       - backend
     restart: unless-stopped
 
-  signaling:
+  nimeet-backend:
     build:
-      context: ./signaling
-    container_name: project-monitor-signaling
-    environment:
-      - PORT=7673
+      context: ./services/nimeet-backend
+      dockerfile: Dockerfile
+    container_name: project-monitor-nimeet-backend
     ports:
-      - "7673:7673"
+      - "4000:4000"
+    env_file:
+      - ./services/nimeet-backend/.env
+    depends_on:
+      - mongo
+      - redis
+      - turn
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: project-monitor-mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=nimeet
+      - MONGO_INITDB_ROOT_PASSWORD=nimeetpass
+      - MONGO_INITDB_DATABASE=nimeet
+    volumes:
+      - mongodata:/data/db
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: project-monitor-redis
+    command: redis-server --requirepass nimeet_redis_pass
+    volumes:
+      - redisdata:/data
     networks:
       - project-monitor-network
     restart: unless-stopped
@@ -126,3 +154,5 @@ networks:
 volumes:
   pgdata:
   gitrepos:
+  mongodata:
+  redisdata:

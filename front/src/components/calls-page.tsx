@@ -9,8 +9,7 @@ import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import NewMeetingDialog from './calls/NewMeetingDialog';
 import UpcomingOverlay from './calls/UpcomingOverlay';
-import CallPage from './call/CallPage';
-import Initializer from './calls/Initializer';
+import CallPage from '../features/call/pages/CallPage';
 import MeetingsList from './calls/MeetingsList';
 import UpcomingPanel from './calls/UpcomingPanel';
 import SearchBar from './calls/SearchBar';
@@ -168,10 +167,10 @@ export function CallsPage() {
 
   const startCall = (meeting?: Meeting) => {
     if (meeting) {
-      navigate(`/prejoin/${meeting.roomId || meeting.id}`, { state: { title: meeting.title, start: meeting.date.toISOString(), duration: meeting.duration } });
+      navigate(`/call/${meeting.roomId || meeting.id}`);
     } else {
       const rid = Date.now().toString();
-      navigate(`/prejoin/${rid}`);
+      navigate(`/call/${rid}`);
     }
   };
 
@@ -184,7 +183,6 @@ export function CallsPage() {
     return (
       <div className="h-full w-full">
         <CallPage />
-        <Initializer roomId={roomId} onLeave={endCall} />
       </div>
     );
   }
