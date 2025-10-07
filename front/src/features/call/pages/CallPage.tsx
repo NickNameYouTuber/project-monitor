@@ -39,15 +39,21 @@ const CallPage: React.FC = () => {
     sendMessage,
   } = useWebRTC(callId || '', preCallSettings.guestName);
 
-  // Собираем все screen streams (локальный + удаленные)
+  // Собираем все screen streams (локальный + удаленные), проверяя что они содержат треки
   const allScreenStreams: Array<{ stream: MediaStream; isLocal: boolean; socketId?: string }> = [];
   
-  if (localScreenStream) {
+  if (localScreenStream && localScreenStream.getVideoTracks().length > 0) {
     allScreenStreams.push({ stream: localScreenStream, isLocal: true });
   }
   
   remoteScreenStreams.forEach((stream, socketId) => {
-    allScreenStreams.push({ stream, isLocal: false, socketId });
+    // Проверяем что stream содержит активные видео треки
+    if (stream && stream.getVideoTracks().length > 0) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack && videoTrack.readyState === 'live') {
+        allScreenStreams.push({ stream, isLocal: false, socketId });
+      }
+    }
   });
 
   const hasScreenShare = allScreenStreams.length > 0;
