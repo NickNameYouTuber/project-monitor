@@ -59,4 +59,25 @@ export async function reorderTasksInColumn(projectId: string, columnId: string, 
   return Array.isArray(data) ? data.map(normalizeTask) : [];
 }
 
+export interface TaskFromChatRequest {
+  title: string;
+  description?: string;
+  assignee_username?: string;
+  watcher_username?: string;
+  deadline?: string;
+  project_id?: string;
+  parent_task_id?: string;
+  room_id?: string;
+}
+
+export async function createTaskFromChat(request: TaskFromChatRequest): Promise<TaskDto> {
+  const { data } = await apiClient.post('/tasks/from-chat', request);
+  return normalizeTask(data);
+}
+
+export async function getTask(taskId: string): Promise<TaskDto> {
+  const { data } = await apiClient.get(`/tasks/${taskId}`);
+  return normalizeTask(data);
+}
+
 

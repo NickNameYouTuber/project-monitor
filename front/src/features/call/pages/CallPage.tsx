@@ -20,6 +20,7 @@ const CallPage: React.FC = () => {
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isParticipantsVisible, setIsParticipantsVisible] = useState(true);
+  const [callContext, setCallContext] = useState<{ projectId?: string; taskId?: string }>({});
   
   const {
     localStream,
@@ -60,6 +61,25 @@ const CallPage: React.FC = () => {
 
   const hasScreenShare = allScreenStreams.length > 0;
   const currentScreen = hasScreenShare ? allScreenStreams[currentScreenIndex] : null;
+
+  // Загрузка информации о звонке для получения projectId/taskId
+  useEffect(() => {
+    const loadCallContext = async () => {
+      if (callId) {
+        try {
+          const { getCallByRoomId } = await import('../../../api/calls');
+          const callInfo = await getCallByRoomId(callId);
+          setCallContext({
+            projectId: callInfo.project_id,
+            taskId: callInfo.task_id,
+          });
+        } catch (error) {
+          console.warn('Не удалось загрузить контекст звонка:', error);
+        }
+      }
+    };
+    loadCallContext();
+  }, [callId]);
 
   useEffect(() => {
     if (hasJoined) {
@@ -245,6 +265,9 @@ const CallPage: React.FC = () => {
           alert('Функция редактирования будет реализована на бэкенде');
         }}
         currentUserId={socketService.getSocket()?.id}
+        projectId={callContext.projectId}
+        taskId={callContext.taskId}
+        roomId={callId || ''}
       />
     </div>
   );

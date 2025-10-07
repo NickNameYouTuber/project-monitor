@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, MessageCircle, Image as ImageIcon, Paperclip, Plus, FileText, CheckSquare, Calendar, User, Edit2, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { createTaskFromChat } from '../../../api/tasks';
 
 interface ChatMessage {
   id: string;
@@ -13,6 +15,7 @@ interface ChatMessage {
   fileType?: string;
   edited?: boolean;
   task?: {
+    id?: string;
     title: string;
     description?: string;
     assignee?: string;
@@ -28,6 +31,9 @@ interface ChatPanelProps {
   onSendMessage: (message: string, file?: File) => void;
   onEditMessage?: (messageId: string, newMessage: string) => void;
   currentUserId?: string;
+  projectId?: string;
+  taskId?: string;
+  roomId?: string;
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -37,7 +43,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   onSendMessage,
   onEditMessage,
   currentUserId,
+  projectId,
+  taskId,
+  roomId,
 }) => {
+  const navigate = useNavigate();
   const [inputMessage, setInputMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -154,34 +164,48 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     setTaskForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     if (!taskForm.title.trim()) return;
 
-    // Кодируем задачу в JSON и отправляем как специальное сообщение
-    // Префикс [TASK] позволит бэкенду распознать это как задачу
-    const taskData = {
-      title: taskForm.title,
-      description: taskForm.description || undefined,
-      assignee: taskForm.assignee || undefined,
-      watcher: taskForm.watcher || undefined,
-      deadline: taskForm.deadline || undefined,
-    };
-    
-    const taskMessage = `[TASK]${JSON.stringify(taskData)}`;
-    
     if (editingTaskId) {
-      // Редактирование существующей задачи
-      if (onEditMessage) {
-        onEditMessage(editingTaskId, taskMessage);
-      }
-      setEditingTaskId(null);
-    } else {
-      // Создание новой задачи
-      onSendMessage(taskMessage);
+      // Редактирование существующей задачи (пока не поддерживается)
+      alert('Редактирование задач пока не реализовано');
+      return;
     }
-    
-    console.log(editingTaskId ? 'Редактирование задачи:' : 'Создание задачи:', taskForm);
-    handleCloseTaskModal();
+
+    try {
+      // Создаем задачу через API
+      const createdTask = await createTaskFromChat({
+        title: taskForm.title,
+        description: taskForm.description || undefined,
+        assignee_username: taskForm.assignee || undefined,
+        watcher_username: taskForm.watcher || undefined,
+        deadline: taskForm.deadline || undefined,
+        project_id: projectId,
+        parent_task_id: taskId,
+        room_id: roomId,
+      });
+
+      console.log('✅ Задача создана:', createdTask);
+
+      // Отправляем сообщение в чат с информацией о созданной задаче
+      const taskData = {
+        id: createdTask.id,
+        title: taskForm.title,
+        description: taskForm.description || undefined,
+        assignee: taskForm.assignee || undefined,
+        watcher: taskForm.watcher || undefined,
+        deadline: taskForm.deadline || undefined,
+      };
+      
+      const taskMessage = `[TASK]${JSON.stringify(taskData)}`;
+      onSendMessage(taskMessage);
+
+      handleCloseTaskModal();
+    } catch (error) {
+      console.error('❌ Ошибка создания задачи:', error);
+      alert('Не удалось создать задачу. Проверьте консоль для деталей.');
+    }
   };
 
   const handleStartEditMessage = (messageId: string, currentText: string) => {
@@ -278,7 +302,15 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                     }`}
                   >
                     {taskData && (
-                      <div className="p-3 bg-black/20 border-l-2 border-green-400 space-y-2 relative group">
+                      <div 
+                        className="p-3 bg-black/20 border-l-2 border-green-400 space-y-2 relative group cursor-pointer hover:bg-black/30 transition"
+                        onClick={() => {
+                          if (taskData.id && projectId) {
+                            navigate(`/projects/${projectId}`);
+                          }
+                        }}
+                        title={taskData.id ? 'Перейти к задаче на дашборде' : 'Задача создается...'}
+                      >
                         <div className="flex items-start gap-2">
                           <CheckSquare className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
@@ -286,10 +318,16 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                             {taskData.description && (
                               <p className="text-xs text-gray-300 mt-1">{taskData.description}</p>
                             )}
+                            {taskData.id && (
+                              <p className="text-xs text-green-400 mt-1">📋 Нажмите для перехода к задаче</p>
+                            )}
                           </div>
-                          {isOwn && onEditMessage && (
+                          {isOwn && onEditMessage && !taskData.id && (
                             <button
-                              onClick={() => handleStartEditTask(msg.id, taskData)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEditTask(msg.id, taskData);
+                              }}
                               className="opacity-0 group-hover:opacity-100 transition text-gray-400 hover:text-white p-1"
                               title="Редактировать задачу"
                             >
@@ -612,9 +650,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
               </div>
 
               {/* Информация */}
-              <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-3">
-                <p className="text-xs text-blue-300">
-                  ℹ️ Задача будет отправлена в чат и видна всем участникам звонка. Полная интеграция с системой управления задачами будет реализована в будущем.
+              <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-3">
+                <p className="text-xs text-green-300">
+                  ✅ Задача будет создана на дашборде проекта и отправлена в чат. Все участники звонка увидят её и смогут перейти к ней.
                 </p>
               </div>
             </div>
