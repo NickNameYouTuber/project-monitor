@@ -175,6 +175,21 @@ const CallPage: React.FC = () => {
           </>
         )}
 
+        {/* Полоска-шторка для сворачивания списка участников (когда развернуто - сверху) */}
+        {hasScreenShare && isParticipantsVisible && (
+          <button
+            onClick={() => setIsParticipantsVisible(false)}
+            className="w-full bg-transparent hover:bg-card/95 hover:backdrop-blur-sm border-y border-transparent hover:border-border transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group"
+            title="Скрыть участников"
+          >
+            <div className="flex items-center gap-2 text-transparent group-hover:text-muted-foreground transition-colors">
+              <div className="w-8 h-0.5 bg-transparent group-hover:bg-border transition-colors rounded-full" />
+              <ChevronDown className="w-4 h-4" />
+              <div className="w-8 h-0.5 bg-transparent group-hover:bg-border transition-colors rounded-full" />
+            </div>
+          </button>
+        )}
+
         {/* Полоса с камерами (режим зависит от наличия screen share) */}
         <div 
           className={`overflow-hidden transition-all duration-300 ${
@@ -192,17 +207,17 @@ const CallPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Полоска-шторка для сворачивания списка участников (поверх всего) */}
-      {hasScreenShare && (
+      {/* Полоска-шторка для разворачивания списка участников (когда свернуто - над нижней панелью) */}
+      {hasScreenShare && !isParticipantsVisible && (
         <button
-          onClick={() => setIsParticipantsVisible(!isParticipantsVisible)}
-          className="fixed bottom-14 left-0 right-0 bg-transparent hover:bg-card/95 hover:backdrop-blur-sm border-y border-transparent hover:border-border transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40"
-          title={isParticipantsVisible ? 'Скрыть участников' : 'Показать участников'}
+          onClick={() => setIsParticipantsVisible(true)}
+          className="fixed bottom-14 left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm border-y border-border/30 hover:border-border transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40"
+          title="Показать участников"
         >
-          <div className="flex items-center gap-2 text-transparent group-hover:text-muted-foreground transition-colors">
-            <div className="w-8 h-0.5 bg-transparent group-hover:bg-border transition-colors rounded-full" />
-            {isParticipantsVisible ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-            <div className="w-8 h-0.5 bg-transparent group-hover:bg-border transition-colors rounded-full" />
+          <div className="flex items-center gap-2 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">
+            <div className="w-8 h-0.5 bg-border/50 group-hover:bg-border transition-colors rounded-full" />
+            <ChevronUp className="w-4 h-4" />
+            <div className="w-8 h-0.5 bg-border/50 group-hover:bg-border transition-colors rounded-full" />
           </div>
         </button>
       )}
