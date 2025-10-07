@@ -216,18 +216,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   return (
     <>
       <div
-        className={`fixed right-0 top-0 h-[100dvh] bg-[#1a1a1a] border-l border-[#2a2a2a] transition-transform duration-300 z-50 flex flex-col w-full md:w-[380px] ${
+        className={`fixed right-0 top-0 h-[100dvh] bg-card border-l border-border transition-transform duration-300 z-50 flex flex-col w-full md:w-[380px] shadow-xl ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-[#2a2a2a] flex-shrink-0">
-          <h3 className="text-white font-semibold flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
+          <h3 className="text-foreground font-semibold flex items-center gap-2">
             <MessageCircle className="w-5 h-5" />
             Чат
           </h3>
           <button
             onClick={onToggle}
-            className="text-gray-400 hover:text-white transition p-1"
+            className="text-muted-foreground hover:text-foreground transition p-1"
             aria-label="Закрыть чат"
           >
             <X className="w-5 h-5" />
@@ -237,7 +237,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500 text-sm text-center">
+              <p className="text-muted-foreground text-sm text-center">
                 Нет сообщений.<br />Начните общение!
               </p>
             </div>
@@ -266,15 +266,15 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                   className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}
                 >
                   {!isOwn && (
-                    <span className="text-xs text-gray-500 mb-1 px-1">
+                    <span className="text-xs text-muted-foreground mb-1 px-1">
                       {msg.senderName}
                     </span>
                   )}
                   <div
                     className={`max-w-[80%] rounded-xl overflow-hidden ${
                       isOwn
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-[#2a2a2a] text-white'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground'
                     }`}
                   >
                     {taskData && (
@@ -406,21 +406,21 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-3 sm:p-4 pb-5 sm:pb-4 border-t border-[#2a2a2a] flex-shrink-0 bg-[#1a1a1a]">
+        <div className="p-3 sm:p-4 pb-5 sm:pb-4 border-t border-border flex-shrink-0 bg-card">
           {selectedFile && (
-            <div className="mb-2 bg-[#2a2a2a] rounded-lg p-2 flex items-center gap-2">
+            <div className="mb-2 bg-muted rounded-lg p-2 flex items-center gap-2">
               {selectedFile.type.startsWith('image/') ? (
-                <ImageIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <ImageIcon className="w-4 h-4 text-primary flex-shrink-0" />
               ) : (
-                <Paperclip className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <Paperclip className="w-4 h-4 text-primary flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-white truncate">{selectedFile.name}</p>
-                <p className="text-[10px] text-gray-500">{formatFileSize(selectedFile.size)}</p>
+                <p className="text-xs text-foreground truncate">{selectedFile.name}</p>
+                <p className="text-[10px] text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
               </div>
               <button
                 onClick={removeSelectedFile}
-                className="text-gray-400 hover:text-white active:text-gray-200 transition p-1"
+                className="text-muted-foreground hover:text-foreground transition p-1"
                 aria-label="Удалить файл"
               >
                 <X className="w-4 h-4" />
@@ -440,7 +440,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             <div ref={dropdownRef} className="relative flex-shrink-0">
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="bg-[#2a2a2a] hover:bg-[#3a3a3a] active:bg-[#4a4a4a] text-white p-2.5 sm:p-2 rounded-lg transition"
+                className="bg-muted hover:bg-muted/80 text-foreground p-2.5 sm:p-2 rounded-lg transition border border-border"
                 title="Добавить"
               >
                 <Plus className="w-5 h-5" />
@@ -448,20 +448,20 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
               {/* Выпадающее меню */}
               {isDropdownOpen && (
-                <div className="absolute bottom-full left-0 mb-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg shadow-xl overflow-hidden min-w-[200px] z-10">
+                <div className="absolute bottom-full left-0 mb-2 bg-card border border-border rounded-lg shadow-xl overflow-hidden min-w-[200px] z-10">
                   <button
                     onClick={handleOpenFileDialog}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-[#3a3a3a] active:bg-[#4a4a4a] transition text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-foreground hover:bg-muted transition text-left"
                   >
-                    <FileText className="w-5 h-5 text-blue-400" />
+                    <FileText className="w-5 h-5 text-primary" />
                     <span className="text-sm">Прикрепить файл</span>
                   </button>
-                  <div className="h-px bg-[#3a3a3a]" />
+                  <div className="h-px bg-border" />
                   <button
                     onClick={handleOpenTaskModal}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-[#3a3a3a] active:bg-[#4a4a4a] transition text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-foreground hover:bg-muted transition text-left"
                   >
-                    <CheckSquare className="w-5 h-5 text-green-400" />
+                    <CheckSquare className="w-5 h-5 text-green-500" />
                     <span className="text-sm">Поставить задачу</span>
                   </button>
                 </div>
@@ -475,13 +475,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Введите сообщение..."
-              className="flex-1 bg-[#2a2a2a] border border-[#3a3a3a] text-white text-sm sm:text-base rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-blue-600 transition placeholder-gray-500"
+              className="flex-1 bg-muted border border-border text-foreground text-sm sm:text-base rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:ring-2 focus:ring-primary transition placeholder-muted-foreground"
               maxLength={500}
             />
             <button
               onClick={handleSendMessage}
               disabled={!inputMessage.trim() && !selectedFile}
-              className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-2.5 sm:p-2 rounded-lg transition flex-shrink-0"
+              className="bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground p-2.5 sm:p-2 rounded-lg transition flex-shrink-0"
               aria-label="Отправить сообщение"
             >
               <Send className="w-5 h-5" />

@@ -35,74 +35,60 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Информация о комнате */}
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block">
-              <p className="text-sm font-medium">Комната</p>
-              <p className="text-xs text-muted-foreground font-mono">{roomId}</p>
-            </div>
-          </div>
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
+      <div className="max-w-7xl mx-auto px-3 py-2">
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            onClick={onToggleMicrophone}
+            variant={isMicrophoneEnabled ? "default" : "destructive"}
+            size="icon"
+            className="rounded-full w-10 h-10"
+            title={isMicrophoneEnabled ? 'Выключить микрофон' : 'Включить микрофон'}
+          >
+            {isMicrophoneEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+          </Button>
 
-          {/* Основные контролы */}
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={onToggleMicrophone}
-              variant={isMicrophoneEnabled ? "default" : "destructive"}
-              size="lg"
-              className="rounded-full w-12 h-12 sm:w-14 sm:h-14"
-              title={isMicrophoneEnabled ? 'Выключить микрофон' : 'Включить микрофон'}
-            >
-              {isMicrophoneEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-            </Button>
+          <Button
+            onClick={onToggleCamera}
+            variant={isCameraEnabled ? "default" : "destructive"}
+            size="icon"
+            className="rounded-full w-10 h-10"
+            title={isCameraEnabled ? 'Выключить камеру' : 'Включить камеру'}
+          >
+            {isCameraEnabled ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
+          </Button>
 
-            <Button
-              onClick={onToggleCamera}
-              variant={isCameraEnabled ? "default" : "destructive"}
-              size="lg"
-              className="rounded-full w-12 h-12 sm:w-14 sm:h-14"
-              title={isCameraEnabled ? 'Выключить камеру' : 'Включить камеру'}
-            >
-              {isCameraEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-            </Button>
+          <Button
+            onClick={onToggleScreenShare}
+            variant={isScreenSharing ? "secondary" : "outline"}
+            size="icon"
+            className="rounded-full w-10 h-10"
+            title={isScreenSharing ? 'Остановить демонстрацию' : 'Демонстрация экрана'}
+          >
+            {isScreenSharing ? <MonitorOff className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
+          </Button>
 
-            <Button
-              onClick={onToggleScreenShare}
-              variant={isScreenSharing ? "secondary" : "outline"}
-              size="lg"
-              className="rounded-full w-12 h-12 sm:w-14 sm:h-14"
-              title={isScreenSharing ? 'Остановить демонстрацию' : 'Демонстрация экрана'}
-            >
-              {isScreenSharing ? <MonitorOff className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
-            </Button>
+          <Button
+            onClick={onToggleChat}
+            variant={isChatOpen ? "secondary" : "outline"}
+            size="icon"
+            className="rounded-full w-10 h-10"
+            title="Чат"
+          >
+            <MessageSquare className="w-4 h-4" />
+          </Button>
 
-            <Button
-              onClick={onToggleChat}
-              variant={isChatOpen ? "secondary" : "outline"}
-              size="lg"
-              className="rounded-full w-12 h-12 sm:w-14 sm:h-14 relative"
-              title="Чат"
-            >
-              <MessageSquare className="w-5 h-5" />
-            </Button>
+          <div className="w-px h-8 bg-border mx-1" />
 
-            <div className="w-px h-10 bg-border mx-2" />
-
-            <Button
-              onClick={handleLeaveCall}
-              variant="destructive"
-              size="lg"
-              className="rounded-full w-12 h-12 sm:w-14 sm:h-14"
-              title="Покинуть звонок"
-            >
-              <PhoneOff className="w-5 h-5" />
-            </Button>
-          </div>
-
-          {/* Пустое место для симметрии */}
-          <div className="w-32 hidden sm:block" />
+          <Button
+            onClick={handleLeaveCall}
+            variant="destructive"
+            size="icon"
+            className="rounded-full w-10 h-10"
+            title="Покинуть звонок"
+          >
+            <PhoneOff className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </div>

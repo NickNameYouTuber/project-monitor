@@ -6,7 +6,7 @@ import ControlPanel from '../components/ControlPanel';
 import PreCallSetup from '../components/PreCallSetup';
 import ChatPanel from '../components/ChatPanel';
 import socketService from '../services/socketService';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 
 const CallPage: React.FC = () => {
@@ -19,6 +19,7 @@ const CallPage: React.FC = () => {
   }>({ cameraEnabled: true, microphoneEnabled: true });
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isParticipantsVisible, setIsParticipantsVisible] = useState(true);
   
   const {
     localStream,
@@ -126,7 +127,10 @@ const CallPage: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Большой плеер для screen share */}
         {hasScreenShare && currentScreen && (
-          <div className="w-full bg-muted flex-shrink-0 border-b border-border relative" style={{ height: '60vh' }}>
+          <div 
+            className="w-full bg-muted flex-shrink-0 border-b border-border relative transition-all duration-300" 
+            style={{ height: isParticipantsVisible ? '60vh' : '85vh' }}
+          >
             <video
               className="w-full h-full object-contain bg-muted"
               autoPlay
@@ -138,6 +142,15 @@ const CallPage: React.FC = () => {
             <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-sm">
               <span className="text-foreground text-sm font-medium">{getScreenOwnerName()}</span>
             </div>
+
+            {/* Кнопка сворачивания списка участников */}
+            <button
+              onClick={() => setIsParticipantsVisible(!isParticipantsVisible)}
+              className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm hover:bg-background border border-border text-foreground p-2 rounded-lg transition shadow-sm"
+              title={isParticipantsVisible ? 'Скрыть участников' : 'Показать участников'}
+            >
+              {isParticipantsVisible ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+            </button>
 
             {/* Навигация между screen streams (если их несколько) */}
             {allScreenStreams.length > 1 && (
@@ -169,7 +182,11 @@ const CallPage: React.FC = () => {
         )}
 
         {/* Полоса с камерами (режим зависит от наличия screen share) */}
-        <div className="flex-1 overflow-hidden pb-20 sm:pb-24">
+        <div 
+          className={`overflow-hidden pb-14 transition-all duration-300 ${
+            hasScreenShare && !isParticipantsVisible ? 'h-0' : 'flex-1'
+          }`}
+        >
           <VideoGrid
             localStream={localStream}
             remoteVideoStreams={remoteVideoStreams}
