@@ -172,18 +172,6 @@ const CallPage: React.FC = () => {
               )}
             </div>
 
-            {/* Полоска-шторка для сворачивания списка участников */}
-            <button
-              onClick={() => setIsParticipantsVisible(!isParticipantsVisible)}
-              className="w-full bg-card hover:bg-muted border-y border-border transition-colors duration-200 flex items-center justify-center py-1 cursor-pointer group"
-              title={isParticipantsVisible ? 'Скрыть участников' : 'Показать участников'}
-            >
-              <div className="flex items-center gap-2 text-muted-foreground group-hover:text-foreground transition-colors">
-                <div className="w-8 h-0.5 bg-border group-hover:bg-foreground transition-colors rounded-full" />
-                {isParticipantsVisible ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-                <div className="w-8 h-0.5 bg-border group-hover:bg-foreground transition-colors rounded-full" />
-              </div>
-            </button>
           </>
         )}
 
@@ -203,6 +191,21 @@ const CallPage: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Полоска-шторка для сворачивания списка участников (поверх всего) */}
+      {hasScreenShare && (
+        <button
+          onClick={() => setIsParticipantsVisible(!isParticipantsVisible)}
+          className="fixed bottom-14 left-0 right-0 bg-transparent hover:bg-card/95 hover:backdrop-blur-sm border-y border-transparent hover:border-border transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40"
+          title={isParticipantsVisible ? 'Скрыть участников' : 'Показать участников'}
+        >
+          <div className="flex items-center gap-2 text-transparent group-hover:text-muted-foreground transition-colors">
+            <div className="w-8 h-0.5 bg-transparent group-hover:bg-border transition-colors rounded-full" />
+            {isParticipantsVisible ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            <div className="w-8 h-0.5 bg-transparent group-hover:bg-border transition-colors rounded-full" />
+          </div>
+        </button>
+      )}
 
       <ControlPanel
         isCameraEnabled={isCameraEnabled}
