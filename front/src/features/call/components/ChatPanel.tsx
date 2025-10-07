@@ -538,16 +538,15 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       {/* Модальное окно создания задачи */}
       {isTaskModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="bg-card border border-border rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg">
             {/* Заголовок */}
-            <div className="flex items-center justify-between p-4 border-b border-[#2a2a2a] sticky top-0 bg-[#1a1a1a] z-10">
-              <h3 className="text-white font-semibold flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-green-400" />
-                {editingTaskId ? 'Редактировать задачу' : 'Поставить задачу'}
+            <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
+              <h3 className="text-foreground font-semibold">
+                {editingTaskId ? 'Редактировать задачу' : 'Создать задачу'}
               </h3>
               <button
                 onClick={handleCloseTaskModal}
-                className="text-gray-400 hover:text-white transition p-1"
+                className="text-muted-foreground hover:text-foreground transition p-1"
                 aria-label="Закрыть"
               >
                 <X className="w-5 h-5" />
@@ -557,103 +556,96 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             {/* Форма */}
             <div className="p-4 space-y-4">
               {/* Название */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  Название задачи *
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-foreground">
+                  Название задачи
                 </label>
                 <input
                   type="text"
                   value={taskForm.title}
                   onChange={(e) => handleTaskFormChange('title', e.target.value)}
                   placeholder="Введите название задачи"
-                  className="w-full bg-[#2a2a2a] border border-[#3a3a3a] text-white text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-600 transition placeholder-gray-500"
+                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition placeholder-muted-foreground"
                   maxLength={100}
+                  required
                 />
               </div>
 
               {/* Описание */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-foreground">
                   Описание
                 </label>
                 <textarea
                   value={taskForm.description}
                   onChange={(e) => handleTaskFormChange('description', e.target.value)}
                   placeholder="Введите описание задачи"
-                  className="w-full bg-[#2a2a2a] border border-[#3a3a3a] text-white text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-600 transition placeholder-gray-500 resize-none"
-                  rows={4}
+                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition placeholder-muted-foreground resize-none"
+                  rows={3}
                   maxLength={500}
                 />
               </div>
 
               {/* Исполнитель */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
-                  <User className="w-4 h-4" />
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-foreground">
                   Исполнитель
                 </label>
                 <input
                   type="text"
                   value={taskForm.assignee}
                   onChange={(e) => handleTaskFormChange('assignee', e.target.value)}
-                  placeholder="Выберите исполнителя"
-                  className="w-full bg-[#2a2a2a] border border-[#3a3a3a] text-white text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-600 transition placeholder-gray-500"
+                  placeholder="Введите имя исполнителя"
+                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition placeholder-muted-foreground"
                   maxLength={50}
                 />
               </div>
 
-              {/* Смотрящий */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
-                  <User className="w-4 h-4" />
+              {/* Смотрящий (Reviewer) */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-foreground">
                   Смотрящий
                 </label>
                 <input
                   type="text"
                   value={taskForm.watcher}
                   onChange={(e) => handleTaskFormChange('watcher', e.target.value)}
-                  placeholder="Выберите смотрящего"
-                  className="w-full bg-[#2a2a2a] border border-[#3a3a3a] text-white text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-600 transition placeholder-gray-500"
+                  placeholder="Введите имя смотрящего"
+                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition placeholder-muted-foreground"
                   maxLength={50}
                 />
               </div>
 
-              {/* Время на исполнение */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Срок исполнения
+              {/* Срок выполнения */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-foreground">
+                  Срок выполнения
                 </label>
                 <input
                   type="datetime-local"
                   value={taskForm.deadline}
                   onChange={(e) => handleTaskFormChange('deadline', e.target.value)}
-                  className="w-full bg-[#2a2a2a] border border-[#3a3a3a] text-white text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-600 transition"
+                  className="w-full bg-background border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary transition"
                 />
               </div>
 
               {/* Кнопки */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-4">
                 <button
+                  type="button"
                   onClick={handleCloseTaskModal}
-                  className="flex-1 bg-[#2a2a2a] hover:bg-[#3a3a3a] active:bg-[#4a4a4a] text-white py-2.5 rounded-lg font-medium transition"
+                  className="flex-1 bg-background hover:bg-muted text-foreground py-2 rounded-lg font-medium transition border border-border"
                 >
                   Отмена
                 </button>
                 <button
+                  type="submit"
                   onClick={handleCreateTask}
                   disabled={!taskForm.title.trim()}
-                  className="flex-1 bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-2.5 rounded-lg font-medium transition"
+                  className="flex-1 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground py-2 rounded-lg font-medium transition"
                 >
-                  {editingTaskId ? 'Сохранить' : 'Создать'}
+                  Создать задачу
                 </button>
-              </div>
-
-              {/* Информация */}
-              <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-3">
-                <p className="text-xs text-green-300">
-                  ✅ Задача будет создана на дашборде проекта и отправлена в чат. Все участники звонка увидят её и смогут перейти к ней.
-                </p>
               </div>
             </div>
           </div>
