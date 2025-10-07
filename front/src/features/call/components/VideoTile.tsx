@@ -147,7 +147,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
   const hasAudio = audioStream && audioStream.getAudioTracks().length > 0;
 
   return (
-    <div className="relative w-full h-full bg-[#1a1a1a] rounded-xl overflow-hidden border border-[#2a2a2a] group">
+    <div className="relative w-full h-full bg-card rounded-lg overflow-hidden border border-border group shadow-sm">
       <audio ref={audioRef} autoPlay muted={isLocal} style={{ display: 'none' }} />
       
       {/* Canvas для замороженного кадра (скрыт по умолчанию) */}
@@ -165,9 +165,9 @@ const VideoTile: React.FC<VideoTileProps> = ({
           className={`w-full h-full object-cover ${showFrozenFrame ? 'opacity-0' : 'opacity-100'}`}
         />
       ) : (
-        <div className="flex items-center justify-center w-full h-full">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2a2a2a] rounded-full flex items-center justify-center">
-            <span className="text-2xl sm:text-3xl text-gray-400 font-semibold">
+        <div className="flex items-center justify-center w-full h-full bg-muted">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center">
+            <span className="text-2xl sm:text-3xl text-muted-foreground font-semibold">
               {displayName[0].toUpperCase()}
             </span>
           </div>

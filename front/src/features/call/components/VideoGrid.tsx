@@ -234,7 +234,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   // РЕЖИМ 1: Горизонтальная полоса (когда есть screen share)
   if (isScreenSharing) {
     return (
-      <div className="relative h-full w-full bg-[#0a0a0a] flex items-center">
+      <div className="relative h-full w-full bg-background flex items-center">
         <div 
           ref={containerRef}
           className="flex gap-3 p-4 overflow-x-auto overflow-y-hidden h-full w-full scrollbar-hide"

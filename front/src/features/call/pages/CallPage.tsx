@@ -7,6 +7,7 @@ import PreCallSetup from '../components/PreCallSetup';
 import ChatPanel from '../components/ChatPanel';
 import socketService from '../services/socketService';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../../../components/ui/button';
 
 const CallPage: React.FC = () => {
   const { callId } = useParams<{ callId: string }>();
@@ -88,16 +89,13 @@ const CallPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center">
-        <div className="bg-[#1a1a1a] border border-red-500 rounded-lg p-6 max-w-md mx-4">
-          <h2 className="text-xl font-bold text-red-400 mb-4">Ошибка подключения</h2>
-          <p className="text-gray-300 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
-          >
+      <div className="fixed inset-0 bg-background flex items-center justify-center">
+        <div className="bg-card border border-destructive rounded-lg p-6 max-w-md mx-4 shadow-lg">
+          <h2 className="text-xl font-bold text-destructive mb-4">Ошибка подключения</h2>
+          <p className="text-foreground mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
             Перезагрузить страницу
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -120,21 +118,21 @@ const CallPage: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Большой плеер для screen share */}
         {hasScreenShare && currentScreen && (
-          <div className="w-full bg-black flex-shrink-0 border-b border-[#2a2a2a] relative" style={{ height: '60vh' }}>
+          <div className="w-full bg-muted flex-shrink-0 border-b border-border relative" style={{ height: '60vh' }}>
             <video
-              className="w-full h-full object-contain bg-black"
+              className="w-full h-full object-contain bg-muted"
               autoPlay
               playsInline
               ref={(el) => { if (el && currentScreen.stream) el.srcObject = currentScreen.stream; }}
             />
             
             {/* Информация о владельце */}
-            <div className="absolute top-4 left-4 bg-black/80 px-4 py-2 rounded-lg">
-              <span className="text-white text-sm font-medium">{getScreenOwnerName()}</span>
+            <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-sm">
+              <span className="text-foreground text-sm font-medium">{getScreenOwnerName()}</span>
             </div>
 
             {/* Навигация между screen streams (если их несколько) */}
@@ -142,22 +140,22 @@ const CallPage: React.FC = () => {
               <>
                 <button
                   onClick={handlePrevScreen}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm hover:bg-background border border-border text-foreground p-3 rounded-full transition shadow-sm"
                   aria-label="Предыдущая демонстрация"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   onClick={handleNextScreen}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black/90 text-white p-3 rounded-full transition"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm hover:bg-background border border-border text-foreground p-3 rounded-full transition shadow-sm"
                   aria-label="Следующая демонстрация"
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>
                 
                 {/* Индикатор количества */}
-                <div className="absolute bottom-4 right-4 bg-black/80 px-3 py-1 rounded-lg">
-                  <span className="text-white text-sm">
+                <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-lg border border-border shadow-sm">
+                  <span className="text-foreground text-sm">
                     {currentScreenIndex + 1} / {allScreenStreams.length}
                   </span>
                 </div>
