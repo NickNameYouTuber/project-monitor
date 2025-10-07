@@ -176,10 +176,15 @@ const { createAdapter } = require('@socket.io/redis-adapter');
         
         if (!room) {
           console.log(`Комната ${roomId} не найдена в БД, создаем автоматически`);
+          // Для гостей используем null вместо невалидного ObjectId
+          const ownerIdValue = userData.userId === 'guest' || userData.userId.startsWith('guest-') 
+            ? null 
+            : userData.userId;
+          
           room = await Room.create({
             roomId,
             name: `Комната ${roomId}`,
-            ownerId: userData.userId,
+            ownerId: ownerIdValue,
             isStatic: true,
             customId: roomId
           });
