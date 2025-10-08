@@ -126,7 +126,9 @@ export function CallsPage() {
         start.setHours(0, 0, 0, 0);
         end.setHours(23, 59, 59, 999);
         
+        console.log(`calls-page: загружаем звонки с ${start.toISOString()} по ${end.toISOString()}`);
         const calls = await getCallsInRange(start.toISOString(), end.toISOString());
+        console.log('calls-page: получено звонков:', calls.length, calls);
         setCalendarCalls(calls);
       } catch (error) {
         console.error('Ошибка загрузки звонков для календаря:', error);

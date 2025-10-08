@@ -63,17 +63,26 @@ const MonthView: React.FC<MonthViewProps> = ({
   const callsByDate = useMemo(() => {
     const map = new Map<string, CallResponse[]>();
     
+    console.log('MonthView: всего звонков для отображения:', calls.length, calls);
+    
     calls.forEach(call => {
-      if (!call.scheduled_time) return;
+      if (!call.scheduled_time) {
+        console.log('MonthView: звонок без scheduled_time:', call);
+        return;
+      }
       
       const date = new Date(call.scheduled_time);
       const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      
+      console.log(`MonthView: добавляем звонок "${call.title}" на дату ${dateKey}`, call);
       
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }
       map.get(dateKey)!.push(call);
     });
+    
+    console.log('MonthView: итоговая карта звонков:', map);
     
     return map;
   }, [calls]);
@@ -86,10 +95,10 @@ const MonthView: React.FC<MonthViewProps> = ({
 
   const getCallCountByStatus = (dateCalls: CallResponse[]) => {
     return {
-      scheduled: dateCalls.filter(c => c.status === 'SCHEDULED').length,
-      active: dateCalls.filter(c => c.status === 'ACTIVE').length,
-      completed: dateCalls.filter(c => c.status === 'COMPLETED').length,
-      cancelled: dateCalls.filter(c => c.status === 'CANCELLED').length,
+      scheduled: dateCalls.filter(c => c.status?.toUpperCase() === 'SCHEDULED').length,
+      active: dateCalls.filter(c => c.status?.toUpperCase() === 'ACTIVE').length,
+      completed: dateCalls.filter(c => c.status?.toUpperCase() === 'COMPLETED').length,
+      cancelled: dateCalls.filter(c => c.status?.toUpperCase() === 'CANCELLED').length,
     };
   };
 

@@ -48,21 +48,30 @@ const WeekView: React.FC<WeekViewProps> = ({
   const callsByDay = useMemo(() => {
     const map = new Map<string, CallResponse[]>();
     
+    console.log('WeekView: всего звонков для отображения:', calls.length, calls);
+    
     weekDays.forEach(day => {
       const dateKey = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
       map.set(dateKey, []);
     });
     
     calls.forEach(call => {
-      if (!call.scheduled_time) return;
+      if (!call.scheduled_time) {
+        console.log('WeekView: звонок без scheduled_time:', call);
+        return;
+      }
       
       const date = new Date(call.scheduled_time);
       const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      
+      console.log(`WeekView: добавляем звонок "${call.title}" на дату ${dateKey}`, call);
       
       if (map.has(dateKey)) {
         map.get(dateKey)!.push(call);
       }
     });
+    
+    console.log('WeekView: итоговая карта звонков по дням:', map);
     
     return map;
   }, [calls, weekDays]);
