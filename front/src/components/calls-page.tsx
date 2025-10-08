@@ -226,7 +226,7 @@ export function CallsPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Header - фиксированная высота */}
       <div className="flex-none border-b border-border p-6">
         <div className="flex items-center justify-between mb-4">
