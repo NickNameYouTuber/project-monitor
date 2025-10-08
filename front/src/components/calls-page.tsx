@@ -80,6 +80,26 @@ export function CallsPage() {
   useEffect(() => {
     (async () => {
       try {
+        // Создаем тестовый звонок для проверки календаря (только при первом запуске)
+        const testCallExists = localStorage.getItem('testCallCreated');
+        if (!testCallExists) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(14, 0, 0, 0);
+          
+          await createCall({
+            room_id: 'test-calendar-room',
+            title: 'Test Calendar Call',
+            description: 'Тестовый звонок для проверки календаря',
+            scheduled_time: tomorrow.toISOString(),
+            duration_minutes: 60,
+            status: 'SCHEDULED',
+          }).then(() => {
+            localStorage.setItem('testCallCreated', 'true');
+            console.log('Тестовый звонок создан');
+          }).catch(err => console.error('Ошибка создания тестового звонка:', err));
+        }
+
         const fromApi = await listCalls();
         if (fromApi && fromApi.length) {
           const apiMeetings = fromApi.map(c => ({
@@ -127,9 +147,22 @@ export function CallsPage() {
         end.setHours(23, 59, 59, 999);
         
         console.log(`calls-page: загружаем звонки с ${start.toISOString()} по ${end.toISOString()}`);
-        const calls = await getCallsInRange(start.toISOString(), end.toISOString());
-        console.log('calls-page: получено звонков:', calls.length, calls);
-        setCalendarCalls(calls);
+        try {
+          const calls = await getCallsInRange(start.toISOString(), end.toISOString());
+          console.log('calls-page: получено звонков через /range:', calls.length, calls);
+          setCalendarCalls(calls);
+        } catch (rangeError) {
+          console.warn('Ошибка /range, используем fallback /list:', rangeError);
+          // Fallback: загружаем все звонки и фильтруем на клиенте
+          const allCalls = await listCalls();
+          const filtered = allCalls.filter(c => {
+            if (!c.scheduled_time) return false;
+            const callDate = new Date(c.scheduled_time);
+            return callDate >= start && callDate <= end;
+          });
+          console.log('calls-page: получено звонков через fallback:', filtered.length, filtered);
+          setCalendarCalls(filtered);
+        }
       } catch (error) {
         console.error('Ошибка загрузки звонков для календаря:', error);
       }
