@@ -248,70 +248,30 @@ export function CallsPage() {
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
         {/* Tabs header - фиксированная высота */}
         <div className="flex-none flex items-center justify-between border-b bg-background p-4">
-          <div className="flex items-center gap-4">
-            {/* Табы Calendar / List */}
-            <div className="flex items-center rounded-none bg-transparent p-0">
-              <button
-                onClick={() => setActiveTab('calendar')}
-                className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
-                  activeTab === 'calendar'
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <CalendarIcon className="w-4 h-4 mr-2" />
-                Calendar View
-              </button>
-              <button
-                onClick={() => setActiveTab('list')}
-                className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
-                  activeTab === 'list'
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <List className="w-4 h-4 mr-2" />
-                List View
-              </button>
-            </div>
-            
-            {/* Переключатель месяц/неделя для календаря */}
-            <div className="flex items-center gap-2 border-l pl-4">
-              <Button
-                variant={calendarView === 'month' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setCalendarView('month')}
-              >
-                Месяц
-              </Button>
-              <Button
-                variant={calendarView === 'week' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setCalendarView('week')}
-              >
-                Неделя
-              </Button>
-            </div>
-
-            {/* Легенда статусов */}
-            <div className="flex items-center gap-3 text-sm border-l pl-4">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-muted-foreground">Предстоящие</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                <span className="text-muted-foreground">Сейчас</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <span className="text-muted-foreground">Завершенные</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <span className="text-muted-foreground">Отмененные</span>
-              </div>
-            </div>
+          {/* Табы Calendar / List */}
+          <div className="flex items-center rounded-none bg-transparent p-0">
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
+                activeTab === 'calendar'
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <CalendarIcon className="w-4 h-4 mr-2" />
+              Calendar View
+            </button>
+            <button
+              onClick={() => setActiveTab('list')}
+              className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
+                activeTab === 'list'
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <List className="w-4 h-4 mr-2" />
+              List View
+            </button>
           </div>
           
           {/* Upcoming Meetings Toggle Button */}
@@ -340,6 +300,8 @@ export function CallsPage() {
                     setCurrentDate(date);
                     setCalendarView('week');
                   }}
+                  calendarView={calendarView}
+                  onCalendarViewChange={setCalendarView}
                 />
               ) : (
                 <WeekView 
@@ -351,6 +313,8 @@ export function CallsPage() {
                       navigate(`/call/${call.room_id}`);
                     }
                   }}
+                  calendarView={calendarView}
+                  onCalendarViewChange={setCalendarView}
                 />
               )}
             </CalendarContainer>

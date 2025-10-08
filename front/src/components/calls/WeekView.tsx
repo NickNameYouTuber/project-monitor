@@ -2,12 +2,15 @@ import React, { useMemo, useRef, useEffect } from 'react';
 import { CallResponse } from '../../api/calls';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CallCard from './CallCard';
+import { Button } from '../ui/button';
 
 interface WeekViewProps {
   currentDate: Date;
   calls: CallResponse[];
   onDateChange: (date: Date) => void;
   onCallClick: (call: CallResponse) => void;
+  calendarView?: 'month' | 'week';
+  onCalendarViewChange?: (view: 'month' | 'week') => void;
 }
 
 const DAYS_OF_WEEK_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
@@ -17,7 +20,9 @@ const WeekView: React.FC<WeekViewProps> = ({
   currentDate, 
   calls, 
   onDateChange,
-  onCallClick 
+  onCallClick,
+  calendarView = 'week',
+  onCalendarViewChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -195,6 +200,46 @@ const WeekView: React.FC<WeekViewProps> = ({
           >
             <ChevronRight className="w-5 h-5" />
           </button>
+
+          {/* Переключатель месяц/неделя */}
+          {onCalendarViewChange && (
+            <div className="flex items-center gap-2 border-l pl-4 ml-2">
+              <Button
+                variant={calendarView === 'month' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onCalendarViewChange('month')}
+              >
+                Месяц
+              </Button>
+              <Button
+                variant={calendarView === 'week' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onCalendarViewChange('week')}
+              >
+                Неделя
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Легенда статусов */}
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <span className="text-muted-foreground">Предстоящие</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <span className="text-muted-foreground">Сейчас</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+            <span className="text-muted-foreground">Завершенные</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500" />
+            <span className="text-muted-foreground">Отмененные</span>
+          </div>
         </div>
       </div>
 

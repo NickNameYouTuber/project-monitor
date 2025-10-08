@@ -1,12 +1,15 @@
 import React, { useMemo } from 'react';
 import { CallResponse } from '../../api/calls';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../ui/button';
 
 interface MonthViewProps {
   currentDate: Date;
   calls: CallResponse[];
   onDateChange: (date: Date) => void;
   onDayClick: (date: Date) => void;
+  calendarView?: 'month' | 'week';
+  onCalendarViewChange?: (view: 'month' | 'week') => void;
 }
 
 const DAYS_OF_WEEK = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
@@ -19,7 +22,9 @@ const MonthView: React.FC<MonthViewProps> = ({
   currentDate, 
   calls, 
   onDateChange,
-  onDayClick 
+  onDayClick,
+  calendarView = 'month',
+  onCalendarViewChange
 }) => {
   // Получаем дни месяца
   const monthDays = useMemo(() => {
@@ -128,6 +133,46 @@ const MonthView: React.FC<MonthViewProps> = ({
           >
             <ChevronRight className="w-5 h-5" />
           </button>
+
+          {/* Переключатель месяц/неделя */}
+          {onCalendarViewChange && (
+            <div className="flex items-center gap-2 border-l pl-4 ml-2">
+              <Button
+                variant={calendarView === 'month' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onCalendarViewChange('month')}
+              >
+                Месяц
+              </Button>
+              <Button
+                variant={calendarView === 'week' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onCalendarViewChange('week')}
+              >
+                Неделя
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Легенда статусов */}
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <span className="text-muted-foreground">Предстоящие</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <span className="text-muted-foreground">Сейчас</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+            <span className="text-muted-foreground">Завершенные</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500" />
+            <span className="text-muted-foreground">Отмененные</span>
+          </div>
         </div>
       </div>
 
