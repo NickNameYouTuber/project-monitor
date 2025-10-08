@@ -50,7 +50,8 @@ export function CallsPage() {
       participants: ['John Doe', 'Jane Smith'],
     type: 'video',
     status: 'scheduled',
-    color: MEETING_COLORS[0].value
+    color: MEETING_COLORS[0].value,
+    roomId: 'test-room-1'
   },
   {
     id: '2',
@@ -60,7 +61,8 @@ export function CallsPage() {
       participants: ['Mike Johnson', 'Sarah Wilson'],
     type: 'video',
     status: 'scheduled',
-    color: MEETING_COLORS[1].value
+    color: MEETING_COLORS[1].value,
+    roomId: 'test-room-2'
     }
   ]);
 
@@ -80,17 +82,22 @@ export function CallsPage() {
       try {
         const fromApi = await listCalls();
         if (fromApi && fromApi.length) {
-          setMeetings(fromApi.map(c => ({
+          const apiMeetings = fromApi.map(c => ({
             id: c.id,
             title: c.title || c.room_id,
-            date: c.start_at ? new Date(c.start_at) : new Date(),
-            duration: c.end_at && c.start_at ? Math.max(1, Math.round((new Date(c.end_at).getTime() - new Date(c.start_at).getTime()) / 60000)) : 30,
+            date: c.scheduled_time ? new Date(c.scheduled_time) : (c.start_at ? new Date(c.start_at) : new Date()),
+            duration: c.duration_minutes || (c.end_at && c.start_at ? Math.max(1, Math.round((new Date(c.end_at).getTime() - new Date(c.start_at).getTime()) / 60000)) : 30),
             participants: [],
             type: 'video' as const,
-            status: 'scheduled' as const,
+            status: (c.status?.toLowerCase() || 'scheduled') as 'scheduled' | 'in-progress' | 'completed' | 'cancelled',
             color: MEETING_COLORS[1].value,
             roomId: c.room_id,
-          })));
+          }));
+          setMeetings(prev => {
+            // Объединяем API данные с локальными тестовыми, избегая дубликатов
+            const testIds = prev.filter(m => m.id === '1' || m.id === '2').map(m => m.id);
+            return [...prev.filter(m => testIds.includes(m.id)), ...apiMeetings];
+          });
         }
       } catch {}
     })();
@@ -172,6 +179,9 @@ export function CallsPage() {
         description: meeting.description,
         start_at: meeting.date.toISOString(),
         end_at: new Date(meetingDate.getTime() + meeting.duration * 60000).toISOString(),
+        scheduled_time: meeting.date.toISOString(),
+        duration_minutes: meeting.duration,
+        status: 'SCHEDULED',
       }).catch(()=>{});
     } catch {}
     setNewMeeting({
@@ -279,9 +289,12 @@ export function CallsPage() {
               )}
             </CalendarContainer>
           ) : (
-            <div className="h-full overflow-y-auto p-6">
-              <MeetingsList items={meetings} />
-            </div>
+            <MeetingsList 
+              items={meetings} 
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
+            />
           )}
         </div>
 
