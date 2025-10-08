@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useWebRTC } from '../hooks/useWebRTC';
 import VideoGrid from '../components/VideoGrid';
@@ -22,6 +22,7 @@ const CallPage: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isParticipantsVisible, setIsParticipantsVisible] = useState(true);
   const [callContext, setCallContext] = useState<{ projectId?: string; taskId?: string }>({});
+  const screenVideoRef = React.useRef<HTMLVideoElement>(null);
   
   const {
     localStream,
@@ -47,24 +48,31 @@ const CallPage: React.FC = () => {
   } = useWebRTC(callId || '', preCallSettings.guestName);
 
   // Собираем все screen streams (локальный + удаленные), проверяя что они содержат треки
-  const allScreenStreams: Array<{ stream: MediaStream; isLocal: boolean; socketId?: string }> = [];
-  
-  if (localScreenStream && localScreenStream.getVideoTracks().length > 0) {
-    allScreenStreams.push({ stream: localScreenStream, isLocal: true });
-  }
-  
-  remoteScreenStreams.forEach((stream, socketId) => {
-    // Проверяем что stream содержит активные видео треки
-    if (stream && stream.getVideoTracks().length > 0) {
-      const videoTrack = stream.getVideoTracks()[0];
-      if (videoTrack && videoTrack.readyState === 'live') {
-        allScreenStreams.push({ stream, isLocal: false, socketId });
-      }
+  const allScreenStreams = useMemo(() => {
+    const streams: Array<{ stream: MediaStream; isLocal: boolean; socketId?: string }> = [];
+    
+    if (localScreenStream && localScreenStream.getVideoTracks().length > 0) {
+      streams.push({ stream: localScreenStream, isLocal: true });
     }
-  });
+    
+    remoteScreenStreams.forEach((stream, socketId) => {
+      // Проверяем что stream содержит активные видео треки
+      if (stream && stream.getVideoTracks().length > 0) {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack && videoTrack.readyState === 'live') {
+          streams.push({ stream, isLocal: false, socketId });
+        }
+      }
+    });
+    
+    return streams;
+  }, [localScreenStream, remoteScreenStreams]);
 
   const hasScreenShare = allScreenStreams.length > 0;
-  const currentScreen = hasScreenShare ? allScreenStreams[currentScreenIndex] : null;
+  const currentScreen = useMemo(
+    () => hasScreenShare ? allScreenStreams[currentScreenIndex] : null,
+    [hasScreenShare, allScreenStreams, currentScreenIndex]
+  );
 
   // Загрузка информации о звонке для получения projectId/taskId
   useEffect(() => {
@@ -103,6 +111,15 @@ const CallPage: React.FC = () => {
     }
   }, [allScreenStreams.length, currentScreenIndex]);
 
+  // Обновление srcObject для screen video без ререндера
+  useEffect(() => {
+    if (screenVideoRef.current && currentScreen) {
+      screenVideoRef.current.srcObject = currentScreen.stream;
+    } else if (screenVideoRef.current) {
+      screenVideoRef.current.srcObject = null;
+    }
+  }, [currentScreen]);
+
   const handleJoinCall = (options: { cameraEnabled: boolean; microphoneEnabled: boolean; guestName?: string }) => {
     setPreCallSettings(options);
     setHasJoined(true);
@@ -130,21 +147,21 @@ const CallPage: React.FC = () => {
     );
   }
 
-  const handlePrevScreen = () => {
+  const handlePrevScreen = useCallback(() => {
     setCurrentScreenIndex((prev) => (prev > 0 ? prev - 1 : allScreenStreams.length - 1));
-  };
+  }, [allScreenStreams.length]);
 
-  const handleNextScreen = () => {
+  const handleNextScreen = useCallback(() => {
     setCurrentScreenIndex((prev) => (prev < allScreenStreams.length - 1 ? prev + 1 : 0));
-  };
+  }, [allScreenStreams.length]);
 
   // Получаем имя владельца screen share
-  const getScreenOwnerName = () => {
+  const screenOwnerName = useMemo(() => {
     if (!currentScreen) return '';
     if (currentScreen.isLocal) return 'Ваша демонстрация экрана';
     const participant = Array.from(participants.values()).find(p => p.socketId === currentScreen.socketId);
     return participant ? `${participant.username} - демонстрация экрана` : 'Демонстрация экрана';
-  };
+  }, [currentScreen, participants]);
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
@@ -160,12 +177,12 @@ const CallPage: React.FC = () => {
                 className="w-full h-full object-contain bg-muted"
                 autoPlay
                 playsInline
-                ref={(el) => { if (el && currentScreen.stream) el.srcObject = currentScreen.stream; }}
+                ref={screenVideoRef}
               />
               
               {/* Информация о владельце */}
               <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-sm">
-                <span className="text-foreground text-sm font-medium">{getScreenOwnerName()}</span>
+                <span className="text-foreground text-sm font-medium">{screenOwnerName}</span>
               </div>
 
               {/* Навигация между screen streams (если их несколько) */}
