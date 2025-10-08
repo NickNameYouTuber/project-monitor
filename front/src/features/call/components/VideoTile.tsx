@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Video, VideoOff, Hand } from 'lucide-react';
+import VideoTileBorder from './VideoTileBorder';
 
 interface VideoTileProps {
   videoStream: MediaStream | null;
@@ -29,9 +30,6 @@ const VideoTile: React.FC<VideoTileProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastIsSpeakingRef = useRef<boolean>(false);
-  const lastIsHandRaisedRef = useRef<boolean>(false);
   const [showFrozenFrame, setShowFrozenFrame] = useState(false);
   const [isStreamLost, setIsStreamLost] = useState(false);
 
@@ -152,37 +150,14 @@ const VideoTile: React.FC<VideoTileProps> = ({
     }
   }, [audioStream, isLocal]);
 
-  // Обновляем обводку через прямое изменение DOM БЕЗ ре-рендера React
-  // Используем useLayoutEffect чтобы изменения применялись синхронно
-  useEffect(() => {
-    // Проверяем изменились ли значения (чтобы не обновлять DOM без необходимости)
-    if (lastIsSpeakingRef.current === isSpeaking && lastIsHandRaisedRef.current === isHandRaised) {
-      return;
-    }
-    
-    lastIsSpeakingRef.current = isSpeaking;
-    lastIsHandRaisedRef.current = isHandRaised;
-    
-    if (containerRef.current) {
-      if (isHandRaised) {
-        containerRef.current.className = 'relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm transition-all duration-200 border-4 border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.6)]';
-      } else if (isSpeaking) {
-        containerRef.current.className = 'relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm transition-all duration-200 border-4 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.6)]';
-      } else {
-        containerRef.current.className = 'relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm transition-all duration-200 border border-border';
-      }
-    }
-  });
-
   const displayName = isLocal ? 'Вы' : username || 'Участник';
   const hasVideo = videoStream && videoStream.getVideoTracks().length > 0 && isCameraEnabled;
   const hasAudio = audioStream && audioStream.getAudioTracks().length > 0;
 
   return (
-    <div 
-      ref={containerRef}
-      className="relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm transition-all duration-200 border border-border"
-    >
+    <div className="relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm">
+      {/* Обводка в отдельном компоненте для избежания ре-рендера видео */}
+      <VideoTileBorder isSpeaking={isSpeaking} isHandRaised={isHandRaised} />
       <audio ref={audioRef} autoPlay muted={isLocal} style={{ display: 'none' }} />
       
       {/* Canvas для замороженного кадра (скрыт по умолчанию) */}
@@ -247,9 +222,9 @@ const VideoTile: React.FC<VideoTileProps> = ({
   );
 };
 
-// Мемоизируем компонент, но isSpeaking обновляем через ref без ре-рендера основного контента
+// Мемоизируем компонент, но isSpeaking и isHandRaised не влияют на ре-рендер основного видео
 export default React.memo(VideoTile, (prevProps, nextProps) => {
-  // Не ре-рендерим при изменении только isSpeaking (обработаем через useEffect)
+  // Перерисовываем только если изменились критичные для видео пропсы
   return (
     prevProps.videoStream === nextProps.videoStream &&
     prevProps.audioStream === nextProps.audioStream &&
@@ -257,9 +232,8 @@ export default React.memo(VideoTile, (prevProps, nextProps) => {
     prevProps.isCameraEnabled === nextProps.isCameraEnabled &&
     prevProps.isMicEnabled === nextProps.isMicEnabled &&
     prevProps.username === nextProps.username &&
-    prevProps.isGuest === nextProps.isGuest &&
-    prevProps.isHandRaised === nextProps.isHandRaised
-    // Специально НЕ сравниваем isSpeaking - оно обновится через useEffect
+    prevProps.isGuest === nextProps.isGuest
+    // isSpeaking и isHandRaised намеренно НЕ проверяются - их изменения обрабатывает VideoTileBorder
   );
 });
 
