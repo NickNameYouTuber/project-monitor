@@ -202,7 +202,7 @@ const WeekView: React.FC<WeekViewProps> = ({
   return (
     <div className="h-full min-h-0 flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-background">
         <div className="flex items-center gap-4">
           {/* Табы Calendar / List */}
           {onTabChange && (
@@ -313,8 +313,8 @@ const WeekView: React.FC<WeekViewProps> = ({
               <div key={dayIndex} className="border-r border-border relative">
                 {/* Day header */}
                 <div className={`
-                  h-12 border-b border-border flex flex-col items-center justify-center sticky top-0 bg-background z-10
-                  ${today ? 'bg-blue-50 dark:bg-blue-950/20' : ''}
+                  h-12 border-b border-border flex flex-col items-center justify-center sticky top-0 z-10
+                  ${today ? 'bg-blue-50 dark:bg-blue-950/20' : 'bg-background'}
                 `}>
                   <div className="text-xs text-muted-foreground">{DAYS_OF_WEEK_FULL[dayIndex].slice(0, 3)}</div>
                   <div className={`text-sm font-medium ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>

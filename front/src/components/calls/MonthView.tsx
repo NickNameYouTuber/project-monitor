@@ -131,7 +131,7 @@ const MonthView: React.FC<MonthViewProps> = ({
   return (
     <div className="h-full min-h-0 flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-background">
         <div className="flex items-center gap-4">
           {/* Табы Calendar / List */}
           {onTabChange && (
@@ -224,7 +224,7 @@ const MonthView: React.FC<MonthViewProps> = ({
         <div className="grid grid-cols-7 h-full min-h-[600px]">
           {/* День недели headers */}
           {DAYS_OF_WEEK.map(day => (
-            <div key={day} className="text-center py-2 font-medium text-sm text-muted-foreground border-b border-border">
+            <div key={day} className="text-center py-2 font-medium text-sm text-muted-foreground border-b border-border bg-background sticky top-0 z-10">
               {day}
             </div>
           ))}
