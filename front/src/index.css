@@ -174,10 +174,10 @@
 
   /* Центрирование всех модальных окон от Radix Dialog через data-slot */
   [data-slot="dialog-portal"] [data-slot="dialog-overlay"] {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    background: rgba(0,0,0,0.5);
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 50 !important;
+    background: rgba(0,0,0,0.5) !important;
   }
 
   [data-slot="dialog-portal"] [data-slot="dialog-content"] {
@@ -185,9 +185,12 @@
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
+    --tw-translate-x: -50% !important;
+    --tw-translate-y: -50% !important;
     z-index: 51 !important;
-    max-width: min(42rem, calc(100% - 2rem));
-    width: 100%;
+    max-width: min(42rem, calc(100% - 2rem)) !important;
+    width: 100% !important;
+    margin: 0 !important;
   }
 
   hr {
