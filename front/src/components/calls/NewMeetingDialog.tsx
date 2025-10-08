@@ -10,7 +10,7 @@ import MeetingColorPicker from './MeetingColorPicker';
 export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeeting, colors, onCreate }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%]">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Schedule New Meeting</DialogTitle>
           <DialogDescription>
