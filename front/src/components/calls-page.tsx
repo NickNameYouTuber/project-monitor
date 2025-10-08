@@ -226,7 +226,7 @@ export function CallsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full min-h-0 overflow-hidden flex flex-col relative">
       <div className="border-b border-border p-6 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -243,8 +243,8 @@ export function CallsPage() {
         <SearchBar value={searchQuery} onChange={setSearchQuery} onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)} upcomingCount={upcomingMeetings.length} />
       </div>
 
-      <div className="flex-1 relative min-h-0">
-        <Tabs defaultValue="calendar" className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 relative min-h-0 overflow-hidden">
+        <Tabs defaultValue="calendar" className="flex-1 min-h-0 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between border-b bg-background p-4 shrink-0">
             <div className="flex items-center gap-4">
               <TabsList className="justify-start rounded-none bg-transparent p-0">
@@ -290,7 +290,7 @@ export function CallsPage() {
             </Button>
           </div>
           
-          <TabsContent value="calendar" className="flex-1 min-h-0 m-0">
+          <TabsContent value="calendar" className="flex-1 min-h-0 m-0 overflow-hidden">
             <div className="relative h-full min-h-0">
               <CalendarContainer>
                 {calendarView === 'month' ? (
@@ -319,7 +319,7 @@ export function CallsPage() {
             </div>
           </TabsContent>
           
-          <TabsContent value="list" className="flex-1 min-h-0 m-0 p-6">
+          <TabsContent value="list" className="flex-1 min-h-0 m-0 p-6 overflow-y-auto">
             <MeetingsList items={meetings} />
           </TabsContent>
         </Tabs>
