@@ -13,6 +13,7 @@ import SearchBar from './calls/SearchBar';
 import MonthView from './calls/MonthView';
 import WeekView from './calls/WeekView';
 import CalendarContainer from './calls/CalendarContainer';
+import CallDetailsPanel from './calls/CallDetailsPanel';
 import { listCalls, createCall, getCallsInRange, CallResponse } from '../api/calls';
 
 interface Meeting {
@@ -76,6 +77,8 @@ export function CallsPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarCalls, setCalendarCalls] = useState<CallResponse[]>([]);
   const [activeTab, setActiveTab] = useState<'calendar' | 'list'>('calendar');
+  const [selectedCall, setSelectedCall] = useState<CallResponse | null>(null);
+  const [isCallDetailsPanelOpen, setIsCallDetailsPanelOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -321,6 +324,10 @@ export function CallsPage() {
                     setCurrentDate(date);
                     setCalendarView('week');
                   }}
+                  onCallClick={(call) => {
+                    setSelectedCall(call);
+                    setIsCallDetailsPanelOpen(true);
+                  }}
                   calendarView={calendarView}
                   onCalendarViewChange={setCalendarView}
                   activeTab={activeTab}
@@ -332,9 +339,8 @@ export function CallsPage() {
                   calls={calendarCalls}
                   onDateChange={setCurrentDate}
                   onCallClick={(call) => {
-                    if (call.room_id) {
-                      navigate(`/call/${call.room_id}`);
-                    }
+                    setSelectedCall(call);
+                    setIsCallDetailsPanelOpen(true);
                   }}
                   calendarView={calendarView}
                   onCalendarViewChange={setCalendarView}
@@ -361,6 +367,17 @@ export function CallsPage() {
         
         {/* Overlay when panel is open */}
         <UpcomingOverlay open={isUpcomingOpen} onClick={() => setIsUpcomingOpen(false)} />
+
+        {/* Call Details Panel */}
+        <CallDetailsPanel
+          call={selectedCall}
+          open={isCallDetailsPanelOpen}
+          onClose={() => {
+            setIsCallDetailsPanelOpen(false);
+            setSelectedCall(null);
+          }}
+          onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
+        />
       </div>
     </div>
   );

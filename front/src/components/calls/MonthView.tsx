@@ -8,6 +8,7 @@ interface MonthViewProps {
   calls: CallResponse[];
   onDateChange: (date: Date) => void;
   onDayClick: (date: Date) => void;
+  onCallClick?: (call: CallResponse) => void;
   calendarView?: 'month' | 'week';
   onCalendarViewChange?: (view: 'month' | 'week') => void;
   activeTab?: 'calendar' | 'list';
@@ -25,6 +26,7 @@ const MonthView: React.FC<MonthViewProps> = ({
   calls, 
   onDateChange,
   onDayClick,
+  onCallClick,
   calendarView = 'month',
   onCalendarViewChange,
   activeTab = 'calendar',
@@ -250,31 +252,36 @@ const MonthView: React.FC<MonthViewProps> = ({
                       {date.getDate()}
                     </div>
                     
-                    {/* Call indicators */}
+                    {/* Call indicators - показываем первые 3 звонка */}
                     {dateCalls.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {counts.scheduled > 0 && (
-                          <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 rounded text-xs">
-                            <div className="w-2 h-2 rounded-full bg-green-500" />
-                            <span className="text-green-700 dark:text-green-300">{counts.scheduled}</span>
-                          </div>
-                        )}
-                        {counts.active > 0 && (
-                          <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded text-xs">
-                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                            <span className="text-blue-700 dark:text-blue-300">{counts.active}</span>
-                          </div>
-                        )}
-                        {counts.completed > 0 && (
-                          <div className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 rounded text-xs">
-                            <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                            <span className="text-yellow-700 dark:text-yellow-300">{counts.completed}</span>
-                          </div>
-                        )}
-                        {counts.cancelled > 0 && (
-                          <div className="flex items-center gap-1 px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 rounded text-xs">
-                            <div className="w-2 h-2 rounded-full bg-red-500" />
-                            <span className="text-red-700 dark:text-red-300">{counts.cancelled}</span>
+                      <div className="space-y-1">
+                        {dateCalls.slice(0, 3).map((call) => {
+                          const timeStr = call.scheduled_time || call.start_at;
+                          const time = timeStr ? new Date(timeStr) : null;
+                          const timeFormatted = time ? `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}` : '';
+                          
+                          return (
+                            <div
+                              key={call.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onCallClick?.(call);
+                              }}
+                              className="text-xs truncate px-1.5 py-0.5 rounded hover:bg-accent/50 transition cursor-pointer border-l-2"
+                              style={{
+                                borderLeftColor: 
+                                  call.status?.toUpperCase() === 'ACTIVE' ? '#3b82f6' :
+                                  call.status?.toUpperCase() === 'COMPLETED' ? '#eab308' :
+                                  call.status?.toUpperCase() === 'CANCELLED' ? '#ef4444' : '#22c55e'
+                              }}
+                            >
+                              <span className="font-medium">{timeFormatted}</span> {call.title || 'Без названия'}
+                            </div>
+                          );
+                        })}
+                        {dateCalls.length > 3 && (
+                          <div className="text-xs text-muted-foreground px-1.5">
+                            +{dateCalls.length - 3} ещё
                           </div>
                         )}
                       </div>
