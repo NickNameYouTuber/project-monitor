@@ -226,26 +226,29 @@ export function CallsPage() {
   }
 
   return (
-    <div className="h-full min-h-0 overflow-hidden flex flex-col relative">
-      <div className="border-b border-border p-6 shrink-0">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
+      {/* Header - фиксированная высота */}
+      <div className="flex-none border-b border-border p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1>Calls & Meetings</h1>
             <p className="text-muted-foreground">Schedule and manage your team meetings</p>
           </div>
           <Button onClick={() => setIsCreateMeetingOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Meeting
-              </Button>
+            <Plus className="w-4 h-4 mr-2" />
+            New Meeting
+          </Button>
           <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
         </div>
         
         <SearchBar value={searchQuery} onChange={setSearchQuery} onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)} upcomingCount={upcomingMeetings.length} />
       </div>
 
-      <div className="flex-1 relative min-h-0 overflow-hidden">
+      {/* Content area - растягивается на оставшееся пространство */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
         <Tabs defaultValue="calendar" className="flex-1 min-h-0 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between border-b bg-background p-4 shrink-0">
+          {/* Tabs header - фиксированная высота */}
+          <div className="flex-none flex items-center justify-between border-b bg-background p-4">
             <div className="flex items-center gap-4">
               <TabsList className="justify-start rounded-none bg-transparent p-0">
                 <TabsTrigger value="calendar" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
@@ -290,36 +293,35 @@ export function CallsPage() {
             </Button>
           </div>
           
-          <TabsContent value="calendar" className="flex-1 min-h-0 m-0 overflow-hidden">
-            <div className="relative h-full min-h-0">
-              <CalendarContainer>
-                {calendarView === 'month' ? (
-                  <MonthView 
-                    currentDate={currentDate}
-                    calls={calendarCalls}
-                    onDateChange={setCurrentDate}
-                    onDayClick={(date) => {
-                      setCurrentDate(date);
-                      setCalendarView('week');
-                    }}
-                  />
-                ) : (
-                  <WeekView 
-                    currentDate={currentDate}
-                    calls={calendarCalls}
-                    onDateChange={setCurrentDate}
-                    onCallClick={(call) => {
-                      if (call.room_id) {
-                        navigate(`/call/${call.room_id}`);
-                      }
-                    }}
-                  />
-                )}
-              </CalendarContainer>
-            </div>
+          {/* Tabs content - растягивается на оставшееся пространство */}
+          <TabsContent value="calendar" className="flex-1 min-h-0 overflow-hidden m-0 data-[state=active]:flex data-[state=active]:flex-col">
+            <CalendarContainer>
+              {calendarView === 'month' ? (
+                <MonthView 
+                  currentDate={currentDate}
+                  calls={calendarCalls}
+                  onDateChange={setCurrentDate}
+                  onDayClick={(date) => {
+                    setCurrentDate(date);
+                    setCalendarView('week');
+                  }}
+                />
+              ) : (
+                <WeekView 
+                  currentDate={currentDate}
+                  calls={calendarCalls}
+                  onDateChange={setCurrentDate}
+                  onCallClick={(call) => {
+                    if (call.room_id) {
+                      navigate(`/call/${call.room_id}`);
+                    }
+                  }}
+                />
+              )}
+            </CalendarContainer>
           </TabsContent>
           
-          <TabsContent value="list" className="flex-1 min-h-0 m-0 p-6 overflow-y-auto">
+          <TabsContent value="list" className="flex-1 min-h-0 overflow-y-auto m-0 p-6 data-[state=active]:block">
             <MeetingsList items={meetings} />
           </TabsContent>
         </Tabs>
