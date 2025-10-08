@@ -129,26 +129,6 @@ const MonthView: React.FC<MonthViewProps> = ({
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-        
-        {/* Легенда */}
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-muted-foreground">Предстоящие</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-muted-foreground">Сейчас</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <span className="text-muted-foreground">Завершенные</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-muted-foreground">Отмененные</span>
-          </div>
-        </div>
       </div>
 
       {/* Calendar Grid */}
