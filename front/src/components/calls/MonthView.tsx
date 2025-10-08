@@ -107,9 +107,9 @@ const MonthView: React.FC<MonthViewProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-4">
           <button
             onClick={handlePrevMonth}
@@ -152,8 +152,8 @@ const MonthView: React.FC<MonthViewProps> = ({
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex-1 p-6">
-        <div className="grid grid-cols-7 h-full">
+      <div className="flex-1 overflow-auto p-6">
+        <div className="grid grid-cols-7 min-h-full">
           {/* День недели headers */}
           {DAYS_OF_WEEK.map(day => (
             <div key={day} className="text-center py-2 font-medium text-sm text-muted-foreground border-b border-border">

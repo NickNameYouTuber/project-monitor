@@ -174,9 +174,9 @@ const WeekView: React.FC<WeekViewProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-4">
           <button
             onClick={handlePrevWeek}
@@ -199,7 +199,7 @@ const WeekView: React.FC<WeekViewProps> = ({
       </div>
 
       {/* Week Grid */}
-      <div className="flex-1 overflow-auto" ref={containerRef}>
+      <div className="flex-1 overflow-auto min-h-0" ref={containerRef}>
         <div className="grid grid-cols-[80px_repeat(7,1fr)] min-h-full">
           {/* Time column */}
           <div className="border-r border-border sticky left-0 bg-background z-10">
