@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import VideoTile from './VideoTile';
+import VideoTileBorder from './VideoTileBorder';
 import { Participant } from '../../types/call.types';
 import { useAuth } from '../hooks/useAuth';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -264,7 +265,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           {allParticipants.map((participant, index) => (
             <div 
               key={participant.socketId}
-              className="flex-shrink-0 h-full"
+              className="flex-shrink-0 h-full relative"
               style={{ aspectRatio: '4/3' }}
             >
               <VideoTile
@@ -275,6 +276,10 @@ const VideoGrid: React.FC<VideoGridProps> = ({
                 isMicEnabled={participant.isMicEnabled}
                 username={participant.isLocal ? undefined : participant.username}
                 isGuest={participant.isGuest}
+                isSpeaking={false}
+                isHandRaised={false}
+              />
+              <VideoTileBorder 
                 isSpeaking={speakingParticipants.has(participant.socketId)}
                 isHandRaised={raisedHands.has(participant.socketId)}
               />
@@ -326,7 +331,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
             {row.map((participant) => (
               <div 
                 key={participant.socketId}
-                className="flex-shrink-0"
+                className="flex-shrink-0 relative"
                 style={{
                   width: `${gridLayout.tileWidth}px`,
                   height: `${gridLayout.tileHeight}px`
@@ -340,6 +345,10 @@ const VideoGrid: React.FC<VideoGridProps> = ({
                   isMicEnabled={participant.isMicEnabled}
                   username={participant.isLocal ? undefined : participant.username}
                   isGuest={participant.isGuest}
+                  isSpeaking={false}
+                  isHandRaised={false}
+                />
+                <VideoTileBorder 
                   isSpeaking={speakingParticipants.has(participant.socketId)}
                   isHandRaised={raisedHands.has(participant.socketId)}
                 />

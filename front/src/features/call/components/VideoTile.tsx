@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
-import VideoTileBorder from './VideoTileBorder';
 
 interface VideoTileProps {
   videoStream: MediaStream | null;
@@ -209,9 +208,6 @@ const VideoTile: React.FC<VideoTileProps> = ({
           ВЫ
         </div>
       )}
-
-      {/* Рамка и индикаторы поверх видео, изолированы от основного DOM */}
-      <VideoTileBorder isSpeaking={isSpeaking} isHandRaised={isHandRaised} />
     </div>
   );
 };
