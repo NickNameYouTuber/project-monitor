@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import VideoTile from './VideoTile';
 import VideoTileBorder from './VideoTileBorder';
 import { Participant } from '../../types/call.types';
@@ -35,18 +35,22 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   
-  const uniqueParticipants = new Map<string, { socketId: string; username: string; mediaState: Participant['mediaState']; isGuest: boolean }>();
-  
-  participants.forEach((participant) => {
-    if (participant.userId !== user?.id && !uniqueParticipants.has(participant.socketId)) {
-      uniqueParticipants.set(participant.socketId, {
-        socketId: participant.socketId,
-        username: participant.username,
-        mediaState: participant.mediaState,
-        isGuest: participant.userId.startsWith('guest-')
-      });
-    }
-  });
+  const uniqueParticipants = useMemo(() => {
+    const map = new Map<string, { socketId: string; username: string; mediaState: Participant['mediaState']; isGuest: boolean }>();
+    
+    participants.forEach((participant) => {
+      if (participant.userId !== user?.id && !map.has(participant.socketId)) {
+        map.set(participant.socketId, {
+          socketId: participant.socketId,
+          username: participant.username,
+          mediaState: participant.mediaState,
+          isGuest: participant.userId.startsWith('guest-')
+        });
+      }
+    });
+    
+    return map;
+  }, [participants, user?.id]);
 
   // console.log('VideoGrid рендер:', {
   //   remoteVideoStreamsSize: remoteVideoStreams.size,
@@ -211,42 +215,47 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     }
   }, [gridLayout.totalPages, currentPage]);
 
-  // Все участники (локальный + удаленные)
-  const allParticipants = [
-    {
-      isLocal: true,
-      videoStream: localStream,
-      audioStream: null,
-      isCameraEnabled,
-      isMicEnabled,
-      username: 'Вы',
-      isGuest: false,
-      socketId: 'local'
-    },
-    ...Array.from(uniqueParticipants.entries()).map(([socketId, participantData]) => ({
-      isLocal: false,
-      videoStream: remoteVideoStreams.get(participantData.socketId) || null,
-      audioStream: remoteAudioStreams.get(participantData.socketId) || null,
-      isCameraEnabled: participantData.mediaState.camera,
-      isMicEnabled: participantData.mediaState.microphone,
-      username: participantData.username,
-      isGuest: participantData.isGuest,
-      socketId
-    }))
-  ].sort((a, b) => {
-    // Сортировка: участники с поднятой рукой выше
-    const aHasRaisedHand = raisedHands.has(a.socketId);
-    const bHasRaisedHand = raisedHands.has(b.socketId);
+  // Все участники (локальный + удаленные) - мемоизируем БЕЗ speakingParticipants и raisedHands
+  const allParticipants = useMemo(() => {
+    const participants = [
+      {
+        isLocal: true,
+        videoStream: localStream,
+        audioStream: null,
+        isCameraEnabled,
+        isMicEnabled,
+        username: 'Вы',
+        isGuest: false,
+        socketId: 'local'
+      },
+      ...Array.from(uniqueParticipants.entries()).map(([socketId, participantData]) => ({
+        isLocal: false,
+        videoStream: remoteVideoStreams.get(participantData.socketId) || null,
+        audioStream: remoteAudioStreams.get(participantData.socketId) || null,
+        isCameraEnabled: participantData.mediaState.camera,
+        isMicEnabled: participantData.mediaState.microphone,
+        username: participantData.username,
+        isGuest: participantData.isGuest,
+        socketId
+      }))
+    ];
     
-    if (aHasRaisedHand && !bHasRaisedHand) return -1;
-    if (!aHasRaisedHand && bHasRaisedHand) return 1;
+    // Сортировка по поднятым рукам
+    participants.sort((a, b) => {
+      const aHasRaisedHand = raisedHands.has(a.socketId);
+      const bHasRaisedHand = raisedHands.has(b.socketId);
+      
+      if (aHasRaisedHand && !bHasRaisedHand) return -1;
+      if (!aHasRaisedHand && bHasRaisedHand) return 1;
+      
+      if (a.isLocal) return -1;
+      if (b.isLocal) return 1;
+      
+      return 0;
+    });
     
-    // Локальный пользователь всегда первый (если нет поднятых рук)
-    if (a.isLocal) return -1;
-    if (b.isLocal) return 1;
-    
-    return 0;
-  });
+    return participants;
+  }, [localStream, isCameraEnabled, isMicEnabled, uniqueParticipants, remoteVideoStreams, remoteAudioStreams, raisedHands]);
 
   // Получаем участников для текущей страницы
   const startIndex = currentPage * gridLayout.tilesPerPage;
@@ -393,19 +402,5 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   );
 };
 
-// Мемоизация для предотвращения лишних рендеров
-// speakingParticipants не влияет на структуру, только на VideoTileBorder внутри VideoTile
-export default React.memo(VideoGrid, (prev, next) => {
-  return (
-    prev.localStream === next.localStream &&
-    prev.remoteVideoStreams === next.remoteVideoStreams &&
-    prev.remoteAudioStreams === next.remoteAudioStreams &&
-    prev.isCameraEnabled === next.isCameraEnabled &&
-    prev.isMicEnabled === next.isMicEnabled &&
-    prev.participants === next.participants &&
-    prev.isScreenSharing === next.isScreenSharing
-    // speakingParticipants и raisedHands передаются в VideoTile, 
-    // но VideoTile мемоизирован и не ререндерится, только VideoTileBorder обновляется
-  );
-});
+export default VideoGrid;
 
