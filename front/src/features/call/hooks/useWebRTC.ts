@@ -5,6 +5,7 @@ import authService from '../services/authService';
 import roomService from '../services/roomService';
 import { useAuth } from './useAuth';
 import { Participant } from '../types/call.types';
+import { AudioLevelDetector } from '../utils/audioDetection';
 
 export const useWebRTC = (roomId: string, guestName?: string) => {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
   const [isMicrophoneEnabled, setIsMicrophoneEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [participants, setParticipants] = useState<Map<string, Participant>>(new Map());
+  const [speakingParticipants, setSpeakingParticipants] = useState<Set<string>>(new Set());
   const [raisedHands, setRaisedHands] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Array<{
@@ -30,6 +32,8 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
   const isInitialized = useRef(false);
   const offersCreated = useRef<Set<string>>(new Set());
   const guestId = useRef<string>(`guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+  const localAudioDetector = useRef<AudioLevelDetector | null>(null);
+  const remoteAudioDetectors = useRef<Map<string, AudioLevelDetector>>(new Map());
 
   const handleRemoteVideoStream = useCallback((socketId: string, stream: MediaStream) => {
     const mySocketId = socketService.getSocket()?.id;
@@ -565,6 +569,24 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
           return next;
         });
       });
+
+      // Обработчик состояния говорения
+      socket.on('speaking-state-update', (data: { socketId: string; isSpeaking: boolean }) => {
+        setSpeakingParticipants((prev) => {
+          const isCurrentlySpeaking = prev.has(data.socketId);
+          if (isCurrentlySpeaking === data.isSpeaking) {
+            return prev;
+          }
+          
+          const next = new Set(prev);
+          if (data.isSpeaking) {
+            next.add(data.socketId);
+          } else {
+            next.delete(data.socketId);
+          }
+          return next;
+        });
+      });
     }
   }, [roomId, user, guestName, handleRemoteVideoStream, handleRemoteStreamRemoved]);
 
@@ -693,6 +715,105 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
     };
   }, [cleanup]);
 
+  // Детекция говорения для локального аудио
+  useEffect(() => {
+    if (localStream && isMicrophoneEnabled) {
+      const audioTracks = localStream.getAudioTracks();
+      if (audioTracks.length > 0 && audioTracks[0].enabled) {
+        try {
+          if (localAudioDetector.current) {
+            localAudioDetector.current.stop();
+          }
+          
+          localAudioDetector.current = new AudioLevelDetector(localStream, 10);
+          localAudioDetector.current.start((isSpeaking) => {
+            setSpeakingParticipants((prev) => {
+              const isCurrentlySpeaking = prev.has('local');
+              if (isCurrentlySpeaking === isSpeaking) {
+                return prev;
+              }
+              
+              const next = new Set(prev);
+              if (isSpeaking) {
+                next.add('local');
+              } else {
+                next.delete('local');
+              }
+              return next;
+            });
+            
+            // Отправляем состояние говорения другим участникам
+            const socket = socketService.getSocket();
+            if (socket) {
+              socket.emit('speaking-state', { roomId, isSpeaking });
+            }
+          });
+        } catch (error) {
+          console.error('Ошибка запуска детектора локального аудио:', error);
+        }
+      }
+    } else {
+      if (localAudioDetector.current) {
+        localAudioDetector.current.stop();
+        localAudioDetector.current = null;
+      }
+    }
+
+    return () => {
+      if (localAudioDetector.current) {
+        localAudioDetector.current.stop();
+        localAudioDetector.current = null;
+      }
+    };
+  }, [localStream, isMicrophoneEnabled, roomId]);
+
+  // Детекция говорения для удаленных аудио
+  useEffect(() => {
+    const newDetectors = new Map<AudioLevelDetector>();
+    
+    remoteAudioStreams.forEach((stream, socketId) => {
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length > 0 && audioTracks[0].enabled) {
+        try {
+          let detector = remoteAudioDetectors.current.get(socketId);
+          
+          if (!detector) {
+            detector = new AudioLevelDetector(stream, 10);
+            detector.start((isSpeaking) => {
+              setSpeakingParticipants((prev) => {
+                const isCurrentlySpeaking = prev.has(socketId);
+                if (isCurrentlySpeaking === isSpeaking) {
+                  return prev;
+                }
+                
+                const next = new Set(prev);
+                if (isSpeaking) {
+                  next.add(socketId);
+                } else {
+                  next.delete(socketId);
+                }
+                return next;
+              });
+            });
+          }
+          
+          newDetectors.set(socketId, detector);
+        } catch (error) {
+          console.error(`Ошибка запуска детектора аудио для ${socketId}:`, error);
+        }
+      }
+    });
+    
+    // Останавливаем детекторы для участников, которых больше нет
+    remoteAudioDetectors.current.forEach((detector, socketId) => {
+      if (!newDetectors.has(socketId)) {
+        detector.stop();
+      }
+    });
+    
+    remoteAudioDetectors.current = newDetectors;
+  }, [remoteAudioStreams]);
+
   return {
     localStream,
     localScreenStream,
@@ -703,6 +824,7 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
     isMicrophoneEnabled,
     isScreenSharing,
     participants,
+    speakingParticipants,
     raisedHands,
     error,
     messages,

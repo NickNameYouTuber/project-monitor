@@ -33,6 +33,7 @@ const CallPage: React.FC = () => {
     isMicrophoneEnabled,
     isScreenSharing,
     participants,
+    speakingParticipants,
     raisedHands,
     error,
     messages,
@@ -211,6 +212,7 @@ const CallPage: React.FC = () => {
             isCameraEnabled={isCameraEnabled}
             isMicEnabled={isMicrophoneEnabled}
             participants={participants}
+            speakingParticipants={speakingParticipants}
             raisedHands={raisedHands}
             isScreenSharing={hasScreenShare}
           />

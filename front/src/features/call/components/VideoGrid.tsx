@@ -11,6 +11,7 @@ interface VideoGridProps {
   isCameraEnabled: boolean;
   isMicEnabled: boolean;
   participants: Map<string, Participant>;
+  speakingParticipants: Set<string>;
   raisedHands: Set<string>;
   isScreenSharing?: boolean; // Новый проп для определения режима
 }
@@ -22,6 +23,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   isCameraEnabled,
   isMicEnabled,
   participants,
+  speakingParticipants,
   raisedHands,
   isScreenSharing = false
 }) => {
@@ -273,6 +275,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
                 isMicEnabled={participant.isMicEnabled}
                 username={participant.isLocal ? undefined : participant.username}
                 isGuest={participant.isGuest}
+                isSpeaking={speakingParticipants.has(participant.socketId)}
                 isHandRaised={raisedHands.has(participant.socketId)}
               />
             </div>
@@ -337,6 +340,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
                   isMicEnabled={participant.isMicEnabled}
                   username={participant.isLocal ? undefined : participant.username}
                   isGuest={participant.isGuest}
+                  isSpeaking={speakingParticipants.has(participant.socketId)}
                   isHandRaised={raisedHands.has(participant.socketId)}
                 />
               </div>

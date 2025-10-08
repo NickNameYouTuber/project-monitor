@@ -577,6 +577,15 @@ const { createAdapter } = require('@socket.io/redis-adapter');
       console.log(`✋ Пользователь ${socket.id} ${isRaised ? 'поднял' : 'опустил'} руку в комнате ${roomId}`);
     });
 
+    // Состояние говорения
+    socket.on('speaking-state', ({ roomId, isSpeaking }) => {
+      // Транслируем состояние говорения другим участникам комнаты
+      socket.to(roomId).emit('speaking-state-update', {
+        socketId: socket.id,
+        isSpeaking,
+      });
+    });
+
     socket.on('disconnect', async (reason) => {
       clearTimeout(joinTimeout); // Очищаем таймаут при отключении
       console.log('🔌 Пользователь отключился:', socket.id, 'Причина:', reason);

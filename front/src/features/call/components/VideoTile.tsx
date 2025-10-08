@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Hand } from 'lucide-react';
 
 interface VideoTileProps {
   videoStream: MediaStream | null;
@@ -9,6 +9,7 @@ interface VideoTileProps {
   isMicEnabled?: boolean;
   username?: string;
   isGuest?: boolean;
+  isSpeaking?: boolean;
   isHandRaised?: boolean;
 }
 
@@ -20,6 +21,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
   isMicEnabled = true,
   username,
   isGuest = false,
+  isSpeaking = false,
   isHandRaised = false
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -155,7 +157,9 @@ const VideoTile: React.FC<VideoTileProps> = ({
     <div className={`relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm transition-all duration-200 ${
       isHandRaised
         ? 'border-4 border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.6)]'
-        : 'border border-border'
+        : isSpeaking 
+          ? 'border-4 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.6)]' 
+          : 'border border-border'
     }`}>
       <audio ref={audioRef} autoPlay muted={isLocal} style={{ display: 'none' }} />
       
@@ -208,6 +212,13 @@ const VideoTile: React.FC<VideoTileProps> = ({
       {isLocal && (
         <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-blue-600 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-white text-xs font-semibold">
           ВЫ
+        </div>
+      )}
+
+      {/* Иконка поднятой руки */}
+      {isHandRaised && (
+        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-yellow-500 p-2 rounded-full shadow-lg animate-pulse">
+          <Hand className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
       )}
     </div>
