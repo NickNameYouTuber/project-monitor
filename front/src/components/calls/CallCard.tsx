@@ -58,20 +58,27 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
   };
 
   if (compact) {
+    // Для компактного режима показываем только время начала и длительность
+    const startTime = formatTime(call.scheduled_time || call.start_at);
+    const duration = formatDuration(call.duration_minutes);
+    
     return (
       <div
         onClick={onClick}
         className={`
-          h-full w-full rounded border-l-4 p-1.5 cursor-pointer
-          transition hover:shadow-md overflow-hidden
+          h-full w-full rounded border-l-4 p-1 cursor-pointer
+          transition hover:shadow-md overflow-hidden flex flex-col
           ${getStatusColor(call.status)}
         `}
       >
-        <div className="flex items-start justify-between gap-1 mb-1">
-          <div className="font-medium text-xs truncate flex-1">{call.title || 'Без названия'}</div>
+        <div className="flex items-center gap-1 mb-0.5">
           {getStatusIcon(call.status)}
+          <div className="font-medium text-[10px] truncate flex-1 leading-tight">{call.title || 'Без названия'}</div>
         </div>
-        <div className="text-xs text-muted-foreground">{getTimeRange()}</div>
+        <div className="text-[10px] text-muted-foreground leading-tight">
+          {startTime}
+          {duration && <span className="ml-1">({duration})</span>}
+        </div>
       </div>
     );
   }
