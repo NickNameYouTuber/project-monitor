@@ -17,7 +17,7 @@ import UpcomingPanel from './calls/UpcomingPanel';
 import SearchBar from './calls/SearchBar';
 import MonthView from './calls/MonthView';
 import WeekView from './calls/WeekView';
-import CalendarViewContainer from './calls/CalendarViewContainer';
+import CalendarContainer from './calls/CalendarContainer';
 import { listCalls, createCall, getCallsInRange, CallResponse } from '../api/calls';
 
 interface Meeting {
@@ -290,31 +290,33 @@ export function CallsPage() {
             </Button>
           </div>
           
-          <TabsContent value="calendar" className="flex-1 min-h-0 m-0 relative">
-            <CalendarViewContainer>
-              {calendarView === 'month' ? (
-                <MonthView 
-                  currentDate={currentDate}
-                  calls={calendarCalls}
-                  onDateChange={setCurrentDate}
-                  onDayClick={(date) => {
-                    setCurrentDate(date);
-                    setCalendarView('week');
-                  }}
-                />
-              ) : (
-                <WeekView 
-                  currentDate={currentDate}
-                  calls={calendarCalls}
-                  onDateChange={setCurrentDate}
-                  onCallClick={(call) => {
-                    if (call.room_id) {
-                      navigate(`/call/${call.room_id}`);
-                    }
-                  }}
-                />
-              )}
-            </CalendarViewContainer>
+          <TabsContent value="calendar" className="flex-1 min-h-0 m-0">
+            <div className="relative h-full min-h-0">
+              <CalendarContainer>
+                {calendarView === 'month' ? (
+                  <MonthView 
+                    currentDate={currentDate}
+                    calls={calendarCalls}
+                    onDateChange={setCurrentDate}
+                    onDayClick={(date) => {
+                      setCurrentDate(date);
+                      setCalendarView('week');
+                    }}
+                  />
+                ) : (
+                  <WeekView 
+                    currentDate={currentDate}
+                    calls={calendarCalls}
+                    onDateChange={setCurrentDate}
+                    onCallClick={(call) => {
+                      if (call.room_id) {
+                        navigate(`/call/${call.room_id}`);
+                      }
+                    }}
+                  />
+                )}
+              </CalendarContainer>
+            </div>
           </TabsContent>
           
           <TabsContent value="list" className="flex-1 min-h-0 m-0 p-6">
