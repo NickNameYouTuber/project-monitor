@@ -226,133 +226,134 @@ export function CallsPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-row overflow-hidden bg-background">
-      {/* Левая панель с табами - фиксированная ширина */}
-      <div className="flex-none w-64 border-r border-border flex flex-col overflow-hidden bg-background">
-        <div className="flex-none p-4 border-b border-border">
-          <h2 className="text-lg font-semibold">Calls & Meetings</h2>
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
+      {/* Header - фиксированная высота */}
+      <div className="flex-none border-b border-border p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1>Calls & Meetings</h1>
+            <p className="text-muted-foreground">Schedule and manage your team meetings</p>
+          </div>
+          <Button onClick={() => setIsCreateMeetingOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Meeting
+          </Button>
+          <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
         </div>
         
-        <Tabs defaultValue="calendar" className="flex-1 min-h-0 flex flex-col overflow-hidden" orientation="vertical">
-          <TabsList className="flex-col items-stretch h-auto p-2 bg-transparent gap-1">
-            <TabsTrigger 
-              value="calendar" 
-              className="justify-start data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-            >
-              <CalendarIcon className="w-4 h-4 mr-2" />
-              Calendar View
-            </TabsTrigger>
-            <TabsTrigger 
-              value="list" 
-              className="justify-start data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-            >
-              <List className="w-4 h-4 mr-2" />
-              List View
-            </TabsTrigger>
-          </TabsList>
-          
-          {/* Переключатель месяц/неделя для календаря */}
-          <div className="flex-none p-4 border-t border-border">
-            <div className="text-xs font-medium text-muted-foreground mb-2">Calendar Mode</div>
-            <div className="flex flex-col gap-2">
-              <Button
-                variant={calendarView === 'month' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setCalendarView('month')}
-                className="w-full justify-start"
-              >
-                Месяц
-              </Button>
-              <Button
-                variant={calendarView === 'week' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setCalendarView('week')}
-                className="w-full justify-start"
-              >
-                Неделя
-              </Button>
+        <SearchBar value={searchQuery} onChange={setSearchQuery} onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)} upcomingCount={upcomingMeetings.length} />
+      </div>
+
+      {/* Content area - растягивается на оставшееся пространство */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
+        <Tabs defaultValue="calendar" className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          {/* Tabs header - фиксированная высота */}
+          <div className="flex-none flex items-center justify-between border-b bg-background p-4">
+            <div className="flex items-center gap-4">
+              <TabsList className="justify-start rounded-none bg-transparent p-0">
+                <TabsTrigger value="calendar" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  Calendar View
+                </TabsTrigger>
+                <TabsTrigger value="list" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <List className="w-4 h-4 mr-2" />
+                  List View
+                </TabsTrigger>
+              </TabsList>
+              
+              {/* Переключатель месяц/неделя для календаря */}
+              <div className="flex items-center gap-2 border-l pl-4">
+                <Button
+                  variant={calendarView === 'month' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCalendarView('month')}
+                >
+                  Месяц
+                </Button>
+                <Button
+                  variant={calendarView === 'week' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCalendarView('week')}
+                >
+                  Неделя
+                </Button>
+              </div>
+
+              {/* Легенда статусов */}
+              <div className="flex items-center gap-3 text-sm border-l pl-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="text-muted-foreground">Предстоящие</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                  <span className="text-muted-foreground">Сейчас</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                  <span className="text-muted-foreground">Завершенные</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <span className="text-muted-foreground">Отмененные</span>
+                </div>
+              </div>
             </div>
-          </div>
-          
-          {/* Upcoming button */}
-          <div className="flex-none p-4 border-t border-border">
+            
+            {/* Upcoming Meetings Toggle Button */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
-              className="w-full justify-start"
+              className="flex items-center gap-2"
             >
-              <Clock className="w-4 h-4 mr-2" />
+              <Clock className="w-4 h-4" />
               Upcoming ({upcomingMeetings.length})
-              <ChevronRight className={`w-4 h-4 ml-auto transition-transform ${isUpcomingOpen ? 'rotate-90' : ''}`} />
+              <ChevronRight className={`w-4 h-4 transition-transform ${isUpcomingOpen ? 'rotate-180' : ''}`} />
             </Button>
           </div>
+          
+          {/* Tabs content - растягивается на оставшееся пространство */}
+          <TabsContent value="calendar" className="flex-1 min-h-0 overflow-hidden m-0 data-[state=active]:flex data-[state=active]:flex-col">
+            <CalendarContainer>
+              {calendarView === 'month' ? (
+                <MonthView 
+                  currentDate={currentDate}
+                  calls={calendarCalls}
+                  onDateChange={setCurrentDate}
+                  onDayClick={(date) => {
+                    setCurrentDate(date);
+                    setCalendarView('week');
+                  }}
+                />
+              ) : (
+                <WeekView 
+                  currentDate={currentDate}
+                  calls={calendarCalls}
+                  onDateChange={setCurrentDate}
+                  onCallClick={(call) => {
+                    if (call.room_id) {
+                      navigate(`/call/${call.room_id}`);
+                    }
+                  }}
+                />
+              )}
+            </CalendarContainer>
+          </TabsContent>
+          
+          <TabsContent value="list" className="flex-1 min-h-0 overflow-y-auto m-0 p-6 data-[state=active]:block">
+            <MeetingsList items={meetings} />
+          </TabsContent>
         </Tabs>
-      </div>
 
-      {/* Правая область контента */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-        {/* Header - фиксированная высота */}
-        <div className="flex-none border-b border-border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1>Schedule and manage your team meetings</h1>
-            </div>
-            <Button onClick={() => setIsCreateMeetingOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Meeting
-            </Button>
-            <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
-          </div>
-          
-          <SearchBar value={searchQuery} onChange={setSearchQuery} onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)} upcomingCount={upcomingMeetings.length} />
-        </div>
-
-        {/* Content area - растягивается на оставшееся пространство */}
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
-          <Tabs defaultValue="calendar" className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            {/* Tabs content - растягивается на оставшееся пространство */}
-            <TabsContent value="calendar" className="flex-1 min-h-0 overflow-hidden m-0 data-[state=active]:flex data-[state=active]:flex-col">
-              <CalendarContainer>
-                {calendarView === 'month' ? (
-                  <MonthView 
-                    currentDate={currentDate}
-                    calls={calendarCalls}
-                    onDateChange={setCurrentDate}
-                    onDayClick={(date) => {
-                      setCurrentDate(date);
-                      setCalendarView('week');
-                    }}
-                  />
-                ) : (
-                  <WeekView 
-                    currentDate={currentDate}
-                    calls={calendarCalls}
-                    onDateChange={setCurrentDate}
-                    onCallClick={(call) => {
-                      if (call.room_id) {
-                        navigate(`/call/${call.room_id}`);
-                      }
-                    }}
-                  />
-                )}
-              </CalendarContainer>
-            </TabsContent>
-            
-            <TabsContent value="list" className="flex-1 min-h-0 overflow-y-auto m-0 p-6 data-[state=active]:block">
-              <MeetingsList items={meetings} />
-            </TabsContent>
-          </Tabs>
-
-          {/* Sliding Upcoming Meetings Panel */}
-          <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={(id) => {
-            const m = meetings.find(mm => mm.id === id);
-            startCall(m);
-          }} />
-          
-          {/* Overlay when panel is open */}
-          <UpcomingOverlay open={isUpcomingOpen} onClick={() => setIsUpcomingOpen(false)} />
-        </div>
+        {/* Sliding Upcoming Meetings Panel */}
+        <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={(id) => {
+          const m = meetings.find(mm => mm.id === id);
+          startCall(m);
+        }} />
+        
+        {/* Overlay when panel is open */}
+        <UpcomingOverlay open={isUpcomingOpen} onClick={() => setIsUpcomingOpen(false)} />
       </div>
     </div>
   );
