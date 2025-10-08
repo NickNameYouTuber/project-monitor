@@ -1,15 +1,14 @@
 import React from 'react';
 
-interface CalendarContainerProps {
+interface Props {
   children: React.ReactNode;
 }
 
-const CalendarContainer: React.FC<CalendarContainerProps> = ({ children }) => {
+// Обёртка, фиксирующая высоту в рамках экрана и предоставляющая внутренние скроллы
+const CalendarContainer: React.FC<Props> = ({ children }) => {
   return (
-    <div className="relative h-full min-h-0">
-      <div className="absolute inset-0 overflow-auto">
-        {children}
-      </div>
+    <div className="relative h-full min-h-0 flex flex-col overflow-hidden">
+      {children}
     </div>
   );
 };
