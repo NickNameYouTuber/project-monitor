@@ -295,9 +295,9 @@ const WeekView: React.FC<WeekViewProps> = ({
         <div className="grid grid-cols-[80px_repeat(7,1fr)] min-h-full">
           {/* Time column */}
           <div className="border-r border-border sticky left-0 bg-background z-10">
-            <div className="h-12 border-b border-border" /> {/* Header spacer */}
+            <div className="h-12 border-b border-border bg-background" /> {/* Header spacer */}
             {HOURS.map(hour => (
-              <div key={hour} className="h-[90px] border-b border-border px-2 py-1 text-xs text-muted-foreground">
+              <div key={hour} className="h-[90px] border-b border-border px-2 py-1 text-xs text-muted-foreground bg-background">
                 {hour.toString().padStart(2, '0')}:00
               </div>
             ))}
@@ -314,7 +314,7 @@ const WeekView: React.FC<WeekViewProps> = ({
                 {/* Day header */}
                 <div className={`
                   h-12 border-b border-border flex flex-col items-center justify-center sticky top-0 z-10
-                  ${today ? 'bg-blue-50 dark:bg-blue-950/20' : 'bg-background'}
+                  ${today ? 'bg-blue-100/90 dark:bg-blue-900/90 backdrop-blur-sm' : 'bg-background'}
                 `}>
                   <div className="text-xs text-muted-foreground">{DAYS_OF_WEEK_FULL[dayIndex].slice(0, 3)}</div>
                   <div className={`text-sm font-medium ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>
