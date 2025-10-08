@@ -120,6 +120,23 @@ const CallPage: React.FC = () => {
     }
   }, [currentScreen]);
 
+  // Все хуки должны быть ДО условных return
+  const handlePrevScreen = useCallback(() => {
+    setCurrentScreenIndex((prev) => (prev > 0 ? prev - 1 : allScreenStreams.length - 1));
+  }, [allScreenStreams.length]);
+
+  const handleNextScreen = useCallback(() => {
+    setCurrentScreenIndex((prev) => (prev < allScreenStreams.length - 1 ? prev + 1 : 0));
+  }, [allScreenStreams.length]);
+
+  // Получаем имя владельца screen share
+  const screenOwnerName = useMemo(() => {
+    if (!currentScreen) return '';
+    if (currentScreen.isLocal) return 'Ваша демонстрация экрана';
+    const participant = Array.from(participants.values()).find(p => p.socketId === currentScreen.socketId);
+    return participant ? `${participant.username} - демонстрация экрана` : 'Демонстрация экрана';
+  }, [currentScreen, participants]);
+
   const handleJoinCall = (options: { cameraEnabled: boolean; microphoneEnabled: boolean; guestName?: string }) => {
     setPreCallSettings(options);
     setHasJoined(true);
@@ -146,22 +163,6 @@ const CallPage: React.FC = () => {
       </div>
     );
   }
-
-  const handlePrevScreen = useCallback(() => {
-    setCurrentScreenIndex((prev) => (prev > 0 ? prev - 1 : allScreenStreams.length - 1));
-  }, [allScreenStreams.length]);
-
-  const handleNextScreen = useCallback(() => {
-    setCurrentScreenIndex((prev) => (prev < allScreenStreams.length - 1 ? prev + 1 : 0));
-  }, [allScreenStreams.length]);
-
-  // Получаем имя владельца screen share
-  const screenOwnerName = useMemo(() => {
-    if (!currentScreen) return '';
-    if (currentScreen.isLocal) return 'Ваша демонстрация экрана';
-    const participant = Array.from(participants.values()).find(p => p.socketId === currentScreen.socketId);
-    return participant ? `${participant.username} - демонстрация экрана` : 'Демонстрация экрана';
-  }, [currentScreen, participants]);
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
