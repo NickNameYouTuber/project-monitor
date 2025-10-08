@@ -47,17 +47,6 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     }
   });
 
-  console.log('VideoGrid рендер:', {
-    remoteVideoStreamsSize: remoteVideoStreams.size,
-    remoteAudioStreamsSize: remoteAudioStreams.size,
-    participantsSize: participants.size,
-    uniqueParticipantsSize: uniqueParticipants.size,
-    participantSocketIds: Array.from(participants.keys()),
-    participantsData: Array.from(participants.values()).map(p => ({ socketId: p.socketId, userId: p.userId, username: p.username })),
-    uniqueSocketIds: Array.from(uniqueParticipants.keys()),
-    currentUserId: user?.id,
-    isScreenSharing
-  });
   
   const totalParticipants = 1 + uniqueParticipants.size;
 
