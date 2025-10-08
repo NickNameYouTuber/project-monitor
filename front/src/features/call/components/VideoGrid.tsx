@@ -9,7 +9,9 @@ interface VideoGridProps {
   remoteVideoStreams: Map<string, MediaStream>;
   remoteAudioStreams: Map<string, MediaStream>;
   isCameraEnabled: boolean;
+  isMicEnabled: boolean;
   participants: Map<string, Participant>;
+  raisedHands: Set<string>;
   isScreenSharing?: boolean; // Новый проп для определения режима
 }
 
@@ -18,7 +20,9 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   remoteVideoStreams, 
   remoteAudioStreams,
   isCameraEnabled,
+  isMicEnabled,
   participants,
+  raisedHands,
   isScreenSharing = false
 }) => {
   const { user } = useAuth();
@@ -211,6 +215,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       videoStream: localStream,
       audioStream: null,
       isCameraEnabled,
+      isMicEnabled,
       username: 'Вы',
       isGuest: false,
       socketId: 'local'
@@ -220,11 +225,25 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       videoStream: remoteVideoStreams.get(participantData.socketId) || null,
       audioStream: remoteAudioStreams.get(participantData.socketId) || null,
       isCameraEnabled: participantData.mediaState.camera,
+      isMicEnabled: participantData.mediaState.microphone,
       username: participantData.username,
       isGuest: participantData.isGuest,
       socketId
     }))
-  ];
+  ].sort((a, b) => {
+    // Сортировка: участники с поднятой рукой выше
+    const aHasRaisedHand = raisedHands.has(a.socketId);
+    const bHasRaisedHand = raisedHands.has(b.socketId);
+    
+    if (aHasRaisedHand && !bHasRaisedHand) return -1;
+    if (!aHasRaisedHand && bHasRaisedHand) return 1;
+    
+    // Локальный пользователь всегда первый (если нет поднятых рук)
+    if (a.isLocal) return -1;
+    if (b.isLocal) return 1;
+    
+    return 0;
+  });
 
   // Получаем участников для текущей страницы
   const startIndex = currentPage * gridLayout.tilesPerPage;
@@ -251,8 +270,10 @@ const VideoGrid: React.FC<VideoGridProps> = ({
                 audioStream={participant.audioStream}
                 isLocal={participant.isLocal}
                 isCameraEnabled={participant.isCameraEnabled}
+                isMicEnabled={participant.isMicEnabled}
                 username={participant.isLocal ? undefined : participant.username}
                 isGuest={participant.isGuest}
+                isHandRaised={raisedHands.has(participant.socketId)}
               />
             </div>
           ))}
@@ -313,8 +334,10 @@ const VideoGrid: React.FC<VideoGridProps> = ({
                   audioStream={participant.audioStream}
                   isLocal={participant.isLocal}
                   isCameraEnabled={participant.isCameraEnabled}
+                  isMicEnabled={participant.isMicEnabled}
                   username={participant.isLocal ? undefined : participant.username}
                   isGuest={participant.isGuest}
+                  isHandRaised={raisedHands.has(participant.socketId)}
                 />
               </div>
             ))}

@@ -5,6 +5,7 @@ import VideoGrid from '../components/VideoGrid';
 import ControlPanel from '../components/ControlPanel';
 import PreCallSetup from '../components/PreCallSetup';
 import ChatPanel from '../components/ChatPanel';
+import RaisedHandsBadge from '../components/RaisedHandsBadge';
 import socketService from '../services/socketService';
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
@@ -32,11 +33,13 @@ const CallPage: React.FC = () => {
     isMicrophoneEnabled,
     isScreenSharing,
     participants,
+    raisedHands,
     error,
     messages,
     toggleCamera,
     toggleMicrophone,
     toggleScreenShare,
+    toggleRaiseHand,
     initializeMedia,
     cleanup,
     sendMessage,
@@ -206,7 +209,9 @@ const CallPage: React.FC = () => {
             remoteVideoStreams={remoteVideoStreams}
             remoteAudioStreams={remoteAudioStreams}
             isCameraEnabled={isCameraEnabled}
+            isMicEnabled={isMicrophoneEnabled}
             participants={participants}
+            raisedHands={raisedHands}
             isScreenSharing={hasScreenShare}
           />
         </div>
@@ -242,15 +247,19 @@ const CallPage: React.FC = () => {
         </button>
       )}
 
+      <RaisedHandsBadge participants={participants} raisedHands={raisedHands} />
+
       <ControlPanel
         isCameraEnabled={isCameraEnabled}
         isMicrophoneEnabled={isMicrophoneEnabled}
         isScreenSharing={isScreenSharing}
         isChatOpen={isChatOpen}
+        isHandRaised={raisedHands.has('local')}
         onToggleCamera={toggleCamera}
         onToggleMicrophone={toggleMicrophone}
         onToggleScreenShare={toggleScreenShare}
         onToggleChat={() => setIsChatOpen(!isChatOpen)}
+        onToggleRaiseHand={toggleRaiseHand}
         roomId={callId || ''}
       />
 

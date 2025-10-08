@@ -1,5 +1,5 @@
 import React from 'react';
-import { Video, VideoOff, Mic, MicOff, Monitor, MonitorOff, MessageSquare, PhoneOff } from 'lucide-react';
+import { Video, VideoOff, Mic, MicOff, Monitor, MonitorOff, MessageSquare, PhoneOff, Hand } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/button';
 
@@ -8,10 +8,12 @@ interface ControlPanelProps {
   isMicrophoneEnabled: boolean;
   isScreenSharing: boolean;
   isChatOpen: boolean;
+  isHandRaised: boolean;
   onToggleCamera: () => void;
   onToggleMicrophone: () => void;
   onToggleScreenShare: () => void;
   onToggleChat: () => void;
+  onToggleRaiseHand: () => void;
   roomId: string;
 }
 
@@ -20,10 +22,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   isMicrophoneEnabled,
   isScreenSharing,
   isChatOpen,
+  isHandRaised,
   onToggleCamera,
   onToggleMicrophone,
   onToggleScreenShare,
   onToggleChat,
+  onToggleRaiseHand,
   roomId,
 }) => {
   const navigate = useNavigate();
@@ -76,6 +80,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             title="Чат"
           >
             <MessageSquare className="w-4 h-4" />
+          </Button>
+
+          <Button
+            onClick={onToggleRaiseHand}
+            variant={isHandRaised ? "secondary" : "outline"}
+            size="icon"
+            className={`rounded-full w-10 h-10 ${isHandRaised ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : ''}`}
+            title={isHandRaised ? 'Опустить руку' : 'Поднять руку'}
+          >
+            <Hand className="w-4 h-4" />
           </Button>
 
           <div className="w-px h-8 bg-border mx-1" />

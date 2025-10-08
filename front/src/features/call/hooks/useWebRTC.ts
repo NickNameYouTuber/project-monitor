@@ -17,6 +17,7 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
   const [isMicrophoneEnabled, setIsMicrophoneEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [participants, setParticipants] = useState<Map<string, Participant>>(new Map());
+  const [raisedHands, setRaisedHands] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Array<{
     id: string;
@@ -77,6 +78,12 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
         participant.mediaState.screen = false;
         next.set(socketId, { ...participant });
       }
+      return next;
+    });
+    // Удаляем из поднятых рук
+    setRaisedHands((prev) => {
+      const next = new Set(prev);
+      next.delete(socketId);
       return next;
     });
   }, []);
@@ -279,9 +286,10 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
       }
     });
 
-    socketService.onExistingParticipants(({ participants }) => {
+    socketService.onExistingParticipants(({ participants, raisedHands }) => {
       const mySocketId = socketService.getSocket()?.id;
       console.log('Существующие участники:', participants, 'Мой socketId:', mySocketId);
+      console.log('Поднятые руки:', raisedHands);
 
       // Фильтруем дубли по userId - берем только один socketId на пользователя
       const userIdToParticipant = new Map<string, typeof participants[0]>();
@@ -307,6 +315,11 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
         console.log('✅ Список участников полностью заменен, новый размер:', newParticipants.size);
         return newParticipants;
       });
+
+      // Обновляем список поднятых рук
+      if (raisedHands && raisedHands.length > 0) {
+        setRaisedHands(new Set(raisedHands));
+      }
 
       // Сначала обрабатываем информацию о screen sharing для уникальных участников
       const uniqueParticipants = Array.from(userIdToParticipant.values());
@@ -539,6 +552,19 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
           ];
         });
       });
+
+      // Обработчик поднятия руки
+      socket.on('hand-raised', (data: { socketId: string; isRaised: boolean }) => {
+        setRaisedHands((prev) => {
+          const next = new Set(prev);
+          if (data.isRaised) {
+            next.add(data.socketId);
+          } else {
+            next.delete(data.socketId);
+          }
+          return next;
+        });
+      });
     }
   }, [roomId, user, guestName, handleRemoteVideoStream, handleRemoteStreamRemoved]);
 
@@ -583,6 +609,29 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
       }
     }
   }, [isScreenSharing, roomId]);
+
+  const toggleRaiseHand = useCallback(() => {
+    const socket = socketService.getSocket();
+    if (socket) {
+      const isCurrentlyRaised = raisedHands.has('local');
+      const newState = !isCurrentlyRaised;
+      
+      // Обновляем локальное состояние
+      setRaisedHands((prev) => {
+        const next = new Set(prev);
+        if (newState) {
+          next.add('local');
+        } else {
+          next.delete('local');
+        }
+        return next;
+      });
+      
+      // Отправляем состояние другим участникам
+      socket.emit('raise-hand', { roomId, isRaised: newState });
+      console.log('✋ Рука', newState ? 'поднята' : 'опущена');
+    }
+  }, [roomId, raisedHands]);
 
   const sendMessage = useCallback(async (message: string, file?: File) => {
     const socket = socketService.getSocket();
@@ -635,6 +684,7 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
     isInitialized.current = false;
     offersCreated.current.clear();
     setMessages([]);
+    setRaisedHands(new Set());
   }, [roomId]);
 
   useEffect(() => {
@@ -653,11 +703,13 @@ export const useWebRTC = (roomId: string, guestName?: string) => {
     isMicrophoneEnabled,
     isScreenSharing,
     participants,
+    raisedHands,
     error,
     messages,
     toggleCamera,
     toggleMicrophone,
     toggleScreenShare,
+    toggleRaiseHand,
     initializeMedia,
     cleanup,
     sendMessage,

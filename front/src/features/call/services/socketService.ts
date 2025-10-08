@@ -162,7 +162,7 @@ class SocketService {
     this.socket?.on('user-joined', callback);
   }
 
-  onExistingParticipants(callback: (data: { participants: Participant[] }) => void): void {
+  onExistingParticipants(callback: (data: { participants: Participant[]; raisedHands?: string[] }) => void): void {
     this.socket?.on('existing-participants', callback);
   }
 

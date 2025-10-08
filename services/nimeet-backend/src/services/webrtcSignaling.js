@@ -1,4 +1,5 @@
 const rooms = new Map();
+const raisedHands = new Map(); // Map<roomId, Set<socketId>> - для хранения поднятых рук
 const Room = require('../models/Room');
 const UserRoom = require('../models/UserRoom');
 const ActiveConnection = require('../models/ActiveConnection');
@@ -283,10 +284,15 @@ const { createAdapter } = require('@socket.io/redis-adapter');
 
         console.log(`Отправляем ${userData.username} список из ${activeParticipants.length} существующих участников`);
 
+        // Получаем список поднятых рук для комнаты
+        const roomHands = raisedHands.get(roomId) || new Set();
+        const raisedHandsArray = Array.from(roomHands);
+
         // Отправляем список существующих участников новому пользователю
         if (activeParticipants.length > 0) {
           socket.emit('existing-participants', {
             participants: activeParticipants,
+            raisedHands: raisedHandsArray, // Добавляем список socketId с поднятыми руками
           });
         }
 
@@ -549,6 +555,28 @@ const { createAdapter } = require('@socket.io/redis-adapter');
       }
     });
 
+    // Поднятие руки
+    socket.on('raise-hand', ({ roomId, isRaised }) => {
+      // Обновляем состояние поднятых рук
+      if (!raisedHands.has(roomId)) {
+        raisedHands.set(roomId, new Set());
+      }
+      const roomHands = raisedHands.get(roomId);
+      
+      if (isRaised) {
+        roomHands.add(socket.id);
+      } else {
+        roomHands.delete(socket.id);
+      }
+      
+      // Транслируем состояние поднятой руки другим участникам комнаты
+      socket.to(roomId).emit('hand-raised', {
+        socketId: socket.id,
+        isRaised,
+      });
+      console.log(`✋ Пользователь ${socket.id} ${isRaised ? 'поднял' : 'опустил'} руку в комнате ${roomId}`);
+    });
+
     socket.on('disconnect', async (reason) => {
       clearTimeout(joinTimeout); // Очищаем таймаут при отключении
       console.log('🔌 Пользователь отключился:', socket.id, 'Причина:', reason);
@@ -609,6 +637,15 @@ const { createAdapter } = require('@socket.io/redis-adapter');
         
       } else {
         console.log(`⚠️ Соединение ${socket.id} не найдено в БД для комнаты ${roomId}`);
+      }
+
+      // Удаляем из поднятых рук
+      const roomHands = raisedHands.get(roomId);
+      if (roomHands) {
+        roomHands.delete(socket.id);
+        if (roomHands.size === 0) {
+          raisedHands.delete(roomId);
+        }
       }
 
       // Удаляем из in-memory

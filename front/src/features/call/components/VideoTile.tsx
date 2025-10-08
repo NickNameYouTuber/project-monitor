@@ -1,21 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Hand, Mic, MicOff, Video, VideoOff } from 'lucide-react';
 
 interface VideoTileProps {
   videoStream: MediaStream | null;
   audioStream: MediaStream | null;
   isLocal: boolean;
   isCameraEnabled?: boolean;
+  isMicEnabled?: boolean;
   username?: string;
   isGuest?: boolean;
+  isHandRaised?: boolean;
 }
 
 const VideoTile: React.FC<VideoTileProps> = ({ 
   videoStream, 
   audioStream,
   isLocal, 
-  isCameraEnabled = true, 
+  isCameraEnabled = true,
+  isMicEnabled = true,
   username,
-  isGuest = false
+  isGuest = false,
+  isHandRaised = false
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -181,17 +186,20 @@ const VideoTile: React.FC<VideoTileProps> = ({
         </div>
       )}
 
+      {/* Иконка поднятой руки */}
+      {isHandRaised && (
+        <div className="absolute top-2 left-2 bg-yellow-500 rounded-full p-1.5 animate-bounce shadow-lg">
+          <Hand className="w-4 h-4 text-white" />
+        </div>
+      )}
+
       <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-black/80 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
         <span className="text-white text-xs sm:text-sm font-medium flex items-center gap-1.5">
           {(!isCameraEnabled || !hasVideo) && (
-            <svg className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A3.001 3.001 0 0018 13V5a3 3 0 00-3-3H8.586L3.707 2.293zm5.586 5.586L13 11.586V5H9.293z" clipRule="evenodd" />
-            </svg>
+            <VideoOff className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
           )}
-          {!isLocal && !hasAudio && (
-            <svg className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
-            </svg>
+          {!isLocal && !isMicEnabled && (
+            <MicOff className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
           )}
           {displayName}
           {isGuest && !isLocal && (
