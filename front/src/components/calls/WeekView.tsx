@@ -161,14 +161,15 @@ const WeekView: React.FC<WeekViewProps> = ({
 
   const getCallPosition = (call: CallResponse) => {
     const timeStr = call.scheduled_time || call.start_at;
-    if (!timeStr) return { top: 0, height: 60 };
+    if (!timeStr) return { top: 0, height: 90 };
     
     const date = new Date(timeStr);
     const hours = date.getHours();
     const minutes = date.getMinutes();
     
-    const top = (hours * 60 + minutes);
-    const height = (call.duration_minutes || 30);
+    // Масштаб 1.5x: 90px на час вместо 60px
+    const top = (hours * 90 + minutes * 1.5);
+    const height = (call.duration_minutes || 30) * 1.5;
     
     return { top, height };
   };
@@ -186,14 +187,16 @@ const WeekView: React.FC<WeekViewProps> = ({
   useEffect(() => {
     if (containerRef.current) {
       const now = new Date();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      containerRef.current.scrollTop = currentMinutes - 120; // -2 часа для контекста
+      // Масштаб 1.5x: 90px на час вместо 60px
+      const currentPosition = now.getHours() * 90 + now.getMinutes() * 1.5;
+      containerRef.current.scrollTop = currentPosition - 180; // -2 часа для контекста (120 * 1.5)
     }
   }, []);
 
   const getCurrentTimePosition = () => {
     const now = new Date();
-    return now.getHours() * 60 + now.getMinutes();
+    // Масштаб 1.5x: 90px на час вместо 60px
+    return now.getHours() * 90 + now.getMinutes() * 1.5;
   };
 
   return (
@@ -294,7 +297,7 @@ const WeekView: React.FC<WeekViewProps> = ({
           <div className="border-r border-border sticky left-0 bg-background z-10">
             <div className="h-12 border-b border-border" /> {/* Header spacer */}
             {HOURS.map(hour => (
-              <div key={hour} className="h-[60px] border-b border-border px-2 py-1 text-xs text-muted-foreground">
+              <div key={hour} className="h-[90px] border-b border-border px-2 py-1 text-xs text-muted-foreground">
                 {hour.toString().padStart(2, '0')}:00
               </div>
             ))}
@@ -319,10 +322,10 @@ const WeekView: React.FC<WeekViewProps> = ({
                   </div>
                 </div>
 
-                {/* Hour rows */}
-                {HOURS.map(hour => (
-                  <div key={hour} className="h-[60px] border-b border-border" />
-                ))}
+                  {/* Hour rows */}
+                  {HOURS.map(hour => (
+                    <div key={hour} className="h-[90px] border-b border-border" />
+                  ))}
 
                 {/* Calls */}
                 {dayCalls.map((call, index) => {

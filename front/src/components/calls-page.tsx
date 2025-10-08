@@ -126,58 +126,61 @@ export function CallsPage() {
     }
   }, [roomId]);
 
+  // Функция перезагрузки календаря
+  const reloadCalendarCalls = async () => {
+    try {
+      const start = new Date(currentDate);
+      const end = new Date(currentDate);
+      
+      if (calendarView === 'month') {
+        start.setDate(1);
+        end.setMonth(end.getMonth() + 1, 0);
+      } else {
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+        start.setDate(diff);
+        end.setDate(start.getDate() + 6);
+      }
+      
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      
+      console.log(`calls-page: загружаем звонки с ${start.toISOString()} по ${end.toISOString()}`);
+      try {
+        const calls = await getCallsInRange(start.toISOString(), end.toISOString());
+        console.log('calls-page: получено звонков через /range:', calls.length, calls);
+        setCalendarCalls(calls);
+      } catch (rangeError) {
+        console.warn('Ошибка /range, используем fallback /list:', rangeError);
+        // Fallback: загружаем все звонки и фильтруем на клиенте
+        const allCalls = await listCalls();
+        const filtered = allCalls.filter(c => {
+          // Используем scheduled_time или start_at
+          const timeStr = c.scheduled_time || c.start_at;
+          if (!timeStr) {
+            console.log('calls-page: звонок без даты:', c);
+            return false;
+          }
+          const callDate = new Date(timeStr);
+          const inRange = callDate >= start && callDate <= end;
+          console.log(`calls-page: звонок "${c.title}" (${timeStr}) в диапазоне? ${inRange}`, {
+            callDate: callDate.toISOString(),
+            start: start.toISOString(),
+            end: end.toISOString()
+          });
+          return inRange;
+        });
+        console.log('calls-page: получено звонков через fallback:', filtered.length, filtered);
+        setCalendarCalls(filtered);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки звонков для календаря:', error);
+    }
+  };
+
   // Загрузка звонков для календаря
   useEffect(() => {
-    (async () => {
-      try {
-        const start = new Date(currentDate);
-        const end = new Date(currentDate);
-        
-        if (calendarView === 'month') {
-          start.setDate(1);
-          end.setMonth(end.getMonth() + 1, 0);
-        } else {
-          const day = start.getDay();
-          const diff = start.getDate() - day + (day === 0 ? -6 : 1);
-          start.setDate(diff);
-          end.setDate(start.getDate() + 6);
-        }
-        
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-        
-        console.log(`calls-page: загружаем звонки с ${start.toISOString()} по ${end.toISOString()}`);
-        try {
-          const calls = await getCallsInRange(start.toISOString(), end.toISOString());
-          console.log('calls-page: получено звонков через /range:', calls.length, calls);
-          setCalendarCalls(calls);
-        } catch (rangeError) {
-          console.warn('Ошибка /range, используем fallback /list:', rangeError);
-          // Fallback: загружаем все звонки и фильтруем на клиенте
-          const allCalls = await listCalls();
-          const filtered = allCalls.filter(c => {
-            // Используем scheduled_time или start_at
-            const timeStr = c.scheduled_time || c.start_at;
-            if (!timeStr) {
-              console.log('calls-page: звонок без даты:', c);
-              return false;
-            }
-            const callDate = new Date(timeStr);
-            const inRange = callDate >= start && callDate <= end;
-            console.log(`calls-page: звонок "${c.title}" (${timeStr}) в диапазоне? ${inRange}`, {
-              callDate: callDate.toISOString(),
-              start: start.toISOString(),
-              end: end.toISOString()
-            });
-            return inRange;
-          });
-          console.log('calls-page: получено звонков через fallback:', filtered.length, filtered);
-          setCalendarCalls(filtered);
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки звонков для календаря:', error);
-      }
-    })();
+    reloadCalendarCalls();
   }, [currentDate, calendarView]);
   const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
 
@@ -218,18 +221,24 @@ export function CallsPage() {
 
     setMeetings(prev => [...prev, meeting]);
     // Пишем на бэк
-    try {
-      createCall({
-        room_id: roomId,
-        title: meeting.title,
-        description: meeting.description,
-        start_at: meeting.date.toISOString(),
-        end_at: new Date(meetingDate.getTime() + meeting.duration * 60000).toISOString(),
-        scheduled_time: meeting.date.toISOString(),
-        duration_minutes: meeting.duration,
-        status: 'SCHEDULED',
-      }).catch(()=>{});
-    } catch {}
+    (async () => {
+      try {
+        await createCall({
+          room_id: roomId,
+          title: meeting.title,
+          description: meeting.description,
+          start_at: meeting.date.toISOString(),
+          end_at: new Date(meetingDate.getTime() + meeting.duration * 60000).toISOString(),
+          scheduled_time: meeting.date.toISOString(),
+          duration_minutes: meeting.duration,
+          status: 'SCHEDULED',
+        });
+        // Перезагружаем календарь после успешного создания
+        await reloadCalendarCalls();
+      } catch (err) {
+        console.error('Ошибка создания звонка:', err);
+      }
+    })();
     setNewMeeting({
       title: '',
       date: new Date(),
