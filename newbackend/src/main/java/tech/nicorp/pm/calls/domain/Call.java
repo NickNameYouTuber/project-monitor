@@ -47,6 +47,16 @@ public class Call {
     @Column(name = "end_at")
     private OffsetDateTime endAt;
 
+    @Column(name = "scheduled_time")
+    private OffsetDateTime scheduledTime;
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    private CallStatus status = CallStatus.SCHEDULED;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 }

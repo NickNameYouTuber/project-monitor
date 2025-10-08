@@ -9,6 +9,7 @@ import tech.nicorp.pm.calls.domain.Call;
 import tech.nicorp.pm.calls.service.CallService;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,6 +38,14 @@ public class CallsController {
         return service.getByRoomId(roomId).map(c -> ResponseEntity.ok(toResponse(c))).orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/range")
+    @Operation(summary = "Получить звонки за период")
+    public ResponseEntity<List<CallResponse>> getRange(
+            @RequestParam("start") OffsetDateTime start,
+            @RequestParam("end") OffsetDateTime end) {
+        return ResponseEntity.ok(service.getByRange(start, end).stream().map(this::toResponse).toList());
+    }
+
     @PostMapping
     @Operation(summary = "Создать звонок")
     public ResponseEntity<CallResponse> create(@RequestBody tech.nicorp.pm.calls.api.dto.CallCreateRequest body) {
@@ -48,6 +57,11 @@ public class CallsController {
         c.setTask(service.resolveTask(body.getTaskId()));
         c.setStartAt(body.getStartAt());
         c.setEndAt(body.getEndAt());
+        c.setScheduledTime(body.getScheduledTime());
+        c.setDurationMinutes(body.getDurationMinutes() != null ? body.getDurationMinutes() : 30);
+        if (body.getStatus() != null) {
+            c.setStatus(tech.nicorp.pm.calls.domain.CallStatus.valueOf(body.getStatus()));
+        }
         Call saved = service.save(c);
         return ResponseEntity.created(URI.create("/api/calls/" + saved.getId())).body(toResponse(saved));
     }
@@ -82,6 +96,9 @@ public class CallsController {
         r.setCreatedAt(c.getCreatedAt());
         r.setStartAt(c.getStartAt());
         r.setEndAt(c.getEndAt());
+        r.setScheduledTime(c.getScheduledTime());
+        r.setDurationMinutes(c.getDurationMinutes());
+        r.setStatus(c.getStatus() != null ? c.getStatus().name() : null);
         if (c.getProject() != null) r.setProjectId(c.getProject().getId());
         if (c.getTask() != null) r.setTaskId(c.getTask().getId());
         if (c.getCreatedBy() != null) r.setCreatedBy(c.getCreatedBy().getId());

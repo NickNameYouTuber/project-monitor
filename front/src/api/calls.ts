@@ -9,6 +9,9 @@ export interface CallCreateRequest {
   task_id?: string;
   start_at?: string;
   end_at?: string;
+  scheduled_time?: string;
+  duration_minutes?: number;
+  status?: 'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 }
 
 export interface CallResponse {
@@ -21,6 +24,9 @@ export interface CallResponse {
   created_by?: string;
   start_at?: string;
   end_at?: string;
+  scheduled_time?: string;
+  duration_minutes?: number;
+  status?: string;
   created_at: string;
 }
 
@@ -36,6 +42,13 @@ export async function getCallByRoomId(roomId: string): Promise<CallResponse> {
 
 export async function listCalls(): Promise<CallResponse[]> {
   const response = await apiClient.get('/calls');
+  return response.data;
+}
+
+export async function getCallsInRange(start: string, end: string): Promise<CallResponse[]> {
+  const response = await apiClient.get('/calls/range', {
+    params: { start, end }
+  });
   return response.data;
 }
 

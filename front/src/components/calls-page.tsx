@@ -4,6 +4,8 @@ import {
   Plus,
   Clock,
   ChevronRight,
+  Calendar as CalendarIcon,
+  List,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -13,7 +15,9 @@ import CallPage from '../features/call/pages/CallPage';
 import MeetingsList from './calls/MeetingsList';
 import UpcomingPanel from './calls/UpcomingPanel';
 import SearchBar from './calls/SearchBar';
-import { listCalls, createCall } from '../api/calls';
+import MonthView from './calls/MonthView';
+import WeekView from './calls/WeekView';
+import { listCalls, createCall, getCallsInRange, CallResponse } from '../api/calls';
 
 interface Meeting {
   id: string;
@@ -68,6 +72,11 @@ export function CallsPage() {
   const [isInCall, setIsInCall] = useState(false);
   const { roomId } = useParams();
   const navigate = useNavigate();
+  
+  // Calendar state
+  const [calendarView, setCalendarView] = useState<'month' | 'week'>('month');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [calendarCalls, setCalendarCalls] = useState<CallResponse[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -92,6 +101,34 @@ export function CallsPage() {
       setIsInCall(true);
     }
   }, [roomId]);
+
+  // Загрузка звонков для календаря
+  useEffect(() => {
+    (async () => {
+      try {
+        const start = new Date(currentDate);
+        const end = new Date(currentDate);
+        
+        if (calendarView === 'month') {
+          start.setDate(1);
+          end.setMonth(end.getMonth() + 1, 0);
+        } else {
+          const day = start.getDay();
+          const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+          start.setDate(diff);
+          end.setDate(start.getDate() + 6);
+        }
+        
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        
+        const calls = await getCallsInRange(start.toISOString(), end.toISOString());
+        setCalendarCalls(calls);
+      } catch (error) {
+        console.error('Ошибка загрузки звонков для календаря:', error);
+      }
+    })();
+  }, [currentDate, calendarView]);
   const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
 
   const [newMeeting, setNewMeeting] = useState({
@@ -208,14 +245,36 @@ export function CallsPage() {
       <div className="flex-1 relative min-h-0">
         <Tabs defaultValue="calendar" className="flex-1 min-h-0 flex flex-col">
           <div className="flex items-center justify-between border-b bg-background p-4 shrink-0">
-            <TabsList className="justify-start rounded-none bg-transparent p-0">
-              <TabsTrigger value="calendar" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-                Calendar View
-              </TabsTrigger>
-              <TabsTrigger value="list" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-                List View
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center gap-4">
+              <TabsList className="justify-start rounded-none bg-transparent p-0">
+                <TabsTrigger value="calendar" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  Calendar View
+                </TabsTrigger>
+                <TabsTrigger value="list" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <List className="w-4 h-4 mr-2" />
+                  List View
+                </TabsTrigger>
+              </TabsList>
+              
+              {/* Переключатель месяц/неделя для календаря */}
+              <div className="flex items-center gap-2 border-l pl-4">
+                <Button
+                  variant={calendarView === 'month' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCalendarView('month')}
+                >
+                  Месяц
+                </Button>
+                <Button
+                  variant={calendarView === 'week' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCalendarView('week')}
+                >
+                  Неделя
+                </Button>
+              </div>
+            </div>
             
             {/* Upcoming Meetings Toggle Button */}
             <Button
@@ -230,7 +289,30 @@ export function CallsPage() {
             </Button>
           </div>
           
-          {/* Calendar view removed */}
+          <TabsContent value="calendar" className="flex-1 min-h-0 m-0">
+            {calendarView === 'month' ? (
+              <MonthView 
+                currentDate={currentDate}
+                calls={calendarCalls}
+                onDateChange={setCurrentDate}
+                onDayClick={(date) => {
+                  setCurrentDate(date);
+                  setCalendarView('week');
+                }}
+              />
+            ) : (
+              <WeekView 
+                currentDate={currentDate}
+                calls={calendarCalls}
+                onDateChange={setCurrentDate}
+                onCallClick={(call) => {
+                  if (call.room_id) {
+                    navigate(`/call/${call.room_id}`);
+                  }
+                }}
+              />
+            )}
+          </TabsContent>
           
           <TabsContent value="list" className="flex-1 min-h-0 m-0 p-6">
             <MeetingsList items={meetings} />

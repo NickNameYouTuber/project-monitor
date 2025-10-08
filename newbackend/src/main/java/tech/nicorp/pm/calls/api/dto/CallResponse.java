@@ -25,6 +25,11 @@ public class CallResponse {
     private OffsetDateTime startAt;
     @JsonProperty("end_at")
     private OffsetDateTime endAt;
+    @JsonProperty("scheduled_time")
+    private OffsetDateTime scheduledTime;
+    @JsonProperty("duration_minutes")
+    private Integer durationMinutes;
+    private String status;
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
 }

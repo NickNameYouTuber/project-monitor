@@ -22,6 +22,11 @@ public class CallCreateRequest {
     private OffsetDateTime startAt;
     @JsonProperty("end_at")
     private OffsetDateTime endAt;
+    @JsonProperty("scheduled_time")
+    private OffsetDateTime scheduledTime;
+    @JsonProperty("duration_minutes")
+    private Integer durationMinutes;
+    private String status;
 }
 
 
