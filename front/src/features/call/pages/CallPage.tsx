@@ -247,7 +247,10 @@ const CallPage: React.FC = () => {
         </button>
       )}
 
-      <RaisedHandsBadge participants={participants} raisedHands={raisedHands} />
+      {/* Плашка с информацией о поднятых руках (только когда участники свернуты) */}
+      {hasScreenShare && !isParticipantsVisible && (
+        <RaisedHandsBadge participants={participants} raisedHands={raisedHands} />
+      )}
 
       <ControlPanel
         isCameraEnabled={isCameraEnabled}

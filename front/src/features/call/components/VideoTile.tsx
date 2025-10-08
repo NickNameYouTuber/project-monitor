@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Hand, Mic, MicOff, Video, VideoOff } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
 
 interface VideoTileProps {
   videoStream: MediaStream | null;
@@ -152,7 +152,11 @@ const VideoTile: React.FC<VideoTileProps> = ({
   const hasAudio = audioStream && audioStream.getAudioTracks().length > 0;
 
   return (
-    <div className="relative w-full h-full bg-card rounded-lg overflow-hidden border border-border group shadow-sm">
+    <div className={`relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm transition-all duration-200 ${
+      isHandRaised
+        ? 'border-4 border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.6)]'
+        : 'border border-border'
+    }`}>
       <audio ref={audioRef} autoPlay muted={isLocal} style={{ display: 'none' }} />
       
       {/* Canvas для замороженного кадра (скрыт по умолчанию) */}
@@ -183,13 +187,6 @@ const VideoTile: React.FC<VideoTileProps> = ({
       {showFrozenFrame && !isStreamLost && (
         <div className="absolute top-2 left-2 bg-yellow-600/90 px-2 py-1 rounded-lg">
           <span className="text-white text-xs font-medium">Восстановление...</span>
-        </div>
-      )}
-
-      {/* Иконка поднятой руки */}
-      {isHandRaised && (
-        <div className="absolute top-2 left-2 bg-yellow-500 rounded-full p-1.5 animate-bounce shadow-lg">
-          <Hand className="w-4 h-4 text-white" />
         </div>
       )}
 
