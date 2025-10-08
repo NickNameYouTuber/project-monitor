@@ -56,15 +56,17 @@ const WeekView: React.FC<WeekViewProps> = ({
     });
     
     calls.forEach(call => {
-      if (!call.scheduled_time) {
-        console.log('WeekView: звонок без scheduled_time:', call);
+      // Используем scheduled_time или start_at
+      const timeStr = call.scheduled_time || call.start_at;
+      if (!timeStr) {
+        console.log('WeekView: звонок без scheduled_time и start_at:', call);
         return;
       }
       
-      const date = new Date(call.scheduled_time);
+      const date = new Date(timeStr);
       const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
       
-      console.log(`WeekView: добавляем звонок "${call.title}" на дату ${dateKey}`, call);
+      console.log(`WeekView: добавляем звонок "${call.title}" на дату ${dateKey} (источник: ${call.scheduled_time ? 'scheduled_time' : 'start_at'})`, call);
       
       if (map.has(dateKey)) {
         map.get(dateKey)!.push(call);
@@ -82,15 +84,16 @@ const WeekView: React.FC<WeekViewProps> = ({
     
     callsByDay.forEach((dayCalls, dateKey) => {
       const sorted = [...dayCalls].sort((a, b) => {
-        const timeA = a.scheduled_time ? new Date(a.scheduled_time).getTime() : 0;
-        const timeB = b.scheduled_time ? new Date(b.scheduled_time).getTime() : 0;
+        const timeA = (a.scheduled_time || a.start_at) ? new Date(a.scheduled_time || a.start_at).getTime() : 0;
+        const timeB = (b.scheduled_time || b.start_at) ? new Date(b.scheduled_time || b.start_at).getTime() : 0;
         return timeA - timeB;
       });
       
       const layout: Array<CallResponse & { column: number; columnSpan: number; }> = [];
       
       sorted.forEach(call => {
-        const startTime = call.scheduled_time ? new Date(call.scheduled_time) : new Date();
+        const timeStr = call.scheduled_time || call.start_at;
+        const startTime = timeStr ? new Date(timeStr) : new Date();
         const endTime = new Date(startTime.getTime() + (call.duration_minutes || 30) * 60000);
         
         // Находим свободную колонку
@@ -103,7 +106,8 @@ const WeekView: React.FC<WeekViewProps> = ({
           for (const existing of layout) {
             if (existing.column !== column) continue;
             
-            const existingStart = existing.scheduled_time ? new Date(existing.scheduled_time) : new Date();
+            const existingTimeStr = existing.scheduled_time || existing.start_at;
+            const existingStart = existingTimeStr ? new Date(existingTimeStr) : new Date();
             const existingEnd = new Date(existingStart.getTime() + (existing.duration_minutes || 30) * 60000);
             
             // Проверка наложения
@@ -156,9 +160,10 @@ const WeekView: React.FC<WeekViewProps> = ({
   };
 
   const getCallPosition = (call: CallResponse) => {
-    if (!call.scheduled_time) return { top: 0, height: 60 };
+    const timeStr = call.scheduled_time || call.start_at;
+    if (!timeStr) return { top: 0, height: 60 };
     
-    const date = new Date(call.scheduled_time);
+    const date = new Date(timeStr);
     const hours = date.getHours();
     const minutes = date.getMinutes();
     

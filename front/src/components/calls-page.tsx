@@ -156,9 +156,20 @@ export function CallsPage() {
           // Fallback: загружаем все звонки и фильтруем на клиенте
           const allCalls = await listCalls();
           const filtered = allCalls.filter(c => {
-            if (!c.scheduled_time) return false;
-            const callDate = new Date(c.scheduled_time);
-            return callDate >= start && callDate <= end;
+            // Используем scheduled_time или start_at
+            const timeStr = c.scheduled_time || c.start_at;
+            if (!timeStr) {
+              console.log('calls-page: звонок без даты:', c);
+              return false;
+            }
+            const callDate = new Date(timeStr);
+            const inRange = callDate >= start && callDate <= end;
+            console.log(`calls-page: звонок "${c.title}" (${timeStr}) в диапазоне? ${inRange}`, {
+              callDate: callDate.toISOString(),
+              start: start.toISOString(),
+              end: end.toISOString()
+            });
+            return inRange;
           });
           console.log('calls-page: получено звонков через fallback:', filtered.length, filtered);
           setCalendarCalls(filtered);

@@ -66,15 +66,17 @@ const MonthView: React.FC<MonthViewProps> = ({
     console.log('MonthView: всего звонков для отображения:', calls.length, calls);
     
     calls.forEach(call => {
-      if (!call.scheduled_time) {
-        console.log('MonthView: звонок без scheduled_time:', call);
+      // Используем scheduled_time или start_at
+      const timeStr = call.scheduled_time || call.start_at;
+      if (!timeStr) {
+        console.log('MonthView: звонок без scheduled_time и start_at:', call);
         return;
       }
       
-      const date = new Date(call.scheduled_time);
+      const date = new Date(timeStr);
       const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
       
-      console.log(`MonthView: добавляем звонок "${call.title}" на дату ${dateKey}`, call);
+      console.log(`MonthView: добавляем звонок "${call.title}" на дату ${dateKey} (источник: ${call.scheduled_time ? 'scheduled_time' : 'start_at'})`, call);
       
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
