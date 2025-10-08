@@ -172,6 +172,24 @@
     line-height: inherit;
   }
 
+  /* Центрирование всех модальных окон от Radix Dialog через data-slot */
+  [data-slot="dialog-portal"] [data-slot="dialog-overlay"] {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(0,0,0,0.5);
+  }
+
+  [data-slot="dialog-portal"] [data-slot="dialog-content"] {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 51 !important;
+    max-width: min(42rem, calc(100% - 2rem));
+    width: 100%;
+  }
+
   hr {
     height: 0;
     color: inherit;
