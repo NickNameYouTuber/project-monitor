@@ -11,6 +11,8 @@ interface WeekViewProps {
   onCallClick: (call: CallResponse) => void;
   calendarView?: 'month' | 'week';
   onCalendarViewChange?: (view: 'month' | 'week') => void;
+  activeTab?: 'calendar' | 'list';
+  onTabChange?: (tab: 'calendar' | 'list') => void;
 }
 
 const DAYS_OF_WEEK_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
@@ -22,7 +24,9 @@ const WeekView: React.FC<WeekViewProps> = ({
   onDateChange,
   onCallClick,
   calendarView = 'week',
-  onCalendarViewChange
+  onCalendarViewChange,
+  activeTab = 'calendar',
+  onTabChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -183,6 +187,32 @@ const WeekView: React.FC<WeekViewProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div className="flex items-center gap-4">
+          {/* Табы Calendar / List */}
+          {onTabChange && (
+            <div className="flex items-center rounded-none bg-transparent p-0 mr-2">
+              <button
+                onClick={() => onTabChange('calendar')}
+                className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
+                  activeTab === 'calendar'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Calendar
+              </button>
+              <button
+                onClick={() => onTabChange('list')}
+                className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
+                  activeTab === 'list'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                List
+              </button>
+            </div>
+          )}
+
           <button
             onClick={handlePrevWeek}
             className="p-2 hover:bg-accent rounded-lg transition"

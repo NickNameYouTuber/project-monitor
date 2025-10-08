@@ -2,10 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Plus,
-  Clock,
-  ChevronRight,
-  Calendar as CalendarIcon,
-  List,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import NewMeetingDialog from './calls/NewMeetingDialog';
@@ -246,46 +242,6 @@ export function CallsPage() {
 
       {/* Content area - растягивается на оставшееся пространство */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
-        {/* Tabs header - фиксированная высота */}
-        <div className="flex-none flex items-center justify-between border-b bg-background p-4">
-          {/* Табы Calendar / List */}
-          <div className="flex items-center rounded-none bg-transparent p-0">
-            <button
-              onClick={() => setActiveTab('calendar')}
-              className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
-                activeTab === 'calendar'
-                  ? 'border-primary text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <CalendarIcon className="w-4 h-4 mr-2" />
-              Calendar View
-            </button>
-            <button
-              onClick={() => setActiveTab('list')}
-              className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
-                activeTab === 'list'
-                  ? 'border-primary text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <List className="w-4 h-4 mr-2" />
-              List View
-            </button>
-          </div>
-          
-          {/* Upcoming Meetings Toggle Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
-            className="flex items-center gap-2"
-          >
-            <Clock className="w-4 h-4" />
-            Upcoming ({upcomingMeetings.length})
-            <ChevronRight className={`w-4 h-4 transition-transform ${isUpcomingOpen ? 'rotate-180' : ''}`} />
-          </Button>
-        </div>
         
         {/* Tabs content - растягивается на оставшееся пространство */}
         <div className="flex-1 min-h-0 overflow-hidden">
@@ -302,6 +258,8 @@ export function CallsPage() {
                   }}
                   calendarView={calendarView}
                   onCalendarViewChange={setCalendarView}
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
                 />
               ) : (
                 <WeekView 
@@ -315,6 +273,8 @@ export function CallsPage() {
                   }}
                   calendarView={calendarView}
                   onCalendarViewChange={setCalendarView}
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
                 />
               )}
             </CalendarContainer>
