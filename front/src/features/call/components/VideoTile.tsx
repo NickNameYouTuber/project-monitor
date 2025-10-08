@@ -155,7 +155,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
   const hasAudio = audioStream && audioStream.getAudioTracks().length > 0;
 
   return (
-    <div className={"relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm border border-border"}>
+    <div className="relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm border border-border">
       <audio ref={audioRef} autoPlay muted={isLocal} style={{ display: 'none' }} />
       
       {/* Canvas для замороженного кадра (скрыт по умолчанию) */}

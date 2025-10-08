@@ -384,5 +384,19 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   );
 };
 
-export default VideoGrid;
+// Мемоизация для предотвращения лишних рендеров
+// speakingParticipants не влияет на структуру, только на VideoTileBorder внутри VideoTile
+export default React.memo(VideoGrid, (prev, next) => {
+  return (
+    prev.localStream === next.localStream &&
+    prev.remoteVideoStreams === next.remoteVideoStreams &&
+    prev.remoteAudioStreams === next.remoteAudioStreams &&
+    prev.isCameraEnabled === next.isCameraEnabled &&
+    prev.isMicEnabled === next.isMicEnabled &&
+    prev.participants === next.participants &&
+    prev.isScreenSharing === next.isScreenSharing
+    // speakingParticipants и raisedHands передаются в VideoTile, 
+    // но VideoTile мемоизирован и не ререндерится, только VideoTileBorder обновляется
+  );
+});
 
