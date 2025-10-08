@@ -15,6 +15,8 @@ import CallPage from '../features/call/pages/CallPage';
 import MeetingsList from './calls/MeetingsList';
 import UpcomingPanel from './calls/UpcomingPanel';
 import SearchBar from './calls/SearchBar';
+import MonthView from './calls/MonthView';
+import WeekView from './calls/WeekView';
 import CalendarViewContainer from './calls/CalendarViewContainer';
 import { listCalls, createCall, getCallsInRange, CallResponse } from '../api/calls';
 
@@ -289,21 +291,30 @@ export function CallsPage() {
           </div>
           
           <TabsContent value="calendar" className="flex-1 min-h-0 m-0 relative">
-            <CalendarViewContainer
-              calendarView={calendarView}
-              currentDate={currentDate}
-              calls={calendarCalls}
-              onDateChange={setCurrentDate}
-              onDayClick={(date) => {
-                setCurrentDate(date);
-                setCalendarView('week');
-              }}
-              onCallClick={(call) => {
-                if (call.room_id) {
-                  navigate(`/call/${call.room_id}`);
-                }
-              }}
-            />
+            <CalendarViewContainer>
+              {calendarView === 'month' ? (
+                <MonthView 
+                  currentDate={currentDate}
+                  calls={calendarCalls}
+                  onDateChange={setCurrentDate}
+                  onDayClick={(date) => {
+                    setCurrentDate(date);
+                    setCalendarView('week');
+                  }}
+                />
+              ) : (
+                <WeekView 
+                  currentDate={currentDate}
+                  calls={calendarCalls}
+                  onDateChange={setCurrentDate}
+                  onCallClick={(call) => {
+                    if (call.room_id) {
+                      navigate(`/call/${call.room_id}`);
+                    }
+                  }}
+                />
+              )}
+            </CalendarViewContainer>
           </TabsContent>
           
           <TabsContent value="list" className="flex-1 min-h-0 m-0 p-6">
