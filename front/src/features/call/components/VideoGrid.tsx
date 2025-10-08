@@ -47,7 +47,6 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     }
   });
 
-  // Дебаг-лог закомментирован для производительности
   // console.log('VideoGrid рендер:', {
   //   remoteVideoStreamsSize: remoteVideoStreams.size,
   //   remoteAudioStreamsSize: remoteAudioStreams.size,

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Video, VideoOff, Hand } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
 import VideoTileBorder from './VideoTileBorder';
 
 interface VideoTileProps {
@@ -155,9 +155,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
   const hasAudio = audioStream && audioStream.getAudioTracks().length > 0;
 
   return (
-    <div className="relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm">
-      {/* Обводка в отдельном компоненте для избежания ре-рендера видео */}
-      <VideoTileBorder isSpeaking={isSpeaking} isHandRaised={isHandRaised} />
+    <div className={"relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm border border-border"}>
       <audio ref={audioRef} autoPlay muted={isLocal} style={{ display: 'none' }} />
       
       {/* Canvas для замороженного кадра (скрыт по умолчанию) */}
@@ -212,28 +210,23 @@ const VideoTile: React.FC<VideoTileProps> = ({
         </div>
       )}
 
-      {/* Иконка поднятой руки */}
-      {isHandRaised && (
-        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-yellow-500 p-2 rounded-full shadow-lg animate-pulse">
-          <Hand className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-        </div>
-      )}
+      {/* Рамка и индикаторы поверх видео, изолированы от основного DOM */}
+      <VideoTileBorder isSpeaking={isSpeaking} isHandRaised={isHandRaised} />
     </div>
   );
 };
 
-// Мемоизируем компонент, но isSpeaking и isHandRaised не влияют на ре-рендер основного видео
-export default React.memo(VideoTile, (prevProps, nextProps) => {
-  // Перерисовываем только если изменились критичные для видео пропсы
+// Мемоизация: видео не будет перерендериваться при изменении статусов, бордер рисуется отдельно
+export default React.memo(VideoTile, (prev, next) => {
   return (
-    prevProps.videoStream === nextProps.videoStream &&
-    prevProps.audioStream === nextProps.audioStream &&
-    prevProps.isLocal === nextProps.isLocal &&
-    prevProps.isCameraEnabled === nextProps.isCameraEnabled &&
-    prevProps.isMicEnabled === nextProps.isMicEnabled &&
-    prevProps.username === nextProps.username &&
-    prevProps.isGuest === nextProps.isGuest
-    // isSpeaking и isHandRaised намеренно НЕ проверяются - их изменения обрабатывает VideoTileBorder
+    prev.videoStream === next.videoStream &&
+    prev.audioStream === next.audioStream &&
+    prev.isLocal === next.isLocal &&
+    prev.isCameraEnabled === next.isCameraEnabled &&
+    prev.isMicEnabled === next.isMicEnabled &&
+    prev.username === next.username &&
+    prev.isGuest === next.isGuest
+    // isSpeaking/isHandRaised специально не учитываем — их отображает VideoTileBorder
   );
 });
 
