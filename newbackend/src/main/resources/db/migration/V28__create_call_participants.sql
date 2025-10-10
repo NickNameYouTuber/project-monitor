@@ -1,3 +1,6 @@
+-- Удаляем таблицу если существует (для повторного выполнения)
+DROP TABLE IF EXISTS call_participants CASCADE;
+
 -- Создание таблицы участников звонков
 CREATE TABLE call_participants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
