@@ -8,17 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Socket } from 'socket.io-client';
 import { MediaSoupService } from '../services/mediasoupClient';
 import type { Consumer } from 'mediasoup-client/lib/types';
-
-export interface Participant {
-  socketId: string;
-  userId: string;
-  username: string;
-  mediaState: {
-    camera: boolean;
-    microphone: boolean;
-    screen: boolean;
-  };
-}
+import type { Participant } from '../types/call.types';
 
 export function useMediasoupWebRTC(
   socket: Socket | null,
@@ -529,19 +519,17 @@ export function useMediasoupWebRTC(
     isCameraEnabled,
     isMicrophoneEnabled: isMicEnabled,
     isScreenSharing,
+    participants,
+    speakingParticipants,
+    raisedHands,
+    error,
+    messages,
     toggleCamera,
     toggleMicrophone,
     toggleScreenShare,
-    participants,
-    messages,
-    sendMessage,
-    raisedHands,
-    isHandRaised: socket && socket.id ? raisedHands.has(socket.id) : false,
     toggleRaiseHand,
-    speakingParticipants,
-    error,
     initializeMedia,
     cleanup,
-    leaveRoom
+    sendMessage,
   };
 }

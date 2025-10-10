@@ -42,149 +42,97 @@ const MEETING_COLORS = [
 
 export function CallsPage() {
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
-  const [meetings, setMeetings] = useState<Meeting[]>([
-  {
-    id: '1',
-      title: 'Daily Standup',
-      date: new Date(new Date().setHours(9, 0, 0, 0)),
-    duration: 30,
-      participants: ['John Doe', 'Jane Smith'],
-    type: 'video',
-    status: 'scheduled',
-    color: MEETING_COLORS[0].value,
-    roomId: 'test-room-1'
-  },
-  {
-    id: '2',
-    title: 'Project Review',
-      date: new Date(new Date().setHours(14, 30, 0, 0)),
-    duration: 60,
-      participants: ['Mike Johnson', 'Sarah Wilson'],
-    type: 'video',
-    status: 'scheduled',
-    color: MEETING_COLORS[1].value,
-    roomId: 'test-room-2'
-    }
-  ]);
-
   const [searchQuery, setSearchQuery] = useState('');
   const [isInCall, setIsInCall] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { roomId } = useParams();
   const navigate = useNavigate();
+  
+  // ЕДИНСТВЕННЫЙ ИСТОЧНИК ИСТИНЫ - calls из API
+  const [calls, setCalls] = useState<CallResponse[]>([]);
   
   // Calendar state
   const [calendarView, setCalendarView] = useState<'month' | 'week'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [calendarCalls, setCalendarCalls] = useState<CallResponse[]>([]);
   const [activeTab, setActiveTab] = useState<'calendar' | 'list'>('calendar');
   const [selectedCall, setSelectedCall] = useState<CallResponse | null>(null);
   const [isCallDetailsPanelOpen, setIsCallDetailsPanelOpen] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // Создаем тестовый звонок для проверки календаря (только при первом запуске)
-        const testCallExists = localStorage.getItem('testCallCreated');
-        if (!testCallExists) {
-          const tomorrow = new Date();
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          tomorrow.setHours(14, 0, 0, 0);
-          
-          await createCall({
-            room_id: 'test-calendar-room',
-            title: 'Test Calendar Call',
-            description: 'Тестовый звонок для проверки календаря',
-            scheduled_time: tomorrow.toISOString(),
-            duration_minutes: 60,
-            status: 'SCHEDULED',
-          }).then(() => {
-            localStorage.setItem('testCallCreated', 'true');
-            console.log('Тестовый звонок создан');
-          }).catch(err => console.error('Ошибка создания тестового звонка:', err));
-        }
+  // Преобразуем calls в meetings для UI
+  const meetings = React.useMemo(() => {
+    return calls.map(c => ({
+      id: c.id,
+      title: c.title || c.room_id,
+      date: c.scheduled_time ? new Date(c.scheduled_time) : (c.start_at ? new Date(c.start_at) : new Date()),
+      duration: c.duration_minutes || (c.end_at && c.start_at ? Math.max(1, Math.round((new Date(c.end_at).getTime() - new Date(c.start_at).getTime()) / 60000)) : 30),
+      participants: [],
+      type: 'video' as const,
+      status: (c.status?.toLowerCase() || 'scheduled') as 'scheduled' | 'in-progress' | 'completed' | 'cancelled',
+      color: MEETING_COLORS[Math.floor(Math.random() * MEETING_COLORS.length)].value,
+      roomId: c.room_id,
+      description: c.description,
+    }));
+  }, [calls]);
 
-        const fromApi = await listCalls();
-        if (fromApi && fromApi.length) {
-          const apiMeetings = fromApi.map(c => ({
-            id: c.id,
-            title: c.title || c.room_id,
-            date: c.scheduled_time ? new Date(c.scheduled_time) : (c.start_at ? new Date(c.start_at) : new Date()),
-            duration: c.duration_minutes || (c.end_at && c.start_at ? Math.max(1, Math.round((new Date(c.end_at).getTime() - new Date(c.start_at).getTime()) / 60000)) : 30),
-            participants: [],
-            type: 'video' as const,
-            status: (c.status?.toLowerCase() || 'scheduled') as 'scheduled' | 'in-progress' | 'completed' | 'cancelled',
-            color: MEETING_COLORS[1].value,
-            roomId: c.room_id,
-          }));
-          setMeetings(prev => {
-            // Объединяем API данные с локальными тестовыми, избегая дубликатов
-            const testIds = prev.filter(m => m.id === '1' || m.id === '2').map(m => m.id);
-            return [...prev.filter(m => testIds.includes(m.id)), ...apiMeetings];
-          });
-        }
-      } catch {}
-    })();
+  // Загрузка всех звонков из API
+  const loadCallsFromAPI = React.useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const callsData = await listCalls();
+      console.log('✅ Загружено звонков из API:', callsData.length);
+      setCalls(callsData);
+    } catch (err: any) {
+      console.error('❌ Ошибка загрузки звонков:', err);
+      setError('Не удалось загрузить звонки. Попробуйте обновить страницу.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Начальная загрузка
+  useEffect(() => {
+    loadCallsFromAPI();
+  }, [loadCallsFromAPI]);
+
+  useEffect(() => {
     if (roomId) {
       setIsInCall(true);
     }
   }, [roomId]);
 
-  // Функция перезагрузки календаря
-  const reloadCalendarCalls = async () => {
-    try {
-      const start = new Date(currentDate);
-      const end = new Date(currentDate);
-      
-      if (calendarView === 'month') {
-        start.setDate(1);
-        end.setMonth(end.getMonth() + 1, 0);
-      } else {
-        const day = start.getDay();
-        const diff = start.getDate() - day + (day === 0 ? -6 : 1);
-        start.setDate(diff);
-        end.setDate(start.getDate() + 6);
-      }
-      
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-      
-      console.log(`calls-page: загружаем звонки с ${start.toISOString()} по ${end.toISOString()}`);
-      try {
-        const calls = await getCallsInRange(start.toISOString(), end.toISOString());
-        console.log('calls-page: получено звонков через /range:', calls.length, calls);
-        setCalendarCalls(calls);
-      } catch (rangeError) {
-        console.warn('Ошибка /range, используем fallback /list:', rangeError);
-        // Fallback: загружаем все звонки и фильтруем на клиенте
-        const allCalls = await listCalls();
-        const filtered = allCalls.filter(c => {
-          // Используем scheduled_time или start_at
-          const timeStr = c.scheduled_time || c.start_at;
-          if (!timeStr) {
-            console.log('calls-page: звонок без даты:', c);
-            return false;
-          }
-          const callDate = new Date(timeStr);
-          const inRange = callDate >= start && callDate <= end;
-          console.log(`calls-page: звонок "${c.title}" (${timeStr}) в диапазоне? ${inRange}`, {
-            callDate: callDate.toISOString(),
-            start: start.toISOString(),
-            end: end.toISOString()
-          });
-          return inRange;
-        });
-        console.log('calls-page: получено звонков через fallback:', filtered.length, filtered);
-        setCalendarCalls(filtered);
-      }
-    } catch (error) {
-      console.error('Ошибка загрузки звонков для календаря:', error);
-    }
-  };
+  // Перезагрузка всех звонков (обновляет единый источник истины)
+  const reloadCalls = React.useCallback(async () => {
+    await loadCallsFromAPI();
+  }, [loadCallsFromAPI]);
 
-  // Загрузка звонков для календаря
-  useEffect(() => {
-    reloadCalendarCalls();
-  }, [currentDate, calendarView]);
+  // Фильтр звонков для календаря (по текущей дате)
+  const calendarCalls = React.useMemo(() => {
+    const start = new Date(currentDate);
+    const end = new Date(currentDate);
+    
+    if (calendarView === 'month') {
+      start.setDate(1);
+      end.setMonth(end.getMonth() + 1, 0);
+    } else {
+      const day = start.getDay();
+      const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+      start.setDate(diff);
+      end.setDate(start.getDate() + 6);
+    }
+    
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    
+    return calls.filter(c => {
+      const timeStr = c.scheduled_time || c.start_at;
+      if (!timeStr) return false;
+      
+      const callDate = new Date(timeStr);
+      return callDate >= start && callDate <= end;
+    });
+  }, [calls, currentDate, calendarView]);
   const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
 
   const [newMeeting, setNewMeeting] = useState({
@@ -198,73 +146,79 @@ export function CallsPage() {
     color: MEETING_COLORS[0].value
   });
 
-  const upcomingMeetings = meetings
+  // Фильтрация по поиску
+  const filteredMeetings = React.useMemo(() => {
+    if (!searchQuery.trim()) return meetings;
+    
+    const query = searchQuery.toLowerCase();
+    return meetings.filter(m => 
+      m.title.toLowerCase().includes(query) ||
+      m.description?.toLowerCase().includes(query) ||
+      m.participants.some(p => p.toLowerCase().includes(query)) ||
+      m.roomId?.toLowerCase().includes(query)
+    );
+  }, [meetings, searchQuery]);
+
+  const upcomingMeetings = filteredMeetings
     .filter(meeting => meeting.date > new Date() && meeting.status === 'scheduled')
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 5);
 
-  const handleCreateMeeting = () => {
+  const handleCreateMeeting = async () => {
     const [hours, minutes] = newMeeting.time.split(':').map(Number);
     const meetingDate = new Date(newMeeting.date);
     meetingDate.setHours(hours, minutes);
 
     const roomId = Date.now().toString();
-    const meeting: Meeting = {
-      id: Date.now().toString(),
-      title: newMeeting.title,
-      date: meetingDate,
-      duration: newMeeting.duration,
-      participants: newMeeting.participants.split(',').map(p => p.trim()).filter(Boolean),
-      type: newMeeting.type,
-      status: 'scheduled',
-      description: newMeeting.description,
-      color: newMeeting.color,
-      roomId,
-    };
 
-    setMeetings(prev => [...prev, meeting]);
-    // Пишем на бэк
-    (async () => {
-      try {
-        await createCall({
-          room_id: roomId,
-          title: meeting.title,
-          description: meeting.description,
-          start_at: meeting.date.toISOString(),
-          end_at: new Date(meetingDate.getTime() + meeting.duration * 60000).toISOString(),
-          scheduled_time: meeting.date.toISOString(),
-          duration_minutes: meeting.duration,
-          status: 'SCHEDULED',
-        });
-        // Перезагружаем календарь после успешного создания
-        await reloadCalendarCalls();
-      } catch (err) {
-        console.error('Ошибка создания звонка:', err);
-      }
-    })();
-    setNewMeeting({
-      title: '',
-      date: new Date(),
-      time: '09:00',
-      duration: 30,
-      type: 'video',
-      description: '',
-      participants: '',
-      color: MEETING_COLORS[0].value
-    });
-    setIsCreateMeetingOpen(false);
+    try {
+      await createCall({
+        room_id: roomId,
+        title: newMeeting.title,
+        description: newMeeting.description,
+        start_at: meetingDate.toISOString(),
+        end_at: new Date(meetingDate.getTime() + newMeeting.duration * 60000).toISOString(),
+        scheduled_time: meetingDate.toISOString(),
+        duration_minutes: newMeeting.duration,
+        status: 'SCHEDULED',
+      });
+      
+      console.log('✅ Звонок создан успешно');
+      
+      // Перезагружаем все звонки после успешного создания
+      await reloadCalls();
+      
+      // Сбрасываем форму
+      setNewMeeting({
+        title: '',
+        date: new Date(),
+        time: '09:00',
+        duration: 30,
+        type: 'video',
+        description: '',
+        participants: '',
+        color: MEETING_COLORS[0].value
+      });
+      setIsCreateMeetingOpen(false);
+    } catch (err: any) {
+      console.error('❌ Ошибка создания звонка:', err);
+      setError('Не удалось создать звонок. Попробуйте еще раз.');
+      // TODO: показать toast уведомление
+    }
   };
 
   const handleCancelMeeting = async (meetingId: string) => {
-    setMeetings(prev => prev.map(meeting => 
-      meeting.id === meetingId 
-        ? { ...meeting, status: 'cancelled' as const }
-        : meeting
-    ));
     try {
-      const leaveBtn = document.getElementById('ctrlLeave') as HTMLButtonElement | null;
-      if (leaveBtn) leaveBtn.click();
-    } catch {}
+      // TODO: API endpoint для отмены звонка
+      // await cancelCall(meetingId);
+      console.log('Отмена звонка:', meetingId);
+      
+      // Перезагружаем звонки
+      await reloadCalls();
+    } catch (err) {
+      console.error('Ошибка отмены звонка:', err);
+      setError('Не удалось отменить звонок.');
+    }
   }; 
 
   const startCall = (meeting?: Meeting) => {
@@ -306,6 +260,19 @@ export function CallsPage() {
         </div>
         
         <SearchBar value={searchQuery} onChange={setSearchQuery} onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)} upcomingCount={upcomingMeetings.length} />
+        
+        {/* Error banner */}
+        {error && (
+          <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-3 flex items-center justify-between">
+            <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Content area - растягивается на оставшееся пространство */}
@@ -351,10 +318,11 @@ export function CallsPage() {
             </CalendarContainer>
           ) : (
             <MeetingsList 
-              items={meetings} 
+              items={filteredMeetings} 
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
+              isLoading={isLoading}
             />
           )}
         </div>
