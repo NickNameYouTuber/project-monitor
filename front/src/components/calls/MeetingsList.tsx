@@ -28,11 +28,18 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
     const now = new Date();
     const groups: { label: string; meetings: typeof items }[] = [];
 
-    // 1. Идут сейчас (ACTIVE/IN-PROGRESS)
-    const activeItems = items.filter(m => 
-      m.status?.toLowerCase() === 'active' || 
-      m.status?.toLowerCase() === 'in-progress'
-    ).sort((a, b) => a.date.getTime() - b.date.getTime());
+    // 1. Идут сейчас (ACTIVE/IN-PROGRESS И время начала <= now < время окончания)
+    const activeItems = items.filter(m => {
+      const status = m.status?.toLowerCase();
+      const isActiveStatus = status === 'active' || status === 'in-progress';
+      
+      if (!isActiveStatus) return false;
+      
+      const startTime = m.date;
+      const endTime = new Date(startTime.getTime() + m.duration * 60000);
+      
+      return startTime <= now && now < endTime;
+    }).sort((a, b) => a.date.getTime() - b.date.getTime());
 
     if (activeItems.length > 0) {
       groups.push({ label: '🔵 Идут сейчас', meetings: activeItems });

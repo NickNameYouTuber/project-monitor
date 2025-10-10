@@ -25,13 +25,14 @@ export default function UserAutocomplete({
   const [users, setUsers] = useState<UserDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Загрузка пользователей
+  // Загрузка пользователей ТОЛЬКО при открытии popover
   useEffect(() => {
+    if (!open) return;
+    
     const loadUsers = async () => {
       setIsLoading(true);
       try {
         const allUsers = await listUsers(100);
-        // Фильтруем исключенных
         setUsers(allUsers.filter(u => !excludeUserIds.includes(u.id)));
       } catch (error) {
         console.error('Ошибка загрузки пользователей:', error);
@@ -40,10 +41,8 @@ export default function UserAutocomplete({
       }
     };
     
-    if (open) {
-      loadUsers();
-    }
-  }, [open, excludeUserIds]);
+    loadUsers();
+  }, [open]);
 
   const handleSelect = (user: UserDto) => {
     const isSelected = selectedUsers.some(u => u.id === user.id);

@@ -137,14 +137,23 @@ export function CallsPage() {
   }, [calls, currentDate, calendarView]);
   const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
 
-  const [newMeeting, setNewMeeting] = useState({
+  const [newMeeting, setNewMeeting] = useState<{
+    title: string;
+    date: Date;
+    time: string;
+    duration: number;
+    type: 'video' | 'audio';
+    description: string;
+    participants: any[];
+    color: string;
+  }>({
     title: '',
     date: new Date(),
     time: '09:00',
     duration: 30,
-    type: 'video' as 'video' | 'audio',
+    type: 'video',
     description: '',
-    participants: '',
+    participants: [],
     color: MEETING_COLORS[0].value
   });
 
