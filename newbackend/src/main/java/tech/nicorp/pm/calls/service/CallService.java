@@ -1,6 +1,7 @@
 package tech.nicorp.pm.calls.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tech.nicorp.pm.calls.domain.Call;
 import tech.nicorp.pm.calls.repo.CallRepository;
 import tech.nicorp.pm.projects.domain.Project;
@@ -31,6 +32,7 @@ public class CallService {
 
     public List<Call> list() { return calls.findAll(); }
     
+    @Transactional(readOnly = true)
     public List<Call> getCallsForUser(UUID userId) {
         return calls.findByParticipantUserId(userId);
     }
