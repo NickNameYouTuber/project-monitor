@@ -40,12 +40,18 @@ public class CallsController {
 
     @GetMapping
     @Operation(summary = "Список звонков текущего пользователя")
-    public ResponseEntity<List<CallResponse>> list(@AuthenticationPrincipal User currentUser) {
-        if (currentUser == null) {
+    public ResponseEntity<List<CallResponse>> list(@AuthenticationPrincipal Object principal) {
+        UUID userId = extractUserId(principal);
+        System.out.println("🔍 DEBUG: principal = " + principal);
+        System.out.println("🔍 DEBUG: userId = " + userId);
+        
+        if (userId == null) {
+            System.out.println("⚠️ DEBUG: userId is null, returning empty list");
             return ResponseEntity.ok(List.of());
         }
         
-        List<Call> userCalls = service.getCallsForUser(currentUser.getId());
+        List<Call> userCalls = service.getCallsForUser(userId);
+        System.out.println("🔍 DEBUG: Found " + userCalls.size() + " calls for user " + userId);
         return ResponseEntity.ok(userCalls.stream().map(this::toResponse).toList());
     }
 
@@ -73,7 +79,10 @@ public class CallsController {
     @Operation(summary = "Создать звонок")
     public ResponseEntity<CallResponse> create(
             @RequestBody tech.nicorp.pm.calls.api.dto.CallCreateRequest body,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal Object principal) {
+        
+        UUID userId = extractUserId(principal);
+        User currentUser = userId != null ? service.resolveUser(userId) : null;
         
         Call c = new Call();
         c.setRoomId(body.getRoomId());
@@ -157,14 +166,15 @@ public class CallsController {
     @Operation(summary = "Проверить доступ текущего пользователя к звонку")
     public ResponseEntity<CheckAccessResponse> checkAccess(
             @PathVariable("callId") UUID callId,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal Object principal) {
         
-        if (currentUser == null) {
+        UUID userId = extractUserId(principal);
+        if (userId == null) {
             return ResponseEntity.ok(new CheckAccessResponse(false, null));
         }
         
-        boolean hasAccess = participantService.hasAccess(callId, currentUser.getId());
-        String role = participantService.getUserRole(callId, currentUser.getId())
+        boolean hasAccess = participantService.hasAccess(callId, userId);
+        String role = participantService.getUserRole(callId, userId)
             .map(Enum::name)
             .orElse(null);
         
@@ -176,14 +186,15 @@ public class CallsController {
     public ResponseEntity<CallResponse> updateStatus(
             @PathVariable("callId") UUID callId,
             @RequestBody UpdateStatusRequest request,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal Object principal) {
         
-        if (currentUser == null) {
+        UUID userId = extractUserId(principal);
+        if (userId == null) {
             return ResponseEntity.status(401).build();
         }
         
         // Проверяем что пользователь - организатор
-        ParticipantRole role = participantService.getUserRole(callId, currentUser.getId())
+        ParticipantRole role = participantService.getUserRole(callId, userId)
             .orElse(null);
         
         if (role != ParticipantRole.ORGANIZER) {
@@ -242,6 +253,26 @@ public class CallsController {
             p.getJoinedAt(),
             p.getLeftAt()
         );
+    }
+    
+    private UUID extractUserId(Object principal) {
+        if (principal == null) {
+            return null;
+        }
+        
+        if (principal instanceof User) {
+            return ((User) principal).getId();
+        }
+        
+        if (principal instanceof String) {
+            try {
+                return UUID.fromString((String) principal);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+        
+        return null;
     }
 }
 
