@@ -129,12 +129,9 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
       return apiStatus;
     }
     
-    // Если scheduled, проверяем время
-    if (apiStatus === 'scheduled') {
-      const endTime = new Date(meeting.date.getTime() + meeting.duration * 60000);
-      if (now >= endTime) {
-        return 'completed';
-      }
+    // Если scheduled, но время прошло - это "завершенный"
+    if (apiStatus === 'scheduled' && meeting.date < now) {
+      return 'completed';
     }
     
     return apiStatus || 'scheduled';
