@@ -1,22 +1,13 @@
 FROM node:20-alpine
 
-# Install dependencies for MediaSoup (включая pip)
+# Install runtime dependencies for MediaSoup
 RUN apk add --no-cache \
     python3 \
-    py3-pip \
-    make \
-    g++ \
-    gcc \
-    linux-headers
+    libstdc++
 
 WORKDIR /app
 
-COPY package*.json ./
-COPY package-lock.json ./
-
-# Установка с прогрессом и использованием prebuilt binaries где возможно
-RUN npm install --omit=dev --prefer-offline --no-audit --progress=true
-
+# Копируем все файлы (включая уже собранные node_modules)
 COPY . .
 
 EXPOSE 4001
