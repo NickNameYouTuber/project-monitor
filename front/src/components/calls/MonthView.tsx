@@ -133,9 +133,9 @@ const MonthView: React.FC<MonthViewProps> = ({
       if (startTime <= now && now < endTime) {
         return 'active';
       }
-      // Если время прошло - это прошедший
+      // Если время прошло - это завершенный
       if (now >= endTime) {
-        return 'past';
+        return 'completed';
       }
     }
     
@@ -146,10 +146,7 @@ const MonthView: React.FC<MonthViewProps> = ({
     return {
       scheduled: dateCalls.filter(c => getActualStatus(c) === 'scheduled').length,
       active: dateCalls.filter(c => getActualStatus(c) === 'active').length,
-      completed: dateCalls.filter(c => {
-        const status = getActualStatus(c);
-        return status === 'completed' || status === 'past';
-      }).length,
+      completed: dateCalls.filter(c => getActualStatus(c) === 'completed').length,
       cancelled: dateCalls.filter(c => getActualStatus(c) === 'cancelled').length,
     };
   };
@@ -319,7 +316,7 @@ const MonthView: React.FC<MonthViewProps> = ({
                               style={{
                                 borderLeftColor: 
                                   getActualStatus(call) === 'active' ? '#3b82f6' :
-                                  getActualStatus(call) === 'completed' || getActualStatus(call) === 'past' ? '#eab308' :
+                                  getActualStatus(call) === 'completed' ? '#eab308' :
                                   getActualStatus(call) === 'cancelled' ? '#ef4444' : '#22c55e'
                               }}
                             >

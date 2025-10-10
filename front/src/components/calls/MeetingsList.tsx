@@ -116,17 +116,6 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
       groups.push({ label: '🔴 Отмененные', meetings: cancelledItems });
     }
 
-    // 8. Прошедшие (SCHEDULED но время прошло)
-    const pastItems = items.filter(m => {
-      const isPast = m.date < now;
-      const isScheduled = m.status?.toLowerCase() === 'scheduled';
-      return isPast && isScheduled;
-    }).sort((a, b) => b.date.getTime() - a.date.getTime());
-
-    if (pastItems.length > 0) {
-      groups.push({ label: '📅 Прошедшие', meetings: pastItems });
-    }
-
     return groups;
   }, [items]);
 
@@ -140,9 +129,12 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
       return apiStatus;
     }
     
-    // Если scheduled, но время прошло - это "прошедший"
-    if (apiStatus === 'scheduled' && meeting.date < now) {
-      return 'past';
+    // Если scheduled, проверяем время
+    if (apiStatus === 'scheduled') {
+      const endTime = new Date(meeting.date.getTime() + meeting.duration * 60000);
+      if (now >= endTime) {
+        return 'completed';
+      }
     }
     
     return apiStatus || 'scheduled';
@@ -166,8 +158,6 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
         return 'border-yellow-500';
       case 'cancelled':
         return 'border-red-500';
-      case 'past':
-        return 'border-gray-400';
       default:
         return 'border-gray-500';
     }
@@ -187,8 +177,6 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
         return <span className="px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">Завершен</span>;
       case 'cancelled':
         return <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Отменен</span>;
-      case 'past':
-        return <span className="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">Прошедший</span>;
       default:
         return null;
     }
@@ -233,7 +221,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                 <div className="space-y-3">
                   {group.meetings.map((meeting) => {
                     const actualStatus = getActualStatus(meeting);
-                    const isJoinable = meeting.roomId && actualStatus !== 'completed' && actualStatus !== 'cancelled' && actualStatus !== 'past';
+                    const isJoinable = meeting.roomId && actualStatus !== 'completed' && actualStatus !== 'cancelled';
                     
                     return (
                       <Card key={meeting.id} className={`border-l-4 ${getStatusColor(actualStatus, meeting.id)} transition-all hover:shadow-md`}>
