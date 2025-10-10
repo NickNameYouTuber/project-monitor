@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Video, Calendar, Clock, MoreVertical, Copy, Trash2, Mic } from 'lucide-react';
@@ -20,9 +20,11 @@ interface MeetingsListProps {
   onTabChange?: (tab: 'calendar' | 'list') => void;
   onJoinCall?: (roomId: string) => void;
   isLoading?: boolean;
+  onCopyLink?: (roomId: string) => void;
 }
 
-export default function MeetingsList({ items, activeTab = 'list', onTabChange, onJoinCall, isLoading }: MeetingsListProps) {
+export default function MeetingsList({ items, activeTab = 'list', onTabChange, onJoinCall, isLoading, onCopyLink }: MeetingsListProps) {
+  const animatedItemsRef = useRef<Set<string>>(new Set());
   // Группировка по статусу и времени
   const groupedMeetings = useMemo(() => {
     const now = new Date();
@@ -146,13 +148,20 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
     return apiStatus || 'scheduled';
   };
 
-  const getStatusColor = (status?: string) => {
+  const getStatusColor = (status?: string, itemId?: string) => {
+    const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'in-progress';
+    const shouldAnimate = isActive && itemId && !animatedItemsRef.current.has(itemId);
+    
+    if (shouldAnimate && itemId) {
+      animatedItemsRef.current.add(itemId);
+    }
+    
     switch (status?.toLowerCase()) {
       case 'scheduled':
         return 'border-green-500';
       case 'in-progress':
       case 'active':
-        return 'border-blue-500 animate-pulse';
+        return `border-blue-500 ${shouldAnimate ? 'animate-pulse-limited' : ''}`;
       case 'completed':
         return 'border-yellow-500';
       case 'cancelled':
@@ -164,13 +173,16 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
     }
   };
 
-  const getStatusBadge = (status?: string) => {
+  const getStatusBadge = (status?: string, itemId?: string) => {
+    const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'in-progress';
+    const shouldAnimate = isActive && itemId && !animatedItemsRef.current.has(itemId);
+    
     switch (status?.toLowerCase()) {
       case 'scheduled':
         return <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Запланирован</span>;
       case 'in-progress':
       case 'active':
-        return <span className="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 animate-pulse">Идет сейчас</span>;
+        return <span className={`px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 ${shouldAnimate ? 'animate-pulse-limited' : ''}`}>Идет сейчас</span>;
       case 'completed':
         return <span className="px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">Завершен</span>;
       case 'cancelled':
@@ -185,8 +197,10 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
   const handleCopyLink = (roomId: string) => {
     const link = `${window.location.origin}/call/${roomId}`;
     navigator.clipboard.writeText(link);
-    // TODO: показать toast уведомление
-    console.log('Ссылка скопирована:', link);
+    
+    if (onCopyLink) {
+      onCopyLink(roomId);
+    }
   };
 
   return (
@@ -222,7 +236,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                     const isJoinable = meeting.roomId && actualStatus !== 'completed' && actualStatus !== 'cancelled' && actualStatus !== 'past';
                     
                     return (
-                      <Card key={meeting.id} className={`border-l-4 ${getStatusColor(actualStatus)} transition-all hover:shadow-md`}>
+                      <Card key={meeting.id} className={`border-l-4 ${getStatusColor(actualStatus, meeting.id)} transition-all hover:shadow-md`}>
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
@@ -265,7 +279,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                               
                               {/* Статус badge */}
                               <div className="mt-2">
-                                {getStatusBadge(actualStatus)}
+                                {getStatusBadge(actualStatus, meeting.id)}
                               </div>
                             </div>
                             

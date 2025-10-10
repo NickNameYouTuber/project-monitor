@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { CallResponse } from '../../api/calls';
 import { Users, Target, Play } from 'lucide-react';
 
@@ -7,6 +7,8 @@ interface CallCardProps {
   onClick: () => void;
   compact?: boolean;
 }
+
+const animatedCallsRef = new Set<string>();
 
 const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) => {
   // Вычисляем актуальный статус на основе времени
@@ -50,13 +52,18 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
   };
 
   const actualStatus = getActualStatus();
+  
+  const shouldAnimate = actualStatus === 'ACTIVE' && !animatedCallsRef.has(call.id);
+  if (shouldAnimate) {
+    animatedCallsRef.add(call.id);
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
         return 'border-green-500 bg-green-50 dark:bg-green-950/20';
       case 'ACTIVE':
-        return 'border-blue-500 bg-blue-50 dark:bg-blue-950/20 animate-pulse';
+        return `border-blue-500 bg-blue-50 dark:bg-blue-950/20 ${shouldAnimate ? 'animate-pulse-limited' : ''}`;
       case 'COMPLETED':
         return 'border-gray-400 bg-gray-50 dark:bg-gray-950/20';
       case 'CANCELLED':
@@ -68,7 +75,7 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
 
   const getStatusIcon = (status: string) => {
     if (status === 'ACTIVE') {
-      return <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />;
+      return <div className={`w-2 h-2 rounded-full bg-blue-500 ${shouldAnimate ? 'animate-pulse-limited' : ''}`} />;
     }
     return null;
   };

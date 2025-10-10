@@ -16,6 +16,7 @@ import WeekView from './calls/WeekView';
 import CalendarContainer from './calls/CalendarContainer';
 import CallDetailsPanel from './calls/CallDetailsPanel';
 import { listCalls, createCall, getCallsInRange, CallResponse } from '../api/calls';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface Meeting {
   id: string;
@@ -50,6 +51,7 @@ export function CallsPage() {
   const [error, setError] = useState<string | null>(null);
   const { roomId } = useParams();
   const navigate = useNavigate();
+  const { showToast, addNotification } = useNotifications();
   
   // ЕДИНСТВЕННЫЙ ИСТОЧНИК ИСТИНЫ - calls из API
   const [calls, setCalls] = useState<CallResponse[]>([]);
@@ -93,9 +95,16 @@ export function CallsPage() {
     }
   }, []);
 
-  // Начальная загрузка
+  // Начальная загрузка + автообновление каждую минуту
   useEffect(() => {
     loadCallsFromAPI();
+    
+    const intervalId = setInterval(() => {
+      console.log('🔄 Автообновление статусов звонков');
+      loadCallsFromAPI();
+    }, 60000);
+    
+    return () => clearInterval(intervalId);
   }, [loadCallsFromAPI]);
 
   useEffect(() => {
@@ -207,10 +216,17 @@ export function CallsPage() {
       
       console.log('✅ Звонок создан успешно');
       
-      // Перезагружаем все звонки после успешного создания
+      const participantCount = newMeeting.participants?.length || 0;
+      showToast(
+        'Звонок создан', 
+        participantCount > 0 
+          ? `${participantCount} участник${participantCount > 1 ? 'а' : ''} получ${participantCount > 1 ? 'ат' : 'ит'} уведомление`
+          : 'Вы можете пригласить участников позже',
+        'success'
+      );
+      
       await reloadCalls();
       
-      // Сбрасываем форму
       setNewMeeting({
         title: '',
         date: new Date(),
@@ -218,14 +234,14 @@ export function CallsPage() {
         duration: 30,
         type: 'video',
         description: '',
-        participants: [], // ← НОВОЕ: массив User[] вместо строки
+        participants: [],
         color: MEETING_COLORS[0].value
       });
       setIsCreateMeetingOpen(false);
     } catch (err: any) {
       console.error('❌ Ошибка создания звонка:', err);
       setError('Не удалось создать звонок. Попробуйте еще раз.');
-      // TODO: показать toast уведомление
+      showToast('Ошибка', 'Не удалось создать звонок. Попробуйте еще раз.', 'error');
     }
   };
 
@@ -377,6 +393,7 @@ export function CallsPage() {
               items={filteredMeetings} 
               onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
               isLoading={isLoading}
+              onCopyLink={(roomId) => showToast('Ссылка скопирована', undefined, 'success')}
             />
           )}
         </div>

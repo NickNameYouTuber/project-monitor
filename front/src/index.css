@@ -3545,3 +3545,17 @@ html {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
 }
+
+/* Ограниченная анимация пульсации (только 3 раза) для активных звонков */
+@keyframes pulse-limited {
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: .5; 
+  }
+}
+
+.animate-pulse-limited {
+  animation: pulse-limited 2s cubic-bezier(0.4, 0, 0.6, 1) 3;
+}

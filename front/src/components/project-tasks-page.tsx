@@ -20,6 +20,23 @@ import { useNavigate } from 'react-router-dom';
 import { ActiveCallIndicator } from './active-call-indicator';
 import type { Project, Task, Column } from '../App';
 
+/**
+ * ЗАГЛУШКА: Система уведомлений о задачах
+ * 
+ * В будущем здесь будет реализовано:
+ * 1. import { useNotifications } from '../hooks/useNotifications';
+ * 2. const { showToast, addNotification } = useNotifications();
+ * 3. При назначении задачи:
+ *    - showToast('Задача назначена', `Задача "${task.title}" назначена пользователю`, 'success');
+ *    - addNotification({
+ *        type: 'task',
+ *        title: 'Новая задача',
+ *        message: `Вам назначена задача: ${task.title}`,
+ *        actionUrl: `/projects/${project.id}/tasks`,
+ *        metadata: { taskId: task.id, projectId: project.id }
+ *      });
+ */
+
 interface ProjectTasksPageProps {
   project: Project | null;
   tasks: Task[];

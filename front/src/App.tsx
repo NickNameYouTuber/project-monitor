@@ -14,6 +14,8 @@ import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
 import { setAccessToken } from './api/client';
 import CallPage from './features/call/pages/CallPage';
+import { Toaster } from './components/ui/sonner';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'settings' | 'merge-request';
 
@@ -311,16 +313,18 @@ export default function App() {
   }, [location.pathname]);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="dark min-h-screen bg-background text-foreground">
-        {!isAuthenticated ? (
-          <AuthPage onLogin={() => setIsAuthenticated(true)} />
-        ) : (
-          <div className="flex h-screen">
-            {!isStandaloneCall && (
-              <Sidebar currentPage={currentPage} onNavigate={handleNavigate} selectedProject={selectedProject} />
-            )}
-            <main className={`flex-1 overflow-hidden ${currentPage === 'projects' || isStandaloneCall ? 'w-full' : ''}`}>
+    <NotificationProvider>
+      <DndProvider backend={HTML5Backend}>
+        <Toaster position="top-right" richColors />
+        <div className="dark min-h-screen bg-background text-foreground">
+          {!isAuthenticated ? (
+            <AuthPage onLogin={() => setIsAuthenticated(true)} />
+          ) : (
+            <div className="flex h-screen">
+              {!isStandaloneCall && (
+                <Sidebar currentPage={currentPage} onNavigate={handleNavigate} selectedProject={selectedProject} />
+              )}
+              <main className={`flex-1 overflow-hidden ${currentPage === 'projects' || isStandaloneCall ? 'w-full' : ''}`}>
               <Routes>
                 <Route path="/" element={<Navigate to="/projects" replace />} />
                 <Route path="/projects" element={
@@ -385,6 +389,7 @@ export default function App() {
           </div>
         )}
       </div>
-    </DndProvider>
+      </DndProvider>
+    </NotificationProvider>
   );
 }

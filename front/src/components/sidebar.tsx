@@ -13,6 +13,7 @@ import { cn } from './ui/utils';
 import type { Page, Project } from '../App';
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '../api/users';
+import { NotificationBell } from './NotificationBell';
 
 interface SidebarProps {
   currentPage: Page;
@@ -44,14 +45,15 @@ export function Sidebar({ currentPage, onNavigate, selectedProject }: SidebarPro
   return (
     <div className="w-64 bg-card border-r border-border flex flex-col">
       <div className="p-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-8 bg-transparent rounded-lg flex items-center justify-center">
             <img src="/logo.svg" alt="NIGIT" className="w-8 h-8" draggable={false} />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl font-semibold">NIGIt</h1>
             <p className="text-sm text-muted-foreground">Team Workspace</p>
           </div>
+          <NotificationBell />
         </div>
       </div>
 
