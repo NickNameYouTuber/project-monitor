@@ -1,8 +1,9 @@
 FROM node:20-alpine
 
-# Install dependencies for MediaSoup
+# Install dependencies for MediaSoup (включая pip)
 RUN apk add --no-cache \
     python3 \
+    py3-pip \
     make \
     g++ \
     gcc \
@@ -11,7 +12,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 COPY . .
 
