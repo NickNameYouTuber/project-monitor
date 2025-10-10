@@ -8,6 +8,7 @@ import NewMeetingDialog from './calls/NewMeetingDialog';
 import UpcomingOverlay from './calls/UpcomingOverlay';
 import CallPage from '../features/call/pages/CallPage';
 import MeetingsList from './calls/MeetingsList';
+import MeetingFilters from './calls/MeetingFilters';
 import UpcomingPanel from './calls/UpcomingPanel';
 import SearchBar from './calls/SearchBar';
 import MonthView from './calls/MonthView';
@@ -43,6 +44,7 @@ const MEETING_COLORS = [
 export function CallsPage() {
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'scheduled' | 'active' | 'completed' | 'cancelled'>('all');
   const [isInCall, setIsInCall] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,18 +148,28 @@ export function CallsPage() {
     color: MEETING_COLORS[0].value
   });
 
-  // Фильтрация по поиску
+  // Фильтрация по поиску и статусу
   const filteredMeetings = React.useMemo(() => {
-    if (!searchQuery.trim()) return meetings;
+    let filtered = meetings;
     
-    const query = searchQuery.toLowerCase();
-    return meetings.filter(m => 
-      m.title.toLowerCase().includes(query) ||
-      m.description?.toLowerCase().includes(query) ||
-      m.participants.some(p => p.toLowerCase().includes(query)) ||
-      m.roomId?.toLowerCase().includes(query)
-    );
-  }, [meetings, searchQuery]);
+    // Фильтр по статусу
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(m => m.status?.toLowerCase() === statusFilter);
+    }
+    
+    // Фильтр по поиску
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(m => 
+        m.title.toLowerCase().includes(query) ||
+        m.description?.toLowerCase().includes(query) ||
+        m.participants.some(p => p.toLowerCase().includes(query)) ||
+        m.roomId?.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  }, [meetings, searchQuery, statusFilter]);
 
   const upcomingMeetings = filteredMeetings
     .filter(meeting => meeting.date > new Date() && meeting.status === 'scheduled')
@@ -277,6 +289,14 @@ export function CallsPage() {
 
       {/* Content area - растягивается на оставшееся пространство */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
+        
+        {/* Фильтры (только для List view) */}
+        {activeTab === 'list' && (
+          <MeetingFilters 
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+          />
+        )}
         
         {/* Tabs content - растягивается на оставшееся пространство */}
         <div className="flex-1 min-h-0 overflow-hidden">
