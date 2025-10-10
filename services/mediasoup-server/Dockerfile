@@ -1,24 +1,13 @@
 FROM node:20-alpine
 
-# Install build + runtime dependencies for MediaSoup
+# Устанавливаем только runtime зависимости (без компиляторов)
 RUN apk add --no-cache \
     python3 \
-    py3-pip \
-    make \
-    g++ \
-    gcc \
-    linux-headers \
     libstdc++
 
 WORKDIR /app
 
-# Copy package files first
-COPY package*.json ./
-
-# Install dependencies (mediasoup будет скомпилирован)
-RUN npm install
-
-# Copy application code
+# Копируем все файлы включая уже собранные node_modules с хост-машины
 COPY . .
 
 EXPOSE 4001
