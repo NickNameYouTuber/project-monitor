@@ -13,7 +13,9 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY package-lock.json ./
-RUN npm install --omit=dev
+
+# Установка с прогрессом и использованием prebuilt binaries где возможно
+RUN npm install --omit=dev --prefer-offline --no-audit --progress=true
 
 COPY . .
 
