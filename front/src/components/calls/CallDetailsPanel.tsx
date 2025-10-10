@@ -1,9 +1,10 @@
-import React from 'react';
-import { CallResponse } from '../../api/calls';
+import React, { useState, useEffect } from 'react';
+import { CallResponse, CallParticipant, getCallParticipants } from '../../api/calls';
 import { X, Video, Calendar, Clock, Users, Tag, Copy, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 
 interface CallDetailsPanelProps {
   call: CallResponse | null;
@@ -13,7 +14,31 @@ interface CallDetailsPanelProps {
 }
 
 const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose, onJoinCall }) => {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
+  const [participants, setParticipants] = useState<CallParticipant[]>([]);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
+
+  useEffect(() => {
+    if (!call || !open) return;
+    
+    const loadParticipants = async () => {
+      setLoadingParticipants(true);
+      try {
+        if (call.participants && call.participants.length > 0) {
+          setParticipants(call.participants);
+        } else {
+          const data = await getCallParticipants(call.id);
+          setParticipants(data);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки участников:', error);
+      } finally {
+        setLoadingParticipants(false);
+      }
+    };
+    
+    loadParticipants();
+  }, [call?.id, open]);
 
   if (!call) return null;
 
@@ -178,6 +203,35 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
               </div>
             </div>
           )}
+
+          {/* Participants */}
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-muted-foreground mt-0.5" />
+            <div className="flex-1">
+              <div className="text-sm font-medium text-muted-foreground mb-2">Участники</div>
+              {loadingParticipants ? (
+                <div className="text-xs text-muted-foreground">Загрузка...</div>
+              ) : participants.length === 0 ? (
+                <div className="text-xs text-muted-foreground">Нет участников</div>
+              ) : (
+                <div className="space-y-2">
+                  {participants.map(p => (
+                    <div key={p.id} className="flex items-center gap-2 text-sm">
+                      <Avatar className="w-6 h-6">
+                        <AvatarFallback className="text-xs">
+                          {p.user.displayName?.[0] || p.user.username[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{p.user.displayName || p.user.username}</span>
+                      {p.role === 'ORGANIZER' && (
+                        <span className="text-xs text-muted-foreground">(организатор)</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Created At */}
           {call.created_at && (

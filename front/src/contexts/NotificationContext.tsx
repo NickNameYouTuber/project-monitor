@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
+import socketService from '../features/call/services/socketService';
 
 export interface Notification {
   id: string;
@@ -79,6 +80,36 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         toast(title, { description });
     }
   }, []);
+
+  useEffect(() => {
+    const socket = socketService.getSocket();
+    
+    if (!socket) return;
+    
+    const handleCallStarting = (data: { callId: string, title: string, roomId: string }) => {
+      addNotification({
+        type: 'call',
+        title: 'Звонок начинается!',
+        message: `"${data.title}" начинается прямо сейчас`,
+        actionUrl: `/call/${data.roomId}`,
+        metadata: { callId: data.callId }
+      });
+      
+      showToast('Звонок начинается!', `"${data.title}" начинается прямо сейчас`, 'info');
+    };
+    
+    const handleCallReminder = (data: { callId: string, title: string, minutesUntil: number }) => {
+      showToast('Напоминание о звонке', `"${data.title}" начнется через ${data.minutesUntil} минут`, 'info');
+    };
+    
+    socket.on('call-starting', handleCallStarting);
+    socket.on('call-reminder', handleCallReminder);
+    
+    return () => {
+      socket.off('call-starting', handleCallStarting);
+      socket.off('call-reminder', handleCallReminder);
+    };
+  }, [addNotification, showToast]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

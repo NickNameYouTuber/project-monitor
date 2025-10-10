@@ -39,9 +39,14 @@ public class CallsController {
     }
 
     @GetMapping
-    @Operation(summary = "Список звонков")
-    public ResponseEntity<List<CallResponse>> list() {
-        return ResponseEntity.ok(service.list().stream().map(this::toResponse).toList());
+    @Operation(summary = "Список звонков текущего пользователя")
+    public ResponseEntity<List<CallResponse>> list(@AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        
+        List<Call> userCalls = service.getCallsForUser(currentUser.getId());
+        return ResponseEntity.ok(userCalls.stream().map(this::toResponse).toList());
     }
 
     @GetMapping("/{id}")
@@ -209,6 +214,13 @@ public class CallsController {
         if (c.getProject() != null) r.setProjectId(c.getProject().getId());
         if (c.getTask() != null) r.setTaskId(c.getTask().getId());
         if (c.getCreatedBy() != null) r.setCreatedBy(c.getCreatedBy().getId());
+        
+        if (c.getParticipants() != null && !c.getParticipants().isEmpty()) {
+            r.setParticipants(c.getParticipants().stream()
+                .map(this::toParticipantResponse)
+                .toList());
+        }
+        
         return r;
     }
 

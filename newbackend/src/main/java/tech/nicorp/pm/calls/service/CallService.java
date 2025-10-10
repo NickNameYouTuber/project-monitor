@@ -30,6 +30,11 @@ public class CallService {
     }
 
     public List<Call> list() { return calls.findAll(); }
+    
+    public List<Call> getCallsForUser(UUID userId) {
+        return calls.findByParticipantUserId(userId);
+    }
+    
     public Optional<Call> get(UUID id) { return calls.findById(id); }
     public Optional<Call> getByRoomId(String roomId) { return calls.findByRoomId(roomId); }
     public List<Call> getByRange(OffsetDateTime start, OffsetDateTime end) { 

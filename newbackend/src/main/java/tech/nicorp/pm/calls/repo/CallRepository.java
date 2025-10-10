@@ -2,6 +2,7 @@ package tech.nicorp.pm.calls.repo;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import tech.nicorp.pm.calls.domain.Call;
 import tech.nicorp.pm.calls.domain.CallStatus;
 
@@ -16,7 +17,9 @@ public interface CallRepository extends JpaRepository<Call, UUID> {
     @Query("SELECT c FROM Call c WHERE c.scheduledTime >= :start AND c.scheduledTime < :end ORDER BY c.scheduledTime")
     List<Call> findByScheduledTimeBetween(OffsetDateTime start, OffsetDateTime end);
     
-    // Для автоматического управления статусами
+    @Query("SELECT DISTINCT c FROM Call c JOIN c.participants p WHERE p.user.id = :userId ORDER BY c.scheduledTime DESC")
+    List<Call> findByParticipantUserId(@Param("userId") UUID userId);
+    
     List<Call> findByStatusAndScheduledTimeBefore(CallStatus status, OffsetDateTime time);
     List<Call> findByStatusAndEndAtBefore(CallStatus status, OffsetDateTime time);
 }

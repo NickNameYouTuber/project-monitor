@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -32,6 +33,7 @@ public class CallResponse {
     private String status;
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
+    private List<CallParticipantResponse> participants;
 }
 
 

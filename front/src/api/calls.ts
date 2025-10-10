@@ -29,6 +29,7 @@ export interface CallResponse {
   duration_minutes?: number;
   status?: string;
   created_at: string;
+  participants?: CallParticipant[];
 }
 
 export async function createCall(data: CallCreateRequest): Promise<CallResponse> {
