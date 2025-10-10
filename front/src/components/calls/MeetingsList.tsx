@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Video, Calendar, Clock, MoreVertical, Copy, Trash2 } from 'lucide-react';
+import { Video, Calendar, Clock, MoreVertical, Copy, Trash2, Mic } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../ui/dropdown-menu';
 
 interface MeetingsListProps {
@@ -23,65 +23,99 @@ interface MeetingsListProps {
 }
 
 export default function MeetingsList({ items, activeTab = 'list', onTabChange, onJoinCall, isLoading }: MeetingsListProps) {
-  // Группировка по датам
+  // Группировка по статусу и времени
   const groupedMeetings = useMemo(() => {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const weekEnd = new Date(today);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-
     const groups: { label: string; meetings: typeof items }[] = [];
 
-    // Сегодня
+    // 1. Идут сейчас (ACTIVE/IN-PROGRESS)
+    const activeItems = items.filter(m => 
+      m.status?.toLowerCase() === 'active' || 
+      m.status?.toLowerCase() === 'in-progress'
+    ).sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    if (activeItems.length > 0) {
+      groups.push({ label: '🔵 Идут сейчас', meetings: activeItems });
+    }
+
+    // 2. Сегодня (предстоящие сегодня)
     const todayItems = items.filter(m => {
-      const mDate = new Date(m.date.getFullYear(), m.date.getMonth(), m.date.getDate());
-      return mDate.getTime() === today.getTime();
+      const isToday = m.date.toDateString() === now.toDateString();
+      const notStarted = m.date > now;
+      const isScheduled = m.status?.toLowerCase() === 'scheduled';
+      return isToday && notStarted && isScheduled;
     }).sort((a, b) => a.date.getTime() - b.date.getTime());
-    
+
     if (todayItems.length > 0) {
-      groups.push({ label: `Сегодня • ${today.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`, meetings: todayItems });
+      groups.push({ label: '📅 Сегодня', meetings: todayItems });
     }
 
-    // Завтра
+    // 3. Завтра
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowItems = items.filter(m => {
-      const mDate = new Date(m.date.getFullYear(), m.date.getMonth(), m.date.getDate());
-      return mDate.getTime() === tomorrow.getTime();
+      const isTomorrow = m.date.toDateString() === tomorrow.toDateString();
+      const isScheduled = m.status?.toLowerCase() === 'scheduled';
+      return isTomorrow && isScheduled;
     }).sort((a, b) => a.date.getTime() - b.date.getTime());
-    
+
     if (tomorrowItems.length > 0) {
-      groups.push({ label: `Завтра • ${tomorrow.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`, meetings: tomorrowItems });
+      groups.push({ label: '📅 Завтра', meetings: tomorrowItems });
     }
 
-    // На этой неделе
+    // 4. На этой неделе
+    const weekEnd = new Date(now);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    weekEnd.setHours(23, 59, 59, 999);
     const thisWeekItems = items.filter(m => {
-      const mDate = new Date(m.date.getFullYear(), m.date.getMonth(), m.date.getDate());
-      return mDate > tomorrow && mDate <= weekEnd;
+      const afterTomorrow = m.date > tomorrow;
+      const beforeWeekEnd = m.date <= weekEnd;
+      const isScheduled = m.status?.toLowerCase() === 'scheduled';
+      return afterTomorrow && beforeWeekEnd && isScheduled;
     }).sort((a, b) => a.date.getTime() - b.date.getTime());
-    
+
     if (thisWeekItems.length > 0) {
-      groups.push({ label: 'На этой неделе', meetings: thisWeekItems });
+      groups.push({ label: '📅 На этой неделе', meetings: thisWeekItems });
     }
 
-    // Позже
+    // 5. Позже (будущие, но не на этой неделе)
     const laterItems = items.filter(m => {
-      const mDate = new Date(m.date.getFullYear(), m.date.getMonth(), m.date.getDate());
-      return mDate > weekEnd;
+      const afterWeek = m.date > weekEnd;
+      const isScheduled = m.status?.toLowerCase() === 'scheduled';
+      return afterWeek && isScheduled;
     }).sort((a, b) => a.date.getTime() - b.date.getTime());
-    
+
     if (laterItems.length > 0) {
-      groups.push({ label: 'Позже', meetings: laterItems });
+      groups.push({ label: '📅 Позже', meetings: laterItems });
     }
 
-    // Прошедшие
+    // 6. Завершенные
+    const completedItems = items.filter(m => 
+      m.status?.toLowerCase() === 'completed'
+    ).sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    if (completedItems.length > 0) {
+      groups.push({ label: '🟡 Завершенные', meetings: completedItems });
+    }
+
+    // 7. Отмененные
+    const cancelledItems = items.filter(m => 
+      m.status?.toLowerCase() === 'cancelled'
+    ).sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    if (cancelledItems.length > 0) {
+      groups.push({ label: '🔴 Отмененные', meetings: cancelledItems });
+    }
+
+    // 8. Прошедшие (SCHEDULED но время прошло)
     const pastItems = items.filter(m => {
-      const mDate = new Date(m.date.getFullYear(), m.date.getMonth(), m.date.getDate());
-      return mDate < today;
+      const isPast = m.date < now;
+      const isScheduled = m.status?.toLowerCase() === 'scheduled';
+      return isPast && isScheduled;
     }).sort((a, b) => b.date.getTime() - a.date.getTime());
-    
+
     if (pastItems.length > 0) {
-      groups.push({ label: 'Прошедшие', meetings: pastItems });
+      groups.push({ label: '📅 Прошедшие', meetings: pastItems });
     }
 
     return groups;
@@ -193,11 +227,21 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
                               <CardTitle className="text-base flex items-center gap-2 mb-2">
+                                {meeting.type === 'video' ? (
+                                  <Video className="w-4 h-4 text-blue-500" />
+                                ) : (
+                                  <Mic className="w-4 h-4 text-green-500" />
+                                )}
                                 {meeting.title}
                               </CardTitle>
                               
                               {/* Дата и время */}
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                                <div className="flex items-center gap-1.5">
+                                  <Calendar className="w-4 h-4" />
+                                  <span>{meeting.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</span>
+                                </div>
+                                <span>в</span>
                                 <div className="flex items-center gap-1.5">
                                   <Clock className="w-4 h-4" />
                                   <span>{meeting.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
