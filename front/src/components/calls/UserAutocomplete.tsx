@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Check, ChevronsUpDown, X, UserPlus } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn } from '../ui/utils';
 import { listUsers, UserDto } from '../../api/users';
 
 interface UserAutocompleteProps {

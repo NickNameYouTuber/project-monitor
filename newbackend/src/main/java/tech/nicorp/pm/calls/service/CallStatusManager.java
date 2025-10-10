@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import tech.nicorp.pm.calls.domain.Call;
 import tech.nicorp.pm.calls.domain.CallStatus;
-import tech.nicorp.pm.calls.repository.CallRepository;
+import tech.nicorp.pm.calls.repo.CallRepository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
