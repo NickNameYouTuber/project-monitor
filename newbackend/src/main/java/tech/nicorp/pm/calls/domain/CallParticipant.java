@@ -27,11 +27,20 @@ public class CallParticipant {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "role")
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", length = 20)
+    private ParticipantRole role = ParticipantRole.PARTICIPANT;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    private ParticipantStatus status = ParticipantStatus.INVITED;
+
+    @Column(name = "invited_at", nullable = false)
+    private OffsetDateTime invitedAt = OffsetDateTime.now();
 
     @Column(name = "joined_at")
     private OffsetDateTime joinedAt;
+
+    @Column(name = "left_at")
+    private OffsetDateTime leftAt;
 }
-
-

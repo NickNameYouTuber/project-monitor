@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -27,6 +28,8 @@ public class CallCreateRequest {
     @JsonProperty("duration_minutes")
     private Integer durationMinutes;
     private String status;
+    @JsonProperty("participant_ids")
+    private List<UUID> participantIds;
 }
 
 

@@ -5,7 +5,9 @@ import { Calendar } from '../ui/calendar';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Textarea } from '../ui/textarea';
 import MeetingColorPicker from './MeetingColorPicker';
+import UserAutocomplete from './UserAutocomplete';
 
 export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeeting, colors, onCreate }: any) {
   return (
@@ -88,21 +90,20 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
             </div>
           </div>
           <div>
-            <Label htmlFor="participants">Participants</Label>
-            <Input
-              id="participants"
-              value={newMeeting.participants}
-              onChange={(e) => setNewMeeting((prev: any) => ({ ...prev, participants: e.target.value }))}
-              placeholder="Enter participant names separated by commas"
-            />
-          </div>
-          <div>
             <Label htmlFor="description">Description</Label>
-            <Input
+            <Textarea
               id="description"
               value={newMeeting.description}
               onChange={(e) => setNewMeeting((prev: any) => ({ ...prev, description: e.target.value }))}
-              placeholder="Meeting description (optional)"
+              placeholder="Описание звонка (опционально)"
+              rows={3}
+            />
+          </div>
+          <div>
+            <UserAutocomplete
+              selectedUsers={newMeeting.participants || []}
+              onUsersChange={(users) => setNewMeeting((prev: any) => ({ ...prev, participants: users }))}
+              label="Участники"
             />
           </div>
           <div className="flex justify-end gap-2">

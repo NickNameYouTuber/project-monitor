@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAdaptiveWebRTC } from '../hooks/useAdaptiveWebRTC';
 import VideoGrid from '../components/VideoGrid';
 import ControlPanel from '../components/ControlPanel';
@@ -7,12 +7,17 @@ import PreCallSetup from '../components/PreCallSetup';
 import ChatPanel from '../components/ChatPanel';
 import RaisedHandsBadge from '../components/RaisedHandsBadge';
 import socketService from '../services/socketService';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
+import { checkCallAccess } from '../../../api/calls';
 
 const CallPage: React.FC = () => {
   const { callId } = useParams<{ callId: string }>();
+  const navigate = useNavigate();
   const [hasJoined, setHasJoined] = useState(false);
+  const [accessChecked, setAccessChecked] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [userRole, setUserRole] = useState<'ORGANIZER' | 'PARTICIPANT' | null>(null);
   const [preCallSettings, setPreCallSettings] = useState<{ 
     cameraEnabled: boolean; 
     microphoneEnabled: boolean; 
@@ -73,6 +78,33 @@ const CallPage: React.FC = () => {
     () => hasScreenShare ? allScreenStreams[currentScreenIndex] : null,
     [hasScreenShare, allScreenStreams, currentScreenIndex]
   );
+
+  // Проверка доступа к звонку
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!callId) return;
+      
+      try {
+        const response = await checkCallAccess(callId);
+        setHasAccess(response.hasAccess);
+        setUserRole(response.role as 'ORGANIZER' | 'PARTICIPANT' | null);
+        setAccessChecked(true);
+        
+        if (!response.hasAccess) {
+          console.warn('Access denied to call:', callId);
+          // Редирект через 2 секунды чтобы показать сообщение
+          setTimeout(() => navigate('/calls'), 2000);
+        }
+      } catch (error) {
+        console.error('Ошибка проверки доступа:', error);
+        setAccessChecked(true);
+        setHasAccess(false);
+        setTimeout(() => navigate('/calls'), 2000);
+      }
+    };
+    
+    checkAccess();
+  }, [callId, navigate]);
 
   // Загрузка информации о звонке для получения projectId/taskId
   useEffect(() => {
@@ -141,6 +173,41 @@ const CallPage: React.FC = () => {
     setPreCallSettings(options);
     setHasJoined(true);
   };
+
+  // Показать загрузку пока проверяется доступ
+  if (!accessChecked) {
+    return (
+      <div className="fixed inset-0 bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Проверка доступа...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Показать ошибку если нет доступа
+  if (!hasAccess) {
+    return (
+      <div className="fixed inset-0 bg-background flex items-center justify-center">
+        <div className="bg-card border border-destructive rounded-lg p-6 max-w-md mx-4 shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="w-6 h-6 text-destructive" />
+            <h2 className="text-xl font-bold text-destructive">Доступ запрещен</h2>
+          </div>
+          <p className="text-foreground mb-4">
+            У вас нет доступа к этому звонку. Возможно, вы не были приглашены как участник.
+          </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Перенаправление на страницу звонков...
+          </p>
+          <Button onClick={() => navigate('/calls')}>
+            Вернуться к списку звонков
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!hasJoined) {
     return (

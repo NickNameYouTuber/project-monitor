@@ -193,6 +193,7 @@ export function CallsPage() {
         scheduled_time: meetingDate.toISOString(),
         duration_minutes: newMeeting.duration,
         status: 'SCHEDULED',
+        participant_ids: newMeeting.participants?.map((u: any) => u.id) || [], // ← НОВОЕ: отправляем UUIDs участников
       });
       
       console.log('✅ Звонок создан успешно');
@@ -208,7 +209,7 @@ export function CallsPage() {
         duration: 30,
         type: 'video',
         description: '',
-        participants: '',
+        participants: [], // ← НОВОЕ: массив User[] вместо строки
         color: MEETING_COLORS[0].value
       });
       setIsCreateMeetingOpen(false);

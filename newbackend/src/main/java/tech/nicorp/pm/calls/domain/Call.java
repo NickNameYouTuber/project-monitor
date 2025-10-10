@@ -8,6 +8,8 @@ import tech.nicorp.pm.projects.domain.Project;
 import tech.nicorp.pm.users.domain.User;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -59,6 +61,17 @@ public class Call {
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @OneToMany(mappedBy = "call", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CallParticipant> participants = new ArrayList<>();
+
+    public void addParticipant(User user, ParticipantRole role) {
+        CallParticipant participant = new CallParticipant();
+        participant.setCall(this);
+        participant.setUser(user);
+        participant.setRole(role);
+        participants.add(participant);
+    }
 }
 
 

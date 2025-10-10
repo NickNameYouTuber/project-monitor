@@ -3,10 +3,17 @@ package tech.nicorp.pm.calls.api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import tech.nicorp.pm.calls.api.dto.CallResponse;
+import tech.nicorp.pm.calls.api.dto.*;
 import tech.nicorp.pm.calls.domain.Call;
+import tech.nicorp.pm.calls.domain.CallParticipant;
+import tech.nicorp.pm.calls.domain.CallStatus;
+import tech.nicorp.pm.calls.domain.ParticipantRole;
+import tech.nicorp.pm.calls.service.CallParticipantService;
 import tech.nicorp.pm.calls.service.CallService;
+import tech.nicorp.pm.calls.service.CallStatusManager;
+import tech.nicorp.pm.users.domain.User;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
@@ -18,7 +25,18 @@ import java.util.UUID;
 @Tag(name = "Calls", description = "Управление звонками")
 public class CallsController {
     private final CallService service;
-    public CallsController(CallService service) { this.service = service; }
+    private final CallParticipantService participantService;
+    private final CallStatusManager statusManager;
+    
+    public CallsController(
+        CallService service, 
+        CallParticipantService participantService,
+        CallStatusManager statusManager
+    ) {
+        this.service = service;
+        this.participantService = participantService;
+        this.statusManager = statusManager;
+    }
 
     @GetMapping
     @Operation(summary = "Список звонков")
@@ -48,7 +66,10 @@ public class CallsController {
 
     @PostMapping
     @Operation(summary = "Создать звонок")
-    public ResponseEntity<CallResponse> create(@RequestBody tech.nicorp.pm.calls.api.dto.CallCreateRequest body) {
+    public ResponseEntity<CallResponse> create(
+            @RequestBody tech.nicorp.pm.calls.api.dto.CallCreateRequest body,
+            @AuthenticationPrincipal User currentUser) {
+        
         Call c = new Call();
         c.setRoomId(body.getRoomId());
         c.setTitle(body.getTitle());
@@ -62,7 +83,15 @@ public class CallsController {
         if (body.getStatus() != null) {
             c.setStatus(tech.nicorp.pm.calls.domain.CallStatus.valueOf(body.getStatus()));
         }
+        
+        // Сохраняем звонок
         Call saved = service.save(c);
+        
+        // Добавляем участников (если указаны)
+        if (currentUser != null && body.getParticipantIds() != null) {
+            participantService.addParticipantsToCall(saved, body.getParticipantIds(), currentUser);
+        }
+        
         return ResponseEntity.created(URI.create("/api/calls/" + saved.getId())).body(toResponse(saved));
     }
 
@@ -87,6 +116,84 @@ public class CallsController {
         return ResponseEntity.noContent().build();
     }
 
+    // ============== УПРАВЛЕНИЕ УЧАСТНИКАМИ ==============
+
+    @PostMapping("/{callId}/participants")
+    @Operation(summary = "Добавить участника к звонку")
+    public ResponseEntity<Void> addParticipant(
+            @PathVariable("callId") UUID callId,
+            @RequestBody AddParticipantRequest request) {
+        ParticipantRole role = request.getRole() != null 
+            ? ParticipantRole.valueOf(request.getRole()) 
+            : ParticipantRole.PARTICIPANT;
+        
+        participantService.addParticipant(callId, request.getUserId(), role);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{callId}/participants/{userId}")
+    @Operation(summary = "Удалить участника из звонка")
+    public ResponseEntity<Void> removeParticipant(
+            @PathVariable("callId") UUID callId,
+            @PathVariable("userId") UUID userId) {
+        participantService.removeParticipant(callId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{callId}/participants")
+    @Operation(summary = "Получить список участников звонка")
+    public ResponseEntity<List<CallParticipantResponse>> getParticipants(
+            @PathVariable("callId") UUID callId) {
+        List<CallParticipant> participants = participantService.getParticipants(callId);
+        return ResponseEntity.ok(participants.stream().map(this::toParticipantResponse).toList());
+    }
+
+    @GetMapping("/{callId}/check-access")
+    @Operation(summary = "Проверить доступ текущего пользователя к звонку")
+    public ResponseEntity<CheckAccessResponse> checkAccess(
+            @PathVariable("callId") UUID callId,
+            @AuthenticationPrincipal User currentUser) {
+        
+        if (currentUser == null) {
+            return ResponseEntity.ok(new CheckAccessResponse(false, null));
+        }
+        
+        boolean hasAccess = participantService.hasAccess(callId, currentUser.getId());
+        String role = participantService.getUserRole(callId, currentUser.getId())
+            .map(Enum::name)
+            .orElse(null);
+        
+        return ResponseEntity.ok(new CheckAccessResponse(hasAccess, role));
+    }
+
+    @PatchMapping("/{callId}/status")
+    @Operation(summary = "Обновить статус звонка (только для организатора)")
+    public ResponseEntity<CallResponse> updateStatus(
+            @PathVariable("callId") UUID callId,
+            @RequestBody UpdateStatusRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        // Проверяем что пользователь - организатор
+        ParticipantRole role = participantService.getUserRole(callId, currentUser.getId())
+            .orElse(null);
+        
+        if (role != ParticipantRole.ORGANIZER) {
+            return ResponseEntity.status(403).build();
+        }
+        
+        return service.get(callId).map(call -> {
+            CallStatus newStatus = CallStatus.valueOf(request.getStatus());
+            statusManager.updateStatus(call, newStatus);
+            return ResponseEntity.ok(toResponse(call));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // ============== HELPER METHODS ==============
+
     private CallResponse toResponse(Call c) {
         CallResponse r = new CallResponse();
         r.setId(c.getId());
@@ -103,6 +210,26 @@ public class CallsController {
         if (c.getTask() != null) r.setTaskId(c.getTask().getId());
         if (c.getCreatedBy() != null) r.setCreatedBy(c.getCreatedBy().getId());
         return r;
+    }
+
+    private CallParticipantResponse toParticipantResponse(CallParticipant p) {
+        User user = p.getUser();
+        CallParticipantResponse.UserSummary userSummary = new CallParticipantResponse.UserSummary(
+            user.getId(),
+            user.getUsername(),
+            user.getDisplayName(),
+            null // avatar - TODO: добавить если есть в User entity
+        );
+        
+        return new CallParticipantResponse(
+            p.getId(),
+            userSummary,
+            p.getRole().name(),
+            p.getStatus().name(),
+            p.getInvitedAt(),
+            p.getJoinedAt(),
+            p.getLeftAt()
+        );
     }
 }
 
