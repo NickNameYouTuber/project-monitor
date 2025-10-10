@@ -12,7 +12,7 @@ function getAccessToken(): string | null {
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: false,
+  withCredentials: true,
   timeout: 15000,
 });
 
