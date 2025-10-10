@@ -9,7 +9,49 @@ interface CallCardProps {
 }
 
 const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) => {
-  const getStatusColor = (status?: string) => {
+  // Вычисляем актуальный статус на основе времени
+  const getActualStatus = (): string => {
+    const now = new Date();
+    const apiStatus = call.status?.toUpperCase();
+    
+    // Если API говорит COMPLETED/CANCELLED - верим ему
+    if (apiStatus === 'COMPLETED' || apiStatus === 'CANCELLED') {
+      return apiStatus;
+    }
+    
+    const timeStr = call.scheduled_time || call.start_at;
+    if (!timeStr) return apiStatus || 'SCHEDULED';
+    
+    const startTime = new Date(timeStr);
+    const endTime = new Date(startTime.getTime() + (call.duration_minutes || 30) * 60000);
+    
+    // Если API говорит ACTIVE, проверяем что время корректное
+    if (apiStatus === 'ACTIVE') {
+      if (startTime <= now && now < endTime) {
+        return 'ACTIVE';
+      }
+      if (now >= endTime) {
+        return 'COMPLETED';
+      }
+      return 'SCHEDULED';
+    }
+    
+    // Если SCHEDULED, проверяем время
+    if (apiStatus === 'SCHEDULED') {
+      if (startTime <= now && now < endTime) {
+        return 'ACTIVE';
+      }
+      if (now >= endTime) {
+        return 'COMPLETED';
+      }
+    }
+    
+    return apiStatus || 'SCHEDULED';
+  };
+
+  const actualStatus = getActualStatus();
+
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
         return 'border-green-500 bg-green-50 dark:bg-green-950/20';
@@ -24,7 +66,7 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
     }
   };
 
-  const getStatusIcon = (status?: string) => {
+  const getStatusIcon = (status: string) => {
     if (status === 'ACTIVE') {
       return <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />;
     }
@@ -68,11 +110,11 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
         className={`
           h-full w-full rounded border-l-4 p-1 cursor-pointer
           transition hover:shadow-md overflow-hidden flex flex-col
-          ${getStatusColor(call.status)}
+          ${getStatusColor(actualStatus)}
         `}
       >
         <div className="flex items-center gap-1 mb-0.5">
-          {getStatusIcon(call.status)}
+          {getStatusIcon(actualStatus)}
           <div className="font-medium text-[10px] truncate flex-1 leading-tight">{call.title || 'Без названия'}</div>
         </div>
         <div className="text-[10px] text-muted-foreground leading-tight">
@@ -89,12 +131,12 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
       className={`
         rounded-lg border-2 p-3 cursor-pointer
         transition hover:shadow-md
-        ${getStatusColor(call.status)}
+        ${getStatusColor(actualStatus)}
       `}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          {getStatusIcon(call.status)}
+          {getStatusIcon(actualStatus)}
           <h3 className="font-medium text-sm">{call.title || 'Без названия'}</h3>
         </div>
       </div>
@@ -115,7 +157,7 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
         )}
       </div>
 
-      {call.status === 'ACTIVE' && (
+      {actualStatus === 'ACTIVE' && (
         <button
           onClick={(e) => {
             e.stopPropagation();

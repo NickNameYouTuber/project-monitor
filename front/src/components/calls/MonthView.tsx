@@ -97,12 +97,60 @@ const MonthView: React.FC<MonthViewProps> = ({
     return callsByDate.get(dateKey) || [];
   };
 
+  // Вычисляем актуальный статус на основе времени
+  const getActualStatus = (call: CallResponse): string => {
+    const now = new Date();
+    const apiStatus = call.status?.toLowerCase();
+    
+    // Если API говорит completed/cancelled - верим ему
+    if (apiStatus === 'completed' || apiStatus === 'cancelled') {
+      return apiStatus;
+    }
+    
+    const timeStr = call.scheduled_time || call.start_at;
+    if (!timeStr) return apiStatus || 'scheduled';
+    
+    const startTime = new Date(timeStr);
+    const endTime = new Date(startTime.getTime() + (call.duration_minutes || 30) * 60000);
+    
+    // Если API говорит active/in-progress, проверяем что время корректное
+    if (apiStatus === 'active' || apiStatus === 'in-progress') {
+      // Проверяем что NOW находится между началом и концом
+      if (startTime <= now && now < endTime) {
+        return 'active';
+      }
+      // Если время прошло, но статус active - это ошибка, считаем completed
+      if (now >= endTime) {
+        return 'completed';
+      }
+      // Если время еще не наступило, но статус active - оставляем scheduled
+      return 'scheduled';
+    }
+    
+    // Если scheduled, проверяем время
+    if (apiStatus === 'scheduled') {
+      // Если время в диапазоне [start, end) - должно быть active
+      if (startTime <= now && now < endTime) {
+        return 'active';
+      }
+      // Если время прошло - это прошедший
+      if (now >= endTime) {
+        return 'past';
+      }
+    }
+    
+    return apiStatus || 'scheduled';
+  };
+
   const getCallCountByStatus = (dateCalls: CallResponse[]) => {
     return {
-      scheduled: dateCalls.filter(c => c.status?.toUpperCase() === 'SCHEDULED').length,
-      active: dateCalls.filter(c => c.status?.toUpperCase() === 'ACTIVE').length,
-      completed: dateCalls.filter(c => c.status?.toUpperCase() === 'COMPLETED').length,
-      cancelled: dateCalls.filter(c => c.status?.toUpperCase() === 'CANCELLED').length,
+      scheduled: dateCalls.filter(c => getActualStatus(c) === 'scheduled').length,
+      active: dateCalls.filter(c => getActualStatus(c) === 'active').length,
+      completed: dateCalls.filter(c => {
+        const status = getActualStatus(c);
+        return status === 'completed' || status === 'past';
+      }).length,
+      cancelled: dateCalls.filter(c => getActualStatus(c) === 'cancelled').length,
     };
   };
 
@@ -270,9 +318,9 @@ const MonthView: React.FC<MonthViewProps> = ({
                               className="text-xs truncate px-1.5 py-0.5 rounded hover:bg-accent/50 transition cursor-pointer border-l-2"
                               style={{
                                 borderLeftColor: 
-                                  call.status?.toUpperCase() === 'ACTIVE' ? '#3b82f6' :
-                                  call.status?.toUpperCase() === 'COMPLETED' ? '#eab308' :
-                                  call.status?.toUpperCase() === 'CANCELLED' ? '#ef4444' : '#22c55e'
+                                  getActualStatus(call) === 'active' ? '#3b82f6' :
+                                  getActualStatus(call) === 'completed' || getActualStatus(call) === 'past' ? '#eab308' :
+                                  getActualStatus(call) === 'cancelled' ? '#ef4444' : '#22c55e'
                               }}
                             >
                               <span className="font-medium">{timeFormatted}</span> {call.title || 'Без названия'}
