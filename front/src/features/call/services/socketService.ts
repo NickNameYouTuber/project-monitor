@@ -215,6 +215,32 @@ class SocketService {
     this.socket?.off('room-not-found');
     this.socket?.off('room-error');
   }
+
+  /**
+   * Получить текущую комнату
+   */
+  getCurrentRoomId(): string | null {
+    return this.lastRoomId;
+  }
+
+  /**
+   * Универсальные методы для работы с socket events
+   */
+  on(event: string, callback: (...args: any[]) => void): void {
+    this.socket?.on(event, callback);
+  }
+
+  off(event: string, callback?: (...args: any[]) => void): void {
+    if (callback) {
+      this.socket?.off(event, callback);
+    } else {
+      this.socket?.off(event);
+    }
+  }
+
+  emit(event: string, ...args: any[]): void {
+    this.socket?.emit(event, ...args);
+  }
 }
 
 const socketService = new SocketService();

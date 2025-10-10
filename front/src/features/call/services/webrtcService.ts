@@ -324,6 +324,20 @@ class WebRTCService {
     try {
       const currentState = peerConnection.signalingState;
       if (currentState === 'stable') {
+        // КООРДИНАЦИЯ OFFERS: Запрашиваем разрешение у сервера для предотвращения glare
+        const roomId = socketService.getCurrentRoomId();
+        if (roomId) {
+          console.log(`📋 Запрашиваю разрешение на offer (${connectionType}) к ${remoteSocketId}...`);
+          
+          try {
+            await this.requestOfferPermission(roomId, remoteSocketId);
+            console.log(`✅ Получено разрешение на offer (${connectionType}) к ${remoteSocketId}`);
+          } catch (error) {
+            console.warn(`⚠️ Не удалось получить разрешение на offer, отправляю без координации:`, error);
+            // Fallback: отправляем без координации
+          }
+        }
+        
         const offer = await peerConnection.createOffer(options);
         await peerConnection.setLocalDescription(offer);
         console.log(`📤 Отправляю offer (${connectionType}) к ${remoteSocketId}`);
@@ -334,6 +348,29 @@ class WebRTCService {
     } catch (error) {
       console.error(`Ошибка создания offer (${connectionType}) для ${remoteSocketId}:`, error);
     }
+  }
+
+  /**
+   * Запросить разрешение на отправку offer (координация для предотвращения glare)
+   */
+  private requestOfferPermission(roomId: string, targetSocketId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        socketService.off('offer-permission-granted', handlePermission);
+        reject(new Error('Offer permission request timeout'));
+      }, 5000); // 5 секунд таймаут
+      
+      const handlePermission = (data: { targetSocketId: string }) => {
+        if (data.targetSocketId === targetSocketId) {
+          clearTimeout(timeout);
+          socketService.off('offer-permission-granted', handlePermission);
+          resolve();
+        }
+      };
+      
+      socketService.on('offer-permission-granted', handlePermission);
+      socketService.emit('request-offer-permission', { roomId, targetSocketId });
+    });
   }
 
   async handleOffer(remoteSocketId: string, offer: RTCSessionDescriptionInit, connectionType: ConnectionType): Promise<void> {

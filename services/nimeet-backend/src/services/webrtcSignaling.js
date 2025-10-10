@@ -586,6 +586,47 @@ const { createAdapter } = require('@socket.io/redis-adapter');
       });
     });
 
+    // ================== КООРДИНАТОР OFFERS (для предотвращения glare) ==================
+    const offerQueues = new Map(); // roomId -> { queue: [], processing: false }
+    
+    socket.on('request-offer-permission', async ({ roomId, targetSocketId }) => {
+      console.log(`📋 Запрос разрешения на offer от ${socket.id} к ${targetSocketId} в комнате ${roomId}`);
+      
+      if (!offerQueues.has(roomId)) {
+        offerQueues.set(roomId, { queue: [], processing: false });
+      }
+      
+      const queue = offerQueues.get(roomId);
+      
+      // Добавить в очередь
+      queue.queue.push({ requester: socket.id, target: targetSocketId });
+      
+      // Если не обрабатывается - разрешить сразу
+      if (!queue.processing) {
+        processOfferQueue(roomId, offerQueues, io);
+      }
+    });
+    
+    // ================== CONSUMER RESTART (для MediaSoup recovery) ==================
+    socket.on('request-consumer-restart', async ({ socketId: targetSocketId }) => {
+      console.log(`🔄 Запрос на рестарт consumer для ${targetSocketId} от ${socket.id}`);
+      
+      // Эта функция будет вызываться когда frontend обнаружит мертвые треки
+      // В mesh P2P режиме: заставляем целевого участника переотправить offer
+      // В MediaSoup режиме: сервер MediaSoup должен обработать это
+      
+      const targetSocket = io.sockets.sockets.get(targetSocketId);
+      if (targetSocket) {
+        // Просим целевого участника пересоздать свои producers
+        targetSocket.emit('recreate-producers-request', {
+          requestedBy: socket.id
+        });
+        console.log(`✅ Запрос на recreate-producers отправлен к ${targetSocketId}`);
+      } else {
+        console.warn(`⚠️ Target socket ${targetSocketId} not found for consumer restart`);
+      }
+    });
+
     socket.on('disconnect', async (reason) => {
       clearTimeout(joinTimeout); // Очищаем таймаут при отключении
       console.log('🔌 Пользователь отключился:', socket.id, 'Причина:', reason);
@@ -606,6 +647,30 @@ const { createAdapter } = require('@socket.io/redis-adapter');
       }
     });
   });
+
+  /**
+   * Процессор очереди offers (для предотвращения glare)
+   */
+  function processOfferQueue(roomId, offerQueues, io) {
+    const queue = offerQueues.get(roomId);
+    if (!queue || queue.queue.length === 0) {
+      return;
+    }
+    
+    queue.processing = true;
+    const { requester, target } = queue.queue.shift();
+    
+    console.log(`✅ Разрешен offer от ${requester} к ${target} в комнате ${roomId}`);
+    
+    // Разрешить offer
+    io.to(requester).emit('offer-permission-granted', { targetSocketId: target });
+    
+    // Через 3 секунды обработать следующий в очереди
+    setTimeout(() => {
+      queue.processing = false;
+      processOfferQueue(roomId, offerQueues, io);
+    }, 3000);
+  }
 
   const handleUserDisconnect = async (socket, roomId) => {
     try {

@@ -100,6 +100,29 @@ services:
       - mongo
       - redis
       - turn
+      - mediasoup-server
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  mediasoup-server:
+    build:
+      context: ./services/mediasoup-server
+      dockerfile: Dockerfile
+    container_name: project-monitor-mediasoup
+    ports:
+      - "4001:4001"
+      - "40000-40100:40000-40100/udp"
+      - "40000-40100:40000-40100/tcp"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://:nimeet_redis_pass@redis:6379
+      - ANNOUNCED_IP=${PUBLIC_IP:-127.0.0.1}
+      - RTC_MIN_PORT=40000
+      - RTC_MAX_PORT=40100
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,https://meet.nicorp.tech
+    depends_on:
+      - redis
     networks:
       - project-monitor-network
     restart: unless-stopped

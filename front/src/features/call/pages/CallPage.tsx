@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { useWebRTC } from '../hooks/useWebRTC';
+import { useAdaptiveWebRTC } from '../hooks/useAdaptiveWebRTC';
 import VideoGrid from '../components/VideoGrid';
 import ControlPanel from '../components/ControlPanel';
 import PreCallSetup from '../components/PreCallSetup';
@@ -45,7 +45,7 @@ const CallPage: React.FC = () => {
     initializeMedia,
     cleanup,
     sendMessage,
-  } = useWebRTC(callId || '', preCallSettings.guestName);
+  } = useAdaptiveWebRTC(callId || '', preCallSettings.guestName);
 
   // Собираем все screen streams (локальный + удаленные), проверяя что они содержат треки
   const allScreenStreams = useMemo(() => {

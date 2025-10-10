@@ -6,6 +6,7 @@ const connectDatabase = require('./config/database');
 const initializeSocket = require('./config/socket');
 const initializeWebRTCSignaling = require('./services/webrtcSignaling');
 const initializeSimpleMeetService = require('./services/simpleMeetService');
+const mediasoupIntegration = require('./services/mediasoupIntegration');
 const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 
@@ -72,6 +73,11 @@ app.get('/', (req, res) => {
 connectDatabase();
 
 const io = initializeSocket(server);
+
+// Инициализация MediaSoup integration (если включено)
+mediasoupIntegration.setupSocketHandlers(io);
+
+// Инициализация WebRTC сигнализации (mesh P2P fallback)
 initializeWebRTCSignaling(io);
 
 // Инициализация простого сервиса встреч
@@ -81,6 +87,20 @@ const simpleMeetService = initializeSimpleMeetService(io);
 app.get('/api/simple-meet/rooms', (req, res) => {
   const rooms = simpleMeetService.getRooms();
   res.json({ rooms });
+});
+
+// API эндпоинт для проверки MediaSoup статуса
+app.get('/api/mediasoup/status', async (req, res) => {
+  try {
+    const stats = await mediasoupIntegration.getStats();
+    res.json({
+      enabled: mediasoupIntegration.enabled,
+      serverUrl: mediasoupIntegration.serverUrl,
+      stats
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 const PORT = process.env.PORT || 5000;

@@ -35,18 +35,34 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   
+  // Фильтруем уникальных участников по userId, выбирая самый свежий socketId
   const uniqueParticipants = useMemo(() => {
     const map = new Map<string, { socketId: string; username: string; mediaState: Participant['mediaState']; isGuest: boolean }>();
+    const userIdToLatestSocket = new Map<string, { socketId: string; participant: Participant }>();
     
+    // Собираем всех участников по userId
     participants.forEach((participant) => {
-      if (participant.userId !== user?.id && !map.has(participant.socketId)) {
-        map.set(participant.socketId, {
-          socketId: participant.socketId,
-          username: participant.username,
-          mediaState: participant.mediaState,
-          isGuest: participant.userId.startsWith('guest-')
-        });
+      // Пропускаем текущего пользователя
+      if (participant.userId === user?.id) {
+        return;
       }
+      
+      // Для каждого userId сохраняем самый последний socketId
+      // (предполагаем что последний в Map - самый свежий)
+      userIdToLatestSocket.set(participant.userId, {
+        socketId: participant.socketId,
+        participant
+      });
+    });
+    
+    // Преобразуем в uniqueParticipants, оставляя только последние socketId для каждого userId
+    userIdToLatestSocket.forEach(({ socketId, participant }) => {
+      map.set(socketId, {
+        socketId: participant.socketId,
+        username: participant.username,
+        mediaState: participant.mediaState,
+        isGuest: participant.userId.startsWith('guest-')
+      });
     });
     
     return map;
@@ -240,16 +256,18 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       }))
     ];
     
-    // Сортировка по поднятым рукам
+    // Сортировка: сначала локальный, потом с поднятыми руками, потом остальные
     participants.sort((a, b) => {
+      // Локальный пользователь всегда первый
+      if (a.isLocal) return -1;
+      if (b.isLocal) return 1;
+      
+      // Затем сортируем по поднятым рукам
       const aHasRaisedHand = raisedHands.has(a.socketId);
       const bHasRaisedHand = raisedHands.has(b.socketId);
       
       if (aHasRaisedHand && !bHasRaisedHand) return -1;
       if (!aHasRaisedHand && bHasRaisedHand) return 1;
-      
-      if (a.isLocal) return -1;
-      if (b.isLocal) return 1;
       
       return 0;
     });
