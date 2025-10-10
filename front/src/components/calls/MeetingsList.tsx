@@ -121,6 +121,24 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
     return groups;
   }, [items]);
 
+  // Вычисляем актуальный статус на основе времени
+  const getActualStatus = (meeting: any) => {
+    const now = new Date();
+    const apiStatus = meeting.status?.toLowerCase();
+    
+    // Если API говорит completed/cancelled/active - верим ему
+    if (apiStatus === 'completed' || apiStatus === 'cancelled' || apiStatus === 'active' || apiStatus === 'in-progress') {
+      return apiStatus;
+    }
+    
+    // Если scheduled, но время прошло - это "прошедший"
+    if (apiStatus === 'scheduled' && meeting.date < now) {
+      return 'past';
+    }
+    
+    return apiStatus || 'scheduled';
+  };
+
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
       case 'scheduled':
@@ -132,6 +150,8 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
         return 'border-yellow-500';
       case 'cancelled':
         return 'border-red-500';
+      case 'past':
+        return 'border-gray-400';
       default:
         return 'border-gray-500';
     }
@@ -148,6 +168,8 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
         return <span className="px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">Завершен</span>;
       case 'cancelled':
         return <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Отменен</span>;
+      case 'past':
+        return <span className="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">Прошедший</span>;
       default:
         return null;
     }
@@ -162,36 +184,6 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Header с табами */}
-      {onTabChange && (
-        <div className="flex-none flex items-center justify-between px-6 py-4 border-b border-border">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center rounded-none bg-transparent p-0">
-              <button
-                onClick={() => onTabChange('calendar')}
-                className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
-                  activeTab === 'calendar'
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Calendar
-              </button>
-              <button
-                onClick={() => onTabChange('list')}
-                className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
-                  activeTab === 'list'
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                List
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Список встреч с группировкой */}
       <div className="flex-1 overflow-y-auto p-6">
         {isLoading ? (
@@ -219,10 +211,11 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                 {/* Карточки в группе */}
                 <div className="space-y-3">
                   {group.meetings.map((meeting) => {
-                    const isJoinable = meeting.roomId && meeting.status !== 'completed' && meeting.status !== 'cancelled';
+                    const actualStatus = getActualStatus(meeting);
+                    const isJoinable = meeting.roomId && actualStatus !== 'completed' && actualStatus !== 'cancelled' && actualStatus !== 'past';
                     
                     return (
-                      <Card key={meeting.id} className={`border-l-4 ${getStatusColor(meeting.status)} transition-all hover:shadow-md`}>
+                      <Card key={meeting.id} className={`border-l-4 ${getStatusColor(actualStatus)} transition-all hover:shadow-md`}>
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
@@ -265,7 +258,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                               
                               {/* Статус badge */}
                               <div className="mt-2">
-                                {getStatusBadge(meeting.status)}
+                                {getStatusBadge(actualStatus)}
                               </div>
                             </div>
                             

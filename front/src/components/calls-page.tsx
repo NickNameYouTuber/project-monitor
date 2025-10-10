@@ -298,6 +298,32 @@ export function CallsPage() {
           />
         )}
         
+        {/* Табы Calendar/List */}
+        <div className="flex items-center gap-4 px-6 py-3 border-b border-border">
+          <div className="flex items-center rounded-none bg-transparent p-0">
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
+                activeTab === 'calendar'
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Calendar
+            </button>
+            <button
+              onClick={() => setActiveTab('list')}
+              className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
+                activeTab === 'list'
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              List
+            </button>
+          </div>
+        </div>
+        
         {/* Tabs content - растягивается на оставшееся пространство */}
         <div className="flex-1 min-h-0 overflow-hidden">
           {activeTab === 'calendar' ? (
@@ -339,8 +365,6 @@ export function CallsPage() {
           ) : (
             <MeetingsList 
               items={filteredMeetings} 
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
               onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
               isLoading={isLoading}
             />

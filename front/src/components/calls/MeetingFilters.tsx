@@ -14,7 +14,7 @@ export default function MeetingFilters({ statusFilter, onStatusFilterChange }: M
         type="single" 
         value={statusFilter} 
         onValueChange={(value) => value && onStatusFilterChange(value as any)}
-        className="border rounded-lg p-1 bg-muted/50"
+        className="rounded-lg p-1 bg-muted/50"
       >
         <ToggleGroupItem 
           value="all" 
