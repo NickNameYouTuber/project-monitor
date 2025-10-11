@@ -61,6 +61,8 @@ class SSEService {
         for (const line of lines) {
           if (!line.trim()) continue;
 
+          console.log('📦 Сырая строка SSE:', line);
+
           const eventMatch = line.match(/event:\s*(.+)/);
           const dataMatch = line.match(/data:\s*(.+)/);
 

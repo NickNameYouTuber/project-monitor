@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 public class CallNotificationController {
     
     private static final Map<UUID, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private static final Map<UUID, ScheduledFuture<?>> heartbeatTasks = new ConcurrentHashMap<>();
     private static final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
     
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -50,16 +52,19 @@ public class CallNotificationController {
         emitter.onCompletion(() -> {
             log.info("📡 SSE отключен: {}", userId);
             emitters.remove(userId);
+            cancelHeartbeat(userId);
         });
         
         emitter.onTimeout(() -> {
             log.info("📡 SSE таймаут: {}", userId);
             emitters.remove(userId);
+            cancelHeartbeat(userId);
         });
         
         emitter.onError((e) -> {
             log.error("📡 SSE ошибка: {}", userId, e);
             emitters.remove(userId);
+            cancelHeartbeat(userId);
         });
         
         try {
@@ -72,20 +77,38 @@ public class CallNotificationController {
             return emitter;
         }
         
-        heartbeatExecutor.scheduleAtFixedRate(() -> {
-            if (emitters.containsKey(userId)) {
-                try {
-                    emitter.send(SseEmitter.event()
-                        .comment("heartbeat"));
-                    log.debug("💓 Heartbeat отправлен пользователю: {}", userId);
-                } catch (IOException e) {
-                    log.warn("💔 Heartbeat failed для пользователя: {}", userId);
-                    emitters.remove(userId);
-                }
-            }
-        }, 15, 15, TimeUnit.SECONDS);
+        ScheduledFuture<?> task = heartbeatExecutor.scheduleAtFixedRate(() -> {
+            sendHeartbeat(userId);
+        }, 10, 10, TimeUnit.SECONDS);
+        
+        heartbeatTasks.put(userId, task);
         
         return emitter;
+    }
+    
+    private static void sendHeartbeat(UUID userId) {
+        SseEmitter emitter = emitters.get(userId);
+        if (emitter == null) {
+            cancelHeartbeat(userId);
+            return;
+        }
+        
+        try {
+            emitter.send(SseEmitter.event().comment("heartbeat"));
+            log.debug("💓 Heartbeat отправлен пользователю: {}", userId);
+        } catch (IOException e) {
+            log.warn("💔 Heartbeat failed для пользователя: {}", userId);
+            emitters.remove(userId);
+            cancelHeartbeat(userId);
+        }
+    }
+    
+    private static void cancelHeartbeat(UUID userId) {
+        ScheduledFuture<?> task = heartbeatTasks.remove(userId);
+        if (task != null && !task.isCancelled()) {
+            task.cancel(false);
+            log.debug("🛑 Heartbeat отменён для пользователя: {}", userId);
+        }
     }
     
     public static void sendCallStarting(UUID userId, String callId, String title, String roomId) {
