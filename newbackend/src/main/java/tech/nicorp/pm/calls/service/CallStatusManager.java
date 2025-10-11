@@ -22,6 +22,8 @@ public class CallStatusManager {
 
     private final CallRepository callRepository;
     private final CallNotificationService notificationService;
+    
+    private final java.util.concurrent.ConcurrentHashMap<UUID, Boolean> sentReminders = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * Обновление статусов звонков каждую минуту
@@ -31,11 +33,53 @@ public class CallStatusManager {
         log.debug("🔄 Запуск автоматического обновления статусов звонков");
         
         try {
+            sendUpcomingCallReminders();
             activateScheduledCalls();
             completeActiveCalls();
         } catch (Exception e) {
             log.error("❌ Ошибка при обновлении статусов звонков", e);
         }
+    }
+
+    /**
+     * Отправка напоминаний за 5 минут до начала звонка
+     */
+    private void sendUpcomingCallReminders() {
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime reminderStart = now.plusMinutes(4);
+        OffsetDateTime reminderEnd = now.plusMinutes(6);
+        
+        List<Call> upcomingCalls = callRepository.findByStatusAndScheduledTimeBetween(
+            CallStatus.SCHEDULED,
+            reminderStart,
+            reminderEnd
+        );
+        
+        for (Call call : upcomingCalls) {
+            if (sentReminders.containsKey(call.getId())) {
+                continue;
+            }
+            
+            long minutesUntil = java.time.Duration.between(now, call.getScheduledTime()).toMinutes();
+            notificationService.notifyCallReminder(call, (int) minutesUntil);
+            
+            sentReminders.put(call.getId(), true);
+            log.info("📢 Отправлено напоминание о звонке {} (через {} минут)", call.getTitle(), minutesUntil);
+        }
+        
+        cleanupOldReminders();
+    }
+    
+    private void cleanupOldReminders() {
+        OffsetDateTime cutoff = OffsetDateTime.now().minusHours(1);
+        sentReminders.entrySet().removeIf(entry -> {
+            try {
+                Call call = callRepository.findById(entry.getKey()).orElse(null);
+                return call == null || call.getScheduledTime().isBefore(cutoff);
+            } catch (Exception e) {
+                return true;
+            }
+        });
     }
 
     /**

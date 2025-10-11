@@ -95,11 +95,23 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         metadata: { callId: data.callId }
       });
       
-      showToast('Звонок начинается!', `"${data.title}" начинается прямо сейчас`, 'info');
+      toast('Звонок начинается!', {
+        description: `"${data.title}" начинается прямо сейчас`,
+        duration: 15000,
+        action: {
+          label: 'В звонок',
+          onClick: () => {
+            window.location.href = `/call/${data.roomId}`;
+          }
+        }
+      });
     };
     
     const handleCallReminder = (data: { callId: string, title: string, minutesUntil: number }) => {
-      showToast('Напоминание о звонке', `"${data.title}" начнется через ${data.minutesUntil} минут`, 'info');
+      toast('Напоминание о звонке', {
+        description: `"${data.title}" начнется через ${data.minutesUntil} минут`,
+        duration: 15000
+      });
     };
     
     socket.on('call-starting', handleCallStarting);
