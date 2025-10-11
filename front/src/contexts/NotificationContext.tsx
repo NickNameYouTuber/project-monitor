@@ -104,6 +104,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
     
     const handleCallReminder = (data: { callId: string, title: string, minutesUntil: number }) => {
+      addNotification({
+        type: 'call',
+        title: 'Напоминание о звонке',
+        message: `"${data.title}" начнется через ${data.minutesUntil} минут`,
+        metadata: { callId: data.callId }
+      });
+      
       toast('Напоминание о звонке', {
         description: `"${data.title}" начнется через ${data.minutesUntil} минут`,
         duration: 15000
