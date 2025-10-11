@@ -23,28 +23,35 @@ public class CallNotificationService {
     private String nimeetBackendUrl;
 
     public void notifyCallStarting(Call call) {
+        log.info("🔔 Попытка отправки уведомлений о начале звонка: callId={}, title={}, roomId={}", 
+            call.getId(), call.getTitle(), call.getRoomId());
+        
         if (call.getParticipants() == null || call.getParticipants().isEmpty()) {
             log.warn("⚠️ Звонок {} не имеет участников, уведомления не отправлены", call.getRoomId());
             return;
         }
         
+        log.info("👥 Участников звонка: {}", call.getParticipants().size());
+        
         for (CallParticipant participant : call.getParticipants()) {
             User user = participant.getUser();
-            if (user == null) continue;
+            if (user == null) {
+                log.warn("⚠️ Участник без пользователя, пропускаем");
+                continue;
+            }
             
             try {
-                Map<String, Object> payload = new HashMap<>();
-                payload.put("userId", user.getId().toString());
-                payload.put("callId", call.getId().toString());
-                payload.put("title", call.getTitle());
-                payload.put("roomId", call.getRoomId());
+                tech.nicorp.pm.calls.api.CallNotificationController.sendCallStarting(
+                    user.getId(),
+                    call.getId().toString(),
+                    call.getTitle(),
+                    call.getRoomId()
+                );
                 
-                String url = nimeetBackendUrl + "/api/notifications/call-starting";
-                restTemplate.postForObject(url, payload, Map.class);
-                
-                log.info("✅ Уведомление о начале звонка отправлено пользователю {}", user.getUsername());
+                log.info("✅ SSE уведомление о начале звонка отправлено пользователю {} (userId={})", 
+                    user.getUsername(), user.getId());
             } catch (Exception e) {
-                log.error("❌ Ошибка отправки уведомления пользователю {}: {}", user.getUsername(), e.getMessage());
+                log.error("❌ Ошибка отправки уведомления пользователю {}: {}", user.getUsername(), e.getMessage(), e);
             }
         }
     }
@@ -59,16 +66,14 @@ public class CallNotificationService {
             if (user == null) continue;
             
             try {
-                Map<String, Object> payload = new HashMap<>();
-                payload.put("userId", user.getId().toString());
-                payload.put("callId", call.getId().toString());
-                payload.put("title", call.getTitle());
-                payload.put("minutesUntil", minutesUntil);
+                tech.nicorp.pm.calls.api.CallNotificationController.sendCallReminder(
+                    user.getId(),
+                    call.getId().toString(),
+                    call.getTitle(),
+                    minutesUntil
+                );
                 
-                String url = nimeetBackendUrl + "/api/notifications/call-reminder";
-                restTemplate.postForObject(url, payload, Map.class);
-                
-                log.info("✅ Напоминание о звонке отправлено пользователю {} (через {} мин)", user.getUsername(), minutesUntil);
+                log.info("✅ SSE напоминание о звонке отправлено пользователю {} (через {} мин)", user.getUsername(), minutesUntil);
             } catch (Exception e) {
                 log.error("❌ Ошибка отправки напоминания пользователю {}: {}", user.getUsername(), e.getMessage());
             }

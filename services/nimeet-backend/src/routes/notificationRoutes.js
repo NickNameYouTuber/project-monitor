@@ -5,7 +5,14 @@ module.exports = (io) => {
   router.post('/call-starting', (req, res) => {
     const { userId, callId, title, roomId } = req.body;
     
-    console.log(`📢 Отправка уведомления о начале звонка пользователю ${userId}`);
+    console.log(`📢 Получен запрос на отправку уведомления о начале звонка`);
+    console.log(`   userId: ${userId}`);
+    console.log(`   callId: ${callId}`);
+    console.log(`   title: ${title}`);
+    console.log(`   roomId: ${roomId}`);
+    
+    const socketsInRoom = io.sockets.adapter.rooms.get(userId);
+    console.log(`   Сокетов в комнате ${userId}: ${socketsInRoom ? socketsInRoom.size : 0}`);
     
     io.to(userId).emit('call-starting', {
       callId,
@@ -13,7 +20,9 @@ module.exports = (io) => {
       roomId
     });
     
-    res.json({ success: true });
+    console.log(`✅ Уведомление отправлено через Socket.IO`);
+    
+    res.json({ success: true, socketsCount: socketsInRoom ? socketsInRoom.size : 0 });
   });
   
   router.post('/call-reminder', (req, res) => {

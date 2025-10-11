@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import socketService from '../features/call/services/socketService';
+import { sseService } from '../services/sseService';
 
 export interface Notification {
   id: string;
@@ -82,10 +82,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   useEffect(() => {
-    const socket = socketService.getSocket();
-    
-    if (!socket) return;
-    
     const handleCallStarting = (data: { callId: string, title: string, roomId: string }) => {
       addNotification({
         type: 'call',
@@ -114,14 +110,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       });
     };
     
-    socket.on('call-starting', handleCallStarting);
-    socket.on('call-reminder', handleCallReminder);
+    sseService.connect(handleCallStarting, handleCallReminder);
     
     return () => {
-      socket.off('call-starting', handleCallStarting);
-      socket.off('call-reminder', handleCallReminder);
+      sseService.disconnect();
     };
-  }, [addNotification, showToast]);
+  }, [addNotification]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

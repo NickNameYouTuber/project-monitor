@@ -64,6 +64,19 @@ const initializeSocket = (httpServer) => {
     }
   });
 
+  io.on('connection', (socket) => {
+    console.log(`🔌 Socket подключен: ${socket.id}, userId: ${socket.userId}`);
+    
+    if (socket.userId) {
+      socket.join(socket.userId);
+      console.log(`👤 Пользователь ${socket.userId} присоединился к своей комнате для уведомлений`);
+    }
+    
+    socket.on('disconnect', () => {
+      console.log(`🔌 Socket отключен: ${socket.id}, userId: ${socket.userId}`);
+    });
+  });
+
   return io;
 };
 
