@@ -50,4 +50,9 @@ springdoc:
     path: /swagger-ui.html
     operationsSorter: method
 
+logging:
+  level:
+    tech.nicorp.pm.calls: INFO
+    org.springframework.scheduling: DEBUG
+
 

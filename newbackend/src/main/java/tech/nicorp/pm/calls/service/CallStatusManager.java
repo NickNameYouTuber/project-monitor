@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import tech.nicorp.pm.calls.domain.Call;
 import tech.nicorp.pm.calls.domain.CallStatus;
 import tech.nicorp.pm.calls.repo.CallRepository;
@@ -33,7 +34,7 @@ public class CallStatusManager {
      */
     @Scheduled(fixedRate = 60000) // 60 секунд
     public void updateCallStatuses() {
-        log.debug("🔄 Запуск автоматического обновления статусов звонков");
+        log.info("🔄 Запуск автоматического обновления статусов звонков");
         
         try {
             sendUpcomingCallReminders();
@@ -47,16 +48,21 @@ public class CallStatusManager {
     /**
      * Отправка напоминаний за 5 минут до начала звонка
      */
+    @Transactional
     private void sendUpcomingCallReminders() {
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime reminderStart = now.plusMinutes(4);
         OffsetDateTime reminderEnd = now.plusMinutes(6);
+        
+        log.info("🔍 Проверка напоминаний: {} - {}", reminderStart, reminderEnd);
         
         List<Call> upcomingCalls = callRepository.findByStatusAndScheduledTimeBetween(
             CallStatus.SCHEDULED,
             reminderStart,
             reminderEnd
         );
+        
+        log.info("📋 Найдено запланированных звонков для напоминания: {}", upcomingCalls.size());
         
         for (Call call : upcomingCalls) {
             if (sentReminders.containsKey(call.getId())) {
@@ -88,13 +94,18 @@ public class CallStatusManager {
     /**
      * SCHEDULED → ACTIVE (если время начала наступило)
      */
+    @Transactional
     private void activateScheduledCalls() {
         OffsetDateTime now = OffsetDateTime.now();
+        
+        log.info("🔍 Проверка звонков для активации до: {}", now);
         
         List<Call> toActivate = callRepository.findByStatusAndScheduledTimeBefore(
             CallStatus.SCHEDULED,
             now
         );
+        
+        log.info("📋 Найдено звонков для активации: {}", toActivate.size());
         
         for (Call call : toActivate) {
             call.setStatus(CallStatus.ACTIVE);
@@ -112,6 +123,7 @@ public class CallStatusManager {
     /**
      * ACTIVE → COMPLETED (если прошло endAt + 5 минут grace period)
      */
+    @Transactional
     private void completeActiveCalls() {
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime gracePeriod = now.minusMinutes(5);

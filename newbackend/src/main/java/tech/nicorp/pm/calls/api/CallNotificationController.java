@@ -74,7 +74,8 @@ public class CallNotificationController {
     public static void sendCallStarting(UUID userId, String callId, String title, String roomId) {
         SseEmitter emitter = emitters.get(userId);
         if (emitter == null) {
-            log.warn("⚠️ Нет SSE подключения для пользователя {}", userId);
+            log.warn("⚠️ Нет SSE подключения для пользователя {} (всего подключений: {})", userId, emitters.size());
+            log.info("📋 Список подключенных пользователей: {}", emitters.keySet());
             return;
         }
         
@@ -96,7 +97,8 @@ public class CallNotificationController {
     public static void sendCallReminder(UUID userId, String callId, String title, int minutesUntil) {
         SseEmitter emitter = emitters.get(userId);
         if (emitter == null) {
-            log.warn("⚠️ Нет SSE подключения для пользователя {}", userId);
+            log.warn("⚠️ Нет SSE подключения для пользователя {} (всего подключений: {})", userId, emitters.size());
+            log.info("📋 Список подключенных пользователей: {}", emitters.keySet());
             return;
         }
         

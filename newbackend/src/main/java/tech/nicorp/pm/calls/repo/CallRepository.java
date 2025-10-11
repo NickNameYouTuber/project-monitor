@@ -22,9 +22,17 @@ public interface CallRepository extends JpaRepository<Call, UUID> {
            "ORDER BY c.scheduledTime DESC")
     List<Call> findByParticipantUserId(@Param("userId") UUID userId);
     
-    List<Call> findByStatusAndScheduledTimeBefore(CallStatus status, OffsetDateTime time);
-    List<Call> findByStatusAndEndAtBefore(CallStatus status, OffsetDateTime time);
-    List<Call> findByStatusAndScheduledTimeBetween(CallStatus status, OffsetDateTime start, OffsetDateTime end);
+    @Query("SELECT DISTINCT c FROM Call c LEFT JOIN FETCH c.participants p LEFT JOIN FETCH p.user " +
+           "WHERE c.status = :status AND c.scheduledTime < :time ORDER BY c.scheduledTime")
+    List<Call> findByStatusAndScheduledTimeBefore(@Param("status") CallStatus status, @Param("time") OffsetDateTime time);
+    
+    @Query("SELECT DISTINCT c FROM Call c LEFT JOIN FETCH c.participants p LEFT JOIN FETCH p.user " +
+           "WHERE c.status = :status AND c.endAt < :time ORDER BY c.endAt")
+    List<Call> findByStatusAndEndAtBefore(@Param("status") CallStatus status, @Param("time") OffsetDateTime time);
+    
+    @Query("SELECT DISTINCT c FROM Call c LEFT JOIN FETCH c.participants p LEFT JOIN FETCH p.user " +
+           "WHERE c.status = :status AND c.scheduledTime >= :start AND c.scheduledTime < :end ORDER BY c.scheduledTime")
+    List<Call> findByStatusAndScheduledTimeBetween(@Param("status") CallStatus status, @Param("start") OffsetDateTime start, @Param("end") OffsetDateTime end);
 }
 
 
