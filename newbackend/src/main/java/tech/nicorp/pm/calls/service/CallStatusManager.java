@@ -8,8 +8,11 @@ import tech.nicorp.pm.calls.domain.Call;
 import tech.nicorp.pm.calls.domain.CallStatus;
 import tech.nicorp.pm.calls.repo.CallRepository;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Автоматическое управление статусами звонков
@@ -23,7 +26,7 @@ public class CallStatusManager {
     private final CallRepository callRepository;
     private final CallNotificationService notificationService;
     
-    private final java.util.concurrent.ConcurrentHashMap<UUID, Boolean> sentReminders = new java.util.concurrent.ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Boolean> sentReminders = new ConcurrentHashMap<>();
 
     /**
      * Обновление статусов звонков каждую минуту
@@ -60,7 +63,7 @@ public class CallStatusManager {
                 continue;
             }
             
-            long minutesUntil = java.time.Duration.between(now, call.getScheduledTime()).toMinutes();
+            long minutesUntil = Duration.between(now, call.getScheduledTime()).toMinutes();
             notificationService.notifyCallReminder(call, (int) minutesUntil);
             
             sentReminders.put(call.getId(), true);
