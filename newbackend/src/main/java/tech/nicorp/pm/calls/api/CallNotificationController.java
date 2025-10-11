@@ -26,10 +26,13 @@ public class CallNotificationController {
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "SSE stream для уведомлений о звонках")
     public SseEmitter streamNotifications(@AuthenticationPrincipal Object principal) {
+        log.info("🔍 DEBUG SSE: principal = {}, type = {}", principal, principal != null ? principal.getClass().getName() : "null");
+        
         UUID userId = extractUserId(principal);
+        log.info("🔍 DEBUG SSE: extracted userId = {}", userId);
         
         if (userId == null) {
-            log.warn("Попытка подключения к SSE без авторизации");
+            log.warn("⚠️ Попытка подключения к SSE без авторизации, principal was: {}", principal);
             SseEmitter emitter = new SseEmitter(0L);
             emitter.completeWithError(new IllegalStateException("Unauthorized"));
             return emitter;
