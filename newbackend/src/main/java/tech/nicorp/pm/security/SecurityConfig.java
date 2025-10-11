@@ -33,7 +33,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/git/**").authenticated()
                         .requestMatchers("/api/projects/**", "/api/dashboards/**", "/api/repositories/**",
                                 "/api/tasks/**", "/api/task-repository/**", "/api/comments/**",
-                                "/api/whiteboards/**", "/api/whiteboard-**").authenticated()
+                                "/api/whiteboards/**", "/api/whiteboard-**",
+                                "/api/calls/**", "/api/call-notifications/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(basicPatAuthFilter, UsernamePasswordAuthenticationFilter.class)
