@@ -39,6 +39,10 @@ security:
     issuer: project-monitor
     expirationSeconds: 2592000
 
+nimeet:
+  backend:
+    url: ${NIMEET_BACKEND_URL:http://nimeet-backend:3001}
+
 springdoc:
   api-docs:
     path: /api-docs

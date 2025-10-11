@@ -9,6 +9,7 @@ const initializeSimpleMeetService = require('./services/simpleMeetService');
 const mediasoupIntegration = require('./services/mediasoupIntegration');
 const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -73,6 +74,8 @@ app.get('/', (req, res) => {
 connectDatabase();
 
 const io = initializeSocket(server);
+
+app.use('/api/notifications', notificationRoutes(io));
 
 // Инициализация MediaSoup integration (если включено)
 mediasoupIntegration.setupSocketHandlers(io);

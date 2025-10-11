@@ -21,6 +21,7 @@ import java.util.List;
 public class CallStatusManager {
 
     private final CallRepository callRepository;
+    private final CallNotificationService notificationService;
 
     /**
      * Обновление статусов звонков каждую минуту
@@ -53,19 +54,7 @@ public class CallStatusManager {
             callRepository.save(call);
             log.info("✅ Call {} автоматически активирован: {}", call.getId(), call.getTitle());
             
-            // TODO: Отправить WebSocket уведомления всем участникам
-            // Для каждого участника с status=INVITED отправить через nimeet-backend:
-            // socket.to(userId).emit('call-starting', {
-            //   callId: call.getId(),
-            //   title: call.getTitle(),
-            //   roomId: call.getRoomId()
-            // });
-            if (call.getParticipants() != null) {
-                call.getParticipants().forEach(participant -> {
-                    log.info("📢 TODO: Отправить уведомление участнику {} о начале звонка {}", 
-                        participant.getUser().getUsername(), call.getRoomId());
-                });
-            }
+            notificationService.notifyCallStarting(call);
         }
         
         if (toActivate.size() > 0) {
