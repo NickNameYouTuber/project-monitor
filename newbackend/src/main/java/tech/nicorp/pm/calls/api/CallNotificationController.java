@@ -14,6 +14,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -22,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CallNotificationController {
     
     private static final Map<UUID, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private static final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
     
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "SSE stream для уведомлений о звонках")
@@ -40,7 +44,7 @@ public class CallNotificationController {
         
         log.info("📡 SSE подключение от пользователя: {}", userId);
         
-        SseEmitter emitter = new SseEmitter(0L); // Бесконечный таймаут
+        SseEmitter emitter = new SseEmitter(0L);
         emitters.put(userId, emitter);
         
         emitter.onCompletion(() -> {
@@ -58,15 +62,28 @@ public class CallNotificationController {
             emitters.remove(userId);
         });
         
-        // Отправляем heartbeat для проверки соединения
         try {
             emitter.send(SseEmitter.event()
                 .name("connected")
                 .data(Map.of("message", "Connected to call notifications")));
         } catch (IOException e) {
-            log.error("Ошибка отправки heartbeat", e);
+            log.error("Ошибка отправки connected", e);
             emitters.remove(userId);
+            return emitter;
         }
+        
+        heartbeatExecutor.scheduleAtFixedRate(() -> {
+            if (emitters.containsKey(userId)) {
+                try {
+                    emitter.send(SseEmitter.event()
+                        .comment("heartbeat"));
+                    log.debug("💓 Heartbeat отправлен пользователю: {}", userId);
+                } catch (IOException e) {
+                    log.warn("💔 Heartbeat failed для пользователя: {}", userId);
+                    emitters.remove(userId);
+                }
+            }
+        }, 15, 15, TimeUnit.SECONDS);
         
         return emitter;
     }
