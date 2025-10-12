@@ -155,6 +155,10 @@ export function CallsPage() {
     description: string;
     participants: any[];
     color: string;
+    isRecurring?: boolean;
+    recurrenceType?: string;
+    recurrenceDays?: number[];
+    recurrenceEndDate?: Date | null;
   }>({
     title: '',
     date: new Date(),
@@ -163,7 +167,11 @@ export function CallsPage() {
     type: 'video',
     description: '',
     participants: [],
-    color: MEETING_COLORS[0].value
+    color: MEETING_COLORS[0].value,
+    isRecurring: false,
+    recurrenceType: 'NONE',
+    recurrenceDays: [],
+    recurrenceEndDate: null
   });
 
   // Фильтрация по поиску и статусу
@@ -202,7 +210,7 @@ export function CallsPage() {
     const roomId = Date.now().toString();
 
     try {
-      await createCall({
+      const payload: any = {
         room_id: roomId,
         title: newMeeting.title,
         description: newMeeting.description,
@@ -211,19 +219,30 @@ export function CallsPage() {
         scheduled_time: meetingDate.toISOString(),
         duration_minutes: newMeeting.duration,
         status: 'SCHEDULED',
-        participant_ids: newMeeting.participants?.map((u: any) => u.id) || [], // ← НОВОЕ: отправляем UUIDs участников
-      });
+        participant_ids: newMeeting.participants?.map((u: any) => u.id) || [],
+      };
+      
+      if (newMeeting.isRecurring) {
+        payload.is_recurring = true;
+        payload.recurrence_type = newMeeting.recurrenceType;
+        payload.recurrence_days = newMeeting.recurrenceDays;
+        if (newMeeting.recurrenceEndDate) {
+          payload.recurrence_end_date = new Date(newMeeting.recurrenceEndDate).toISOString();
+        }
+      }
+      
+      await createCall(payload);
       
       console.log('✅ Звонок создан успешно');
       
       const participantCount = newMeeting.participants?.length || 0;
-      showToast(
-        'Звонок создан', 
-        participantCount > 0 
+      const message = newMeeting.isRecurring 
+        ? `Создана серия повторяющихся встреч` 
+        : participantCount > 0 
           ? `${participantCount} участник${participantCount > 1 ? 'а' : ''} получ${participantCount > 1 ? 'ат' : 'ит'} уведомление`
-          : 'Вы можете пригласить участников позже',
-        'success'
-      );
+          : 'Вы можете пригласить участников позже';
+      
+      showToast('Звонок создан', message, 'success');
       
       await reloadCalls();
       
@@ -235,7 +254,11 @@ export function CallsPage() {
         type: 'video',
         description: '',
         participants: [],
-        color: MEETING_COLORS[0].value
+        color: MEETING_COLORS[0].value,
+        isRecurring: false,
+        recurrenceType: 'NONE',
+        recurrenceDays: [],
+        recurrenceEndDate: null
       });
       setIsCreateMeetingOpen(false);
     } catch (err: any) {

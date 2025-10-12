@@ -33,6 +33,10 @@ public interface CallRepository extends JpaRepository<Call, UUID> {
     @Query("SELECT DISTINCT c FROM Call c LEFT JOIN FETCH c.participants p LEFT JOIN FETCH p.user " +
            "WHERE c.status = :status AND c.scheduledTime >= :start AND c.scheduledTime < :end ORDER BY c.scheduledTime")
     List<Call> findByStatusAndScheduledTimeBetween(@Param("status") CallStatus status, @Param("start") OffsetDateTime start, @Param("end") OffsetDateTime end);
+    
+    @Query("SELECT DISTINCT c FROM Call c LEFT JOIN FETCH c.participants p LEFT JOIN FETCH p.user " +
+           "WHERE c.recurrenceGroupId = :groupId ORDER BY c.scheduledTime ASC")
+    List<Call> findByRecurrenceGroupId(@Param("groupId") UUID groupId);
 }
 
 

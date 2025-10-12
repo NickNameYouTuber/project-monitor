@@ -45,6 +45,10 @@ public class CallService {
     public Call save(Call c) { return calls.save(c); }
     public void delete(UUID id) { calls.deleteById(id); }
 
+    public List<Call> getByRecurrenceGroupId(UUID groupId) {
+        return calls.findByRecurrenceGroupId(groupId);
+    }
+    
     public Project resolveProject(UUID id) { return id == null ? null : projects.findById(id).orElse(null); }
     public Task resolveTask(UUID id) { return id == null ? null : tasks.findById(id).orElse(null); }
     public User resolveUser(UUID id) { return id == null ? null : users.findById(id).orElse(null); }

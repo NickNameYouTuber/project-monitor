@@ -34,6 +34,21 @@ public class CallResponse {
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
     private List<CallParticipantResponse> participants;
+    
+    @JsonProperty("recurrence_group_id")
+    private UUID recurrenceGroupId;
+    
+    @JsonProperty("is_recurring")
+    private Boolean isRecurring;
+    
+    @JsonProperty("recurrence_type")
+    private String recurrenceType;
+    
+    @JsonProperty("recurrence_days")
+    private String recurrenceDays;
+    
+    @JsonProperty("recurrence_end_date")
+    private OffsetDateTime recurrenceEndDate;
 }
 
 

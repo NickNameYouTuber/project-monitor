@@ -30,6 +30,18 @@ public class CallCreateRequest {
     private String status;
     @JsonProperty("participant_ids")
     private List<UUID> participantIds;
+    
+    @JsonProperty("is_recurring")
+    private Boolean isRecurring;
+    
+    @JsonProperty("recurrence_type")
+    private String recurrenceType;
+    
+    @JsonProperty("recurrence_days")
+    private List<Integer> recurrenceDays;
+    
+    @JsonProperty("recurrence_end_date")
+    private OffsetDateTime recurrenceEndDate;
 }
 
 

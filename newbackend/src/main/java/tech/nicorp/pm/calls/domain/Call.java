@@ -65,6 +65,22 @@ public class Call {
     @OneToMany(mappedBy = "call", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CallParticipant> participants = new ArrayList<>();
 
+    @Column(name = "recurrence_group_id", columnDefinition = "uuid")
+    private UUID recurrenceGroupId;
+
+    @Column(name = "is_recurring")
+    private Boolean isRecurring = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "recurrence_type", length = 20)
+    private RecurrenceType recurrenceType;
+
+    @Column(name = "recurrence_days", length = 50)
+    private String recurrenceDays;
+
+    @Column(name = "recurrence_end_date")
+    private OffsetDateTime recurrenceEndDate;
+
     public void addParticipant(User user, ParticipantRole role) {
         CallParticipant participant = new CallParticipant();
         participant.setCall(this);

@@ -27,15 +27,18 @@ public class CallsController {
     private final CallService service;
     private final CallParticipantService participantService;
     private final CallStatusManager statusManager;
+    private final RecurringCallService recurringService;
     
     public CallsController(
         CallService service, 
         CallParticipantService participantService,
-        CallStatusManager statusManager
+        CallStatusManager statusManager,
+        RecurringCallService recurringService
     ) {
         this.service = service;
         this.participantService = participantService;
         this.statusManager = statusManager;
+        this.recurringService = recurringService;
     }
 
     @GetMapping
@@ -74,16 +77,33 @@ public class CallsController {
             @RequestParam("end") OffsetDateTime end) {
         return ResponseEntity.ok(service.getByRange(start, end).stream().map(this::toResponse).toList());
     }
+    
+    @GetMapping("/recurrence-group/{groupId}")
+    @Operation(summary = "Получить все встречи из группы повторяющихся")
+    public ResponseEntity<List<CallResponse>> getRecurrenceGroup(@PathVariable UUID groupId) {
+        List<Call> calls = service.getByRecurrenceGroupId(groupId);
+        return ResponseEntity.ok(calls.stream().map(this::toResponse).toList());
+    }
 
     @PostMapping
-    @Operation(summary = "Создать звонок")
-    public ResponseEntity<CallResponse> create(
+    @Operation(summary = "Создать звонок или серию повторяющихся звонков")
+    public ResponseEntity<?> create(
             @RequestBody tech.nicorp.pm.calls.api.dto.CallCreateRequest body,
             @AuthenticationPrincipal Object principal) {
         
         UUID userId = extractUserId(principal);
         User currentUser = userId != null ? service.resolveUser(userId) : null;
         
+        if (Boolean.TRUE.equals(body.getIsRecurring())) {
+            List<Call> calls = recurringService.createRecurringCalls(body, currentUser, body.getParticipantIds());
+            return ResponseEntity.ok(calls.stream().map(this::toResponse).toList());
+        } else {
+            Call saved = createSingleCall(body, currentUser);
+            return ResponseEntity.created(URI.create("/api/calls/" + saved.getId())).body(toResponse(saved));
+        }
+    }
+    
+    private Call createSingleCall(tech.nicorp.pm.calls.api.dto.CallCreateRequest body, User currentUser) {
         Call c = new Call();
         c.setRoomId(body.getRoomId());
         c.setTitle(body.getTitle());
@@ -98,15 +118,13 @@ public class CallsController {
             c.setStatus(tech.nicorp.pm.calls.domain.CallStatus.valueOf(body.getStatus()));
         }
         
-        // Сохраняем звонок
         Call saved = service.save(c);
         
-        // Добавляем участников (если указаны)
         if (currentUser != null && body.getParticipantIds() != null) {
             participantService.addParticipantsToCall(saved, body.getParticipantIds(), currentUser);
         }
         
-        return ResponseEntity.created(URI.create("/api/calls/" + saved.getId())).body(toResponse(saved));
+        return saved;
     }
 
     @PutMapping("/{id}")
@@ -225,6 +243,12 @@ public class CallsController {
         if (c.getProject() != null) r.setProjectId(c.getProject().getId());
         if (c.getTask() != null) r.setTaskId(c.getTask().getId());
         if (c.getCreatedBy() != null) r.setCreatedBy(c.getCreatedBy().getId());
+        
+        r.setRecurrenceGroupId(c.getRecurrenceGroupId());
+        r.setIsRecurring(c.getIsRecurring());
+        r.setRecurrenceType(c.getRecurrenceType() != null ? c.getRecurrenceType().name() : null);
+        r.setRecurrenceDays(c.getRecurrenceDays());
+        r.setRecurrenceEndDate(c.getRecurrenceEndDate());
         
         if (c.getParticipants() != null && !c.getParticipants().isEmpty()) {
             r.setParticipants(c.getParticipants().stream()

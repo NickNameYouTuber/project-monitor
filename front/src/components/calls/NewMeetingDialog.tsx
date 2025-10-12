@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Calendar } from '../ui/calendar';
@@ -6,20 +6,21 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import { Checkbox } from '../ui/checkbox';
 import MeetingColorPicker from './MeetingColorPicker';
 import UserAutocomplete from './UserAutocomplete';
 
 export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeeting, colors, onCreate }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl fixed top-[50%] left-[50%] translate-x-[0%] translate-y-[0%]">
+      <DialogContent className="max-w-full sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Schedule New Meeting</DialogTitle>
+          <DialogTitle>Запланировать встречу</DialogTitle>
           <DialogDescription>
-            Create a new meeting and invite participants.
+            Создайте новую встречу и пригласите участников
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 px-1">
           <div>
             <Label htmlFor="title">Meeting Title</Label>
             <Input
@@ -29,9 +30,9 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
               placeholder="Enter meeting title"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Date</Label>
+              <Label>Дата</Label>
               <Calendar
                 mode="single"
                 selected={newMeeting.date}
@@ -89,8 +90,102 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
               </div>
             </div>
           </div>
+          
+          <div className="space-y-3 border rounded-lg p-4 bg-muted/20">
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="isRecurring"
+                checked={newMeeting.isRecurring || false}
+                onCheckedChange={(checked) => setNewMeeting((prev: any) => ({ 
+                  ...prev, 
+                  isRecurring: checked,
+                  recurrenceType: checked ? 'WEEKLY' : 'NONE',
+                  recurrenceDays: checked ? [] : [],
+                  recurrenceEndDate: checked ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null
+                }))}
+              />
+              <Label htmlFor="isRecurring" className="cursor-pointer">Повторяющаяся встреча</Label>
+            </div>
+            
+            {newMeeting.isRecurring && (
+              <div className="space-y-3 pl-6">
+                <div>
+                  <Label>Тип повторения</Label>
+                  <Select 
+                    value={newMeeting.recurrenceType || 'WEEKLY'} 
+                    onValueChange={(value) => setNewMeeting((prev: any) => ({ ...prev, recurrenceType: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DAILY">Ежедневно</SelectItem>
+                      <SelectItem value="WEEKLY">Еженедельно</SelectItem>
+                      <SelectItem value="MONTHLY">Ежемесячно</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {newMeeting.recurrenceType === 'WEEKLY' && (
+                  <div>
+                    <Label>Дни недели</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {[
+                        { label: 'Пн', value: 1 },
+                        { label: 'Вт', value: 2 },
+                        { label: 'Ср', value: 3 },
+                        { label: 'Чт', value: 4 },
+                        { label: 'Пт', value: 5 },
+                        { label: 'Сб', value: 6 },
+                        { label: 'Вс', value: 7 }
+                      ].map((day) => {
+                        const isSelected = (newMeeting.recurrenceDays || []).includes(day.value);
+                        return (
+                          <Button
+                            key={day.value}
+                            type="button"
+                            size="sm"
+                            variant={isSelected ? 'default' : 'outline'}
+                            onClick={() => {
+                              const days = newMeeting.recurrenceDays || [];
+                              if (isSelected) {
+                                setNewMeeting((prev: any) => ({ 
+                                  ...prev, 
+                                  recurrenceDays: days.filter((d: number) => d !== day.value) 
+                                }));
+                              } else {
+                                setNewMeeting((prev: any) => ({ 
+                                  ...prev, 
+                                  recurrenceDays: [...days, day.value].sort() 
+                                }));
+                              }
+                            }}
+                            className="w-10"
+                          >
+                            {day.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <Label>Дата окончания повторений</Label>
+                  <Calendar
+                    mode="single"
+                    selected={newMeeting.recurrenceEndDate}
+                    onSelect={(date) => date && setNewMeeting((prev: any) => ({ ...prev, recurrenceEndDate: date }))}
+                    className="rounded-md border mt-2"
+                    disabled={(date) => date < new Date()}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Описание</Label>
             <Textarea
               id="description"
               value={newMeeting.description}

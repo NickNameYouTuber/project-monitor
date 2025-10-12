@@ -111,7 +111,7 @@ export default function UserAutocomplete({
         <PopoverContent className="w-full p-0" align="start">
           <Command>
             <CommandInput placeholder="Поиск пользователей..." />
-            <CommandList>
+            <CommandList className="max-h-[200px] overflow-y-auto">
               {isLoading ? (
                 <div className="p-4 text-sm text-center text-muted-foreground">
                   Загрузка...
