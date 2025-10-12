@@ -32,10 +32,22 @@ public class RecurringCallService {
         UUID groupId = UUID.randomUUID();
         List<Call> calls = new ArrayList<>();
         
-        LocalDate startDate = request.getScheduledTime().toLocalDate();
-        LocalDate endDate = request.getRecurrenceEndDate().toLocalDate();
-        LocalTime time = request.getScheduledTime().toLocalTime();
-        ZoneOffset offset = request.getScheduledTime().getOffset();
+        LocalDate startDate = LocalDate.now();
+        if (request.getScheduledTime() != null) {
+            startDate = request.getScheduledTime().toLocalDate();
+        }
+        
+        LocalDate endDate = request.getRecurrenceEndDate() != null 
+            ? request.getRecurrenceEndDate().toLocalDate() 
+            : startDate.plusMonths(3);
+        
+        LocalTime time = request.getScheduledTime() != null 
+            ? request.getScheduledTime().toLocalTime() 
+            : LocalTime.of(9, 0);
+        
+        ZoneOffset offset = request.getScheduledTime() != null 
+            ? request.getScheduledTime().getOffset() 
+            : ZoneOffset.UTC;
         
         LocalDate currentDate = startDate;
         int maxIterations = 365;
