@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   GitBranch, 
   Folder, 
@@ -51,6 +51,7 @@ interface RepositoryPageProps {
   projects: Project[];
   tasks: Task[];
   initialRepoId?: string;
+  defaultTab?: string;
 }
 
 interface FileNode {
@@ -375,8 +376,9 @@ function RepositorySettings() {
   );
 }
 
-export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPageProps) {
+export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'files' }: RepositoryPageProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [repositories, setRepositories] = useState<RepositoryDto[]>([]);
   const [selectedRepoId, setSelectedRepoId] = useState<string>('');
@@ -607,6 +609,23 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
     ? tasks.filter(task => task.projectId === selectedProject.id && task.repositoryBranch)
     : [];
 
+  // Вычислить активный таб из URL
+  const activeTab = useMemo(() => {
+    const path = location.pathname;
+    if (path.includes('/files')) return 'files';
+    if (path.includes('/commits')) return 'commits';
+    if (path.includes('/branches')) return 'branches';
+    if (path.includes('/members')) return 'members';
+    if (path.includes('/merge-requests')) return 'merge-requests';
+    if (path.includes('/tasks')) return 'tasks';
+    if (path.includes('/settings')) return 'settings';
+    return defaultTab;
+  }, [location.pathname, defaultTab]);
+
+  const handleTabChange = (value: string) => {
+    navigate(`/projects/${selectedProject?.id}/repository/${selectedRepoId}/${value}`);
+  };
+
   if (isLoading) {
     return <LoadingSpinner 
       stages={['Locate Project', 'Connect Repo', 'Fetch Content', 'Ready']}
@@ -659,7 +678,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
             </CardContent>
           </Card>
         ) : (
-        <Tabs defaultValue="files" className="h-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full">
           <TabsList>
             <TabsTrigger value="files">Files</TabsTrigger>
             <TabsTrigger value="commits">Commits</TabsTrigger>

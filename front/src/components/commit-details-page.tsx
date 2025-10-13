@@ -238,7 +238,7 @@ function FileGroup({ type, files }: { type: 'added' | 'modified' | 'deleted'; fi
           <div key={idx} className="space-y-2">
             <div className="font-medium text-sm flex items-center gap-2">
               <FileIcon className="w-4 h-4" />
-              {file.newPath || file.oldPath}
+              {file.changeType === 'DELETE' ? file.oldPath : (file.newPath || file.oldPath)}
             </div>
             <DiffView file={file} />
           </div>
@@ -350,7 +350,7 @@ export function CommitDetailsPage() {
       </div>
       
       {/* Контент */}
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-auto">
         <div className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Сводка изменений */}
@@ -402,7 +402,7 @@ export function CommitDetailsPage() {
             )}
           </div>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
