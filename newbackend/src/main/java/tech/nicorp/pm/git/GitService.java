@@ -172,6 +172,19 @@ public class GitService {
         }
     }
 
+    public void initRepository(UUID repoId) throws IOException {
+        Path path = config.getRepoPath(repoId.toString());
+        try {
+            Files.createDirectories(path.getParent());
+            Git.init()
+                    .setDirectory(path.toFile())
+                    .setInitialBranch("main")
+                    .call();
+        } catch (Exception e) {
+            throw new IOException("Failed to initialize repository: " + e.getMessage(), e);
+        }
+    }
+
     public void cloneRepository(String url, UUID repoId, String authToken) throws IOException {
         Path path = config.getRepoPath(repoId.toString());
         try {

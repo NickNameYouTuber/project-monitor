@@ -92,6 +92,13 @@ public class RepositoriesController {
             members.save(member);
         }
         
+        try {
+            git.initRepository(saved.getId());
+        } catch (IOException e) {
+            repositories.deleteById(saved.getId());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "init_failed", "message", e.getMessage()));
+        }
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
     }
 
