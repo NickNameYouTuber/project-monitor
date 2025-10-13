@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   GitBranch, 
   Folder, 
@@ -375,6 +376,7 @@ function RepositorySettings() {
 }
 
 export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPageProps) {
+  const navigate = useNavigate();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [repositories, setRepositories] = useState<RepositoryDto[]>([]);
   const [selectedRepoId, setSelectedRepoId] = useState<string>('');
@@ -388,9 +390,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
   const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
   const [newMemberRole, setNewMemberRole] = useState('developer');
   
-  const [isFileEditorOpen, setIsFileEditorOpen] = useState(false);
-  const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
-  const [commitMessage, setCommitMessage] = useState('');
+  const [isNewFileOpen, setIsNewFileOpen] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
   
   const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
   const [newBranchName, setNewBranchName] = useState('');
@@ -406,6 +407,26 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [commits, setCommits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const getFileIcon = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    const iconMap: Record<string, string> = {
+      'js': 'text-yellow-500',
+      'ts': 'text-blue-500',
+      'tsx': 'text-blue-400',
+      'jsx': 'text-yellow-400',
+      'json': 'text-green-500',
+      'md': 'text-gray-400',
+      'css': 'text-pink-500',
+      'html': 'text-orange-500',
+      'py': 'text-blue-600',
+      'java': 'text-red-500',
+      'xml': 'text-orange-400',
+      'yml': 'text-purple-500',
+      'yaml': 'text-purple-500',
+    };
+    return iconMap[ext || ''] || 'text-gray-500';
+  };
 
   const loadMembers = async () => {
     if (!selectedRepoId) return;
@@ -441,27 +462,28 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
     }
   };
 
-  const handleEditFile = async (path: string) => {
-    if (!selectedRepoId || !selectedBranch) return;
-    try {
-      const content = await getFileContent(selectedRepoId, selectedBranch, path);
-      setEditingFile({ path, content });
-      setCommitMessage(`Update ${path}`);
-      setIsFileEditorOpen(true);
-    } catch {
-      toast.error('Ошибка при загрузке файла');
-    }
+  const handleEditFile = (path: string) => {
+    if (!selectedRepoId || !selectedProject) return;
+    navigate(`/projects/${selectedProject.id}/repository/${selectedRepoId}/file/${encodeURIComponent(path)}`);
   };
 
-  const handleSaveFile = async () => {
-    if (!selectedRepoId || !selectedBranch || !editingFile) return;
+  const handleCreateFile = async () => {
+    if (!selectedRepoId || !selectedBranch || !newFileName.trim()) return;
+    
+    const fullPath = currentPath 
+      ? `${currentPath}/${newFileName}` 
+      : newFileName;
+    
     try {
-      await updateFile(selectedRepoId, selectedBranch, editingFile.path, editingFile.content, commitMessage);
-      toast.success('Файл сохранён');
-      setIsFileEditorOpen(false);
-      setEditingFile(null);
+      await updateFile(selectedRepoId, selectedBranch, fullPath, '', `Create ${newFileName}`);
+      toast.success('Файл создан');
+      setIsNewFileOpen(false);
+      setNewFileName('');
+      
+      const fs = await listFiles(selectedRepoId, selectedBranch, currentPath || undefined);
+      setEntries(fs);
     } catch {
-      toast.error('Ошибка при сохранении файла');
+      toast.error('Ошибка при создании файла');
     }
   };
 
@@ -676,19 +698,48 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline" size="sm" disabled>
-                <Plus className="w-4 h-4 mr-2" />
-                New File
-              </Button>
+              <Dialog open={isNewFileOpen} onOpenChange={setIsNewFileOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    New File
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Создать новый файл</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Имя файла</Label>
+                      <Input
+                        value={newFileName}
+                        onChange={(e) => setNewFileName(e.target.value)}
+                        placeholder="index.js"
+                      />
+                      {currentPath && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Будет создан в: {currentPath}/
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsNewFileOpen(false)}>
+                        Отмена
+                      </Button>
+                      <Button onClick={handleCreateFile} disabled={!newFileName.trim()}>
+                        Создать
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <Card>
               <CardContent className="p-0">
                 <ScrollArea className="h-96">
                   <div className="p-4">
-                    <div className="text-sm text-muted-foreground mb-3 px-2">
-                      Branch: {selectedBranch} {currentPath && `• ${currentPath}`}
-                    </div>
                     <div className="text-xs text-muted-foreground px-2 mb-2">
                       <button onClick={() => setCurrentPath('')}>root</button>
                       {currentPath.split('/').filter(Boolean).map((seg, idx, arr) => (
@@ -706,10 +757,23 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                                  handleEditFile(e.path);
                                }
                              }}>
-                          {e.type === 'tree' ? <Folder className="w-4 h-4 text-blue-500" /> : <File className="w-4 h-4 text-gray-500" />}
+                          {e.type === 'tree' ? (
+                            <Folder className="w-4 h-4 text-blue-500" />
+                          ) : (
+                            <File className={`w-4 h-4 ${getFileIcon(e.name)}`} />
+                          )}
                           <span className="flex-1">{e.name}</span>
-                          {e.type === 'blob' && e.size && (
-                            <span className="text-xs text-muted-foreground">{e.size} B</span>
+                          {e.type === 'blob' && (
+                            <>
+                              {e.name.includes('.') && (
+                                <span className="text-xs text-muted-foreground mr-2">
+                                  .{e.name.split('.').pop()}
+                                </span>
+                              )}
+                              {e.size && (
+                                <span className="text-xs text-muted-foreground">{e.size} B</span>
+                              )}
+                            </>
                           )}
                         </div>
                       ))}
@@ -1046,37 +1110,6 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
         </Tabs>
         )}
       </div>
-
-      <Dialog open={isFileEditorOpen} onOpenChange={setIsFileEditorOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Редактировать файл: {editingFile?.path}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Содержимое файла</Label>
-              <Textarea
-                value={editingFile?.content || ''}
-                onChange={(e) => setEditingFile(prev => prev ? { ...prev, content: e.target.value } : null)}
-                rows={20}
-                className="font-mono text-sm"
-              />
-            </div>
-            <div>
-              <Label>Commit message</Label>
-              <Input
-                value={commitMessage}
-                onChange={(e) => setCommitMessage(e.target.value)}
-                placeholder="Update file"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsFileEditorOpen(false)}>Отмена</Button>
-              <Button onClick={handleSaveFile}>Сохранить</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

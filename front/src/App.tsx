@@ -9,6 +9,7 @@ import { ProjectTasksPage } from './components/project-tasks-page';
 import { WhiteboardPage } from './components/whiteboard-page';
 import { RepositoryPage } from './components/repository-page';
 import { RepositoriesPage } from './components/repositories-page';
+import { FileEditorPage } from './components/file-editor-page';
 import { SettingsPage } from './components/settings-page';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
@@ -353,6 +354,10 @@ export default function App() {
                   }
                 />
                 <Route path="/repository" element={<RepositoryPage projects={projects} tasks={tasks} />} />
+                <Route
+                  path="/projects/:projectId/repository/:repoId/file/*"
+                  element={<FileEditorPage />}
+                />
                 <Route
                   path="/projects/:projectId/repository/:repoId"
                   element={
