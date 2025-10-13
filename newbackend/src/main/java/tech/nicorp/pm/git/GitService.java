@@ -38,7 +38,7 @@ public class GitService {
                     .map(ref -> Map.of("name", ref.getName().replace("refs/heads/", "")))
                     .toList();
         } catch (Exception e) {
-            throw new IOException(e);
+            return List.of();
         }
     }
 
@@ -58,14 +58,14 @@ public class GitService {
             if (full != null && full.startsWith("refs/heads/")) {
                 return full.substring("refs/heads/".length());
             }
-            return "master";
+            return "main";
         }
     }
 
     public List<Map<String, Object>> listFiles(UUID repoId, String ref, String path) throws IOException {
         try (Repository r = openRepo(repoId)) {
             ObjectId commitId = r.resolve(ref);
-            if (commitId == null) throw new IOException("Ref not found");
+            if (commitId == null) return List.of();
             try (RevWalk walk = new RevWalk(r)) {
                 RevCommit commit = walk.parseCommit(commitId);
                 try (TreeWalk tw = new TreeWalk(r)) {
@@ -117,7 +117,10 @@ public class GitService {
 
     public List<Map<String, Object>> commits(UUID repoId, String ref) throws IOException {
         try (Repository r = openRepo(repoId); Git git = new Git(r)) {
-            Iterable<RevCommit> log = git.log().add(r.resolve(ref)).call();
+            ObjectId refId = r.resolve(ref);
+            if (refId == null) return List.of();
+            
+            Iterable<RevCommit> log = git.log().add(refId).call();
             List<Map<String, Object>> res = new ArrayList<>();
             for (RevCommit c : log) {
                 res.add(Map.of(
@@ -129,7 +132,7 @@ public class GitService {
             }
             return res;
         } catch (Exception e) {
-            throw new IOException(e);
+            return List.of();
         }
     }
 
