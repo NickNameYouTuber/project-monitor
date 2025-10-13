@@ -25,6 +25,15 @@ public class Repository {
     @Column(name = "default_branch")
     private String defaultBranch;
 
+    @Column(name = "clone_url", length = 500)
+    private String cloneUrl;
+
+    @Column(name = "visibility", length = 20)
+    private String visibility = "private";
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;

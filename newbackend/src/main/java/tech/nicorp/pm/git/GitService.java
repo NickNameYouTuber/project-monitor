@@ -171,6 +171,78 @@ public class GitService {
             }
         }
     }
+
+    public void cloneRepository(String url, UUID repoId, String authToken) throws IOException {
+        Path path = config.getRepoPath(repoId.toString());
+        try {
+            Files.createDirectories(path.getParent());
+            Git.cloneRepository()
+                    .setURI(url)
+                    .setDirectory(path.toFile())
+                    .call();
+        } catch (Exception e) {
+            throw new IOException("Failed to clone repository: " + e.getMessage(), e);
+        }
+    }
+
+    public void createBranch(UUID repoId, String branchName, String fromRef) throws IOException {
+        try (Repository r = openRepo(repoId); Git git = new Git(r)) {
+            ObjectId startPoint = r.resolve(fromRef);
+            if (startPoint == null) throw new IOException("Reference not found: " + fromRef);
+            git.branchCreate()
+                    .setName(branchName)
+                    .setStartPoint(fromRef)
+                    .call();
+        } catch (Exception e) {
+            throw new IOException("Failed to create branch: " + e.getMessage(), e);
+        }
+    }
+
+    public void deleteBranch(UUID repoId, String branchName) throws IOException {
+        try (Repository r = openRepo(repoId); Git git = new Git(r)) {
+            git.branchDelete()
+                    .setBranchNames(branchName)
+                    .setForce(true)
+                    .call();
+        } catch (Exception e) {
+            throw new IOException("Failed to delete branch: " + e.getMessage(), e);
+        }
+    }
+
+    public void commitFile(UUID repoId, String branch, String path, String content, String message, String author) throws IOException {
+        try (Repository r = openRepo(repoId); Git git = new Git(r)) {
+            git.checkout().setName(branch).call();
+            
+            Path filePath = config.getRepoPath(repoId.toString()).resolve(path);
+            Files.createDirectories(filePath.getParent());
+            Files.writeString(filePath, content);
+            
+            git.add().addFilepattern(path).call();
+            git.commit()
+                    .setMessage(message)
+                    .setAuthor(author, author + "@example.com")
+                    .call();
+        } catch (Exception e) {
+            throw new IOException("Failed to commit file: " + e.getMessage(), e);
+        }
+    }
+
+    public void deleteFile(UUID repoId, String branch, String path, String message, String author) throws IOException {
+        try (Repository r = openRepo(repoId); Git git = new Git(r)) {
+            git.checkout().setName(branch).call();
+            
+            Path filePath = config.getRepoPath(repoId.toString()).resolve(path);
+            Files.deleteIfExists(filePath);
+            
+            git.rm().addFilepattern(path).call();
+            git.commit()
+                    .setMessage(message)
+                    .setAuthor(author, author + "@example.com")
+                    .call();
+        } catch (Exception e) {
+            throw new IOException("Failed to delete file: " + e.getMessage(), e);
+        }
+    }
 }
 
 

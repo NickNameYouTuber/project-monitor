@@ -14,6 +14,10 @@ public class RepositoryResponse {
     private String name;
     @JsonProperty("default_branch")
     private String defaultBranch;
+    @JsonProperty("clone_url")
+    private String cloneUrl;
+    private String visibility;
+    private String description;
     @JsonProperty("project_id")
     private UUID projectId;
     @JsonProperty("created_at")

@@ -60,10 +60,60 @@ public class RepositoriesController {
         Repository r = new Repository();
         r.setName(name);
         if (body.get("default_branch") != null) r.setDefaultBranch((String) body.get("default_branch"));
+        if (body.get("description") != null) r.setDescription((String) body.get("description"));
+        if (body.get("visibility") != null) r.setVisibility((String) body.get("visibility"));
         if (body.get("project_id") instanceof String s) {
             try { var pid = UUID.fromString(s); projects.findById(pid).ifPresent(r::setProject); } catch (IllegalArgumentException ignored) {}
         }
         Repository saved = repositories.save(r);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        Repository r = repositories.findById(id).orElse(null);
+        if (r == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "repository_not_found"));
+        if (body.get("name") != null) r.setName((String) body.get("name"));
+        if (body.get("default_branch") != null) r.setDefaultBranch((String) body.get("default_branch"));
+        if (body.get("description") != null) r.setDescription((String) body.get("description"));
+        if (body.get("visibility") != null) r.setVisibility((String) body.get("visibility"));
+        Repository saved = repositories.save(r);
+        return ResponseEntity.ok(toResponse(saved));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable UUID id) {
+        if (!repositories.existsById(id)) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "repository_not_found"));
+        repositories.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/clone")
+    public ResponseEntity<Object> cloneRepository(@RequestBody Map<String, Object> body) {
+        String url = (String) body.get("url");
+        String name = (String) body.get("name");
+        if (url == null || url.isBlank()) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "invalid_url"));
+        if (name == null || name.isBlank()) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "invalid_name"));
+        
+        Repository r = new Repository();
+        r.setName(name);
+        r.setCloneUrl(url);
+        if (body.get("default_branch") != null) r.setDefaultBranch((String) body.get("default_branch"));
+        if (body.get("description") != null) r.setDescription((String) body.get("description"));
+        if (body.get("visibility") != null) r.setVisibility((String) body.get("visibility"));
+        if (body.get("project_id") instanceof String s) {
+            try { var pid = UUID.fromString(s); projects.findById(pid).ifPresent(r::setProject); } catch (IllegalArgumentException ignored) {}
+        }
+        Repository saved = repositories.save(r);
+        
+        String authToken = (String) body.get("auth_token");
+        try {
+            git.cloneRepository(url, saved.getId(), authToken);
+        } catch (IOException e) {
+            repositories.deleteById(saved.getId());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "clone_failed", "message", e.getMessage()));
+        }
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
     }
 
@@ -72,6 +122,9 @@ public class RepositoriesController {
         resp.setId(r.getId());
         resp.setName(r.getName());
         resp.setDefaultBranch(r.getDefaultBranch());
+        resp.setCloneUrl(r.getCloneUrl());
+        resp.setVisibility(r.getVisibility());
+        resp.setDescription(r.getDescription());
         if (r.getProject() != null) resp.setProjectId(r.getProject().getId());
         resp.setCreatedAt(r.getCreatedAt());
         return resp;

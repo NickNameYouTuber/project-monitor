@@ -1,19 +1,23 @@
 import { apiClient } from './client';
 
-export type RepositoryMemberDto = { id: string; repositoryId?: string; userId: string; role: string; createdAt?: string };
+export type RepositoryMemberDto = {
+  id: string;
+  repository_id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+};
 
-export async function listRepositoryMembers(repositoryId: string): Promise<RepositoryMemberDto[]> {
-  const { data } = await apiClient.get<RepositoryMemberDto[]>(`/repositories/${repositoryId}/members`);
+export async function listMembers(repoId: string): Promise<RepositoryMemberDto[]> {
+  const { data } = await apiClient.get<RepositoryMemberDto[]>(`/repositories/${repoId}/members`);
   return data;
 }
 
-export async function addRepositoryMember(repositoryId: string, body: { userId: string; role?: string }): Promise<RepositoryMemberDto> {
-  const { data } = await apiClient.post<RepositoryMemberDto>(`/repositories/${repositoryId}/members`, body);
+export async function addMember(repoId: string, userId: string, role: string): Promise<RepositoryMemberDto> {
+  const { data } = await apiClient.post<RepositoryMemberDto>(`/repositories/${repoId}/members`, { user_id: userId, role });
   return data;
 }
 
-export async function removeRepositoryMember(repositoryId: string, memberId: string): Promise<void> {
-  await apiClient.delete(`/repositories/${repositoryId}/members/${memberId}`);
+export async function removeMember(repoId: string, memberId: string): Promise<void> {
+  await apiClient.delete(`/repositories/${repoId}/members/${memberId}`);
 }
-
-

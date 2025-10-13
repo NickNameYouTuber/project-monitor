@@ -38,8 +38,10 @@ import { Separator } from './ui/separator';
 import { LoadingSpinner } from './loading-spinner';
 import { MergeRequestPage } from './merge-request-page';
 import type { Project, Task } from '../App';
-import { listRepositories, type RepositoryDto } from '../api/repositories';
-import { listFiles, type FileEntry, listCommits } from '../api/repository-content';
+import { listRepositories, createBranch, deleteBranch, updateFile, updateRepository, type RepositoryDto } from '../api/repositories';
+import { listFiles, type FileEntry, listCommits, getFileContent } from '../api/repository-content';
+import { listMembers, addMember, removeMember, type RepositoryMemberDto } from '../api/repository-members';
+import { toast } from 'sonner';
 
 interface RepositoryPageProps {
   projects: Project[];
@@ -377,10 +379,124 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingMR, setViewingMR] = useState<string | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
+  
+  const [members, setMembers] = useState<RepositoryMemberDto[]>([]);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [newMemberUserId, setNewMemberUserId] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('developer');
+  
+  const [isFileEditorOpen, setIsFileEditorOpen] = useState(false);
+  const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
+  const [commitMessage, setCommitMessage] = useState('');
+  
+  const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
+  const [newBranchName, setNewBranchName] = useState('');
+  const [newBranchFrom, setNewBranchFrom] = useState('');
+  
+  const [repoSettings, setRepoSettings] = useState({
+    name: '',
+    description: '',
+    visibility: 'private',
+    default_branch: 'main'
+  });
   const [currentPath, setCurrentPath] = useState<string>('');
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [commits, setCommits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const loadMembers = async () => {
+    if (!selectedRepoId) return;
+    try {
+      const m = await listMembers(selectedRepoId);
+      setMembers(m);
+    } catch {}
+  };
+
+  const handleAddMember = async () => {
+    if (!selectedRepoId || !newMemberUserId) return;
+    try {
+      await addMember(selectedRepoId, newMemberUserId, newMemberRole);
+      toast.success('Участник добавлен');
+      setIsAddMemberOpen(false);
+      setNewMemberUserId('');
+      await loadMembers();
+    } catch {
+      toast.error('Ошибка при добавлении участника');
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!selectedRepoId) return;
+    try {
+      await removeMember(selectedRepoId, memberId);
+      toast.success('Участник удалён');
+      await loadMembers();
+    } catch {
+      toast.error('Ошибка при удалении участника');
+    }
+  };
+
+  const handleEditFile = async (path: string) => {
+    if (!selectedRepoId || !selectedBranch) return;
+    try {
+      const content = await getFileContent(selectedRepoId, selectedBranch, path);
+      setEditingFile({ path, content });
+      setCommitMessage(`Update ${path}`);
+      setIsFileEditorOpen(true);
+    } catch {
+      toast.error('Ошибка при загрузке файла');
+    }
+  };
+
+  const handleSaveFile = async () => {
+    if (!selectedRepoId || !selectedBranch || !editingFile) return;
+    try {
+      await updateFile(selectedRepoId, selectedBranch, editingFile.path, editingFile.content, commitMessage);
+      toast.success('Файл сохранён');
+      setIsFileEditorOpen(false);
+      setEditingFile(null);
+    } catch {
+      toast.error('Ошибка при сохранении файла');
+    }
+  };
+
+  const handleCreateBranch = async () => {
+    if (!selectedRepoId || !newBranchName) return;
+    try {
+      await createBranch(selectedRepoId, newBranchName, newBranchFrom || selectedBranch);
+      toast.success('Ветка создана');
+      setIsCreateBranchOpen(false);
+      setNewBranchName('');
+      const { getBranches } = await import('../api/repositories');
+      const brs = await getBranches(selectedRepoId);
+      setBranches(brs);
+    } catch {
+      toast.error('Ошибка при создании ветки');
+    }
+  };
+
+  const handleDeleteBranch = async (branchName: string) => {
+    if (!selectedRepoId || !window.confirm(`Удалить ветку ${branchName}?`)) return;
+    try {
+      await deleteBranch(selectedRepoId, branchName);
+      toast.success('Ветка удалена');
+      const { getBranches } = await import('../api/repositories');
+      const brs = await getBranches(selectedRepoId);
+      setBranches(brs);
+    } catch {
+      toast.error('Ошибка при удалении ветки');
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!selectedRepoId) return;
+    try {
+      await updateRepository(selectedRepoId, repoSettings);
+      toast.success('Настройки сохранены');
+    } catch {
+      toast.error('Ошибка при сохранении настроек');
+    }
+  };
 
   // Load repositories and find project by initialRepoId
   useEffect(() => {
@@ -443,6 +559,21 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
       } catch {}
     })();
   }, [selectedRepoId, selectedBranch, currentPath]);
+
+  useEffect(() => {
+    if (selectedRepoId) {
+      loadMembers();
+      const repo = repositories.find(r => r.id === selectedRepoId);
+      if (repo) {
+        setRepoSettings({
+          name: repo.name,
+          description: repo.description || '',
+          visibility: repo.visibility || 'private',
+          default_branch: repo.default_branch || 'main'
+        });
+      }
+    }
+  }, [selectedRepoId, repositories]);
   
   const linkedTasks = selectedProject 
     ? tasks.filter(task => task.projectId === selectedProject.id && task.repositoryBranch)
@@ -504,6 +635,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
           <TabsList>
             <TabsTrigger value="files">Files</TabsTrigger>
             <TabsTrigger value="commits">Commits</TabsTrigger>
+            <TabsTrigger value="branches">Branches</TabsTrigger>
+            <TabsTrigger value="members">Members</TabsTrigger>
             <TabsTrigger value="merge-requests">Merge Requests</TabsTrigger>
             <TabsTrigger value="tasks">Linked Tasks</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -563,7 +696,11 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                       .map((e, i) => (
                         <div key={`${e.path}-${i}`} className={`flex items-center gap-2 py-1 px-2 hover:bg-accent rounded cursor-pointer`}
                              onClick={() => {
-                               if (e.type === 'tree') setCurrentPath((currentPath ? currentPath + '/' : '') + e.name);
+                               if (e.type === 'tree') {
+                                 setCurrentPath((currentPath ? currentPath + '/' : '') + e.name);
+                               } else {
+                                 handleEditFile(e.path);
+                               }
                              }}>
                           {e.type === 'tree' ? <Folder className="w-4 h-4 text-blue-500" /> : <File className="w-4 h-4 text-gray-500" />}
                           <span className="flex-1">{e.name}</span>
@@ -584,13 +721,17 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                 <Card key={commit.id || commit.sha || idx}>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <GitCommit className="w-4 h-4 text-muted-foreground" />
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="text-xs">
+                          {(commit.author || commit.authorName || 'U')[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="flex-1">
                         <p className="font-medium">{commit.message || commit.fullMessage || 'Commit'}</p>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>{commit.author || commit.authorName || ''}</span>
-                          <span>{commit.date ? new Date(commit.date).toLocaleDateString() : ''}</span>
-                          <code className="px-2 py-1 bg-muted rounded text-xs">{commit.id || commit.sha || ''}</code>
+                          <span>{commit.date ? new Date(commit.date).toLocaleString() : ''}</span>
+                          <code className="px-2 py-1 bg-muted rounded text-xs">{(commit.id || commit.sha || '').substring(0, 7)}</code>
                         </div>
                       </div>
                     </div>
@@ -599,6 +740,154 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
               ))}
               {commits.length === 0 && (
                 <div className="text-sm text-muted-foreground">No commits.</div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="branches" className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">Ветки</h3>
+              <Dialog open={isCreateBranchOpen} onOpenChange={setIsCreateBranchOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Создать ветку
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Создать новую ветку</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Название ветки</Label>
+                      <Input
+                        value={newBranchName}
+                        onChange={(e) => setNewBranchName(e.target.value)}
+                        placeholder="feature/my-feature"
+                      />
+                    </div>
+                    <div>
+                      <Label>Создать из</Label>
+                      <Select value={newBranchFrom} onValueChange={setNewBranchFrom}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={selectedBranch} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {branches.map(b => (
+                            <SelectItem key={b} value={b}>{b}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsCreateBranchOpen(false)}>Отмена</Button>
+                      <Button onClick={handleCreateBranch}>Создать</Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <div className="space-y-2">
+              {branches.map(branch => (
+                <Card key={branch}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <GitBranch className="w-4 h-4" />
+                        <span className="font-medium">{branch}</span>
+                        {branch === selectedBranch && (
+                          <Badge variant="secondary">Current</Badge>
+                        )}
+                      </div>
+                      {branch !== selectedBranch && (
+                        <Button size="sm" variant="ghost" onClick={() => handleDeleteBranch(branch)}>
+                          Удалить
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="members" className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">Участники</h3>
+              <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Добавить участника
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Добавить участника</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>User ID</Label>
+                      <Input
+                        value={newMemberUserId}
+                        onChange={(e) => setNewMemberUserId(e.target.value)}
+                        placeholder="user-id"
+                      />
+                    </div>
+                    <div>
+                      <Label>Роль</Label>
+                      <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="owner">Owner</SelectItem>
+                          <SelectItem value="maintainer">Maintainer</SelectItem>
+                          <SelectItem value="developer">Developer</SelectItem>
+                          <SelectItem value="reporter">Reporter</SelectItem>
+                          <SelectItem value="guest">Guest</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>Отмена</Button>
+                      <Button onClick={handleAddMember}>Добавить</Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <div className="space-y-2">
+              {members.length === 0 ? (
+                <Card>
+                  <CardContent className="p-4 text-center text-muted-foreground">
+                    Нет участников
+                  </CardContent>
+                </Card>
+              ) : (
+                members.map(member => (
+                  <Card key={member.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-8 h-8">
+                            <AvatarFallback>
+                              {member.user_id.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{member.user_id}</div>
+                            <div className="text-sm text-muted-foreground capitalize">{member.role}</div>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => handleRemoveMember(member.id)}>
+                          Удалить
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
               )}
             </div>
           </TabsContent>
@@ -658,12 +947,88 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
             </div>
           </TabsContent>
 
-          <TabsContent value="settings">
-            <RepositorySettings />
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Настройки репозитория</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Название</Label>
+                  <Input
+                    value={repoSettings.name}
+                    onChange={(e) => setRepoSettings(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>Описание</Label>
+                  <Textarea
+                    value={repoSettings.description}
+                    onChange={(e) => setRepoSettings(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Default Branch</Label>
+                    <Input
+                      value={repoSettings.default_branch}
+                      onChange={(e) => setRepoSettings(prev => ({ ...prev, default_branch: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Видимость</Label>
+                    <Select value={repoSettings.visibility} onValueChange={(v) => setRepoSettings(prev => ({ ...prev, visibility: v }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="private">Private</SelectItem>
+                        <SelectItem value="public">Public</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveSettings}>Сохранить изменения</Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
         )}
       </div>
+
+      <Dialog open={isFileEditorOpen} onOpenChange={setIsFileEditorOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Редактировать файл: {editingFile?.path}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Содержимое файла</Label>
+              <Textarea
+                value={editingFile?.content || ''}
+                onChange={(e) => setEditingFile(prev => prev ? { ...prev, content: e.target.value } : null)}
+                rows={20}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div>
+              <Label>Commit message</Label>
+              <Input
+                value={commitMessage}
+                onChange={(e) => setCommitMessage(e.target.value)}
+                placeholder="Update file"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsFileEditorOpen(false)}>Отмена</Button>
+              <Button onClick={handleSaveFile}>Сохранить</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
