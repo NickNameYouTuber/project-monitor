@@ -1004,15 +1004,15 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Code className="w-5 h-5" />
-                  Локальный доступ к репозиторию
+                  Клонирование репозитория
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Repository ID</Label>
+                  <Label>Clone URL</Label>
                   <div className="flex gap-2 mt-2">
                     <Input 
-                      value={selectedRepoId} 
+                      value={`https://nit.nicorp.tech/git/${selectedRepoId}.git`} 
                       readOnly 
                       className="font-mono text-sm"
                     />
@@ -1020,22 +1020,25 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                       size="icon"
                       variant="outline"
                       onClick={() => {
-                        navigator.clipboard.writeText(selectedRepoId);
-                        toast.success('ID скопирован');
+                        navigator.clipboard.writeText(`git clone https://nit.nicorp.tech/git/${selectedRepoId}.git`);
+                        toast.success('Команда скопирована');
                       }}
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Используйте эту команду для клонирования репозитория локально
+                  </p>
                 </div>
                 <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                  <p className="text-sm font-medium">Путь к репозиторию на сервере:</p>
+                  <p className="text-sm font-medium">Git команды:</p>
                   <code className="text-xs block bg-background p-2 rounded">
-                    /var/lib/project-monitor/repos/{selectedRepoId}
+                    git clone https://nit.nicorp.tech/git/{selectedRepoId}.git
                   </code>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Репозиторий хранится в Docker volume. Используйте встроенный редактор для работы с файлами.
-                  </p>
+                  <code className="text-xs block bg-background p-2 rounded mt-1">
+                    git remote add origin https://nit.nicorp.tech/git/{selectedRepoId}.git
+                  </code>
                 </div>
               </CardContent>
             </Card>
