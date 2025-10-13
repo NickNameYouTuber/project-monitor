@@ -742,9 +742,22 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                 <ScrollArea className="h-96">
                   <div className="p-4">
                     <div className="text-xs text-muted-foreground px-2 mb-2">
-                      <button onClick={() => setCurrentPath('')}>root</button>
-                      {currentPath.split('/').filter(Boolean).map((seg, idx, arr) => (
-                        <span key={idx}> / <button onClick={() => setCurrentPath(arr.slice(0, idx + 1).join('/'))}>{seg}</button></span>
+                      <button 
+                        onClick={() => setCurrentPath('')}
+                        className="hover:underline hover:text-foreground transition-colors"
+                      >
+                        root
+                      </button>
+                      {currentPath && currentPath.split('/').filter(Boolean).map((seg, idx, arr) => (
+                        <span key={idx}>
+                          {' / '}
+                          <button 
+                            onClick={() => setCurrentPath(arr.slice(0, idx + 1).join('/'))}
+                            className="hover:underline hover:text-foreground transition-colors"
+                          >
+                            {seg}
+                          </button>
+                        </span>
                       ))}
                     </div>
                     {entries

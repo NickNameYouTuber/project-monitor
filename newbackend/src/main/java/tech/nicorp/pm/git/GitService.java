@@ -70,32 +70,40 @@ public class GitService {
         try (Repository r = openRepo(repoId)) {
             ObjectId commitId = r.resolve(ref);
             if (commitId == null) return List.of();
+            
             try (RevWalk walk = new RevWalk(r)) {
                 RevCommit commit = walk.parseCommit(commitId);
-                try (TreeWalk tw = new TreeWalk(r)) {
-                    tw.addTree(commit.getTree());
-                    tw.setRecursive(false);
-                    if (path != null && !path.isEmpty()) {
-                        tw.setFilter(PathFilter.create(path));
+                RevTree tree = commit.getTree();
+                
+                // Если path указан, найти поддерево
+                if (path != null && !path.isEmpty()) {
+                    try (TreeWalk pathWalk = TreeWalk.forPath(r, path, tree)) {
+                        if (pathWalk == null || !pathWalk.isSubtree()) {
+                            return List.of();
+                        }
+                        tree = r.parseTree(pathWalk.getObjectId(0));
                     }
+                }
+                
+                // Теперь обойти найденное дерево
+                try (TreeWalk tw = new TreeWalk(r)) {
+                    tw.addTree(tree);
+                    // Рекурсивно для корня (path=null), нерекурсивно для конкретной папки
+                    tw.setRecursive(path == null || path.isEmpty());
+                    
                     List<Map<String, Object>> res = new ArrayList<>();
                     while (tw.next()) {
-                        String p = tw.getPathString();
+                        String fileName = tw.getNameString();
+                        String fullPath = path != null && !path.isEmpty() 
+                            ? path + "/" + fileName 
+                            : tw.getPathString();
                         boolean isDir = tw.isSubtree();
-                        if (path == null || path.isEmpty()) {
-                            res.add(Map.of(
-                                    "path", p,
-                                    "type", isDir ? "tree" : "blob"
-                            ));
-                        } else if (p.startsWith(path + "/")) {
-                            String rel = p.substring(path.length() + 1);
-                            if (!rel.isEmpty() && !rel.contains("/")) {
-                                res.add(Map.of(
-                                        "path", p,
-                                        "type", isDir ? "tree" : "blob"
-                                ));
-                            }
-                        }
+                        
+                        res.add(Map.of(
+                            "path", fullPath,
+                            "name", fileName,
+                            "type", isDir ? "tree" : "blob"
+                        ));
                     }
                     return res;
                 }
