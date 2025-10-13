@@ -42,6 +42,9 @@ import { listRepositories, createBranch, deleteBranch, updateFile, updateReposit
 import { listFiles, type FileEntry, listCommits, getFileContent } from '../api/repository-content';
 import { listMembers, addMember, removeMember, type RepositoryMemberDto } from '../api/repository-members';
 import { toast } from 'sonner';
+import UserAutocomplete from './calls/UserAutocomplete';
+import type { UserDto } from '../api/users';
+import { Copy } from 'lucide-react';
 
 interface RepositoryPageProps {
   projects: Project[];
@@ -382,7 +385,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
   
   const [members, setMembers] = useState<RepositoryMemberDto[]>([]);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [newMemberUserId, setNewMemberUserId] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
   const [newMemberRole, setNewMemberRole] = useState('developer');
   
   const [isFileEditorOpen, setIsFileEditorOpen] = useState(false);
@@ -413,15 +416,17 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
   };
 
   const handleAddMember = async () => {
-    if (!selectedRepoId || !newMemberUserId) return;
+    if (!selectedRepoId || selectedUsers.length === 0) return;
     try {
-      await addMember(selectedRepoId, newMemberUserId, newMemberRole);
-      toast.success('Участник добавлен');
+      for (const user of selectedUsers) {
+        await addMember(selectedRepoId, user.id, newMemberRole);
+      }
+      toast.success('Участники добавлены');
       setIsAddMemberOpen(false);
-      setNewMemberUserId('');
+      setSelectedUsers([]);
       await loadMembers();
     } catch {
-      toast.error('Ошибка при добавлении участника');
+      toast.error('Ошибка при добавлении участников');
     }
   };
 
@@ -645,7 +650,6 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
           <TabsContent value="files" className="space-y-4">
             <div className="flex items-center gap-4 mb-4">
               <div className="flex items-center gap-2">
-                <GitBranch className="w-4 h-4" />
                 <Select value={selectedBranch} onValueChange={setSelectedBranch}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
@@ -828,11 +832,10 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label>User ID</Label>
-                      <Input
-                        value={newMemberUserId}
-                        onChange={(e) => setNewMemberUserId(e.target.value)}
-                        placeholder="user-id"
+                      <UserAutocomplete
+                        selectedUsers={selectedUsers}
+                        onUsersChange={setSelectedUsers}
+                        label="Выберите пользователей"
                       />
                     </div>
                     <div>
@@ -852,7 +855,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                     </div>
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>Отмена</Button>
-                      <Button onClick={handleAddMember}>Добавить</Button>
+                      <Button onClick={handleAddMember} disabled={selectedUsers.length === 0}>Добавить</Button>
                     </div>
                   </div>
                 </DialogContent>
@@ -991,6 +994,40 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                 </div>
                 <div className="flex justify-end">
                   <Button onClick={handleSaveSettings}>Сохранить изменения</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code className="w-5 h-5" />
+                  Клонирование репозитория
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label>Clone URL</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input 
+                      value={`git clone https://nit.nicorp.tech/git/${selectedRepoId}.git`} 
+                      readOnly 
+                      className="font-mono text-sm"
+                    />
+                    <Button 
+                      size="icon"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`git clone https://nit.nicorp.tech/git/${selectedRepoId}.git`);
+                        toast.success('Команда скопирована');
+                      }}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Используйте эту команду для клонирования репозитория локально
+                  </p>
                 </div>
               </CardContent>
             </Card>

@@ -2,13 +2,18 @@ package tech.nicorp.pm.repositories.api;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.git.GitService;
 import tech.nicorp.pm.repositories.domain.Repository;
+import tech.nicorp.pm.repositories.domain.RepositoryMember;
 import tech.nicorp.pm.repositories.repo.RepositoryRepository;
+import tech.nicorp.pm.repositories.repo.RepositoryMemberRepository;
 import tech.nicorp.pm.projects.domain.Project;
 import tech.nicorp.pm.projects.repo.ProjectRepository;
 import tech.nicorp.pm.repositories.api.dto.RepositoryResponse;
+import tech.nicorp.pm.users.domain.User;
+import tech.nicorp.pm.users.repo.UserRepository;
 
 import java.io.IOException;
 import java.util.Map;
@@ -21,11 +26,15 @@ public class RepositoriesController {
     private final GitService git;
     private final RepositoryRepository repositories;
     private final ProjectRepository projects;
+    private final RepositoryMemberRepository members;
+    private final UserRepository users;
 
-    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects) {
+    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects, RepositoryMemberRepository members, UserRepository users) {
         this.git = git;
         this.repositories = repositories;
         this.projects = projects;
+        this.members = members;
+        this.users = users;
     }
 
     @GetMapping("/{repoId}/refs/branches")
@@ -44,9 +53,13 @@ public class RepositoriesController {
     }
 
     @GetMapping
-    public ResponseEntity<Object> list(@RequestParam(name = "project_id", required = false) UUID projectId) {
+    public ResponseEntity<Object> list(@RequestParam(name = "project_id", required = false) UUID projectId, @AuthenticationPrincipal Object principal) {
+        UUID userId = extractUserId(principal);
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "unauthorized"));
+        
         if (projectId != null && !projects.existsById(projectId)) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "project_not_found"));
-        var list = repositories.findAll().stream()
+        
+        var list = repositories.findByMemberUserId(userId).stream()
                 .filter(r -> projectId == null || (r.getProject() != null && projectId.equals(r.getProject().getId())))
                 .map(this::toResponse)
                 .toList();
@@ -54,7 +67,10 @@ public class RepositoriesController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> create(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<Object> create(@RequestBody Map<String, Object> body, @AuthenticationPrincipal Object principal) {
+        UUID userId = extractUserId(principal);
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "unauthorized"));
+        
         String name = (String) body.get("name");
         if (name == null || name.isBlank()) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "invalid_name"));
         Repository r = new Repository();
@@ -66,6 +82,16 @@ public class RepositoriesController {
             try { var pid = UUID.fromString(s); projects.findById(pid).ifPresent(r::setProject); } catch (IllegalArgumentException ignored) {}
         }
         Repository saved = repositories.save(r);
+        
+        User creator = users.findById(userId).orElse(null);
+        if (creator != null) {
+            RepositoryMember member = new RepositoryMember();
+            member.setRepository(saved);
+            member.setUser(creator);
+            member.setRole("owner");
+            members.save(member);
+        }
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
     }
 
@@ -89,7 +115,10 @@ public class RepositoriesController {
     }
 
     @PostMapping("/clone")
-    public ResponseEntity<Object> cloneRepository(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<Object> cloneRepository(@RequestBody Map<String, Object> body, @AuthenticationPrincipal Object principal) {
+        UUID userId = extractUserId(principal);
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "unauthorized"));
+        
         String url = (String) body.get("url");
         String name = (String) body.get("name");
         if (url == null || url.isBlank()) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "invalid_url"));
@@ -106,6 +135,15 @@ public class RepositoriesController {
         }
         Repository saved = repositories.save(r);
         
+        User creator = users.findById(userId).orElse(null);
+        if (creator != null) {
+            RepositoryMember member = new RepositoryMember();
+            member.setRepository(saved);
+            member.setUser(creator);
+            member.setRole("owner");
+            members.save(member);
+        }
+        
         String authToken = (String) body.get("auth_token");
         try {
             git.cloneRepository(url, saved.getId(), authToken);
@@ -115,6 +153,16 @@ public class RepositoriesController {
         }
         
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
+    }
+
+    private UUID extractUserId(Object principal) {
+        if (principal == null) return null;
+        if (principal instanceof User) return ((User) principal).getId();
+        if (principal instanceof String) {
+            try { return UUID.fromString((String) principal); }
+            catch (IllegalArgumentException e) { return null; }
+        }
+        return null;
     }
 
     private RepositoryResponse toResponse(Repository r) {
