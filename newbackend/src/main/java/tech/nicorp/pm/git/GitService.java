@@ -36,23 +36,23 @@ public class GitService {
                 .build();
     }
 
-    public List<Map<String, String>> branches(UUID repoId) throws IOException {
+    public List<String> branches(UUID repoId) throws IOException {
         try (Repository r = openRepo(repoId); Git git = new Git(r)) {
             return git.branchList().call().stream()
-                    .map(ref -> Map.of("name", ref.getName().replace("refs/heads/", "")))
+                    .map(ref -> ref.getName().replace("refs/heads/", ""))
                     .toList();
         } catch (Exception e) {
             return List.of();
         }
     }
 
-    public List<Map<String, String>> tags(UUID repoId) throws IOException {
+    public List<String> tags(UUID repoId) throws IOException {
         try (Repository r = openRepo(repoId); Git git = new Git(r)) {
             return git.tagList().call().stream()
-                    .map(ref -> Map.of("name", ref.getName().replace("refs/tags/", "")))
+                    .map(ref -> ref.getName().replace("refs/tags/", ""))
                     .toList();
         } catch (Exception e) {
-            throw new IOException(e);
+            return List.of();
         }
     }
 
