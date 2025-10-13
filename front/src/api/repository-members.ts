@@ -14,7 +14,7 @@ export async function listMembers(repoId: string): Promise<RepositoryMemberDto[]
 }
 
 export async function addMember(repoId: string, userId: string, role: string): Promise<RepositoryMemberDto> {
-  const { data } = await apiClient.post<RepositoryMemberDto>(`/repositories/${repoId}/members`, { user_id: userId, role });
+  const { data } = await apiClient.post<RepositoryMemberDto>(`/repositories/${repoId}/members`, { userId, role });
   return data;
 }
 

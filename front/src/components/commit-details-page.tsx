@@ -127,7 +127,7 @@ function DiffView({ file }: { file: FileDiff }) {
   }
   
   if (file.changeType === 'ADD') {
-    const lineCount = file.newContent.split('\n').length;
+    const lineCount = file.newContent.split('\n').filter(l => l.trim()).length;
     return (
       <div className="space-y-2">
         <div className="text-sm text-muted-foreground p-3 bg-green-500/5 rounded border border-green-500/20">
@@ -139,7 +139,7 @@ function DiffView({ file }: { file: FileDiff }) {
               {chunk.lines.map((line, lineIdx) => (
                 <div
                   key={lineIdx}
-                  className="flex items-start gap-3 px-4 py-1 bg-green-500/10"
+                  className="flex items-start gap-3 px-4 py-0.5 bg-green-500/10"
                 >
                   <div className="flex gap-2 text-muted-foreground select-none min-w-[60px]">
                     <span className="w-8 text-right">{line.newLineNo || ''}</span>
