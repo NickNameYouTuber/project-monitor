@@ -29,6 +29,7 @@ export function FileEditorPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [markdownMode, setMarkdownMode] = useState<'code' | 'preview'>('code');
   const [svgMode, setSvgMode] = useState<'code' | 'preview'>('preview');
+  const [imageUrl, setImageUrl] = useState<string>('');
 
   // Функция для проверки бинарных изображений
   const isBinaryImage = (path: string) => {
@@ -44,10 +45,24 @@ export function FileEditorPage() {
         setIsLoading(true);
         setContent(''); // Очистить перед загрузкой!
         setOriginalContent('');
+        setImageUrl('');
         setIsEditing(false);
         
-        // Для бинарных изображений (кроме SVG) не загружаем содержимое
+        // Для бинарных изображений (кроме SVG) загрузить как blob
         if (isBinaryImage(filePath)) {
+          const token = localStorage.getItem('access_token');
+          const response = await fetch(`/api/repositories/${repoId}/file?ref=${branch}&path=${encodeURIComponent(filePath)}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          });
+          
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            setImageUrl(url);
+          } else {
+            toast.error('Ошибка при загрузке изображения');
+          }
+          
           setIsLoading(false);
           return;
         }
@@ -64,6 +79,13 @@ export function FileEditorPage() {
     };
 
     loadFile();
+    
+    // Cleanup: освободить blob URL при размонтировании
+    return () => {
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
   }, [repoId, filePath, branch]);
 
   const handleSave = async () => {
@@ -165,11 +187,15 @@ export function FileEditorPage() {
           {isBinaryImage(filePath) ? (
             // Бинарные изображения (PNG, JPG и т.д.) - только просмотр
             <div className="flex items-center justify-center h-full p-6 bg-muted/20">
-              <img
-                src={`/api/repositories/${repoId}/file?ref=${branch}&path=${encodeURIComponent(filePath)}`}
-                alt={filePath}
-                className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-              />
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={filePath}
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                />
+              ) : (
+                <div className="text-muted-foreground">Загрузка изображения...</div>
+              )}
             </div>
           ) : (
             // Текстовые файлы, SVG, Markdown
