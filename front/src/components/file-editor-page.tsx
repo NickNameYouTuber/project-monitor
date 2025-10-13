@@ -16,6 +16,22 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { apiClient } from '../api/client';
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-tsx';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-java';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-markdown';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-markup';
+import 'prismjs/components/prism-sql';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-yaml';
+import 'prismjs/themes/prism-tomorrow.css';
 
 export function FileEditorPage() {
   const { repoId, '*': initialFilePath } = useParams();
@@ -143,6 +159,29 @@ export function FileEditorPage() {
     return langMap[ext || ''] || 'text';
   };
 
+  const getPrismLanguage = (path: string) => {
+    const ext = path.split('.').pop()?.toLowerCase();
+    const langMap: Record<string, any> = {
+      'js': languages.javascript,
+      'jsx': languages.jsx,
+      'ts': languages.typescript,
+      'tsx': languages.tsx,
+      'py': languages.python,
+      'java': languages.java,
+      'json': languages.json,
+      'md': languages.markdown,
+      'css': languages.css,
+      'html': languages.markup,
+      'xml': languages.markup,
+      'sql': languages.sql,
+      'sh': languages.bash,
+      'yml': languages.yaml,
+      'yaml': languages.yaml,
+      'svg': languages.markup,
+    };
+    return langMap[ext || ''] || languages.javascript;
+  };
+
   const isMarkdown = filePath?.endsWith('.md');
   const isSvg = filePath?.toLowerCase().endsWith('.svg');
   const isImage = (path: string) => {
@@ -256,41 +295,25 @@ export function FileEditorPage() {
                     />
                   </div>
                 ) : isEditing ? (
-                  // Режим редактирования - разделённый экран
+                  // Режим редактирования с подсветкой синтаксиса
                   <div className="h-full flex flex-col gap-3">
-                    <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-3">
-                      {/* Редактор */}
-                      <div className="flex flex-col h-full">
-                        <Label className="text-xs font-medium mb-2">Редактирование</Label>
-                        <Textarea
-                          value={content}
-                          onChange={(e) => setContent(e.target.value)}
-                          className="font-mono text-xs flex-1 resize-none"
-                          placeholder="Начните вводить код..."
-                        />
-                      </div>
-                      
-                      {/* Превью с подсветкой */}
-                      <div className="flex flex-col h-full overflow-hidden">
-                        <Label className="text-xs font-medium mb-2">Превью</Label>
-                        <div className="flex-1 overflow-auto">
-                          <SyntaxHighlighter
-                            language={getLanguage(filePath)}
-                            style={vscDarkPlus}
-                            customStyle={{
-                              margin: 0,
-                              borderRadius: '0.5rem',
-                              fontSize: '0.75rem',
-                              padding: '0.75rem',
-                            }}
-                            showLineNumbers
-                          >
-                            {content}
-                          </SyntaxHighlighter>
-                        </div>
-                      </div>
+                    <div className="flex-1 overflow-auto border rounded-lg">
+                      <Editor
+                        value={content}
+                        onValueChange={setContent}
+                        highlight={(code) => highlight(code, getPrismLanguage(filePath), getLanguage(filePath))}
+                        padding={16}
+                        style={{
+                          fontFamily: '"Fira Code", "Fira Mono", monospace',
+                          fontSize: 14,
+                          minHeight: '100%',
+                          backgroundColor: '#1e1e1e',
+                          color: '#d4d4d4',
+                        }}
+                        textareaClassName="focus:outline-none"
+                        placeholder="Начните вводить код..."
+                      />
                     </div>
-                    
                     <div>
                       <Label className="text-sm font-medium">Commit message</Label>
                       <Input
