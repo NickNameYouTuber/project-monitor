@@ -265,8 +265,10 @@ public class GitService {
             Files.createDirectories(filePath.getParent());
             Files.writeString(filePath, content);
             
+            // Добавить только изменённый файл, но сохранить остальные в коммите
             git.add().addFilepattern(path).call();
             git.commit()
+                    .setOnly(path)  // ← Коммитить только этот файл!
                     .setMessage(message)
                     .setAuthor(author, author + "@nicorp.tech")
                     .call();
