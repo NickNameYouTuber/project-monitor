@@ -19,87 +19,87 @@ interface FileTreeProps {
 
 export function FileTree({ repoId, branch, currentFile, onFileSelect }: FileTreeProps) {
   const [tree, setTree] = useState<FileNode[]>([]);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const [loadedFolders, setLoadedFolders] = useState<Set<string>>(new Set(['']));
-  const [loading, setLoading] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['']));
 
   useEffect(() => {
-    loadFolder('');
+    loadTree();
   }, [repoId, branch]);
 
-  const loadFolder = async (folderPath: string) => {
-    if (loadedFolders.has(folderPath)) return;
-    
-    setLoading(prev => new Set(prev).add(folderPath));
-    
+  const loadTree = async () => {
     try {
-      const files = await listFiles(repoId, branch, folderPath || undefined);
-      
-      setTree(prevTree => {
-        const newTree = [...prevTree];
-        
-        if (folderPath === '') {
-          // Корневая директория
-          return files.map(f => ({
-            name: f.name || f.path,
-            path: f.path,
-            type: f.type === 'tree' ? 'folder' : 'file',
-            children: f.type === 'tree' ? [] : undefined
-          }));
-        } else {
-          // Вложенная директория - нужно найти и обновить
-          const updateNode = (nodes: FileNode[]): FileNode[] => {
-            return nodes.map(node => {
-              if (node.path === folderPath) {
-                return {
-                  ...node,
-                  children: files.map(f => ({
-                    name: f.name || f.path.split('/').pop() || f.path,
-                    path: f.path,
-                    type: f.type === 'tree' ? 'folder' : 'file',
-                    children: f.type === 'tree' ? [] : undefined
-                  }))
-                };
-              }
-              if (node.children) {
-                return { ...node, children: updateNode(node.children) };
-              }
-              return node;
-            });
-          };
-          
-          return updateNode(newTree);
-        }
-      });
-      
-      setLoadedFolders(prev => new Set(prev).add(folderPath));
-    } catch (error) {
-      console.error('Error loading folder:', error);
-    } finally {
-      setLoading(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(folderPath);
-        return newSet;
-      });
-    }
+      const allFiles = await loadAllFilesRecursively(repoId, branch, '');
+      const treeStructure = buildTree(allFiles);
+      setTree(treeStructure);
+    } catch {}
   };
 
-  const toggleFolder = async (path: string) => {
-    const isExpanded = expandedFolders.has(path);
-    
+  const loadAllFilesRecursively = async (repoId: string, branch: string, path: string): Promise<FileEntry[]> => {
+    const files = await listFiles(repoId, branch, path || undefined);
+    const allFiles: FileEntry[] = [];
+
+    for (const file of files) {
+      if (file.type === 'tree') {
+        // Это папка - загружаем её содержимое рекурсивно
+        const subFiles = await loadAllFilesRecursively(repoId, branch, file.path);
+        allFiles.push(...subFiles);
+      } else {
+        // Это файл - добавляем в список
+        allFiles.push(file);
+      }
+    }
+
+    return allFiles;
+  };
+
+  const buildTree = (files: FileEntry[]): FileNode[] => {
+    const root: FileNode[] = [];
+    const folders = new Map<string, FileNode>();
+
+    files.forEach(file => {
+      const parts = file.path.split('/');
+      let currentLevel = root;
+      let currentPath = '';
+
+      parts.forEach((part, index) => {
+        currentPath = currentPath ? `${currentPath}/${part}` : part;
+        const isLast = index === parts.length - 1;
+
+        if (isLast && file.type === 'blob') {
+          currentLevel.push({
+            name: part,
+            path: file.path,
+            type: 'file'
+          });
+        } else {
+          let folder = folders.get(currentPath);
+          if (!folder) {
+            folder = {
+              name: part,
+              path: currentPath,
+              type: 'folder',
+              children: []
+            };
+            folders.set(currentPath, folder);
+            currentLevel.push(folder);
+          }
+          currentLevel = folder.children!;
+        }
+      });
+    });
+
+    return root;
+  };
+
+  const toggleFolder = (path: string) => {
     setExpandedFolders(prev => {
       const newSet = new Set(prev);
-      if (isExpanded) {
+      if (newSet.has(path)) {
         newSet.delete(path);
       } else {
         newSet.add(path);
       }
       return newSet;
     });
-    
-    if (!isExpanded && !loadedFolders.has(path)) {
-      await loadFolder(path);
-    }
   };
 
   const getFileIcon = (fileName: string) => {
