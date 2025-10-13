@@ -105,10 +105,6 @@ export function FileEditorPage() {
     return ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico'].includes(ext || '');
   };
 
-  if (isLoading) {
-    return <LoadingSpinner stages={['Loading File', 'Parse Content', 'Ready']} />;
-  }
-
   return (
     <div className="flex h-screen bg-background">
       <div className="w-64 border-r border-border flex-shrink-0 hidden md:block">
@@ -121,6 +117,12 @@ export function FileEditorPage() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <LoadingSpinner stages={['Loading File', 'Parse Content', 'Ready']} />
+          </div>
+        ) : (
+          <>
         <div className="border-b border-border px-4 py-3 flex-shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -245,6 +247,8 @@ export function FileEditorPage() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );
