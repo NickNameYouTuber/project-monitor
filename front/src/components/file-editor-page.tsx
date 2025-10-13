@@ -59,27 +59,27 @@ export function FileEditorPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+    <div className="h-screen flex flex-col bg-background">
+      <div className="border-b border-border px-4 py-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <div className="flex items-center gap-2">
-              <FileCode className="w-5 h-5" />
-              <h1 className="text-lg font-semibold">{filePath}</h1>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <FileCode className="w-5 h-5 flex-shrink-0" />
+              <h1 className="text-base sm:text-lg font-semibold truncate">{filePath}</h1>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
               <GitBranch className="w-4 h-4" />
               <span>{branch}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => navigate(-1)}>
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="flex-1 sm:flex-none">
               Отмена
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button size="sm" onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none">
               <Save className="w-4 h-4 mr-2" />
               {isSaving ? 'Сохранение...' : 'Сохранить'}
             </Button>
@@ -87,29 +87,27 @@ export function FileEditorPage() {
         </div>
       </div>
 
-      <div className="flex-1 p-6 overflow-auto">
-        <Card className="h-full">
-          <CardContent className="p-6 h-full flex flex-col gap-4">
-            <div className="flex-1">
-              <Label>Содержимое файла</Label>
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="font-mono text-sm mt-2 min-h-[600px] resize-none"
-                placeholder="Начните вводить код..."
-              />
-            </div>
-            <div>
-              <Label>Commit message</Label>
-              <Input
-                value={commitMessage}
-                onChange={(e) => setCommitMessage(e.target.value)}
-                placeholder="Update file"
-                className="mt-2"
-              />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex-1 overflow-hidden p-4 sm:p-6">
+        <div className="h-full flex flex-col gap-4 max-w-7xl mx-auto">
+          <div className="flex-1 min-h-0">
+            <Label className="text-sm font-medium">Содержимое файла</Label>
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="font-mono text-xs sm:text-sm mt-2 h-[calc(100vh-250px)] resize-none"
+              placeholder="Начните вводить код..."
+            />
+          </div>
+          <div className="flex-shrink-0">
+            <Label className="text-sm font-medium">Commit message</Label>
+            <Input
+              value={commitMessage}
+              onChange={(e) => setCommitMessage(e.target.value)}
+              placeholder="Update file"
+              className="mt-2"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

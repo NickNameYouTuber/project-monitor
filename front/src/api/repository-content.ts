@@ -3,8 +3,11 @@ import { apiClient } from './client';
 export type FileEntry = { path: string; type: 'blob' | 'tree'; size?: number; name: string };
 
 export async function listFiles(repoId: string, ref: string, path?: string): Promise<FileEntry[]> {
-  const { data } = await apiClient.get<FileEntry[]>(`/repositories/${repoId}/files`, { params: { ref, path } });
-  return data;
+  const { data } = await apiClient.get<any[]>(`/repositories/${repoId}/files`, { params: { ref, path } });
+  return data.map(item => ({
+    ...item,
+    name: item.name || item.path.split('/').pop() || item.path
+  }));
 }
 
 export async function getFileContent(repoId: string, ref: string, path: string): Promise<string> {
