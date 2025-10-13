@@ -28,6 +28,13 @@ export function FileEditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [markdownMode, setMarkdownMode] = useState<'code' | 'preview'>('code');
+  const [svgMode, setSvgMode] = useState<'code' | 'preview'>('preview');
+
+  // Функция для проверки бинарных изображений
+  const isBinaryImage = (path: string) => {
+    const ext = path?.split('.').pop()?.toLowerCase();
+    return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico'].includes(ext || '');
+  };
 
   useEffect(() => {
     if (!repoId || !filePath) return;
@@ -35,7 +42,16 @@ export function FileEditorPage() {
     const loadFile = async () => {
       try {
         setIsLoading(true);
+        setContent(''); // Очистить перед загрузкой!
+        setOriginalContent('');
         setIsEditing(false);
+        
+        // Для бинарных изображений (кроме SVG) не загружаем содержимое
+        if (isBinaryImage(filePath)) {
+          setIsLoading(false);
+          return;
+        }
+        
         const fileContent = await getFileContent(repoId, branch, filePath);
         setContent(fileContent);
         setOriginalContent(fileContent);
@@ -77,15 +93,16 @@ export function FileEditorPage() {
       'js': 'javascript', 'jsx': 'jsx', 'ts': 'typescript', 'tsx': 'tsx',
       'py': 'python', 'java': 'java', 'json': 'json', 'md': 'markdown',
       'css': 'css', 'html': 'html', 'xml': 'xml', 'sql': 'sql',
-      'sh': 'bash', 'yml': 'yaml', 'yaml': 'yaml',
+      'sh': 'bash', 'yml': 'yaml', 'yaml': 'yaml', 'svg': 'xml',
     };
     return langMap[ext || ''] || 'text';
   };
 
   const isMarkdown = filePath?.endsWith('.md');
+  const isSvg = filePath?.toLowerCase().endsWith('.svg');
   const isImage = (path: string) => {
     const ext = path?.split('.').pop()?.toLowerCase();
-    return ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp'].includes(ext || '');
+    return ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico'].includes(ext || '');
   };
 
   if (isLoading) {
@@ -120,28 +137,31 @@ export function FileEditorPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {!isEditing ? (
-                <Button size="sm" onClick={() => setIsEditing(true)}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Редактировать
-                </Button>
-              ) : (
-                <>
-                  <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                    Отмена
+              {!isBinaryImage(filePath) && (
+                !isEditing ? (
+                  <Button size="sm" onClick={() => setIsEditing(true)}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Редактировать
                   </Button>
-                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {isSaving ? 'Сохранение...' : 'Сохранить'}
-                  </Button>
-                </>
+                ) : (
+                  <>
+                    <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                      Отмена
+                    </Button>
+                    <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                      <Save className="w-4 h-4 mr-2" />
+                      {isSaving ? 'Сохранение...' : 'Сохранить'}
+                    </Button>
+                  </>
+                )
               )}
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-hidden">
-          {isImage(filePath) ? (
+          {isBinaryImage(filePath) ? (
+            // Бинарные изображения (PNG, JPG и т.д.) - только просмотр
             <div className="flex items-center justify-center h-full p-6 bg-muted/20">
               <img
                 src={`/api/repositories/${repoId}/file?ref=${branch}&path=${encodeURIComponent(filePath)}`}
@@ -150,10 +170,18 @@ export function FileEditorPage() {
               />
             </div>
           ) : (
+            // Текстовые файлы, SVG, Markdown
             <div className="h-full flex flex-col">
-              {isMarkdown && (
+              {/* Табы для Markdown или SVG */}
+              {(isMarkdown || isSvg) && (
                 <div className="border-b border-border px-4 py-2">
-                  <Tabs value={markdownMode} onValueChange={(v) => setMarkdownMode(v as 'code' | 'preview')}>
+                  <Tabs 
+                    value={isMarkdown ? markdownMode : svgMode} 
+                    onValueChange={(v) => {
+                      if (isMarkdown) setMarkdownMode(v as 'code' | 'preview');
+                      if (isSvg) setSvgMode(v as 'code' | 'preview');
+                    }}
+                  >
                     <TabsList className="grid w-48 grid-cols-2">
                       <TabsTrigger value="code">Код</TabsTrigger>
                       <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -164,12 +192,22 @@ export function FileEditorPage() {
 
               <div className="flex-1 overflow-auto p-4">
                 {isMarkdown && markdownMode === 'preview' ? (
+                  // Markdown preview
                   <div className="prose dark:prose-invert max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {content}
                     </ReactMarkdown>
                   </div>
+                ) : isSvg && svgMode === 'preview' ? (
+                  // SVG preview
+                  <div className="flex items-center justify-center h-full bg-muted/20">
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: content }} 
+                      className="max-w-full max-h-full"
+                    />
+                  </div>
                 ) : isEditing ? (
+                  // Режим редактирования
                   <div className="h-full flex flex-col gap-3">
                     <Textarea
                       value={content}
@@ -188,6 +226,7 @@ export function FileEditorPage() {
                     </div>
                   </div>
                 ) : (
+                  // Режим просмотра с подсветкой синтаксиса
                   <SyntaxHighlighter
                     language={getLanguage(filePath)}
                     style={vscDarkPlus}
