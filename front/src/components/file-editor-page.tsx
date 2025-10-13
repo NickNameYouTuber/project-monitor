@@ -15,6 +15,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { apiClient } from '../api/client';
 
 export function FileEditorPage() {
   const { repoId, '*': initialFilePath } = useParams();
@@ -30,12 +31,29 @@ export function FileEditorPage() {
   const [markdownMode, setMarkdownMode] = useState<'code' | 'preview'>('code');
   const [svgMode, setSvgMode] = useState<'code' | 'preview'>('preview');
   const [imageUrl, setImageUrl] = useState<string>('');
+  const [branches, setBranches] = useState<string[]>([]);
 
   // Функция для проверки бинарных изображений
   const isBinaryImage = (path: string) => {
     const ext = path?.split('.').pop()?.toLowerCase();
     return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico'].includes(ext || '');
   };
+
+  // Загрузить список веток
+  useEffect(() => {
+    if (!repoId) return;
+    
+    const loadBranches = async () => {
+      try {
+        const { data } = await apiClient.get<string[]>(`/repositories/${repoId}/refs/branches`);
+        setBranches(data);
+      } catch (error) {
+        console.error('Failed to load branches:', error);
+      }
+    };
+    
+    loadBranches();
+  }, [repoId]);
 
   useEffect(() => {
     if (!repoId || !filePath) return;
@@ -109,6 +127,11 @@ export function FileEditorPage() {
     setIsEditing(false);
   };
 
+  const handleBranchChange = (newBranch: string) => {
+    setBranch(newBranch);
+    // Файл автоматически перезагрузится через useEffect с зависимостью [branch]
+  };
+
   const getLanguage = (path: string) => {
     const ext = path.split('.').pop()?.toLowerCase();
     const langMap: Record<string, string> = {
@@ -135,6 +158,8 @@ export function FileEditorPage() {
           branch={branch}
           currentFile={filePath}
           onFileSelect={setFilePath}
+          onBranchChange={handleBranchChange}
+          branches={branches}
         />
       </div>
 
@@ -154,10 +179,6 @@ export function FileEditorPage() {
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <FileCode className="w-5 h-5 flex-shrink-0" />
                 <h1 className="text-sm sm:text-base font-semibold truncate">{filePath.split('/').pop()}</h1>
-              </div>
-              <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-                <GitBranch className="w-3 h-3" />
-                <span>{branch}</span>
               </div>
             </div>
             <div className="flex items-center gap-2">

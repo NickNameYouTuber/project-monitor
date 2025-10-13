@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Folder, File, ChevronRight, ChevronDown } from 'lucide-react';
+import { Folder, File, ChevronRight, ChevronDown, GitBranch } from 'lucide-react';
 import { listFiles, type FileEntry } from '../../api/repository-content';
 import { ScrollArea } from '../ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface FileNode {
   name: string;
@@ -15,9 +16,11 @@ interface FileTreeProps {
   branch: string;
   currentFile?: string;
   onFileSelect: (path: string) => void;
+  onBranchChange?: (branch: string) => void;
+  branches?: string[];
 }
 
-export function FileTree({ repoId, branch, currentFile, onFileSelect }: FileTreeProps) {
+export function FileTree({ repoId, branch, currentFile, onFileSelect, onBranchChange, branches = [] }: FileTreeProps) {
   const [tree, setTree] = useState<FileNode[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['']));
 
@@ -167,7 +170,31 @@ export function FileTree({ repoId, branch, currentFile, onFileSelect }: FileTree
   return (
     <ScrollArea className="h-full">
       <div className="p-3">
-        <div className="text-sm font-medium mb-3">Files</div>
+        {/* Заголовок с выбором ветки */}
+        <div className="mb-3 space-y-2">
+          <div className="text-sm font-medium">Files</div>
+          
+          {/* Селектор ветки */}
+          {branches && branches.length > 0 && onBranchChange && (
+            <Select value={branch} onValueChange={onBranchChange}>
+              <SelectTrigger className="h-8 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <GitBranch className="w-3 h-3" />
+                  <SelectValue placeholder="Select branch" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {branches.map(b => (
+                  <SelectItem key={b} value={b} className="text-xs">
+                    {b}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        {/* Дерево файлов */}
         {tree.map(node => (
           <TreeNode key={node.path} node={node} level={0} />
         ))}
