@@ -38,17 +38,17 @@ public class RepositoriesController {
     }
 
     @GetMapping("/{repoId}/refs/branches")
-    public ResponseEntity<Object> branches(@PathVariable UUID repoId) throws IOException {
+    public ResponseEntity<Object> branches(@PathVariable("repoId") UUID repoId) throws IOException {
         return ResponseEntity.ok(git.branches(repoId));
     }
 
     @GetMapping("/{repoId}/refs/tags")
-    public ResponseEntity<Object> tags(@PathVariable UUID repoId) throws IOException {
+    public ResponseEntity<Object> tags(@PathVariable("repoId") UUID repoId) throws IOException {
         return ResponseEntity.ok(git.tags(repoId));
     }
 
     @GetMapping("/{repoId}/refs/default")
-    public ResponseEntity<Object> defaultBranch(@PathVariable UUID repoId) throws IOException {
+    public ResponseEntity<Object> defaultBranch(@PathVariable("repoId") UUID repoId) throws IOException {
         return ResponseEntity.ok(Map.of("default", git.defaultBranch(repoId)));
     }
 
@@ -96,7 +96,7 @@ public class RepositoriesController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<Object> update(@PathVariable("id") UUID id, @RequestBody Map<String, Object> body) {
         Repository r = repositories.findById(id).orElse(null);
         if (r == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "repository_not_found"));
         if (body.get("name") != null) r.setName((String) body.get("name"));
@@ -108,7 +108,7 @@ public class RepositoriesController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable UUID id) {
+    public ResponseEntity<Object> delete(@PathVariable("id") UUID id) {
         if (!repositories.existsById(id)) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "repository_not_found"));
         repositories.deleteById(id);
         return ResponseEntity.noContent().build();

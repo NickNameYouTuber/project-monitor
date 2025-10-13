@@ -21,22 +21,22 @@ public class RepositoryContentController {
     }
 
     @GetMapping("/files")
-    public ResponseEntity<Object> listFiles(@PathVariable UUID repoId, @RequestParam String ref, @RequestParam(required = false) String path) throws IOException {
+    public ResponseEntity<Object> listFiles(@PathVariable("repoId") UUID repoId, @RequestParam("ref") String ref, @RequestParam(value = "path", required = false) String path) throws IOException {
         return ResponseEntity.ok(git.listFiles(repoId, ref, path));
     }
 
     @GetMapping("/file")
-    public ResponseEntity<String> getFile(@PathVariable UUID repoId, @RequestParam String ref, @RequestParam String path) throws IOException {
+    public ResponseEntity<String> getFile(@PathVariable("repoId") UUID repoId, @RequestParam("ref") String ref, @RequestParam("path") String path) throws IOException {
         return ResponseEntity.ok(git.fileContent(repoId, ref, path));
     }
 
     @GetMapping("/commits")
-    public ResponseEntity<Object> listCommits(@PathVariable UUID repoId, @RequestParam String ref) throws IOException {
+    public ResponseEntity<Object> listCommits(@PathVariable("repoId") UUID repoId, @RequestParam("ref") String ref) throws IOException {
         return ResponseEntity.ok(git.commits(repoId, ref));
     }
 
     @GetMapping("/commits/{sha}/diff")
-    public ResponseEntity<List<DiffEntry>> commitDiff(@PathVariable UUID repoId, @PathVariable String sha) throws IOException {
+    public ResponseEntity<List<DiffEntry>> commitDiff(@PathVariable("repoId") UUID repoId, @PathVariable("sha") String sha) throws IOException {
         return ResponseEntity.ok(git.diff(repoId, sha));
     }
 }

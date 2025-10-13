@@ -25,7 +25,7 @@ public class RepositoryBranchesController {
     @PostMapping
     @Operation(summary = "Создать новую ветку")
     public ResponseEntity<Object> createBranch(
-            @PathVariable UUID repoId,
+            @PathVariable("repoId") UUID repoId,
             @RequestBody Map<String, String> body) {
         String branchName = body.get("name");
         String fromRef = body.get("from_ref");
@@ -49,8 +49,8 @@ public class RepositoryBranchesController {
     @DeleteMapping("/{branchName}")
     @Operation(summary = "Удалить ветку")
     public ResponseEntity<Object> deleteBranch(
-            @PathVariable UUID repoId,
-            @PathVariable String branchName) {
+            @PathVariable("repoId") UUID repoId,
+            @PathVariable("branchName") String branchName) {
         try {
             git.deleteBranch(repoId, branchName);
             return ResponseEntity.noContent().build();

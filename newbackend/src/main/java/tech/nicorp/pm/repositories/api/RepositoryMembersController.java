@@ -34,7 +34,7 @@ public class RepositoryMembersController {
 
     @GetMapping
     @Operation(summary = "Список участников репозитория")
-    public ResponseEntity<List<RepositoryMemberResponse>> list(@PathVariable("repositoryId") UUID repositoryId) {
+    public ResponseEntity<List<RepositoryMemberResponse>> list(@PathVariable(value = "repositoryId") UUID repositoryId) {
         Repository repo = repositories.findById(repositoryId).orElse(null);
         if (repo == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(members.findAll().stream()
@@ -44,7 +44,7 @@ public class RepositoryMembersController {
 
     @PostMapping
     @Operation(summary = "Добавить участника в репозиторий")
-    public ResponseEntity<RepositoryMemberResponse> add(@PathVariable("repositoryId") UUID repositoryId, @RequestBody RepositoryMemberCreateRequest body) {
+    public ResponseEntity<RepositoryMemberResponse> add(@PathVariable(value = "repositoryId") UUID repositoryId, @RequestBody RepositoryMemberCreateRequest body) {
         Repository repo = repositories.findById(repositoryId).orElse(null);
         if (repo == null) return ResponseEntity.notFound().build();
         User u = users.findById(UUID.fromString(body.getUserId())).orElse(null);
@@ -59,7 +59,7 @@ public class RepositoryMembersController {
 
     @DeleteMapping("/{memberId}")
     @Operation(summary = "Удалить участника из репозитория")
-    public ResponseEntity<Void> remove(@PathVariable("repositoryId") UUID repositoryId, @PathVariable("memberId") UUID memberId) {
+    public ResponseEntity<Void> remove(@PathVariable(value = "repositoryId") UUID repositoryId, @PathVariable(value = "memberId") UUID memberId) {
         if (!members.existsById(memberId)) return ResponseEntity.notFound().build();
         members.deleteById(memberId);
         return ResponseEntity.noContent().build();

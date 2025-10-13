@@ -142,6 +142,7 @@
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
+          <parameters>true</parameters>
           <excludes>
             <exclude>**/git/GitHttpConfig.java</exclude>
           </excludes>

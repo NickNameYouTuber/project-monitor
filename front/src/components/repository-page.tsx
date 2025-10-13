@@ -878,7 +878,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                         <div className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
                             <AvatarFallback>
-                              {member.user_id.substring(0, 2).toUpperCase()}
+                              {(member.user_id || 'U').toString().substring(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div>

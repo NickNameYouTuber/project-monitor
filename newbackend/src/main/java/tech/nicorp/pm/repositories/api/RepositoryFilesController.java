@@ -27,7 +27,7 @@ public class RepositoryFilesController {
     @PutMapping
     @Operation(summary = "Создать или изменить файл")
     public ResponseEntity<Object> updateFile(
-            @PathVariable UUID repoId,
+            @PathVariable("repoId") UUID repoId,
             @RequestBody Map<String, String> body,
             @AuthenticationPrincipal Object principal) {
         String branch = body.get("branch");
@@ -59,10 +59,10 @@ public class RepositoryFilesController {
     @DeleteMapping
     @Operation(summary = "Удалить файл")
     public ResponseEntity<Object> deleteFile(
-            @PathVariable UUID repoId,
-            @RequestParam String branch,
-            @RequestParam String path,
-            @RequestParam(required = false) String message,
+            @PathVariable("repoId") UUID repoId,
+            @RequestParam("branch") String branch,
+            @RequestParam("path") String path,
+            @RequestParam(value = "message", required = false) String message,
             @AuthenticationPrincipal Object principal) {
         if (branch == null || branch.isBlank()) branch = "main";
         if (path == null || path.isBlank()) {
