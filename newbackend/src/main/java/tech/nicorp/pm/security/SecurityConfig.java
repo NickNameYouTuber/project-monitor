@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/actuator/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/git/**").permitAll()
                         .requestMatchers("/api/git/**").authenticated()
                         .requestMatchers("/api/projects/**", "/api/dashboards/**", "/api/repositories/**",
                                 "/api/tasks/**", "/api/task-repository/**", "/api/comments/**",
