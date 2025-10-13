@@ -256,14 +256,41 @@ export function FileEditorPage() {
                     />
                   </div>
                 ) : isEditing ? (
-                  // Режим редактирования
+                  // Режим редактирования - разделённый экран
                   <div className="h-full flex flex-col gap-3">
-                    <Textarea
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      className="font-mono text-sm flex-1 resize-none"
-                      placeholder="Начните вводить код..."
-                    />
+                    <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-3">
+                      {/* Редактор */}
+                      <div className="flex flex-col h-full">
+                        <Label className="text-xs font-medium mb-2">Редактирование</Label>
+                        <Textarea
+                          value={content}
+                          onChange={(e) => setContent(e.target.value)}
+                          className="font-mono text-xs flex-1 resize-none"
+                          placeholder="Начните вводить код..."
+                        />
+                      </div>
+                      
+                      {/* Превью с подсветкой */}
+                      <div className="flex flex-col h-full overflow-hidden">
+                        <Label className="text-xs font-medium mb-2">Превью</Label>
+                        <div className="flex-1 overflow-auto">
+                          <SyntaxHighlighter
+                            language={getLanguage(filePath)}
+                            style={vscDarkPlus}
+                            customStyle={{
+                              margin: 0,
+                              borderRadius: '0.5rem',
+                              fontSize: '0.75rem',
+                              padding: '0.75rem',
+                            }}
+                            showLineNumbers
+                          >
+                            {content}
+                          </SyntaxHighlighter>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div>
                       <Label className="text-sm font-medium">Commit message</Label>
                       <Input
