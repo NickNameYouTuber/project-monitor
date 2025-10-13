@@ -111,6 +111,14 @@ public class GitService {
         }
     }
 
+    public byte[] fileBytes(UUID repoId, String ref, String path) throws IOException {
+        try (Repository r = openRepo(repoId)) {
+            ObjectId objId = r.resolve(ref + ":" + path);
+            if (objId == null) throw new IOException("File not found");
+            return r.open(objId).getBytes();
+        }
+    }
+
     public String resolveRefSha(UUID repoId, String ref) throws IOException {
         try (Repository r = openRepo(repoId)) {
             ObjectId id = r.resolve(ref);

@@ -26,7 +26,22 @@ public class RepositoryContentController {
     }
 
     @GetMapping("/file")
-    public ResponseEntity<String> getFile(@PathVariable("repoId") UUID repoId, @RequestParam("ref") String ref, @RequestParam("path") String path) throws IOException {
+    public ResponseEntity<?> getFile(@PathVariable("repoId") UUID repoId, @RequestParam("ref") String ref, @RequestParam("path") String path) throws IOException {
+        String lowerPath = path.toLowerCase();
+        if (lowerPath.endsWith(".png") || lowerPath.endsWith(".jpg") || lowerPath.endsWith(".jpeg") ||
+            lowerPath.endsWith(".gif") || lowerPath.endsWith(".svg") || lowerPath.endsWith(".webp") ||
+            lowerPath.endsWith(".bmp") || lowerPath.endsWith(".ico")) {
+            
+            byte[] bytes = git.fileBytes(repoId, ref, path);
+            String contentType = "image/" + lowerPath.substring(lowerPath.lastIndexOf('.') + 1);
+            if (lowerPath.endsWith(".svg")) contentType = "image/svg+xml";
+            if (lowerPath.endsWith(".ico")) contentType = "image/x-icon";
+            
+            return ResponseEntity.ok()
+                    .header("Content-Type", contentType)
+                    .body(bytes);
+        }
+        
         return ResponseEntity.ok(git.fileContent(repoId, ref, path));
     }
 
