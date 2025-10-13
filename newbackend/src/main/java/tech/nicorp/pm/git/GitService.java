@@ -75,27 +75,25 @@ public class GitService {
                 try (TreeWalk tw = new TreeWalk(r)) {
                     tw.addTree(commit.getTree());
                     tw.setRecursive(false);
+                    
+                    // Если указан path, переходим в эту директорию
                     if (path != null && !path.isEmpty()) {
                         tw.setFilter(PathFilter.create(path));
+                        if (tw.next()) {
+                            tw.enterSubtree();
+                        } else {
+                            return List.of();
+                        }
                     }
+                    
                     List<Map<String, Object>> res = new ArrayList<>();
                     while (tw.next()) {
                         String p = tw.getPathString();
                         boolean isDir = tw.isSubtree();
-                        if (path == null || path.isEmpty()) {
-                            res.add(Map.of(
-                                    "path", p,
-                                    "type", isDir ? "tree" : "blob"
-                            ));
-                        } else if (p.startsWith(path + "/")) {
-                            String rel = p.substring(path.length() + 1);
-                            if (!rel.isEmpty() && !rel.contains("/")) {
-                                res.add(Map.of(
-                                        "path", p,
-                                        "type", isDir ? "tree" : "blob"
-                                ));
-                            }
-                        }
+                        res.add(Map.of(
+                                "path", p,
+                                "type", isDir ? "tree" : "blob"
+                        ));
                     }
                     return res;
                 }

@@ -19,92 +19,87 @@ interface FileTreeProps {
 
 export function FileTree({ repoId, branch, currentFile, onFileSelect }: FileTreeProps) {
   const [tree, setTree] = useState<FileNode[]>([]);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['']));
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [loadedFolders, setLoadedFolders] = useState<Set<string>>(new Set(['']));
+  const [loading, setLoading] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    loadTree();
+    loadFolder('');
   }, [repoId, branch]);
 
-  const loadTree = async () => {
+  const loadFolder = async (folderPath: string) => {
+    if (loadedFolders.has(folderPath)) return;
+    
+    setLoading(prev => new Set(prev).add(folderPath));
+    
     try {
-      // Рекурсивно загружаем все файлы из всех папок
-      const allFiles = await loadAllFiles('');
-      const treeStructure = buildTree(allFiles);
-      setTree(treeStructure);
-    } catch {}
-  };
-
-  const loadAllFiles = async (path: string): Promise<FileEntry[]> => {
-    try {
-      const entries = await listFiles(repoId, branch, path || undefined);
-      let allFiles: FileEntry[] = [];
-
-      for (const entry of entries) {
-        if (entry.type === 'tree') {
-          // Это папка - рекурсивно загружаем её содержимое
-          const subFiles = await loadAllFiles(entry.path);
-          allFiles = allFiles.concat(subFiles);
+      const files = await listFiles(repoId, branch, folderPath || undefined);
+      
+      setTree(prevTree => {
+        const newTree = [...prevTree];
+        
+        if (folderPath === '') {
+          // Корневая директория
+          return files.map(f => ({
+            name: f.name || f.path,
+            path: f.path,
+            type: f.type === 'tree' ? 'folder' : 'file',
+            children: f.type === 'tree' ? [] : undefined
+          }));
         } else {
-          // Это файл - добавляем
-          allFiles.push(entry);
+          // Вложенная директория - нужно найти и обновить
+          const updateNode = (nodes: FileNode[]): FileNode[] => {
+            return nodes.map(node => {
+              if (node.path === folderPath) {
+                return {
+                  ...node,
+                  children: files.map(f => ({
+                    name: f.name || f.path.split('/').pop() || f.path,
+                    path: f.path,
+                    type: f.type === 'tree' ? 'folder' : 'file',
+                    children: f.type === 'tree' ? [] : undefined
+                  }))
+                };
+              }
+              if (node.children) {
+                return { ...node, children: updateNode(node.children) };
+              }
+              return node;
+            });
+          };
+          
+          return updateNode(newTree);
         }
-      }
-
-      return allFiles;
-    } catch {
-      return [];
+      });
+      
+      setLoadedFolders(prev => new Set(prev).add(folderPath));
+    } catch (error) {
+      console.error('Error loading folder:', error);
+    } finally {
+      setLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(folderPath);
+        return newSet;
+      });
     }
   };
 
-  const buildTree = (files: FileEntry[]): FileNode[] => {
-    const root: FileNode[] = [];
-    const folders = new Map<string, FileNode>();
-
-    files.forEach(file => {
-      const parts = file.path.split('/');
-      let currentLevel = root;
-      let currentPath = '';
-
-      parts.forEach((part, index) => {
-        currentPath = currentPath ? `${currentPath}/${part}` : part;
-        const isLast = index === parts.length - 1;
-
-        if (isLast && file.type === 'blob') {
-          currentLevel.push({
-            name: part,
-            path: file.path,
-            type: 'file'
-          });
-        } else {
-          let folder = folders.get(currentPath);
-          if (!folder) {
-            folder = {
-              name: part,
-              path: currentPath,
-              type: 'folder',
-              children: []
-            };
-            folders.set(currentPath, folder);
-            currentLevel.push(folder);
-          }
-          currentLevel = folder.children!;
-        }
-      });
-    });
-
-    return root;
-  };
-
-  const toggleFolder = (path: string) => {
+  const toggleFolder = async (path: string) => {
+    const isExpanded = expandedFolders.has(path);
+    
     setExpandedFolders(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(path)) {
+      if (isExpanded) {
         newSet.delete(path);
       } else {
         newSet.add(path);
       }
       return newSet;
     });
+    
+    if (!isExpanded && !loadedFolders.has(path)) {
+      await loadFolder(path);
+    }
   };
 
   const getFileIcon = (fileName: string) => {
