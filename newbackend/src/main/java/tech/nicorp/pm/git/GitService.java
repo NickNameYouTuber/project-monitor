@@ -27,9 +27,13 @@ public class GitService {
     private final GitConfig config;
 
     private Repository openRepo(UUID repoId) throws IOException {
-        Path path = config.getRepoPath(repoId.toString());
-        if (!Files.exists(path)) throw new IOException("Repo not found");
-        return new FileRepositoryBuilder().setGitDir(path.toFile()).build();
+        Path workDir = config.getRepoPath(repoId.toString());
+        Path gitDir = workDir.resolve(".git");
+        if (!Files.exists(gitDir)) throw new IOException("Repo not found");
+        return new FileRepositoryBuilder()
+                .setGitDir(gitDir.toFile())
+                .setWorkTree(workDir.toFile())
+                .build();
     }
 
     public List<Map<String, String>> branches(UUID repoId) throws IOException {
@@ -178,21 +182,17 @@ public class GitService {
     public void initRepository(UUID repoId) throws IOException {
         Path path = config.getRepoPath(repoId.toString());
         try {
-            Files.createDirectories(path.getParent());
+            Files.createDirectories(path);
             Git git = Git.init()
                     .setDirectory(path.toFile())
+                    .setBare(false)
                     .setInitialBranch("master")
                     .call();
             
             Repository repo = git.getRepository();
             repo.getConfig().setString("receive", null, "denyCurrentBranch", "updateInstead");
+            repo.getConfig().setBoolean("http", null, "receivepack", true);
             repo.getConfig().save();
-            
-            git.commit()
-                    .setMessage("Initial commit")
-                    .setAuthor("System", "system@nicorp.tech")
-                    .setAllowEmpty(true)
-                    .call();
             
             git.close();
         } catch (Exception e) {
@@ -239,16 +239,20 @@ public class GitService {
 
     public void commitFile(UUID repoId, String branch, String path, String content, String message, String author) throws IOException {
         try (Repository r = openRepo(repoId); Git git = new Git(r)) {
-            git.checkout().setName(branch).call();
+            String currentBranch = r.getBranch();
+            if (!currentBranch.equals(branch)) {
+                git.checkout().setName(branch).call();
+            }
             
-            Path filePath = config.getRepoPath(repoId.toString()).resolve(path);
+            Path workDir = config.getRepoPath(repoId.toString());
+            Path filePath = workDir.resolve(path);
             Files.createDirectories(filePath.getParent());
             Files.writeString(filePath, content);
             
             git.add().addFilepattern(path).call();
             git.commit()
                     .setMessage(message)
-                    .setAuthor(author, author + "@example.com")
+                    .setAuthor(author, author + "@nicorp.tech")
                     .call();
         } catch (Exception e) {
             throw new IOException("Failed to commit file: " + e.getMessage(), e);
@@ -257,15 +261,19 @@ public class GitService {
 
     public void deleteFile(UUID repoId, String branch, String path, String message, String author) throws IOException {
         try (Repository r = openRepo(repoId); Git git = new Git(r)) {
-            git.checkout().setName(branch).call();
+            String currentBranch = r.getBranch();
+            if (!currentBranch.equals(branch)) {
+                git.checkout().setName(branch).call();
+            }
             
-            Path filePath = config.getRepoPath(repoId.toString()).resolve(path);
+            Path workDir = config.getRepoPath(repoId.toString());
+            Path filePath = workDir.resolve(path);
             Files.deleteIfExists(filePath);
             
             git.rm().addFilepattern(path).call();
             git.commit()
                     .setMessage(message)
-                    .setAuthor(author, author + "@example.com")
+                    .setAuthor(author, author + "@nicorp.tech")
                     .call();
         } catch (Exception e) {
             throw new IOException("Failed to delete file: " + e.getMessage(), e);

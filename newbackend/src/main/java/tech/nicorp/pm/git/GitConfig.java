@@ -11,7 +11,7 @@ public class GitConfig {
     private String reposRoot;
 
     public Path getRepoPath(String repoId) {
-        return Path.of(reposRoot).resolve(repoId + ".git");
+        return Path.of(reposRoot).resolve(repoId);
     }
 }
 

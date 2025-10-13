@@ -27,12 +27,16 @@ public class GitHttpController {
             @PathVariable("repoId") String repoId,
             @RequestParam(value = "service", required = false) String service) throws IOException {
         
-        Path repoPath = config.getRepoPath(repoId);
-        if (!Files.exists(repoPath)) {
+        Path workDir = config.getRepoPath(repoId);
+        Path gitDir = workDir.resolve(".git");
+        if (!Files.exists(gitDir)) {
             return ResponseEntity.notFound().build();
         }
 
-        try (Repository repo = new FileRepositoryBuilder().setGitDir(repoPath.toFile()).build()) {
+        try (Repository repo = new FileRepositoryBuilder()
+                .setGitDir(gitDir.toFile())
+                .setWorkTree(workDir.toFile())
+                .build()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             HttpHeaders headers = new HttpHeaders();
             headers.add("Cache-Control", "no-cache");
@@ -76,12 +80,16 @@ public class GitHttpController {
             @PathVariable("repoId") String repoId,
             @RequestBody byte[] body) throws IOException {
         
-        Path repoPath = config.getRepoPath(repoId);
-        if (!Files.exists(repoPath)) {
+        Path workDir = config.getRepoPath(repoId);
+        Path gitDir = workDir.resolve(".git");
+        if (!Files.exists(gitDir)) {
             return ResponseEntity.notFound().build();
         }
 
-        try (Repository repo = new FileRepositoryBuilder().setGitDir(repoPath.toFile()).build()) {
+        try (Repository repo = new FileRepositoryBuilder()
+                .setGitDir(gitDir.toFile())
+                .setWorkTree(workDir.toFile())
+                .build()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             UploadPack uploadPack = new UploadPack(repo);
             uploadPack.setBiDirectionalPipe(false);
@@ -99,12 +107,16 @@ public class GitHttpController {
             @PathVariable("repoId") String repoId,
             @RequestBody byte[] body) throws IOException {
         
-        Path repoPath = config.getRepoPath(repoId);
-        if (!Files.exists(repoPath)) {
+        Path workDir = config.getRepoPath(repoId);
+        Path gitDir = workDir.resolve(".git");
+        if (!Files.exists(gitDir)) {
             return ResponseEntity.notFound().build();
         }
 
-        try (Repository repo = new FileRepositoryBuilder().setGitDir(repoPath.toFile()).build()) {
+        try (Repository repo = new FileRepositoryBuilder()
+                .setGitDir(gitDir.toFile())
+                .setWorkTree(workDir.toFile())
+                .build()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ReceivePack receivePack = new ReceivePack(repo);
             receivePack.setBiDirectionalPipe(false);
