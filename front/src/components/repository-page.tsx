@@ -46,7 +46,6 @@ import { toast } from 'sonner';
 import UserAutocomplete from './calls/UserAutocomplete';
 import type { UserDto } from '../api/users';
 import { Copy } from 'lucide-react';
-import { CommitDiffViewer } from './repository/CommitDiffViewer';
 
 interface RepositoryPageProps {
   projects: Project[];
@@ -408,9 +407,6 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [commits, setCommits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  const [selectedCommitSha, setSelectedCommitSha] = useState<string | null>(null);
-  const [isDiffViewerOpen, setIsDiffViewerOpen] = useState(false);
 
   const getFileIcon = (fileName: string | undefined) => {
     if (!fileName) return 'text-gray-500';
@@ -808,8 +804,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                   key={commit.id || commit.sha || idx}
                   className="cursor-pointer hover:border-primary transition-colors"
                   onClick={() => {
-                    setSelectedCommitSha(commit.sha || commit.id);
-                    setIsDiffViewerOpen(true);
+                    navigate(`/projects/${selectedProject?.id}/repository/${selectedRepoId}/commit/${commit.sha || commit.id}`);
                   }}
                 >
                   <CardContent className="p-4">
@@ -1135,13 +1130,6 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
         </Tabs>
         )}
       </div>
-
-      <CommitDiffViewer
-        repoId={selectedRepoId}
-        commitSha={selectedCommitSha || ''}
-        isOpen={isDiffViewerOpen}
-        onClose={() => setIsDiffViewerOpen(false)}
-      />
     </div>
   );
 }

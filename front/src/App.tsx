@@ -10,6 +10,7 @@ import { WhiteboardPage } from './components/whiteboard-page';
 import { RepositoryPage } from './components/repository-page';
 import { RepositoriesPage } from './components/repositories-page';
 import { FileEditorPage } from './components/file-editor-page';
+import { CommitDetailsPage } from './components/commit-details-page';
 import { SettingsPage } from './components/settings-page';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
@@ -357,6 +358,10 @@ export default function App() {
                 <Route
                   path="/projects/:projectId/repository/:repoId/file/*"
                   element={<FileEditorPage />}
+                />
+                <Route
+                  path="/projects/:projectId/repository/:repoId/commit/:commitSha"
+                  element={<CommitDetailsPage />}
                 />
                 <Route
                   path="/projects/:projectId/repository/:repoId"
