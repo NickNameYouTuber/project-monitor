@@ -7,6 +7,7 @@ import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
@@ -81,7 +82,7 @@ public class GitService {
                         if (pathWalk == null || !pathWalk.isSubtree()) {
                             return List.of();
                         }
-                        tree = r.parseTree(pathWalk.getObjectId(0));
+                        tree = walk.parseTree(pathWalk.getObjectId(0));
                     }
                 }
                 
