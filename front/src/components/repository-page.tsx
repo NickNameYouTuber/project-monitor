@@ -408,7 +408,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
   const [commits, setCommits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const getFileIcon = (fileName: string) => {
+  const getFileIcon = (fileName: string | undefined) => {
+    if (!fileName) return 'text-gray-500';
     const ext = fileName.split('.').pop()?.toLowerCase();
     const iconMap: Record<string, string> = {
       'js': 'text-yellow-500',
@@ -762,10 +763,10 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                           ) : (
                             <File className={`w-4 h-4 ${getFileIcon(e.name)}`} />
                           )}
-                          <span className="flex-1">{e.name}</span>
+                          <span className="flex-1">{e.name || 'Unnamed'}</span>
                           {e.type === 'blob' && (
                             <>
-                              {e.name.includes('.') && (
+                              {e.name && e.name.includes('.') && (
                                 <span className="text-xs text-muted-foreground mr-2">
                                   .{e.name.split('.').pop()}
                                 </span>
