@@ -89,15 +89,14 @@ public class GitService {
                 // Теперь обойти найденное дерево
                 try (TreeWalk tw = new TreeWalk(r)) {
                     tw.addTree(tree);
-                    // Рекурсивно для корня (path=null), нерекурсивно для конкретной папки
-                    tw.setRecursive(path == null || path.isEmpty());
+                    tw.setRecursive(false);  // Всегда нерекурсивно - только прямые дочерние
                     
                     List<Map<String, Object>> res = new ArrayList<>();
                     while (tw.next()) {
                         String fileName = tw.getNameString();
                         String fullPath = path != null && !path.isEmpty() 
                             ? path + "/" + fileName 
-                            : tw.getPathString();
+                            : fileName;
                         boolean isDir = tw.isSubtree();
                         
                         res.add(Map.of(

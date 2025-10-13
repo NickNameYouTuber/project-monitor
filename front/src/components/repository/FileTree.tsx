@@ -27,10 +27,26 @@ export function FileTree({ repoId, branch, currentFile, onFileSelect }: FileTree
 
   const loadTree = async () => {
     try {
-      const files = await listFiles(repoId, branch, undefined);
-      const treeStructure = buildTree(files);
+      const allFiles = await loadAllFilesRecursively('');
+      const treeStructure = buildTree(allFiles);
       setTree(treeStructure);
     } catch {}
+  };
+
+  const loadAllFilesRecursively = async (path: string): Promise<FileEntry[]> => {
+    const entries = await listFiles(repoId, branch, path || undefined);
+    const allFiles: FileEntry[] = [];
+
+    for (const entry of entries) {
+      allFiles.push(entry);
+      if (entry.type === 'tree') {
+        // Рекурсивно загрузить содержимое папки
+        const subFiles = await loadAllFilesRecursively(entry.path);
+        allFiles.push(...subFiles);
+      }
+    }
+
+    return allFiles;
   };
 
   const buildTree = (files: FileEntry[]): FileNode[] => {
