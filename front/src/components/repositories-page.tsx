@@ -28,7 +28,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
   const [newRepo, setNewRepo] = useState({
     name: '',
     description: '',
-    default_branch: 'main',
+    default_branch: 'master',
     visibility: 'private',
     url: '',
     auth_token: ''
@@ -88,7 +88,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
       setNewRepo({
         name: '',
         description: '',
-        default_branch: 'main',
+        default_branch: 'master',
         visibility: 'private',
         url: '',
         auth_token: ''
@@ -172,7 +172,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                           id="branch"
                           value={newRepo.default_branch}
                           onChange={(e) => setNewRepo(prev => ({ ...prev, default_branch: e.target.value }))}
-                          placeholder="main"
+                          placeholder="master"
                         />
                       </div>
                       

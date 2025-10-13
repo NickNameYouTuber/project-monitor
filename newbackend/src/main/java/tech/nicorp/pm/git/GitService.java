@@ -58,7 +58,7 @@ public class GitService {
             if (full != null && full.startsWith("refs/heads/")) {
                 return full.substring("refs/heads/".length());
             }
-            return "main";
+            return "master";
         }
     }
 
@@ -179,10 +179,22 @@ public class GitService {
         Path path = config.getRepoPath(repoId.toString());
         try {
             Files.createDirectories(path.getParent());
-            Git.init()
+            Git git = Git.init()
                     .setDirectory(path.toFile())
-                    .setInitialBranch("main")
+                    .setInitialBranch("master")
                     .call();
+            
+            Repository repo = git.getRepository();
+            repo.getConfig().setString("receive", null, "denyCurrentBranch", "updateInstead");
+            repo.getConfig().save();
+            
+            git.commit()
+                    .setMessage("Initial commit")
+                    .setAuthor("System", "system@nicorp.tech")
+                    .setAllowEmpty(true)
+                    .call();
+            
+            git.close();
         } catch (Exception e) {
             throw new IOException("Failed to initialize repository: " + e.getMessage(), e);
         }

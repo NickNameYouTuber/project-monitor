@@ -75,7 +75,7 @@ public class RepositoriesController {
         if (name == null || name.isBlank()) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "invalid_name"));
         Repository r = new Repository();
         r.setName(name);
-        if (body.get("default_branch") != null) r.setDefaultBranch((String) body.get("default_branch"));
+        r.setDefaultBranch(body.get("default_branch") != null ? (String) body.get("default_branch") : "master");
         if (body.get("description") != null) r.setDescription((String) body.get("description"));
         if (body.get("visibility") != null) r.setVisibility((String) body.get("visibility"));
         if (body.get("project_id") instanceof String s) {

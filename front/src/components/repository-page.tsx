@@ -400,7 +400,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
     name: '',
     description: '',
     visibility: 'private',
-    default_branch: 'main'
+    default_branch: 'master'
   });
   const [currentPath, setCurrentPath] = useState<string>('');
   const [entries, setEntries] = useState<FileEntry[]>([]);
