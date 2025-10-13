@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface RepositoryRepository extends JpaRepository<Repository, UUID> {
     @Query("SELECT DISTINCT r FROM Repository r " +
-           "LEFT JOIN RepositoryMember m ON m.repository.id = r.id " +
+           "JOIN RepositoryMember m ON m.repository.id = r.id " +
            "WHERE m.user.id = :userId " +
            "ORDER BY r.createdAt DESC")
     List<Repository> findByMemberUserId(@Param("userId") UUID userId);

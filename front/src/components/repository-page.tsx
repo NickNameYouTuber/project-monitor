@@ -735,7 +735,9 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>{commit.author || commit.authorName || ''}</span>
                           <span>{commit.date ? new Date(commit.date).toLocaleString() : ''}</span>
-                          <code className="px-2 py-1 bg-muted rounded text-xs">{(commit.id || commit.sha || '').substring(0, 7)}</code>
+                          <code className="px-2 py-1 bg-muted rounded text-xs">
+                            {(commit.id || commit.sha || '').toString().substring(0, 7)}
+                          </code>
                         </div>
                       </div>
                     </div>
