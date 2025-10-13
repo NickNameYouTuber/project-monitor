@@ -83,6 +83,13 @@ public class RepositoryContentController {
     public ResponseEntity<List<DiffEntry>> commitDiff(@PathVariable("repoId") UUID repoId, @PathVariable("sha") String sha) throws IOException {
         return ResponseEntity.ok(git.diff(repoId, sha));
     }
+
+    @GetMapping("/commits/{sha}/diff-details")
+    public ResponseEntity<Map<String, Object>> commitDiffDetails(
+            @PathVariable("repoId") UUID repoId,
+            @PathVariable("sha") String sha) throws IOException {
+        return ResponseEntity.ok(git.getCommitDiffDetails(repoId, sha));
+    }
 }
 
 

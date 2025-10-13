@@ -17,6 +17,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -166,6 +167,67 @@ public class GitService {
                     return df.scan(new EmptyTreeIterator(), new CanonicalTreeParser(null, r.newObjectReader(), commit.getTree()));
                 }
                 return df.scan(parent.getTree(), commit.getTree());
+            }
+        }
+    }
+
+    public Map<String, Object> getCommitDiffDetails(UUID repoId, String sha) throws IOException {
+        try (Repository r = openRepo(repoId); RevWalk walk = new RevWalk(r)) {
+            RevCommit commit = walk.parseCommit(ObjectId.fromString(sha));
+            RevCommit parent = commit.getParentCount() > 0 ? walk.parseCommit(commit.getParent(0)) : null;
+            
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try (DiffFormatter df = new DiffFormatter(out)) {
+                df.setRepository(r);
+                df.setContext(3); // 3 строки контекста
+                
+                List<DiffEntry> entries;
+                if (parent == null) {
+                    entries = df.scan(new EmptyTreeIterator(), 
+                        new CanonicalTreeParser(null, r.newObjectReader(), commit.getTree()));
+                } else {
+                    entries = df.scan(parent.getTree(), commit.getTree());
+                }
+                
+                List<Map<String, Object>> fileDiffs = new ArrayList<>();
+                for (DiffEntry entry : entries) {
+                    df.format(entry);
+                    String patch = out.toString();
+                    out.reset();
+                    
+                    String oldContent = "";
+                    String newContent = "";
+                    
+                    try {
+                        if (entry.getOldId() != null && !entry.getOldId().equals(ObjectId.zeroId())) {
+                            oldContent = new String(r.open(entry.getOldId().toObjectId()).getBytes());
+                        }
+                        if (entry.getNewId() != null && !entry.getNewId().equals(ObjectId.zeroId())) {
+                            newContent = new String(r.open(entry.getNewId().toObjectId()).getBytes());
+                        }
+                    } catch (Exception e) {
+                        // Игнорировать ошибки для бинарных файлов
+                    }
+                    
+                    fileDiffs.add(Map.of(
+                        "oldPath", entry.getOldPath() != null ? entry.getOldPath() : "",
+                        "newPath", entry.getNewPath() != null ? entry.getNewPath() : "",
+                        "changeType", entry.getChangeType().name(),
+                        "oldContent", oldContent,
+                        "newContent", newContent,
+                        "patch", patch
+                    ));
+                }
+                
+                return Map.of(
+                    "commit", Map.of(
+                        "sha", commit.getName(),
+                        "message", commit.getFullMessage(),
+                        "author", commit.getAuthorIdent().getName(),
+                        "date", commit.getAuthorIdent().getWhen().toInstant().toString()
+                    ),
+                    "files", fileDiffs
+                );
             }
         }
     }

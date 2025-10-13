@@ -46,6 +46,7 @@ import { toast } from 'sonner';
 import UserAutocomplete from './calls/UserAutocomplete';
 import type { UserDto } from '../api/users';
 import { Copy } from 'lucide-react';
+import { CommitDiffViewer } from './repository/CommitDiffViewer';
 
 interface RepositoryPageProps {
   projects: Project[];
@@ -407,6 +408,9 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [commits, setCommits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [selectedCommitSha, setSelectedCommitSha] = useState<string | null>(null);
+  const [isDiffViewerOpen, setIsDiffViewerOpen] = useState(false);
 
   const getFileIcon = (fileName: string | undefined) => {
     if (!fileName) return 'text-gray-500';
@@ -800,7 +804,14 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
           <TabsContent value="commits" className="space-y-4">
             <div className="space-y-3">
               {commits.map((commit: any, idx) => (
-                <Card key={commit.id || commit.sha || idx}>
+                <Card 
+                  key={commit.id || commit.sha || idx}
+                  className="cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => {
+                    setSelectedCommitSha(commit.sha || commit.id);
+                    setIsDiffViewerOpen(true);
+                  }}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
@@ -1124,6 +1135,13 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
         </Tabs>
         )}
       </div>
+
+      <CommitDiffViewer
+        repoId={selectedRepoId}
+        commitSha={selectedCommitSha || ''}
+        isOpen={isDiffViewerOpen}
+        onClose={() => setIsDiffViewerOpen(false)}
+      />
     </div>
   );
 }

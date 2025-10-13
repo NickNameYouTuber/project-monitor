@@ -25,4 +25,28 @@ export async function getCommitDiff(repoId: string, sha: string): Promise<any> {
   return data;
 }
 
+export interface CommitDiff {
+  commit: {
+    sha: string;
+    message: string;
+    author: string;
+    date: string;
+  };
+  files: FileDiff[];
+}
+
+export interface FileDiff {
+  oldPath: string;
+  newPath: string;
+  changeType: 'ADD' | 'MODIFY' | 'DELETE' | 'RENAME' | 'COPY';
+  oldContent: string;
+  newContent: string;
+  patch: string;
+}
+
+export async function getCommitDiffDetails(repoId: string, sha: string): Promise<CommitDiff> {
+  const { data } = await apiClient.get<CommitDiff>(`/repositories/${repoId}/commits/${sha}/diff-details`);
+  return data;
+}
+
 
