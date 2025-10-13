@@ -1004,15 +1004,15 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Code className="w-5 h-5" />
-                  Клонирование репозитория
+                  Локальный доступ к репозиторию
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 <div>
-                  <Label>Clone URL</Label>
+                  <Label>Repository ID</Label>
                   <div className="flex gap-2 mt-2">
                     <Input 
-                      value={`git clone https://nit.nicorp.tech/git/${selectedRepoId}.git`} 
+                      value={selectedRepoId} 
                       readOnly 
                       className="font-mono text-sm"
                     />
@@ -1020,15 +1020,21 @@ export function RepositoryPage({ projects, tasks, initialRepoId }: RepositoryPag
                       size="icon"
                       variant="outline"
                       onClick={() => {
-                        navigator.clipboard.writeText(`git clone https://nit.nicorp.tech/git/${selectedRepoId}.git`);
-                        toast.success('Команда скопирована');
+                        navigator.clipboard.writeText(selectedRepoId);
+                        toast.success('ID скопирован');
                       }}
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Используйте эту команду для клонирования репозитория локально
+                </div>
+                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                  <p className="text-sm font-medium">Путь к репозиторию на сервере:</p>
+                  <code className="text-xs block bg-background p-2 rounded">
+                    /var/lib/project-monitor/repos/{selectedRepoId}
+                  </code>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Репозиторий хранится в Docker volume. Используйте встроенный редактор для работы с файлами.
                   </p>
                 </div>
               </CardContent>
