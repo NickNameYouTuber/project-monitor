@@ -72,7 +72,6 @@ public class RepositoryMembersController {
         if (m.getUser() != null) {
             r.setUserId(m.getUser().getId());
             r.setUsername(m.getUser().getUsername());
-            r.setEmail(m.getUser().getEmail());
         }
         r.setRole(m.getRole());
         r.setCreatedAt(m.getCreatedAt());

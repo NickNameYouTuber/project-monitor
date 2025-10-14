@@ -5,7 +5,6 @@ export type RepositoryMemberDto = {
   repository_id: string;
   user_id: string;
   username?: string;
-  email?: string;
   role: string;
   created_at: string;
 };
