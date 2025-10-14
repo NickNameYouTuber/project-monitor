@@ -121,6 +121,7 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
                       selectedUsers={selectedUsers}
                       onUsersChange={setSelectedUsers}
                       label="Select users"
+                      projectId={projectId}
                     />
                   </div>
                   <div>

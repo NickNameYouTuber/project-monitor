@@ -7,32 +7,36 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Check, ChevronsUpDown, X, UserPlus } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { listUsers, UserDto } from '../../api/users';
+import { getProjectUsers } from '../../api/project-users';
 
 interface UserAutocompleteProps {
   selectedUsers: UserDto[];
   onUsersChange: (users: UserDto[]) => void;
   excludeUserIds?: string[];
   label?: string;
+  projectId?: string;
 }
 
 export default function UserAutocomplete({ 
   selectedUsers, 
   onUsersChange, 
   excludeUserIds = [],
-  label = 'Участники'
+  label = 'Участники',
+  projectId
 }: UserAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<UserDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Загрузка пользователей ТОЛЬКО при открытии popover
   useEffect(() => {
     if (!open) return;
     
     const loadUsers = async () => {
       setIsLoading(true);
       try {
-        const allUsers = await listUsers(100);
+        const allUsers = projectId 
+          ? await getProjectUsers(projectId)
+          : await listUsers(100);
         setUsers(allUsers.filter(u => !excludeUserIds.includes(u.id)));
       } catch (error) {
         console.error('Ошибка загрузки пользователей:', error);
@@ -42,7 +46,7 @@ export default function UserAutocomplete({
     };
     
     loadUsers();
-  }, [open]);
+  }, [open, projectId]);
 
   const handleSelect = (user: UserDto) => {
     const isSelected = selectedUsers.some(u => u.id === user.id);

@@ -1012,6 +1012,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                         selectedUsers={selectedUsers}
                         onUsersChange={setSelectedUsers}
                         label="Выберите пользователей"
+                        projectId={selectedProject?.id}
                       />
                     </div>
                     <div>

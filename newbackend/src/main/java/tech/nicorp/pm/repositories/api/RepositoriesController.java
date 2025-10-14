@@ -20,6 +20,7 @@ import tech.nicorp.pm.tasks.domain.Task;
 import tech.nicorp.pm.tasks.repo.TaskRepository;
 import tech.nicorp.pm.repositories.service.RepositoryMemberService;
 import tech.nicorp.pm.repositories.domain.RepositoryRole;
+import tech.nicorp.pm.projects.service.ProjectMemberService;
 
 import java.io.IOException;
 import java.util.List;
@@ -37,8 +38,9 @@ public class RepositoriesController {
     private final UserRepository users;
     private final TaskRepository tasks;
     private final RepositoryMemberService repositoryMemberService;
+    private final ProjectMemberService projectMemberService;
 
-    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects, RepositoryMemberRepository members, UserRepository users, TaskRepository tasks, RepositoryMemberService repositoryMemberService) {
+    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects, RepositoryMemberRepository members, UserRepository users, TaskRepository tasks, RepositoryMemberService repositoryMemberService, ProjectMemberService projectMemberService) {
         this.git = git;
         this.repositories = repositories;
         this.projects = projects;
@@ -46,6 +48,7 @@ public class RepositoriesController {
         this.users = users;
         this.tasks = tasks;
         this.repositoryMemberService = repositoryMemberService;
+        this.projectMemberService = projectMemberService;
     }
 
     @GetMapping("/{repoId}/refs/branches")
@@ -120,11 +123,22 @@ public class RepositoriesController {
         
         User creator = users.findById(userId).orElse(null);
         if (creator != null) {
-            RepositoryMember member = new RepositoryMember();
-            member.setRepository(saved);
-            member.setUser(creator);
-            member.setRole("owner");
-            members.save(member);
+            RepositoryMember creatorMember = new RepositoryMember();
+            creatorMember.setRepository(saved);
+            creatorMember.setUser(creator);
+            creatorMember.setRoleEnum(RepositoryRole.OWNER);
+            members.save(creatorMember);
+        }
+        
+        if (saved.getProject() != null) {
+            User projectOwner = saved.getProject().getOwner();
+            if (projectOwner != null && !projectOwner.getId().equals(userId)) {
+                RepositoryMember ownerMember = new RepositoryMember();
+                ownerMember.setRepository(saved);
+                ownerMember.setUser(projectOwner);
+                ownerMember.setRoleEnum(RepositoryRole.OWNER);
+                members.save(ownerMember);
+            }
         }
         
         try {
