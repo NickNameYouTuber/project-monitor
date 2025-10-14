@@ -48,6 +48,21 @@ public class RepositoriesController {
         return ResponseEntity.ok(git.branches(repoId));
     }
 
+    @PostMapping("/{repoId}/refs/branches")
+    public ResponseEntity<Object> createBranch(@PathVariable("repoId") UUID repoId, @RequestBody Map<String, String> body) {
+        try {
+            String name = body.get("name");
+            String baseBranch = body.get("base_branch");
+            if (name == null || name.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "name is required"));
+            }
+            git.createBranch(repoId, name, baseBranch != null ? baseBranch : "master");
+            return ResponseEntity.ok(Map.of("name", name, "base_branch", baseBranch != null ? baseBranch : "master", "success", true));
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body(Map.of("error", "failed_to_create_branch", "message", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{repoId}/refs/tags")
     public ResponseEntity<Object> tags(@PathVariable("repoId") UUID repoId) throws IOException {
         return ResponseEntity.ok(git.tags(repoId));
