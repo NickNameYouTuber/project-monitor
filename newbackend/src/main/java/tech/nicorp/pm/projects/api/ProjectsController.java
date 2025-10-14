@@ -22,6 +22,8 @@ import tech.nicorp.pm.users.domain.User;
 import tech.nicorp.pm.dashboards.repo.DashboardRepository;
 import tech.nicorp.pm.dashboards.domain.Dashboard;
 import tech.nicorp.pm.projects.api.dto.ProjectsReorderRequest;
+import tech.nicorp.pm.projects.service.ProjectMemberService;
+import tech.nicorp.pm.projects.domain.ProjectRole;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -31,11 +33,13 @@ public class ProjectsController {
     private final ProjectRepository projects;
     private final UserRepository users;
     private final DashboardRepository dashboards;
+    private final ProjectMemberService projectMemberService;
 
-    public ProjectsController(ProjectRepository projects, UserRepository users, DashboardRepository dashboards) {
+    public ProjectsController(ProjectRepository projects, UserRepository users, DashboardRepository dashboards, ProjectMemberService projectMemberService) {
         this.projects = projects;
         this.users = users;
         this.dashboards = dashboards;
+        this.projectMemberService = projectMemberService;
     }
 
     @GetMapping
@@ -61,16 +65,31 @@ public class ProjectsController {
         p.setAssignee(body.getAssignee());
         if (body.getOrderIndex() != null) p.setOrderIndex(body.getOrderIndex());
         if (body.getColor() != null) p.setColor(body.getColor());
+        
+        UUID ownerId = null;
         if (auth != null && auth.getName() != null) {
-            users.findById(UUID.fromString(auth.getName())).ifPresent(p::setOwner);
+            try {
+                ownerId = UUID.fromString(auth.getName());
+                users.findById(ownerId).ifPresent(p::setOwner);
+            } catch (IllegalArgumentException ignored) {}
         }
+        
         if (body.getDashboardId() != null) {
             try {
                 UUID did = UUID.fromString(body.getDashboardId());
                 dashboards.findById(did).ifPresent(p::setDashboard);
             } catch (IllegalArgumentException ignored) {}
         }
+        
         Project saved = projects.save(p);
+        
+        if (ownerId != null) {
+            try {
+                projectMemberService.addMember(saved.getId(), ownerId, ProjectRole.OWNER);
+            } catch (Exception e) {
+            }
+        }
+        
         return ResponseEntity.created(URI.create("/api/projects/" + saved.getId())).body(toResponse(saved));
     }
 

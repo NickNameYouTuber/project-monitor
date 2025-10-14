@@ -62,6 +62,10 @@ public class Task {
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> assignees = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private User assignee;
+
     @Column(name = "repository_id", columnDefinition = "uuid")
     private UUID repositoryId;
 

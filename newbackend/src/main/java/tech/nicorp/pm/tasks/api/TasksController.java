@@ -11,8 +11,11 @@ import tech.nicorp.pm.repositories.repo.RepositoryRepository;
 import tech.nicorp.pm.tasks.api.dto.TaskCreateRequest;
 import tech.nicorp.pm.tasks.api.dto.TaskRepositoryInfo;
 import tech.nicorp.pm.tasks.api.dto.TaskResponse;
+import tech.nicorp.pm.tasks.api.dto.TaskAssigneeInfo;
 import tech.nicorp.pm.tasks.domain.Task;
 import tech.nicorp.pm.tasks.repo.TaskRepository;
+import tech.nicorp.pm.users.domain.User;
+import tech.nicorp.pm.users.repo.UserRepository;
 
 import java.net.URI;
 import java.util.List;
@@ -26,12 +29,14 @@ public class TasksController {
     private final ProjectRepository projects;
     private final TaskColumnRepository columns;
     private final RepositoryRepository repositories;
+    private final UserRepository users;
 
-    public TasksController(TaskRepository tasks, ProjectRepository projects, TaskColumnRepository columns, RepositoryRepository repositories) {
+    public TasksController(TaskRepository tasks, ProjectRepository projects, TaskColumnRepository columns, RepositoryRepository repositories, UserRepository users) {
         this.tasks = tasks;
         this.projects = projects;
         this.columns = columns;
         this.repositories = repositories;
+        this.users = users;
     }
 
     @GetMapping("/tasks")
@@ -140,6 +145,16 @@ public class TasksController {
                 info.setBranch(t.getRepositoryBranch());
                 r.setRepositoryInfo(info);
             }
+        }
+        
+        if (t.getAssignee() != null) {
+            r.setAssigneeId(t.getAssignee().getId());
+            
+            TaskAssigneeInfo assigneeInfo = new TaskAssigneeInfo();
+            assigneeInfo.setId(t.getAssignee().getId());
+            assigneeInfo.setUsername(t.getAssignee().getUsername());
+            assigneeInfo.setDisplayName(t.getAssignee().getDisplayName());
+            r.setAssignee(assigneeInfo);
         }
         
         return r;

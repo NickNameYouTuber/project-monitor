@@ -39,11 +39,20 @@ security:
     issuer: project-monitor
     expirationSeconds: 2592000
 
+nimeet:
+  backend:
+    url: ${NIMEET_BACKEND_URL:http://nimeet-backend:3001}
+
 springdoc:
   api-docs:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
     operationsSorter: method
+
+logging:
+  level:
+    tech.nicorp.pm.calls: INFO
+    org.springframework.scheduling: DEBUG
 
 

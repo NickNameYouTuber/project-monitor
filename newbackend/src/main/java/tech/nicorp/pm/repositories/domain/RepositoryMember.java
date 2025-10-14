@@ -28,10 +28,26 @@ public class RepositoryMember {
     private User user;
 
     @Column(name = "role", nullable = false)
-    private String role; // owner, maintainer, developer, reporter, guest
+    private String role;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    public RepositoryRole getRoleEnum() {
+        try {
+            return RepositoryRole.valueOf(role.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            if ("owner".equalsIgnoreCase(role)) return RepositoryRole.OWNER;
+            if ("developer".equalsIgnoreCase(role)) return RepositoryRole.DEVELOPER;
+            if ("maintainer".equalsIgnoreCase(role)) return RepositoryRole.MAINTAINER;
+            if ("reporter".equalsIgnoreCase(role)) return RepositoryRole.REPORTER;
+            return RepositoryRole.VIEWER;
+        }
+    }
+
+    public void setRoleEnum(RepositoryRole repositoryRole) {
+        this.role = repositoryRole.name();
+    }
 }
 
 

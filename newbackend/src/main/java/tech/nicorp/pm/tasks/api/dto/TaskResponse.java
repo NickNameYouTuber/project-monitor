@@ -35,6 +35,10 @@ public class TaskResponse {
     private String repositoryBranch;
     @JsonProperty("repository_info")
     private TaskRepositoryInfo repositoryInfo;
+    @JsonProperty("assignee_id")
+    private UUID assigneeId;
+    @JsonProperty("assignee")
+    private TaskAssigneeInfo assignee;
 }
 
 

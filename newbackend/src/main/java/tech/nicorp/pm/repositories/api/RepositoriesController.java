@@ -18,6 +18,8 @@ import tech.nicorp.pm.users.repo.UserRepository;
 import tech.nicorp.pm.tasks.api.dto.TaskResponse;
 import tech.nicorp.pm.tasks.domain.Task;
 import tech.nicorp.pm.tasks.repo.TaskRepository;
+import tech.nicorp.pm.repositories.service.RepositoryMemberService;
+import tech.nicorp.pm.repositories.domain.RepositoryRole;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,14 +36,16 @@ public class RepositoriesController {
     private final RepositoryMemberRepository members;
     private final UserRepository users;
     private final TaskRepository tasks;
+    private final RepositoryMemberService repositoryMemberService;
 
-    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects, RepositoryMemberRepository members, UserRepository users, TaskRepository tasks) {
+    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects, RepositoryMemberRepository members, UserRepository users, TaskRepository tasks, RepositoryMemberService repositoryMemberService) {
         this.git = git;
         this.repositories = repositories;
         this.projects = projects;
         this.members = members;
         this.users = users;
         this.tasks = tasks;
+        this.repositoryMemberService = repositoryMemberService;
     }
 
     @GetMapping("/{repoId}/refs/branches")
@@ -232,6 +236,37 @@ public class RepositoriesController {
         r.setRepositoryId(t.getRepositoryId());
         r.setRepositoryBranch(t.getRepositoryBranch());
         return r;
+    }
+
+    @GetMapping("/{repoId}/check-access")
+    public ResponseEntity<Map<String, Object>> checkAccess(
+            @PathVariable("repoId") UUID repoId,
+            @AuthenticationPrincipal Object principal) {
+        
+        UUID userId = extractUserId(principal);
+        if (userId == null) {
+            return ResponseEntity.ok(Map.of("has_access", false));
+        }
+        
+        RepositoryRole role = repositoryMemberService.getUserRole(repoId, userId).orElse(null);
+        if (role == null) {
+            return ResponseEntity.ok(Map.of("has_access", false));
+        }
+        
+        java.util.HashMap<String, Object> response = new java.util.HashMap<>();
+        response.put("has_access", true);
+        response.put("role", role.name());
+        response.put("can_push", repositoryMemberService.canPush(role));
+        response.put("can_merge", repositoryMemberService.canMerge(role));
+        response.put("can_create_branch", repositoryMemberService.canCreateBranch(role));
+        response.put("can_delete_branch", repositoryMemberService.canDeleteBranch(role));
+        response.put("can_edit_files", repositoryMemberService.canEditFiles(role));
+        response.put("can_manage_settings", repositoryMemberService.canManageSettings(role));
+        response.put("can_manage_members", repositoryMemberService.canManageMembers(role));
+        response.put("can_delete_repository", repositoryMemberService.canDeleteRepository(role));
+        response.put("can_create_issue", repositoryMemberService.canCreateIssue(role));
+        
+        return ResponseEntity.ok(response);
     }
 }
 

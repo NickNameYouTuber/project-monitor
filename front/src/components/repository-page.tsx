@@ -47,6 +47,8 @@ import { toast } from 'sonner';
 import UserAutocomplete from './calls/UserAutocomplete';
 import type { UserDto } from '../api/users';
 import { Copy } from 'lucide-react';
+import { useRepositoryPermissions } from '../hooks/useRepositoryPermissions';
+import { RoleBadge } from './role-badge';
 
 interface RepositoryPageProps {
   projects: Project[];
@@ -389,10 +391,12 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   const [viewingMR, setViewingMR] = useState<string | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
   
+  const repoPermissions = useRepositoryPermissions(selectedRepoId || undefined);
+  
   const [members, setMembers] = useState<RepositoryMemberDto[]>([]);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
-  const [newMemberRole, setNewMemberRole] = useState('developer');
+  const [newMemberRole, setNewMemberRole] = useState('DEVELOPER');
   
   const [linkedTasks, setLinkedTasks] = useState<Task[]>([]);
   
@@ -700,8 +704,13 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
     <div className="h-full flex flex-col">
       <div className="border-b border-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1>Repository</h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1>Repository</h1>
+              {selectedRepoId && repoPermissions.role && (
+                <RoleBadge role={repoPermissions.role} type="repository" />
+              )}
+            </div>
             <p className="text-muted-foreground">Manage your project repositories and code</p>
           </div>
         </div>
@@ -741,7 +750,9 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
             <TabsTrigger value="members">Members</TabsTrigger>
             <TabsTrigger value="merge-requests">Merge Requests</TabsTrigger>
             <TabsTrigger value="tasks">Linked Tasks</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+            {repoPermissions.canManageSettings && (
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="files" className="space-y-4">
@@ -773,13 +784,14 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                   className="pl-10"
                 />
               </div>
-              <Dialog open={isNewFileOpen} onOpenChange={setIsNewFileOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    New File
-                  </Button>
-                </DialogTrigger>
+              {repoPermissions.canEditFiles && (
+                <Dialog open={isNewFileOpen} onOpenChange={setIsNewFileOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      New File
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Создать новый файл</DialogTitle>
@@ -809,6 +821,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                   </div>
                 </DialogContent>
               </Dialog>
+              )}
             </div>
 
             <Card>
@@ -911,13 +924,14 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
           <TabsContent value="branches" className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium">Ветки</h3>
-              <Dialog open={isCreateBranchOpen} onOpenChange={setIsCreateBranchOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Создать ветку
-                  </Button>
-                </DialogTrigger>
+              {repoPermissions.canCreateBranch && (
+                <Dialog open={isCreateBranchOpen} onOpenChange={setIsCreateBranchOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Создать ветку
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Создать новую ветку</DialogTitle>
@@ -951,6 +965,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                   </div>
                 </DialogContent>
               </Dialog>
+              )}
             </div>
             <div className="space-y-2">
               {branches.map(branch => (
@@ -964,7 +979,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                           <Badge variant="secondary">Current</Badge>
                         )}
                       </div>
-                      {branch !== selectedBranch && (
+                      {branch !== selectedBranch && repoPermissions.canDeleteBranch && (
                         <Button size="sm" variant="ghost" onClick={() => handleDeleteBranch(branch)}>
                           Удалить
                         </Button>
@@ -979,13 +994,14 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
           <TabsContent value="members" className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium">Участники</h3>
-              <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Добавить участника
-                  </Button>
-                </DialogTrigger>
+              {repoPermissions.canManageMembers && (
+                <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Добавить участника
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Добавить участника</DialogTitle>
@@ -1005,11 +1021,11 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="owner">Owner</SelectItem>
-                          <SelectItem value="maintainer">Maintainer</SelectItem>
-                          <SelectItem value="developer">Developer</SelectItem>
-                          <SelectItem value="reporter">Reporter</SelectItem>
-                          <SelectItem value="guest">Guest</SelectItem>
+                          <SelectItem value="OWNER">Owner</SelectItem>
+                          <SelectItem value="MAINTAINER">Maintainer</SelectItem>
+                          <SelectItem value="DEVELOPER">Developer</SelectItem>
+                          <SelectItem value="REPORTER">Reporter</SelectItem>
+                          <SelectItem value="VIEWER">Viewer</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1020,6 +1036,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                   </div>
                 </DialogContent>
               </Dialog>
+              )}
             </div>
             <div className="space-y-2">
               {members.length === 0 ? (
@@ -1041,12 +1058,14 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                           </Avatar>
                           <div>
                             <div className="font-medium">{member.user?.username || member.user_id}</div>
-                            <div className="text-sm text-muted-foreground capitalize">{member.role}</div>
+                            <RoleBadge role={member.role} type="repository" variant="secondary" />
                           </div>
                         </div>
-                        <Button size="sm" variant="ghost" onClick={() => handleRemoveMember(member.id)}>
-                          Удалить
-                        </Button>
+                        {repoPermissions.canManageMembers && (
+                          <Button size="sm" variant="ghost" onClick={() => handleRemoveMember(member.id)}>
+                            Удалить
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

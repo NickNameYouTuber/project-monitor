@@ -1,0 +1,4 @@
+ALTER TABLE repositories ADD COLUMN IF NOT EXISTS clone_url VARCHAR(500);
+ALTER TABLE repositories ADD COLUMN IF NOT EXISTS visibility VARCHAR(20) DEFAULT 'private';
+ALTER TABLE repositories ADD COLUMN IF NOT EXISTS description TEXT;
+
