@@ -42,6 +42,7 @@ import type { Project, Task } from '../App';
 import { listRepositories, createBranch, deleteBranch, updateFile, updateRepository, type RepositoryDto } from '../api/repositories';
 import { listFiles, type FileEntry, listCommits, getFileContent } from '../api/repository-content';
 import { listMembers, addMember, removeMember, type RepositoryMemberDto } from '../api/repository-members';
+import { apiClient } from '../api/client';
 import { toast } from 'sonner';
 import UserAutocomplete from './calls/UserAutocomplete';
 import type { UserDto } from '../api/users';
