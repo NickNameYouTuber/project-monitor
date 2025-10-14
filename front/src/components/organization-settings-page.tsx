@@ -20,6 +20,7 @@ import { listMembers, addMember, removeMember, updateMemberRole, getCurrentMembe
 import { listInvites, createInvite, revokeInvite } from '../api/organization-invites';
 import { apiClient } from '../api/client';
 import type { Organization, OrganizationMember, OrganizationInvite } from '../types/organization';
+import { IdentityProviderSettings } from './identity-provider-settings';
 
 export function OrganizationSettingsPage() {
   const { orgId } = useParams<{ orgId: string }>();
@@ -302,6 +303,7 @@ export function OrganizationSettingsPage() {
             {canManageSettings && <TabsTrigger value="members">Members</TabsTrigger>}
             {currentMember?.role === 'OWNER' && <TabsTrigger value="security">Security</TabsTrigger>}
             {canManageSettings && <TabsTrigger value="invites">Invites</TabsTrigger>}
+            {currentMember?.role === 'OWNER' && <TabsTrigger value="identity-provider">Identity Provider</TabsTrigger>}
           </TabsList>
           
           <TabsContent value="general" className="mt-6">
@@ -666,6 +668,10 @@ export function OrganizationSettingsPage() {
                 </div>
               </DialogContent>
             </Dialog>
+          </TabsContent>
+          
+          <TabsContent value="identity-provider" className="mt-6">
+            {orgId && <IdentityProviderSettings organizationId={orgId} />}
           </TabsContent>
         </Tabs>
       </div>

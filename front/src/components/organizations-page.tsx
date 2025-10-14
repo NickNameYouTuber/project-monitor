@@ -12,6 +12,8 @@ import { RoleBadge } from './role-badge';
 import { toast } from 'sonner';
 import { listOrganizations, verifyOrganizationPassword } from '../api/organizations';
 import type { Organization } from '../types/organization';
+import { getCorporateAuthStatus } from '../api/corporate-auth';
+import { CorporateAuthDialog } from './corporate-auth-dialog';
 
 export function OrganizationsPage() {
   const navigate = useNavigate();
@@ -23,6 +25,8 @@ export function OrganizationsPage() {
   const [selectedOrgForPassword, setSelectedOrgForPassword] = useState<Organization | null>(null);
   const [orgPassword, setOrgPassword] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [corporateAuthDialogOpen, setCorporateAuthDialogOpen] = useState(false);
+  const [selectedOrgForCorporateAuth, setSelectedOrgForCorporateAuth] = useState<Organization | null>(null);
 
   useEffect(() => {
     loadOrganizations();
@@ -39,7 +43,20 @@ export function OrganizationsPage() {
     }
   };
 
-  const handleSelectOrganization = (org: Organization) => {
+  const handleSelectOrganization = async (org: Organization) => {
+    if (org.require_corporate_email) {
+      try {
+        const status = await getCorporateAuthStatus(org.id);
+        if (!status.linked) {
+          setSelectedOrgForCorporateAuth(org);
+          setCorporateAuthDialogOpen(true);
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to check corporate auth status:', error);
+      }
+    }
+    
     if (org.require_password) {
       setSelectedOrgForPassword(org);
       setPasswordDialogOpen(true);
@@ -241,6 +258,24 @@ export function OrganizationsPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {selectedOrgForCorporateAuth && (
+          <CorporateAuthDialog
+            open={corporateAuthDialogOpen}
+            onOpenChange={setCorporateAuthDialogOpen}
+            organizationId={selectedOrgForCorporateAuth.id}
+            organizationName={selectedOrgForCorporateAuth.name}
+            onSuccess={() => {
+              if (selectedOrgForCorporateAuth.require_password) {
+                setSelectedOrgForPassword(selectedOrgForCorporateAuth);
+                setPasswordDialogOpen(true);
+              } else {
+                localStorage.setItem('currentOrgId', selectedOrgForCorporateAuth.id);
+                navigate('/projects');
+              }
+            }}
+          />
+        )}
       </div>
     </div>
   );
