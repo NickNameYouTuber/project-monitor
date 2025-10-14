@@ -49,6 +49,10 @@ public class Project {
     @JoinColumn(name = "dashboard_id")
     private Dashboard dashboard;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private tech.nicorp.pm.organizations.domain.Organization organization;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 }

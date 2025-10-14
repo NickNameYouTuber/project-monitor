@@ -13,6 +13,8 @@ import { FileEditorPage } from './components/file-editor-page';
 import { CommitDetailsPage } from './components/commit-details-page';
 import { AccountPage } from './components/account-page';
 import { ProjectSettingsPage } from './components/project-settings-page';
+import { OrganizationsPage } from './components/organizations-page';
+import { CreateOrganizationPage } from './components/create-organization-page';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
 import { setAccessToken } from './api/client';
@@ -344,7 +346,9 @@ export default function App() {
               )}
               <main className={`flex-1 overflow-hidden ${currentPage === 'projects' || isStandaloneCall ? 'w-full' : ''}`}>
               <Routes>
-                <Route path="/" element={<Navigate to="/projects" replace />} />
+                <Route path="/" element={<Navigate to="/organizations" replace />} />
+                <Route path="/organizations" element={<OrganizationsPage />} />
+                <Route path="/organizations/create" element={<CreateOrganizationPage />} />
                 <Route path="/projects" element={
                   <ProjectsPage
                     projects={projects}

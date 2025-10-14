@@ -2,8 +2,10 @@ tech\nicorp\pm\users\repo\UserRepository.class
 tech\nicorp\pm\notifications\Webhook.class
 tech\nicorp\pm\notifications\TelegramService.class
 tech\nicorp\pm\pipelines\domain\Pipeline.class
+tech\nicorp\pm\organizations\domain\OrganizationRole.class
 tech\nicorp\pm\auth\api\dto\TelegramAuthRequest.class
 tech\nicorp\pm\merge\api\MergeRequestDiscussionsController.class
+tech\nicorp\pm\organizations\service\OrganizationService.class
 tech\nicorp\pm\pipelines\service\RunnerService.class
 tech\nicorp\pm\calls\service\RecurringCallService.class
 tech\nicorp\pm\security\BasicPatAuthFilter.class
@@ -14,7 +16,9 @@ tech\nicorp\pm\security\JwtService.class
 tech\nicorp\pm\tasks\api\LegacyTasksCompatController.class
 tech\nicorp\pm\projects\domain\TaskColumn.class
 tech\nicorp\pm\calls\service\CallStatusManager$1.class
+tech\nicorp\pm\organizations\api\dto\CreateInviteRequest.class
 tech\nicorp\pm\pipelines\service\PipelineService$RuleDecision.class
+tech\nicorp\pm\organizations\domain\Organization.class
 tech\nicorp\pm\tasks\api\ChatTasksController.class
 tech\nicorp\pm\auth\api\AuthController.class
 tech\nicorp\pm\merge\repo\MergeRequestApprovalRepository.class
@@ -28,6 +32,7 @@ tech\nicorp\pm\pipelines\domain\PipelineSchedule.class
 tech\nicorp\pm\pipelines\domain\WhenType.class
 tech\nicorp\pm\whiteboards\api\dto\WhiteboardElementResponse.class
 tech\nicorp\pm\dashboards\api\DashboardsController.class
+tech\nicorp\pm\organizations\service\OrganizationMemberService.class
 tech\nicorp\pm\pipelines\service\PipelineYamlParser$RuleSpec.class
 tech\nicorp\pm\projects\api\LegacyTaskColumnsCompatController.class
 tech\nicorp\pm\merge\repo\MergeRequestDiscussionRepository.class
@@ -36,10 +41,15 @@ tech\nicorp\pm\utils\PasswordHashGenerator.class
 tech\nicorp\pm\merge\api\MergeRequestsController.class
 tech\nicorp\pm\calls\service\CallParticipantService.class
 tech\nicorp\pm\tasks\api\TasksController.class
+tech\nicorp\pm\organizations\api\dto\OrganizationCreateRequest.class
 tech\nicorp\pm\repositories\api\RepositoryFilesController.class
 tech\nicorp\pm\pipelines\domain\JobStatus.class
+tech\nicorp\pm\organizations\api\OrganizationsController.class
 tech\nicorp\pm\config\OpenApiConfig.class
+tech\nicorp\pm\organizations\api\dto\OrganizationMemberResponse$UserBasicInfo.class
+tech\nicorp\pm\organizations\api\dto\OrganizationResponse.class
 tech\nicorp\pm\tasks\repo\TaskRepository.class
+tech\nicorp\pm\organizations\service\OrganizationInviteService.class
 tech\nicorp\pm\projects\api\dto\TaskColumnCreateRequest.class
 tech\nicorp\pm\projects\repo\TaskColumnRepository.class
 tech\nicorp\pm\users\service\TokenService.class
@@ -57,6 +67,7 @@ tech\nicorp\pm\comments\api\CommentsController.class
 tech\nicorp\pm\repositories\api\dto\RepositoryMemberCreateRequest.class
 tech\nicorp\pm\whiteboards\repo\WhiteboardElementRepository.class
 tech\nicorp\pm\calls\api\dto\CallParticipantResponse$UserSummary.class
+tech\nicorp\pm\organizations\domain\OrganizationInvite.class
 tech\nicorp\pm\whiteboards\domain\WhiteboardElement.class
 tech\nicorp\pm\merge\domain\MergeRequestDiscussion.class
 tech\nicorp\pm\tasks\api\dto\TaskResponse.class
@@ -91,6 +102,7 @@ tech\nicorp\pm\dashboards\api\dto\DashboardMemberResponse.class
 tech\nicorp\pm\pipelines\repo\PipelineRepository.class
 tech\nicorp\pm\repositories\domain\Repository.class
 tech\nicorp\pm\calls\api\dto\UpdateStatusRequest.class
+tech\nicorp\pm\organizations\repo\OrganizationRepository.class
 tech\nicorp\pm\calls\service\CallParticipantService$1.class
 tech\nicorp\pm\comments\repo\CommentRepository.class
 tech\nicorp\pm\pipelines\domain\PipelineJob.class
@@ -100,6 +112,7 @@ tech\nicorp\pm\repositories\api\dto\RepositoryResponse.class
 tech\nicorp\pm\auth\api\dto\LoginRequest.class
 tech\nicorp\pm\common\WebConfig.class
 tech\nicorp\pm\calls\domain\ParticipantRole.class
+tech\nicorp\pm\organizations\api\dto\OrganizationInviteResponse.class
 tech\nicorp\pm\pipelines\domain\Runner.class
 tech\nicorp\pm\calls\domain\Call.class
 tech\nicorp\pm\calls\domain\ParticipantStatus.class
@@ -114,12 +127,14 @@ tech\nicorp\pm\projects\service\ProjectMemberService$1.class
 tech\nicorp\pm\calls\api\CallNotificationController.class
 tech\nicorp\pm\projects\api\ProjectMembersController.class
 tech\nicorp\pm\calls\domain\CallStatus.class
+tech\nicorp\pm\organizations\domain\OrganizationMember.class
 tech\nicorp\pm\dashboards\api\DashboardMembersController.class
 tech\nicorp\pm\dashboards\domain\Dashboard.class
 tech\nicorp\pm\tasks\domain\Task.class
 tech\nicorp\pm\tasks\api\TaskRepositoryIntegrationController.class
 tech\nicorp\pm\projects\api\dto\CheckProjectAccessResponse.class
 tech\nicorp\pm\repositories\domain\RepositoryMember.class
+tech\nicorp\pm\organizations\repo\OrganizationInviteRepository.class
 tech\nicorp\pm\repositories\repo\RepositoryRepository.class
 tech\nicorp\pm\merge\domain\MergeRequestApproval.class
 tech\nicorp\pm\security\SecurityUtil.class
@@ -132,6 +147,7 @@ tech\nicorp\pm\notifications\WebhookService.class
 tech\nicorp\pm\dashboards\api\dto\DashboardMemberCreateRequest.class
 tech\nicorp\pm\repositories\domain\RepositoryRole.class
 tech\nicorp\pm\whiteboards\domain\WhiteboardConnection.class
+tech\nicorp\pm\organizations\api\dto\OrganizationMemberResponse.class
 tech\nicorp\pm\merge\repo\MergeRequestRepository.class
 tech\nicorp\pm\calls\api\dto\CallResponse.class
 tech\nicorp\pm\ProjectMonitorApplication.class
@@ -141,6 +157,7 @@ tech\nicorp\pm\calls\api\dto\CallUpdateRequest.class
 tech\nicorp\pm\projects\service\ProjectMemberService.class
 tech\nicorp\pm\git\GitConfig.class
 tech\nicorp\pm\pipelines\service\PipelineYamlParser$DefaultSpec.class
+tech\nicorp\pm\organizations\repo\OrganizationMemberRepository.class
 tech\nicorp\pm\calls\repo\CallParticipantRepository.class
 tech\nicorp\pm\projects\domain\ProjectMember.class
 tech\nicorp\pm\whiteboards\repo\WhiteboardRepository.class
@@ -151,6 +168,7 @@ tech\nicorp\pm\pipelines\repo\RunnerRepository.class
 tech\nicorp\pm\calls\api\dto\CallCreateRequest.class
 tech\nicorp\pm\calls\domain\RecurrenceType.class
 tech\nicorp\pm\calls\service\CallNotificationService.class
+tech\nicorp\pm\organizations\api\OrganizationMembersController.class
 tech\nicorp\pm\git\GitService$1.class
 tech\nicorp\pm\tasks\api\dto\TaskRepositoryInfo.class
 tech\nicorp\pm\security\JwtAuthFilter.class
@@ -168,4 +186,5 @@ tech\nicorp\pm\dashboards\repo\DashboardMemberRepository.class
 tech\nicorp\pm\repositories\api\RepositoryMembersController.class
 tech\nicorp\pm\notifications\WebhookRepository.class
 tech\nicorp\pm\calls\service\CallStatusManager.class
+tech\nicorp\pm\organizations\api\OrganizationInvitesController.class
 tech\nicorp\pm\tasks\api\dto\AttachBranchRequest.class
