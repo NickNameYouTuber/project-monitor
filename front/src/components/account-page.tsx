@@ -23,7 +23,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
 import { LoadingSpinner } from './loading-spinner';
 
-export function SettingsPage() {
+export function AccountPage() {
   const [profile, setProfile] = useState({
     name: 'John Doe',
     email: 'john@example.com',
@@ -84,8 +84,8 @@ export function SettingsPage() {
     <div className="h-full flex flex-col">
       <div className="border-b border-border p-6">
         <div>
-          <h1>Settings</h1>
-          <p className="text-muted-foreground">Manage your account and application preferences</p>
+          <h1>Account</h1>
+          <p className="text-muted-foreground">Manage your personal settings and preferences</p>
         </div>
       </div>
 

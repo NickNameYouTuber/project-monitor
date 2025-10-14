@@ -111,6 +111,14 @@ public class ProjectMemberService {
     }
 
     @Transactional(readOnly = true)
+    public List<Project> getProjectsByUserId(UUID userId) {
+        return memberRepository.findByUserId(userId).stream()
+                .map(ProjectMember::getProject)
+                .distinct()
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public boolean hasRole(UUID projectId, UUID userId, ProjectRole requiredRole) {
         Optional<ProjectRole> userRole = getUserRole(projectId, userId);
         if (userRole.isEmpty()) {

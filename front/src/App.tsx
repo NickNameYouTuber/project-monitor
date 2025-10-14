@@ -11,7 +11,8 @@ import { RepositoryPage } from './components/repository-page';
 import { RepositoriesPage } from './components/repositories-page';
 import { FileEditorPage } from './components/file-editor-page';
 import { CommitDetailsPage } from './components/commit-details-page';
-import { SettingsPage } from './components/settings-page';
+import { AccountPage } from './components/account-page';
+import { ProjectSettingsPage } from './components/project-settings-page';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
 import { setAccessToken } from './api/client';
@@ -19,7 +20,7 @@ import CallPage from './features/call/pages/CallPage';
 import { Toaster } from './components/ui/sonner';
 import { NotificationProvider } from './contexts/NotificationContext';
 
-export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'settings' | 'merge-request';
+export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'account' | 'project-settings' | 'merge-request';
 
 export interface Column {
   id: string;
@@ -193,6 +194,9 @@ function ProjectRouteWrapperComponent({
       initialRepoId={(params as any).repoId as string | undefined}
     />
   );
+  if (params.section === 'settings') return (
+    <ProjectSettingsPage project={p} />
+  );
   return <Navigate to={`/projects/${p.id}/tasks`} replace />;
 }
 
@@ -240,8 +244,12 @@ export default function App() {
       navigate('/projects');
       return;
     }
-    if (page === 'calls' || page === 'settings') {
+    if (page === 'calls' || page === 'account') {
       navigate(`/${page}`);
+      return;
+    }
+    if (page === 'project-settings' && selectedProject) {
+      navigate(`/projects/${selectedProject.id}/settings`);
       return;
     }
     if ((page === 'tasks' || page === 'whiteboard' || page === 'repositories' || page === 'repository') && selectedProject) {
@@ -249,7 +257,7 @@ export default function App() {
       return;
     }
     // Если проект не выбран — отправляем на список проектов
-    if (page === 'tasks' || page === 'whiteboard' || page === 'repositories' || page === 'repository') {
+    if (page === 'tasks' || page === 'whiteboard' || page === 'repositories' || page === 'repository' || page === 'project-settings') {
       navigate('/projects');
       return;
     }
@@ -307,8 +315,10 @@ export default function App() {
       setCurrentPage('projects');
     } else if (path === '/calls') {
       setCurrentPage('calls');
-    } else if (path === '/settings') {
-      setCurrentPage('settings');
+    } else if (path === '/account') {
+      setCurrentPage('account');
+    } else if (path.includes('/settings')) {
+      setCurrentPage('project-settings');
     } else if (path.includes('/repository')) {
       setCurrentPage('repositories');
     } else if (path.includes('/repositories')) {
@@ -497,7 +507,7 @@ export default function App() {
                     </div>
                   } 
                 />
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/account" element={<AccountPage />} />
                 <Route path="*" element={<Navigate to="/projects" replace />} />
               </Routes>
             </main>

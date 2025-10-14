@@ -44,8 +44,18 @@ public class ProjectsController {
 
     @GetMapping
     @Operation(summary = "Список проектов")
-    public ResponseEntity<List<ProjectResponse>> list() {
-        return ResponseEntity.ok(projects.findAll().stream().map(this::toResponse).toList());
+    public ResponseEntity<List<ProjectResponse>> list(Authentication auth) {
+        if (auth == null || auth.getName() == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        
+        try {
+            UUID userId = UUID.fromString(auth.getName());
+            List<Project> userProjects = projectMemberService.getProjectsByUserId(userId);
+            return ResponseEntity.ok(userProjects.stream().map(this::toResponse).toList());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(List.of());
+        }
     }
 
     @GetMapping("/{id}")
@@ -95,7 +105,22 @@ public class ProjectsController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Обновить проект")
-    public ResponseEntity<ProjectResponse> update(@PathVariable("id") UUID id, @RequestBody ProjectUpdateRequest body) {
+    public ResponseEntity<ProjectResponse> update(@PathVariable("id") UUID id, @RequestBody ProjectUpdateRequest body, Authentication auth) {
+        if (auth == null || auth.getName() == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        try {
+            UUID userId = UUID.fromString(auth.getName());
+            ProjectRole role = projectMemberService.getUserRole(id, userId).orElse(null);
+            
+            if (role == null || !projectMemberService.canEditProject(role)) {
+                return ResponseEntity.status(403).build();
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).build();
+        }
+        
         return projects.findById(id).map(p -> {
             if (body.getName() != null) p.setName(body.getName());
             if (body.getDescription() != null) p.setDescription(body.getDescription());
@@ -111,8 +136,24 @@ public class ProjectsController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить проект")
-    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id, Authentication auth) {
         if (!projects.existsById(id)) return ResponseEntity.notFound().build();
+        
+        if (auth == null || auth.getName() == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        try {
+            UUID userId = UUID.fromString(auth.getName());
+            ProjectRole role = projectMemberService.getUserRole(id, userId).orElse(null);
+            
+            if (role == null || !projectMemberService.canDeleteProject(role)) {
+                return ResponseEntity.status(403).build();
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).build();
+        }
+        
         projects.deleteById(id);
         return ResponseEntity.noContent().build();
     }

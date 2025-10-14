@@ -6,7 +6,8 @@ import {
   GitBranch, 
   Settings,
   Folder,
-  Video
+  Video,
+  User as UserIcon
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
@@ -21,12 +22,18 @@ interface SidebarProps {
   selectedProject?: Project | null;
 }
 
-const navigation = [
+const projectNavigation = [
   { id: 'tasks' as Page, label: 'Tasks', icon: CheckSquare },
   { id: 'whiteboard' as Page, label: 'Whiteboard', icon: PaintBucket },
   { id: 'repositories' as Page, label: 'Repositories', icon: GitBranch },
   { id: 'calls' as Page, label: 'Calls', icon: Video },
-  { id: 'settings' as Page, label: 'Settings', icon: Settings },
+  { id: 'project-settings' as Page, label: 'Settings', icon: Settings },
+];
+
+const globalNavigation = [
+  { id: 'projects' as Page, label: 'Projects', icon: Folder },
+  { id: 'calls' as Page, label: 'Calls', icon: Video },
+  { id: 'account' as Page, label: 'Account', icon: UserIcon },
 ];
 
 export function Sidebar({ currentPage, onNavigate, selectedProject }: SidebarProps) {
@@ -74,7 +81,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject }: SidebarPro
       <nav className="flex-1 px-4 pb-4">
         <div className="space-y-2">
           {selectedProject ? (
-            navigation.map((item) => {
+            projectNavigation.map((item) => {
               const Icon = item.icon;
               return (
                 <Button
@@ -92,12 +99,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject }: SidebarPro
               );
             })
           ) : (
-            // Показываем только общие навигационные элементы когда проект не выбран
-            [
-              { id: 'projects' as Page, label: 'Projects', icon: Folder },
-              { id: 'calls' as Page, label: 'Calls', icon: Video },
-              { id: 'settings' as Page, label: 'Settings', icon: Settings },
-            ].map((item) => {
+            globalNavigation.map((item) => {
               const Icon = item.icon;
               return (
                 <Button
