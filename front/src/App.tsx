@@ -15,6 +15,7 @@ import { AccountPage } from './components/account-page';
 import { ProjectSettingsPage } from './components/project-settings-page';
 import { OrganizationsPage } from './components/organizations-page';
 import { CreateOrganizationPage } from './components/create-organization-page';
+import { OrganizationSettingsPage } from './components/organization-settings-page';
 import { InvitePage } from './components/invite-page';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
@@ -360,7 +361,10 @@ export default function App() {
             <AuthPage onLogin={() => setIsAuthenticated(true)} />
           ) : (
             <div className="flex h-screen">
-              {!isStandaloneCall && (
+              {!isStandaloneCall && 
+               location.pathname !== '/organizations' && 
+               location.pathname !== '/organizations/create' && 
+               !location.pathname.startsWith('/invite/') && (
                 <Sidebar 
                   currentPage={currentPage} 
                   onNavigate={handleNavigate} 
@@ -373,6 +377,7 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/organizations" replace />} />
                 <Route path="/organizations" element={<OrganizationsPage />} />
                 <Route path="/organizations/create" element={<CreateOrganizationPage />} />
+                <Route path="/organizations/:orgId/settings" element={<OrganizationSettingsPage />} />
                 <Route path="/invite/:token" element={<InvitePage />} />
                 <Route path="/projects" element={
                   currentOrgId ? (
