@@ -1,6 +1,7 @@
 package tech.nicorp.pm.repositories.api;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,6 +35,7 @@ public class RepositoryMembersController {
     }
 
     @GetMapping
+    @Transactional
     @Operation(summary = "Список участников репозитория")
     public ResponseEntity<List<RepositoryMemberResponse>> list(@PathVariable(value = "repositoryId") UUID repositoryId) {
         Repository repo = repositories.findById(repositoryId).orElse(null);

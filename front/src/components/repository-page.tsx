@@ -392,6 +392,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
   const [newMemberRole, setNewMemberRole] = useState('developer');
   
+  const [linkedTasks, setLinkedTasks] = useState<Task[]>([]);
+  
   const [isNewFileOpen, setIsNewFileOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   
@@ -607,12 +609,39 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   
   const selectedRepo = repositories.find(r => r.id === selectedRepoId);
   
-  const linkedTasks = selectedRepo 
-    ? tasks.filter(task => 
-        task.repository_id === selectedRepo.id || 
-        task.repositoryInfo?.repositoryId === selectedRepo.id
-      )
-    : [];
+  useEffect(() => {
+    if (!selectedRepoId) {
+      setLinkedTasks([]);
+      return;
+    }
+    
+    (async () => {
+      try {
+        const { data } = await apiClient.get(`/repositories/${selectedRepoId}/tasks`);
+        const mappedTasks: Task[] = data.map((dto: any) => ({
+          id: dto.id,
+          projectId: dto.project_id ?? dto.projectId,
+          title: dto.title,
+          description: dto.description || '',
+          status: dto.column_id ?? dto.columnId,
+          priority: 'medium' as const,
+          createdAt: dto.created_at ? new Date(dto.created_at) : new Date(),
+          dueDate: dto.due_date ? new Date(dto.due_date) : undefined,
+          repository_id: dto.repository_id,
+          repositoryBranch: dto.repository_branch,
+          repositoryInfo: dto.repository_info ? {
+            repositoryId: dto.repository_info.repository_id,
+            repositoryName: dto.repository_info.repository_name,
+            branch: dto.repository_info.branch
+          } : undefined,
+        }));
+        setLinkedTasks(mappedTasks);
+      } catch (error) {
+        console.error('Failed to load linked tasks:', error);
+        setLinkedTasks([]);
+      }
+    })();
+  }, [selectedRepoId]);
 
   // Вычислить активный таб из URL
   const activeTab = useMemo(() => {

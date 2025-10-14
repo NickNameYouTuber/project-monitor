@@ -3,6 +3,7 @@ package tech.nicorp.pm.repositories.api;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.git.GitService;
 import tech.nicorp.pm.repositories.domain.Repository;
@@ -74,6 +75,7 @@ public class RepositoriesController {
     }
 
     @GetMapping("/{repoId}/tasks")
+    @Transactional
     public ResponseEntity<List<TaskResponse>> getRepositoryTasks(@PathVariable("repoId") UUID repoId) {
         List<Task> repoTasks = tasks.findAll().stream()
                 .filter(t -> repoId.equals(t.getRepositoryId()))
