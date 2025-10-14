@@ -309,14 +309,14 @@ export default function App() {
       setCurrentPage('calls');
     } else if (path === '/settings') {
       setCurrentPage('settings');
+    } else if (path.includes('/repository')) {
+      setCurrentPage('repositories');
+    } else if (path.includes('/repositories')) {
+      setCurrentPage('repositories');
     } else if (path.includes('/tasks')) {
       setCurrentPage('tasks');
     } else if (path.includes('/whiteboard')) {
       setCurrentPage('whiteboard');
-    } else if (path.includes('/repositories')) {
-      setCurrentPage('repositories');
-    } else if (path.includes('/repository')) {
-      setCurrentPage('repository');
     }
   }, [location.pathname]);
 
