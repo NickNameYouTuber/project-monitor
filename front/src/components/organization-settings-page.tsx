@@ -13,7 +13,8 @@ import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import { RoleBadge } from './role-badge';
-import { UserAutocomplete } from './calls/UserAutocomplete';
+import UserAutocomplete from './calls/UserAutocomplete';
+import type { UserDto } from '../api/users';
 import { getOrganization } from '../api/organizations';
 import { listMembers, addMember, removeMember, updateMemberRole } from '../api/organization-members';
 import { listInvites, createInvite, revokeInvite } from '../api/organization-invites';
@@ -29,7 +30,7 @@ export function OrganizationSettingsPage() {
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
   const [newMemberRole, setNewMemberRole] = useState('MEMBER');
 
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
@@ -91,12 +92,14 @@ export function OrganizationSettingsPage() {
   };
 
   const handleAddMember = async () => {
-    if (!orgId || !selectedUserId) return;
+    if (!orgId || selectedUsers.length === 0) return;
     try {
-      await addMember(orgId, { user_id: selectedUserId, role: newMemberRole });
-      toast.success('Member added successfully');
+      for (const user of selectedUsers) {
+        await addMember(orgId, { user_id: user.id, role: newMemberRole });
+      }
+      toast.success('Member(s) added successfully');
       setAddMemberDialogOpen(false);
-      setSelectedUserId('');
+      setSelectedUsers([]);
       setNewMemberRole('MEMBER');
       loadMembers();
     } catch (error) {
@@ -364,10 +367,10 @@ export function OrganizationSettingsPage() {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label>User</Label>
                     <UserAutocomplete
-                      value={selectedUserId}
-                      onChange={setSelectedUserId}
+                      selectedUsers={selectedUsers}
+                      onUsersChange={setSelectedUsers}
+                      label="Select Users"
                     />
                   </div>
                   <div>
@@ -387,7 +390,7 @@ export function OrganizationSettingsPage() {
                     <Button variant="outline" onClick={() => setAddMemberDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={handleAddMember} disabled={!selectedUserId}>
+                    <Button onClick={handleAddMember} disabled={selectedUsers.length === 0}>
                       Add Member
                     </Button>
                   </div>
