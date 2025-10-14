@@ -103,7 +103,7 @@ function Column({
         dragRef(node);
         dropRef(node);
       }}
-      className={`flex-1 min-w-80 h-full bg-card rounded-lg border border-border p-4 flex flex-col ${
+      className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${
         isOver ? 'bg-accent/50' : ''
       } ${isDragging ? 'opacity-50' : ''}`}
     >
@@ -139,7 +139,7 @@ function Column({
         </DropdownMenu>
       </div>
       
-      <div className="flex-1 space-y-3 overflow-y-auto">
+      <div className="space-y-3">
         {columnTasks.map((task) => (
           <TaskCard 
             key={task.id} 
@@ -653,7 +653,7 @@ export function ProjectTasksPage({
       </div>
 
       <div className="flex-1 p-6 overflow-auto">
-        <div className="flex gap-6 h-full">
+        <div className="flex gap-6 items-stretch">
           {sortedColumns.map((column, index) => (
             <Column
               key={column.id}
