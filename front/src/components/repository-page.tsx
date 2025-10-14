@@ -627,16 +627,27 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   };
 
   useEffect(() => {
-    if (!selectedRepoId || activeTab !== 'tasks') {
+    console.log('[LINKED TASKS DEBUG] Effect triggered. activeTab:', activeTab, 'selectedRepoId:', selectedRepoId);
+    
+    if (!selectedRepoId) {
+      console.log('[LINKED TASKS DEBUG] No selectedRepoId, skipping');
+      setLinkedTasks([]);
       return;
     }
     
-    console.log('Loading linked tasks for repository:', selectedRepoId);
+    if (activeTab !== 'tasks') {
+      console.log('[LINKED TASKS DEBUG] Not on tasks tab, skipping. Current tab:', activeTab);
+      return;
+    }
+    
+    console.log('[LINKED TASKS DEBUG] ✅ Loading linked tasks for repository:', selectedRepoId);
     
     (async () => {
       try {
-        const { data } = await apiClient.get(`/repositories/${selectedRepoId}/tasks`);
-        console.log('Loaded linked tasks:', data);
+        const response = await apiClient.get(`/repositories/${selectedRepoId}/tasks`);
+        console.log('[LINKED TASKS DEBUG] ✅ Response received:', response);
+        const data = response.data;
+        console.log('[LINKED TASKS DEBUG] ✅ Data:', data);
         const mappedTasks: Task[] = data.map((dto: any) => ({
           id: dto.id,
           projectId: dto.project_id ?? dto.projectId,
@@ -654,9 +665,10 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
             branch: dto.repository_info.branch
           } : undefined,
         }));
+        console.log('[LINKED TASKS DEBUG] ✅ Mapped tasks:', mappedTasks);
         setLinkedTasks(mappedTasks);
       } catch (error) {
-        console.error('Failed to load linked tasks:', error);
+        console.error('[LINKED TASKS DEBUG] ❌ Failed to load linked tasks:', error);
         setLinkedTasks([]);
       }
     })();
