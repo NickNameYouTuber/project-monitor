@@ -321,6 +321,8 @@ export function ProjectTasksPage({
         title: taskData.title,
         description: taskData.description,
         column_id: taskData.status,
+        repository_id: taskData.repository_id,
+        repository_branch: taskData.repositoryBranch,
       });
       const mapped: Task = {
         id: created.id,
@@ -331,6 +333,13 @@ export function ProjectTasksPage({
         priority: taskData.priority,
         createdAt: created.createdAt ? new Date(created.createdAt) : new Date(),
         dueDate: created.dueDate ? new Date(created.dueDate) : undefined,
+        repository_id: created.repository_id,
+        repositoryBranch: created.repository_branch,
+        repositoryInfo: created.repository_info ? {
+          repositoryId: created.repository_info.repository_id,
+          repositoryName: created.repository_info.repository_name,
+          branch: created.repository_info.branch
+        } : undefined,
       };
       setTasks(prev => [...prev, mapped]);
     } catch {}

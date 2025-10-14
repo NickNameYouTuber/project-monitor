@@ -47,7 +47,7 @@ export async function listTasks(projectId: string): Promise<TaskDto[]> {
   return Array.isArray(data) ? data.map(normalizeTask) : [];
 }
 
-export async function createTask(projectId: string, body: { title: string; description?: string; column_id: string; order?: number }): Promise<TaskDto> {
+export async function createTask(projectId: string, body: { title: string; description?: string; column_id: string; order?: number; repository_id?: string; repository_branch?: string }): Promise<TaskDto> {
   const { data } = await apiClient.post(`/projects/${projectId}/tasks`, body);
   return normalizeTask(data);
 }
