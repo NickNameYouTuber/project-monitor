@@ -23,12 +23,13 @@ export type ProjectCreateRequest = {
   orderIndex?: number;
   dashboardId?: string;
   color?: string;
+  organization_id?: string;
 };
 
 export type ProjectUpdateRequest = Partial<ProjectCreateRequest>;
 
-export async function listProjects(): Promise<ProjectDto[]> {
-  const { data } = await apiClient.get<ProjectDto[]>('/projects');
+export async function listProjects(params?: { organization_id?: string }): Promise<ProjectDto[]> {
+  const { data } = await apiClient.get<ProjectDto[]>('/projects', { params });
   return data;
 }
 

@@ -25,6 +25,7 @@ import tech.nicorp.pm.dashboards.domain.Dashboard;
 import tech.nicorp.pm.projects.api.dto.ProjectsReorderRequest;
 import tech.nicorp.pm.projects.service.ProjectMemberService;
 import tech.nicorp.pm.projects.domain.ProjectRole;
+import tech.nicorp.pm.organizations.repo.OrganizationRepository;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -35,18 +36,22 @@ public class ProjectsController {
     private final UserRepository users;
     private final DashboardRepository dashboards;
     private final ProjectMemberService projectMemberService;
+    private final OrganizationRepository organizationRepository;
 
-    public ProjectsController(ProjectRepository projects, UserRepository users, DashboardRepository dashboards, ProjectMemberService projectMemberService) {
+    public ProjectsController(ProjectRepository projects, UserRepository users, DashboardRepository dashboards, ProjectMemberService projectMemberService, OrganizationRepository organizationRepository) {
         this.projects = projects;
         this.users = users;
         this.dashboards = dashboards;
         this.projectMemberService = projectMemberService;
+        this.organizationRepository = organizationRepository;
     }
 
     @GetMapping
     @Transactional
     @Operation(summary = "Список проектов")
-    public ResponseEntity<List<ProjectResponse>> list(Authentication auth) {
+    public ResponseEntity<List<ProjectResponse>> list(
+            Authentication auth,
+            @RequestParam(required = false) UUID organization_id) {
         if (auth == null || auth.getName() == null) {
             return ResponseEntity.ok(List.of());
         }
@@ -54,6 +59,15 @@ public class ProjectsController {
         try {
             UUID userId = UUID.fromString(auth.getName());
             List<Project> userProjects = projectMemberService.getProjectsByUserId(userId);
+            
+            // Фильтровать по organization_id если передан
+            if (organization_id != null) {
+                userProjects = userProjects.stream()
+                        .filter(p -> p.getOrganization() != null 
+                                && p.getOrganization().getId().equals(organization_id))
+                        .toList();
+            }
+            
             return ResponseEntity.ok(userProjects.stream().map(this::toResponse).toList());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.ok(List.of());
@@ -90,6 +104,14 @@ public class ProjectsController {
             try {
                 UUID did = UUID.fromString(body.getDashboardId());
                 dashboards.findById(did).ifPresent(p::setDashboard);
+            } catch (IllegalArgumentException ignored) {}
+        }
+        
+        // Привязать к организации если указана
+        if (body.getOrganizationId() != null) {
+            try {
+                UUID orgId = UUID.fromString(body.getOrganizationId());
+                organizationRepository.findById(orgId).ifPresent(p::setOrganization);
             } catch (IllegalArgumentException ignored) {}
         }
         

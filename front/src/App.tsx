@@ -15,8 +15,10 @@ import { AccountPage } from './components/account-page';
 import { ProjectSettingsPage } from './components/project-settings-page';
 import { OrganizationsPage } from './components/organizations-page';
 import { CreateOrganizationPage } from './components/create-organization-page';
+import { OrganizationSettingsPage } from './components/organization-settings-page';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
+import type { Organization } from './types/organization';
 import { setAccessToken } from './api/client';
 import CallPage from './features/call/pages/CallPage';
 import { Toaster } from './components/ui/sonner';
@@ -206,6 +208,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('projects');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
 
   // Default project columns
   const [projectColumns, setProjectColumns] = useState<Column[]>([
@@ -246,7 +249,7 @@ export default function App() {
       navigate('/projects');
       return;
     }
-    if (page === 'calls' || page === 'account') {
+    if (page === 'calls' || page === 'account' || page === 'organizations') {
       navigate(`/${page}`);
       return;
     }
@@ -287,13 +290,33 @@ export default function App() {
     } catch {}
   }, []);
 
-  // Загружаем проекты при аутентификации
+  // Загружаем текущую организацию из localStorage
+  useEffect(() => {
+    const orgId = localStorage.getItem('currentOrgId');
+    if (orgId && isAuthenticated) {
+      (async () => {
+        try {
+          const { getOrganization } = await import('./api/organizations');
+          const org = await getOrganization(orgId);
+          setSelectedOrganization(org);
+        } catch {
+          localStorage.removeItem('currentOrgId');
+          setSelectedOrganization(null);
+        }
+      })();
+    } else {
+      setSelectedOrganization(null);
+    }
+  }, [isAuthenticated]);
+
+  // Загружаем проекты при аутентификации и смене организации
   useEffect(() => {
     if (!isAuthenticated) return;
     (async () => {
       try {
+        const currentOrgId = localStorage.getItem('currentOrgId');
         const { listProjects } = await import('./api/projects');
-        const data = await listProjects();
+        const data = await listProjects(currentOrgId ? { organization_id: currentOrgId } : undefined);
         const mapped: Project[] = data.map(d => ({
           id: d.id,
           title: d.name,
@@ -305,7 +328,7 @@ export default function App() {
         setProjects(mapped);
       } catch {}
     })();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, selectedOrganization]);
 
   const location = useLocation();
   const isStandaloneCall = location.pathname.startsWith('/call/');
@@ -342,13 +365,19 @@ export default function App() {
           ) : (
             <div className="flex h-screen">
               {!isStandaloneCall && (
-                <Sidebar currentPage={currentPage} onNavigate={handleNavigate} selectedProject={selectedProject} />
+                <Sidebar 
+                  currentPage={currentPage} 
+                  onNavigate={handleNavigate} 
+                  selectedProject={selectedProject}
+                  selectedOrganization={selectedOrganization}
+                />
               )}
               <main className={`flex-1 overflow-hidden ${currentPage === 'projects' || isStandaloneCall ? 'w-full' : ''}`}>
               <Routes>
                 <Route path="/" element={<Navigate to="/organizations" replace />} />
                 <Route path="/organizations" element={<OrganizationsPage />} />
                 <Route path="/organizations/create" element={<CreateOrganizationPage />} />
+                <Route path="/organizations/:orgId/settings" element={<OrganizationSettingsPage />} />
                 <Route path="/projects" element={
                   <ProjectsPage
                     projects={projects}

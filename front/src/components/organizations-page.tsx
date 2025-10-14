@@ -4,8 +4,12 @@ import { Building2, Plus, Link as LinkIcon, Settings, Users, FolderKanban } from
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 import { LoadingSpinner } from './loading-spinner';
 import { RoleBadge } from './role-badge';
+import { toast } from 'sonner';
 import { listOrganizations } from '../api/organizations';
 import type { Organization } from '../types/organization';
 
@@ -13,6 +17,8 @@ export function OrganizationsPage() {
   const navigate = useNavigate();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [inviteLink, setInviteLink] = useState('');
 
   useEffect(() => {
     loadOrganizations();
@@ -32,6 +38,17 @@ export function OrganizationsPage() {
   const handleSelectOrganization = (org: Organization) => {
     localStorage.setItem('currentOrgId', org.id);
     navigate('/projects');
+  };
+
+  const handleJoinWithLink = () => {
+    const match = inviteLink.match(/\/invite\/([^\/\?]+)/);
+    if (match) {
+      const token = match[1];
+      navigate(`/invite/${token}`);
+      setJoinDialogOpen(false);
+    } else {
+      toast.error('Invalid invitation link');
+    }
   };
 
   if (loading) {
@@ -113,10 +130,41 @@ export function OrganizationsPage() {
             <Plus className="w-4 h-4 mr-2" />
             Create Organization
           </Button>
-          <Button variant="outline">
-            <LinkIcon className="w-4 h-4 mr-2" />
-            Join with Invite Link
-          </Button>
+          
+          <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <LinkIcon className="w-4 h-4 mr-2" />
+                Join with Invite Link
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Join Organization</DialogTitle>
+                <DialogDescription>
+                  Enter an invitation link to join an organization
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Invitation Link</Label>
+                  <Input
+                    value={inviteLink}
+                    onChange={(e) => setInviteLink(e.target.value)}
+                    placeholder="https://nit.nicorp.tech/invite/abc123..."
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setJoinDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleJoinWithLink}>
+                    Join Organization
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

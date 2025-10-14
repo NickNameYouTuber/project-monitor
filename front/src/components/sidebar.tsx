@@ -7,11 +7,13 @@ import {
   Settings,
   Folder,
   Video,
-  User as UserIcon
+  User as UserIcon,
+  Building2
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
 import type { Page, Project } from '../App';
+import type { Organization } from '../types/organization';
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '../api/users';
 import { NotificationBell } from './NotificationBell';
@@ -20,6 +22,7 @@ interface SidebarProps {
   currentPage: Page;
   onNavigate: (page: Page) => void;
   selectedProject?: Project | null;
+  selectedOrganization?: Organization | null;
 }
 
 const projectNavigation = [
@@ -36,7 +39,7 @@ const globalNavigation = [
   { id: 'account' as Page, label: 'Account', icon: UserIcon },
 ];
 
-export function Sidebar({ currentPage, onNavigate, selectedProject }: SidebarProps) {
+export function Sidebar({ currentPage, onNavigate, selectedProject, selectedOrganization }: SidebarProps) {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
 
@@ -63,6 +66,30 @@ export function Sidebar({ currentPage, onNavigate, selectedProject }: SidebarPro
           <NotificationBell />
         </div>
       </div>
+
+      {/* Current organization */}
+      {selectedOrganization && !selectedProject && (
+        <div className="px-4 mb-4">
+          <div className="mb-2 text-xs text-muted-foreground">Current organization</div>
+          <div className="px-3 py-2 rounded bg-muted border border-border">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{selectedOrganization.name}</div>
+                <div className="text-xs text-muted-foreground truncate">/{selectedOrganization.slug}</div>
+              </div>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full mt-2"
+            onClick={() => onNavigate('organizations' as Page)}
+          >
+            Switch Organization
+          </Button>
+        </div>
+      )}
 
       {/* Current project and Back */}
       {selectedProject && (
