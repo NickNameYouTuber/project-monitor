@@ -84,7 +84,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
       </div>
 
       {/* Current organization */}
-      {currentOrg && !selectedProject && (
+      {currentOrg && !selectedProject && currentPage === 'projects' && (
         <div className="px-4 mb-4">
           <div className="mb-2 text-xs text-muted-foreground">Current organization</div>
           <div className="px-3 py-2 rounded bg-muted">

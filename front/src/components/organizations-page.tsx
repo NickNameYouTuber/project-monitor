@@ -10,7 +10,7 @@ import { Label } from './ui/label';
 import { LoadingSpinner } from './loading-spinner';
 import { RoleBadge } from './role-badge';
 import { toast } from 'sonner';
-import { listOrganizations } from '../api/organizations';
+import { listOrganizations, verifyOrganizationPassword } from '../api/organizations';
 import type { Organization } from '../types/organization';
 
 export function OrganizationsPage() {
@@ -19,6 +19,10 @@ export function OrganizationsPage() {
   const [loading, setLoading] = useState(true);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [selectedOrgForPassword, setSelectedOrgForPassword] = useState<Organization | null>(null);
+  const [orgPassword, setOrgPassword] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     loadOrganizations();
@@ -36,8 +40,34 @@ export function OrganizationsPage() {
   };
 
   const handleSelectOrganization = (org: Organization) => {
-    localStorage.setItem('currentOrgId', org.id);
-    navigate('/projects');
+    if (org.require_password) {
+      setSelectedOrgForPassword(org);
+      setPasswordDialogOpen(true);
+    } else {
+      localStorage.setItem('currentOrgId', org.id);
+      navigate('/projects');
+    }
+  };
+
+  const handleVerifyPassword = async () => {
+    if (!selectedOrgForPassword) return;
+    
+    setVerifying(true);
+    try {
+      const isValid = await verifyOrganizationPassword(selectedOrgForPassword.id, orgPassword);
+      if (isValid) {
+        localStorage.setItem('currentOrgId', selectedOrgForPassword.id);
+        setPasswordDialogOpen(false);
+        setOrgPassword('');
+        navigate('/projects');
+      } else {
+        toast.error('Incorrect password');
+      }
+    } catch (error) {
+      toast.error('Failed to verify password');
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const handleJoinWithLink = () => {
@@ -166,6 +196,47 @@ export function OrganizationsPage() {
             </DialogContent>
           </Dialog>
         </div>
+
+        <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Organization Password Required</DialogTitle>
+              <DialogDescription>
+                {selectedOrgForPassword?.name} requires a password to access
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={orgPassword}
+                  onChange={(e) => setOrgPassword(e.target.value)}
+                  placeholder="Enter organization password"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleVerifyPassword();
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setPasswordDialogOpen(false);
+                    setOrgPassword('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleVerifyPassword} disabled={verifying || !orgPassword}>
+                  {verifying ? 'Verifying...' : 'Continue'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

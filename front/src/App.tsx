@@ -15,7 +15,6 @@ import { AccountPage } from './components/account-page';
 import { ProjectSettingsPage } from './components/project-settings-page';
 import { OrganizationsPage } from './components/organizations-page';
 import { CreateOrganizationPage } from './components/create-organization-page';
-import { OrganizationSettingsPage } from './components/organization-settings-page';
 import { InvitePage } from './components/invite-page';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
@@ -300,6 +299,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (location.pathname === '/projects') {
+      const orgId = localStorage.getItem('currentOrgId');
+      if (orgId !== currentOrgId) {
+        setCurrentOrgId(orgId);
+      }
+    }
+  }, [location.pathname, currentOrgId]);
+
+  useEffect(() => {
     if (!isAuthenticated) return;
     (async () => {
       try {
@@ -365,16 +373,19 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/organizations" replace />} />
                 <Route path="/organizations" element={<OrganizationsPage />} />
                 <Route path="/organizations/create" element={<CreateOrganizationPage />} />
-                <Route path="/organizations/:orgId/settings" element={<OrganizationSettingsPage />} />
                 <Route path="/invite/:token" element={<InvitePage />} />
                 <Route path="/projects" element={
-                  <ProjectsPage
-                    projects={projects}
-                    setProjects={setProjects}
-                    columns={projectColumns}
-                    setColumns={setProjectColumns}
-                    onProjectSelect={(project) => handleNavigate('tasks', project)}
-                  />
+                  currentOrgId ? (
+                    <ProjectsPage
+                      projects={projects}
+                      setProjects={setProjects}
+                      columns={projectColumns}
+                      setColumns={setProjectColumns}
+                      onProjectSelect={(project) => handleNavigate('tasks', project)}
+                    />
+                  ) : (
+                    <Navigate to="/organizations" replace />
+                  )
                 } />
                 <Route
                   path="/projects/:projectId/:section"
