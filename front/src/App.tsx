@@ -235,6 +235,9 @@ export default function App() {
   const [branchSuggestions] = useState<string[]>([]);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const isStandaloneCall = location.pathname.startsWith('/call/');
+  
   const handleNavigate = (page: Page, project?: Project) => {
     setCurrentPage(page);
     if (project) {
@@ -326,9 +329,6 @@ export default function App() {
     })();
   }, [isAuthenticated, currentOrgId]);
 
-  const location = useLocation();
-  const isStandaloneCall = location.pathname.startsWith('/call/');
-  
   // Обновляем currentPage на основе URL
   useEffect(() => {
     const path = location.pathname;
