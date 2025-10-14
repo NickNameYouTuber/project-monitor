@@ -103,7 +103,7 @@ function Column({
         dragRef(node);
         dropRef(node);
       }}
-      className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${
+      className={`flex-1 min-w-80 h-full bg-card rounded-lg border border-border p-4 flex flex-col ${
         isOver ? 'bg-accent/50' : ''
       } ${isDragging ? 'opacity-50' : ''}`}
     >
@@ -139,7 +139,7 @@ function Column({
         </DropdownMenu>
       </div>
       
-      <div className="space-y-3">
+      <div className="flex-1 space-y-3 overflow-y-auto">
         {columnTasks.map((task) => (
           <TaskCard 
             key={task.id} 
@@ -324,16 +324,21 @@ export function ProjectTasksPage({
 
   const sortedColumns = [...columns].sort((a, b) => a.order - b.order);
 
-  const handleTaskMove = (taskId: string, newStatus: string) => {
+  const handleTaskMove = async (taskId: string, newStatus: string) => {
+    const originalTasks = tasks;
+    
     setTasks(prev => prev.map(task =>
       task.id === taskId ? { ...task, status: newStatus } : task
     ));
-    (async () => {
-      try {
-        const { moveTask } = await import('../api/tasks');
-        await moveTask(project.id, taskId, { column_id: newStatus });
-      } catch {}
-    })();
+    
+    try {
+      const { moveTask } = await import('../api/tasks');
+      await moveTask(project.id, taskId, { column_id: newStatus });
+      console.log(`Task ${taskId} moved to ${newStatus}`);
+    } catch (error) {
+      console.error('Failed to move task:', error);
+      setTasks(originalTasks);
+    }
   };
 
   const handleCreateTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'projectId'>) => {
