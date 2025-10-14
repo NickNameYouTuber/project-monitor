@@ -397,8 +397,6 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   
   const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
   const [newBranchName, setNewBranchName] = useState('');
-  
-  const [linkedTasksFromApi, setLinkedTasksFromApi] = useState<Task[]>([]);
   const [newBranchFrom, setNewBranchFrom] = useState('');
   
   const [repoSettings, setRepoSettings] = useState({
@@ -604,34 +602,17 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
           default_branch: repo.default_branch || 'main'
         });
       }
-      
-      (async () => {
-        try {
-          const { data } = await apiClient.get(`/repositories/${selectedRepoId}/tasks`);
-          const mapped: Task[] = Array.isArray(data) ? data.map((t: any) => ({
-            id: t.id,
-            projectId: t.project_id || t.projectId,
-            title: t.title,
-            description: t.description || '',
-            status: t.column_id || t.columnId,
-            priority: 'medium' as const,
-            createdAt: t.created_at ? new Date(t.created_at) : new Date(),
-            dueDate: t.due_date ? new Date(t.due_date) : undefined,
-            repository_id: t.repository_id || t.repositoryId,
-            repositoryBranch: t.repository_branch || t.repositoryBranch,
-          })) : [];
-          setLinkedTasksFromApi(mapped);
-        } catch (error) {
-          console.error('Failed to load linked tasks:', error);
-          setLinkedTasksFromApi([]);
-        }
-      })();
     }
   }, [selectedRepoId, repositories]);
   
   const selectedRepo = repositories.find(r => r.id === selectedRepoId);
   
-  const linkedTasks = linkedTasksFromApi;
+  const linkedTasks = selectedRepo 
+    ? tasks.filter(task => 
+        task.repository_id === selectedRepo.id || 
+        task.repositoryInfo?.repositoryId === selectedRepo.id
+      )
+    : [];
 
   // Вычислить активный таб из URL
   const activeTab = useMemo(() => {
@@ -1056,12 +1037,14 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                         <p className="font-medium">{task.title}</p>
                         <p className="text-sm text-muted-foreground">{task.description}</p>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <GitBranch className="w-4 h-4" />
-                        <code className="px-2 py-1 bg-muted rounded text-xs">
-                          {task.repositoryBranch}
-                        </code>
-                      </div>
+                      {task.repositoryInfo && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <GitBranch className="w-4 h-4" />
+                          <code className="px-2 py-1 bg-muted rounded text-xs">
+                            {task.repositoryInfo.branch}
+                          </code>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

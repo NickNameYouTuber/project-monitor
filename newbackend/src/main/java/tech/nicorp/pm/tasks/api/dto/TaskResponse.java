@@ -33,6 +33,8 @@ public class TaskResponse {
     private UUID repositoryId;
     @JsonProperty("repository_branch")
     private String repositoryBranch;
+    @JsonProperty("repository_info")
+    private TaskRepositoryInfo repositoryInfo;
 }
 
 

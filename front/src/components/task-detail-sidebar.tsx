@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Calendar, User, GitBranch, AlertCircle, MessageSquare, Plus, Send, GitCommit, Video } from 'lucide-react';
+import { X, Calendar, User, GitBranch, AlertCircle, MessageSquare, Plus, Send, GitCommit, Video, Folder } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
@@ -31,7 +31,6 @@ export function TaskDetailSidebar({ task, isOpen, onClose }: TaskDetailSidebarPr
   const [newComment, setNewComment] = useState('');
   const [branches, setBranches] = useState<{ name: string; createdAt: Date }[]>([]);
   const [newBranch, setNewBranch] = useState('');
-  const [repositoryName, setRepositoryName] = useState<string>('');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -50,18 +49,9 @@ export function TaskDetailSidebar({ task, isOpen, onClose }: TaskDetailSidebarPr
         const { getTaskBranches } = await import('../api/task-repository');
         const bs = await getTaskBranches(task.id);
         setBranches(bs.map(b => ({ name: b.branch_name, createdAt: new Date(b.created_at) })));
-        
-        if (task.repository_id) {
-          const { apiClient } = await import('../api/client');
-          const { data: repo } = await apiClient.get(`/repositories?project_id=${task.projectId}`);
-          const foundRepo = Array.isArray(repo) ? repo.find((r: any) => r.id === task.repository_id) : null;
-          if (foundRepo) {
-            setRepositoryName(foundRepo.name);
-          }
-        }
       } catch {}
     })();
-  }, [isOpen, task.id, task.repository_id, task.projectId]);
+  }, [isOpen, task.id]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -182,24 +172,20 @@ export function TaskDetailSidebar({ task, isOpen, onClose }: TaskDetailSidebarPr
                 </div>
               )}
 
-              {(task.repository_id || task.repositoryBranch) && (
+              {task.repositoryInfo && (
                 <div className="space-y-2">
-                  {repositoryName && (
-                    <div className="flex items-center gap-2">
-                      <GitBranch className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Repository:</span>
-                      <span className="text-sm font-medium">{repositoryName}</span>
-                    </div>
-                  )}
-                  {task.repositoryBranch && (
-                    <div className="flex items-center gap-2">
-                      <GitBranch className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Branch:</span>
-                      <code className="text-sm bg-muted px-2 py-1 rounded">
-                        {task.repositoryBranch}
-                      </code>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Folder className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Repository:</span>
+                    <span className="text-sm font-medium">{task.repositoryInfo.repositoryName}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Branch:</span>
+                    <code className="text-sm bg-muted px-2 py-1 rounded">
+                      {task.repositoryInfo.branch}
+                    </code>
+                  </div>
                 </div>
               )}
               {branches.length > 0 && (

@@ -49,6 +49,11 @@ export interface Task {
   dueDate?: Date;
   repository_id?: string;
   repositoryBranch?: string;
+  repositoryInfo?: {
+    repositoryId: string;
+    repositoryName: string;
+    branch: string;
+  };
 }
 
 function ProjectRouteWrapperComponent({

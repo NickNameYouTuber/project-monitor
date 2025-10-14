@@ -6,7 +6,10 @@ import tech.nicorp.pm.projects.domain.Project;
 import tech.nicorp.pm.projects.domain.TaskColumn;
 import tech.nicorp.pm.projects.repo.ProjectRepository;
 import tech.nicorp.pm.projects.repo.TaskColumnRepository;
+import tech.nicorp.pm.repositories.domain.Repository;
+import tech.nicorp.pm.repositories.repo.RepositoryRepository;
 import tech.nicorp.pm.tasks.api.dto.TaskCreateRequest;
+import tech.nicorp.pm.tasks.api.dto.TaskRepositoryInfo;
 import tech.nicorp.pm.tasks.api.dto.TaskResponse;
 import tech.nicorp.pm.tasks.domain.Task;
 import tech.nicorp.pm.tasks.repo.TaskRepository;
@@ -22,11 +25,13 @@ public class TasksController {
     private final TaskRepository tasks;
     private final ProjectRepository projects;
     private final TaskColumnRepository columns;
+    private final RepositoryRepository repositories;
 
-    public TasksController(TaskRepository tasks, ProjectRepository projects, TaskColumnRepository columns) {
+    public TasksController(TaskRepository tasks, ProjectRepository projects, TaskColumnRepository columns, RepositoryRepository repositories) {
         this.tasks = tasks;
         this.projects = projects;
         this.columns = columns;
+        this.repositories = repositories;
     }
 
     @GetMapping("/tasks")
@@ -125,6 +130,18 @@ public class TasksController {
         r.setUpdatedAt(t.getUpdatedAt());
         r.setRepositoryId(t.getRepositoryId());
         r.setRepositoryBranch(t.getRepositoryBranch());
+        
+        if (t.getRepositoryId() != null) {
+            Repository repo = repositories.findById(t.getRepositoryId()).orElse(null);
+            if (repo != null) {
+                TaskRepositoryInfo info = new TaskRepositoryInfo();
+                info.setRepositoryId(t.getRepositoryId());
+                info.setRepositoryName(repo.getName());
+                info.setBranch(t.getRepositoryBranch());
+                r.setRepositoryInfo(info);
+            }
+        }
+        
         return r;
     }
 }

@@ -1,5 +1,11 @@
 import { apiClient } from './client';
 
+export type TaskRepositoryInfo = {
+  repository_id: string;
+  repository_name: string;
+  branch: string;
+};
+
 export type TaskDto = {
   id: string;
   title: string;
@@ -12,8 +18,9 @@ export type TaskDto = {
   estimateMinutes?: number | null;
   createdAt?: string;
   updatedAt?: string;
-  repositoryId?: string | null;
-  repositoryBranch?: string | null;
+  repository_id?: string;
+  repository_branch?: string;
+  repository_info?: TaskRepositoryInfo;
 };
 
 function normalizeTask(raw: any): TaskDto {
@@ -29,8 +36,9 @@ function normalizeTask(raw: any): TaskDto {
     estimateMinutes: raw.estimateMinutes ?? raw.estimate_minutes ?? null,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
-    repositoryId: raw.repositoryId ?? raw.repository_id ?? null,
-    repositoryBranch: raw.repositoryBranch ?? raw.repository_branch ?? null,
+    repository_id: raw.repository_id ?? undefined,
+    repository_branch: raw.repository_branch ?? undefined,
+    repository_info: raw.repository_info ?? undefined,
   };
 }
 
