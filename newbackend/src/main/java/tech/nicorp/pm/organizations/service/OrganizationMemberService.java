@@ -118,6 +118,11 @@ public class OrganizationMemberService {
                 .map(OrganizationMember::getRoleEnum);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<OrganizationMember> getMemberByOrgAndUser(UUID orgId, UUID userId) {
+        return memberRepository.findByOrganizationIdAndUserId(orgId, userId);
+    }
+
     @Transactional
     public void setCorporateEmail(UUID memberId, String email) {
         OrganizationMember member = memberRepository.findById(memberId)

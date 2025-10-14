@@ -16,7 +16,7 @@ import { RoleBadge } from './role-badge';
 import UserAutocomplete from './calls/UserAutocomplete';
 import type { UserDto } from '../api/users';
 import { getOrganization } from '../api/organizations';
-import { listMembers, addMember, removeMember, updateMemberRole } from '../api/organization-members';
+import { listMembers, addMember, removeMember, updateMemberRole, getCurrentMember } from '../api/organization-members';
 import { listInvites, createInvite, revokeInvite } from '../api/organization-invites';
 import { apiClient } from '../api/client';
 import type { Organization, OrganizationMember, OrganizationInvite } from '../types/organization';
@@ -26,6 +26,7 @@ export function OrganizationSettingsPage() {
   const navigate = useNavigate();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentMember, setCurrentMember] = useState<OrganizationMember | null>(null);
 
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
@@ -48,7 +49,7 @@ export function OrganizationSettingsPage() {
 
   useEffect(() => {
     if (orgId) {
-      loadOrganization();
+      loadCurrentMember();
     }
   }, [orgId]);
 
@@ -65,6 +66,19 @@ export function OrganizationSettingsPage() {
       loadInvites();
     }
   }, [orgId, organization]);
+
+  const loadCurrentMember = async () => {
+    if (!orgId) return;
+    try {
+      const member = await getCurrentMember(orgId);
+      setCurrentMember(member);
+      await loadOrganization();
+    } catch (error) {
+      console.error('Failed to load current member:', error);
+      toast.error('You do not have access to this organization');
+      navigate('/organizations');
+    }
+  };
 
   const loadOrganization = async () => {
     if (!orgId) return;
@@ -193,10 +207,14 @@ export function OrganizationSettingsPage() {
     if (!orgId) return;
     
     try {
+      const expiresAtFormatted = inviteExpiresAt 
+        ? new Date(inviteExpiresAt + 'T23:59:59Z').toISOString() 
+        : undefined;
+      
       await createInvite(orgId, {
         role: inviteRole,
         max_uses: inviteMaxUses ? parseInt(inviteMaxUses) : undefined,
-        expires_at: inviteExpiresAt || undefined,
+        expires_at: expiresAtFormatted,
       });
       toast.success('Invitation link created');
       setCreateInviteDialogOpen(false);
@@ -241,6 +259,24 @@ export function OrganizationSettingsPage() {
     );
   }
 
+  const canManageSettings = currentMember && 
+    (currentMember.role === 'OWNER' || currentMember.role === 'ADMIN');
+
+  if (!canManageSettings) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground">You do not have permission to access organization settings</p>
+            <Button className="mt-4" onClick={() => navigate('/organizations')}>
+              Back to Organizations
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col">
       <div className="border-b border-border p-6">
@@ -263,9 +299,9 @@ export function OrganizationSettingsPage() {
         <Tabs defaultValue="general" className="w-full">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="invites">Invites</TabsTrigger>
+            {canManageSettings && <TabsTrigger value="members">Members</TabsTrigger>}
+            {currentMember?.role === 'OWNER' && <TabsTrigger value="security">Security</TabsTrigger>}
+            {canManageSettings && <TabsTrigger value="invites">Invites</TabsTrigger>}
           </TabsList>
           
           <TabsContent value="general" className="mt-6">

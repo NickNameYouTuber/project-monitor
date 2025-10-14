@@ -35,6 +35,11 @@ const projectNavigation = [
 ];
 
 const globalNavigation = [
+  { id: 'calls' as Page, label: 'Calls', icon: Video },
+  { id: 'account' as Page, label: 'Account', icon: UserIcon },
+];
+
+const orgNavigation = [
   { id: 'projects' as Page, label: 'Projects', icon: Folder },
   { id: 'calls' as Page, label: 'Calls', icon: Video },
   { id: 'account' as Page, label: 'Account', icon: UserIcon },
@@ -139,6 +144,24 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
             })
           ) : selectedProject ? (
             projectNavigation.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Button
+                  key={item.id}
+                  variant={currentPage === item.id ? 'secondary' : 'ghost'}
+                  className={cn(
+                    'w-full justify-start gap-3 h-11',
+                    currentPage === item.id && 'bg-secondary text-secondary-foreground'
+                  )}
+                  onClick={() => onNavigate(item.id)}
+                >
+                  <Icon className="w-5 h-5" />
+                  {item.label}
+                </Button>
+              );
+            })
+          ) : currentOrgId ? (
+            orgNavigation.map((item) => {
               const Icon = item.icon;
               return (
                 <Button

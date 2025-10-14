@@ -23,4 +23,9 @@ export async function updateMemberRole(orgId: string, memberId: string, role: st
   return data;
 }
 
+export async function getCurrentMember(orgId: string): Promise<OrganizationMember> {
+  const { data } = await apiClient.get<OrganizationMember>(`/organizations/${orgId}/members/me`);
+  return data;
+}
+
 
