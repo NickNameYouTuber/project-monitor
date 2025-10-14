@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.projects.api.dto.*;
 import tech.nicorp.pm.projects.domain.ProjectMember;
@@ -26,6 +27,7 @@ public class ProjectMembersController {
     }
 
     @GetMapping
+    @Transactional
     @Operation(summary = "Получить список участников проекта")
     public ResponseEntity<List<ProjectMemberResponse>> listMembers(
             @PathVariable UUID projectId,
