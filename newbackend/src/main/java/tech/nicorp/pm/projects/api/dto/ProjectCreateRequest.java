@@ -30,12 +30,12 @@ public class ProjectCreateRequest {
     @Schema(example = "2fcb5120-6b9d-4015-9f1f-9e51a4b0b4ce")
     private String dashboardId;
 
+    @JsonProperty("organization_id")
+    @Schema(example = "3fcb5120-6b9d-4015-9f1f-9e51a4b0b4ce")
+    private java.util.UUID organizationId;
+
     @Schema(example = "#6366f1")
     private String color;
-
-    @JsonProperty("organization_id")
-    @Schema(example = "366ea4f0-b2aa-4a95-ba41-94b761399ef2")
-    private String organizationId;
 }
 
 

@@ -202,14 +202,12 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
 
   const handleCreateProject = async (projectData: Omit<Project, 'id' | 'createdAt'>) => {
     try {
-      const currentOrgId = localStorage.getItem('currentOrgId');
       const { createProject } = await import('../api/projects');
       const created = await createProject({
         name: projectData.title,
         description: projectData.description,
         status: projectData.status,
         color: projectData.color,
-        organization_id: currentOrgId || undefined,
       });
       const mapped: Project = {
         id: created.id,

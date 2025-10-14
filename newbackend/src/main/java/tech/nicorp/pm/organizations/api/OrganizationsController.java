@@ -10,7 +10,6 @@ import tech.nicorp.pm.organizations.api.dto.OrganizationCreateRequest;
 import tech.nicorp.pm.organizations.api.dto.OrganizationResponse;
 import tech.nicorp.pm.organizations.domain.Organization;
 import tech.nicorp.pm.organizations.domain.OrganizationRole;
-import tech.nicorp.pm.organizations.repo.OrganizationRepository;
 import tech.nicorp.pm.organizations.service.OrganizationMemberService;
 import tech.nicorp.pm.organizations.service.OrganizationService;
 
@@ -26,15 +25,12 @@ public class OrganizationsController {
 
     private final OrganizationService organizationService;
     private final OrganizationMemberService memberService;
-    private final OrganizationRepository organizationRepository;
 
     public OrganizationsController(
             OrganizationService organizationService,
-            OrganizationMemberService memberService,
-            OrganizationRepository organizationRepository) {
+            OrganizationMemberService memberService) {
         this.organizationService = organizationService;
         this.memberService = memberService;
-        this.organizationRepository = organizationRepository;
     }
 
     @GetMapping
@@ -104,8 +100,7 @@ public class OrganizationsController {
             if (request.getCorporateDomain() != null) org.setCorporateDomain(request.getCorporateDomain());
             if (request.getRequireCorporateEmail() != null) org.setRequireCorporateEmail(request.getRequireCorporateEmail());
             
-            // Сохранить изменения в БД
-            org = organizationRepository.save(org);
+            org = organizationService.updateOrganization(org.getId(), org);
             
             memberService.addMember(org.getId(), userId, OrganizationRole.OWNER, null);
             

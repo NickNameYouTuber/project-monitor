@@ -7,22 +7,22 @@ import {
   Settings,
   Folder,
   Video,
-  User as UserIcon,
-  Building2
+  User as UserIcon
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
 import type { Page, Project } from '../App';
-import type { Organization } from '../types/organization';
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '../api/users';
 import { NotificationBell } from './NotificationBell';
+import type { Organization } from '../types/organization';
+import { getOrganization } from '../api/organizations';
 
 interface SidebarProps {
   currentPage: Page;
   onNavigate: (page: Page) => void;
   selectedProject?: Project | null;
-  selectedOrganization?: Organization | null;
+  currentOrgId?: string | null;
 }
 
 const projectNavigation = [
@@ -39,9 +39,10 @@ const globalNavigation = [
   { id: 'account' as Page, label: 'Account', icon: UserIcon },
 ];
 
-export function Sidebar({ currentPage, onNavigate, selectedProject, selectedOrganization }: SidebarProps) {
+export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId }: SidebarProps) {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -52,6 +53,21 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, selectedOrga
       } catch {}
     })();
   }, []);
+
+  useEffect(() => {
+    if (currentOrgId) {
+      (async () => {
+        try {
+          const org = await getOrganization(currentOrgId);
+          setCurrentOrg(org);
+        } catch {
+          setCurrentOrg(null);
+        }
+      })();
+    } else {
+      setCurrentOrg(null);
+    }
+  }, [currentOrgId]);
   return (
     <div className="w-64 bg-card border-r border-border flex flex-col">
       <div className="p-6">
@@ -68,25 +84,15 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, selectedOrga
       </div>
 
       {/* Current organization */}
-      {selectedOrganization && !selectedProject && (
+      {currentOrg && !selectedProject && (
         <div className="px-4 mb-4">
           <div className="mb-2 text-xs text-muted-foreground">Current organization</div>
-          <div className="px-3 py-2 rounded bg-muted border border-border">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{selectedOrganization.name}</div>
-                <div className="text-xs text-muted-foreground truncate">/{selectedOrganization.slug}</div>
-              </div>
-            </div>
+          <div className="px-3 py-2 rounded bg-muted">
+            <div className="text-sm font-medium truncate">{currentOrg.name}</div>
+            <div className="text-xs text-muted-foreground truncate">/{currentOrg.slug}</div>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full mt-2"
-            onClick={() => onNavigate('organizations' as Page)}
-          >
-            Switch Organization
+          <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => window.location.href = '/organizations'}>
+            Back to Organizations
           </Button>
         </div>
       )}

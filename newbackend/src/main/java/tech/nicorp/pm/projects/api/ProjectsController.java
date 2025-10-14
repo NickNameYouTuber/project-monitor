@@ -50,8 +50,9 @@ public class ProjectsController {
     @Transactional
     @Operation(summary = "Список проектов")
     public ResponseEntity<List<ProjectResponse>> list(
-            Authentication auth,
-            @RequestParam(required = false) UUID organization_id) {
+            @RequestParam(required = false) UUID organizationId,
+            Authentication auth) {
+        
         if (auth == null || auth.getName() == null) {
             return ResponseEntity.ok(List.of());
         }
@@ -60,11 +61,9 @@ public class ProjectsController {
             UUID userId = UUID.fromString(auth.getName());
             List<Project> userProjects = projectMemberService.getProjectsByUserId(userId);
             
-            // Фильтровать по organization_id если передан
-            if (organization_id != null) {
+            if (organizationId != null) {
                 userProjects = userProjects.stream()
-                        .filter(p -> p.getOrganization() != null 
-                                && p.getOrganization().getId().equals(organization_id))
+                        .filter(p -> p.getOrganization() != null && p.getOrganization().getId().equals(organizationId))
                         .toList();
             }
             
@@ -107,12 +106,9 @@ public class ProjectsController {
             } catch (IllegalArgumentException ignored) {}
         }
         
-        // Привязать к организации если указана
         if (body.getOrganizationId() != null) {
-            try {
-                UUID orgId = UUID.fromString(body.getOrganizationId());
-                organizationRepository.findById(orgId).ifPresent(p::setOrganization);
-            } catch (IllegalArgumentException ignored) {}
+            organizationRepository.findById(body.getOrganizationId())
+                    .ifPresent(p::setOrganization);
         }
         
         Project saved = projects.save(p);
@@ -207,6 +203,7 @@ public class ProjectsController {
         r.setCreatedAt(p.getCreatedAt());
         if (p.getOwner() != null) r.setOwnerId(p.getOwner().getId());
         if (p.getDashboard() != null) r.setDashboardId(p.getDashboard().getId());
+        if (p.getOrganization() != null) r.setOrganizationId(p.getOrganization().getId());
         return r;
     }
 

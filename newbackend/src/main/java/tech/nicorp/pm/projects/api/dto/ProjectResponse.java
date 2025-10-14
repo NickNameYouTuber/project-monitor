@@ -42,6 +42,10 @@ public class ProjectResponse {
     @Schema(example = "2fcb5120-6b9d-4015-9f1f-9e51a4b0b4ce")
     private UUID dashboardId;
 
+    @JsonProperty("organization_id")
+    @Schema(example = "3fcb5120-6b9d-4015-9f1f-9e51a4b0b4ce")
+    private UUID organizationId;
+
     private OffsetDateTime createdAt;
 }
 

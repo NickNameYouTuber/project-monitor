@@ -11,6 +11,7 @@ export type ProjectDto = {
   color?: string;
   ownerId?: string;
   dashboardId?: string;
+  organization_id?: string;
   createdAt?: string;
 };
 
@@ -23,12 +24,12 @@ export type ProjectCreateRequest = {
   orderIndex?: number;
   dashboardId?: string;
   color?: string;
-  organization_id?: string;
 };
 
 export type ProjectUpdateRequest = Partial<ProjectCreateRequest>;
 
-export async function listProjects(params?: { organization_id?: string }): Promise<ProjectDto[]> {
+export async function listProjects(organizationId?: string): Promise<ProjectDto[]> {
+  const params = organizationId ? { organizationId } : {};
   const { data } = await apiClient.get<ProjectDto[]>('/projects', { params });
   return data;
 }
