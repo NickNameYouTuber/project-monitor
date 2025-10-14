@@ -12,6 +12,8 @@ export type TaskDto = {
   estimateMinutes?: number | null;
   createdAt?: string;
   updatedAt?: string;
+  repositoryId?: string | null;
+  repositoryBranch?: string | null;
 };
 
 function normalizeTask(raw: any): TaskDto {
@@ -27,6 +29,8 @@ function normalizeTask(raw: any): TaskDto {
     estimateMinutes: raw.estimateMinutes ?? raw.estimate_minutes ?? null,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
+    repositoryId: raw.repositoryId ?? raw.repository_id ?? null,
+    repositoryBranch: raw.repositoryBranch ?? raw.repository_branch ?? null,
   };
 }
 
