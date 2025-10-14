@@ -605,6 +605,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
     }
   }, [selectedRepoId, repositories]);
   
+  const selectedRepo = repositories.find(r => r.id === selectedRepoId);
+  
   const linkedTasks = selectedRepo 
     ? tasks.filter(task => task.repository_id === selectedRepo.id)
     : [];

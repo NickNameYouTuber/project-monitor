@@ -226,10 +226,9 @@ export function CreateTaskDialog({
             <Label>Repository</Label>
             <Select value={selectedRepository} onValueChange={setSelectedRepository}>
               <SelectTrigger>
-                <SelectValue placeholder="Select repository" />
+                <SelectValue placeholder="Select repository (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
                 {repositories.map(repo => (
                   <SelectItem key={repo.id} value={repo.id}>
                     {repo.name}
