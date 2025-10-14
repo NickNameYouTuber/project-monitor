@@ -46,6 +46,8 @@ public class TasksController {
         t.setTitle(body.getTitle());
         t.setDescription(body.getDescription());
         if (body.getOrder() != null) t.setOrderIndex(body.getOrder());
+        t.setRepositoryId(body.getRepositoryId());
+        t.setRepositoryBranch(body.getRepositoryBranch());
         Task saved = tasks.save(t);
         return ResponseEntity.created(URI.create("/api/projects/" + projectId + "/tasks/" + saved.getId())).body(toResponse(saved));
     }
@@ -121,6 +123,8 @@ public class TasksController {
         r.setEstimateMinutes(t.getEstimateMinutes());
         r.setCreatedAt(t.getCreatedAt());
         r.setUpdatedAt(t.getUpdatedAt());
+        r.setRepositoryId(t.getRepositoryId());
+        r.setRepositoryBranch(t.getRepositoryBranch());
         return r;
     }
 }

@@ -16,6 +16,10 @@ public class TaskCreateRequest {
     @JsonProperty("project_id")
     private UUID projectId;
     private Integer order;
+    @JsonProperty("repository_id")
+    private UUID repositoryId;
+    @JsonProperty("repository_branch")
+    private String repositoryBranch;
 }
 
 

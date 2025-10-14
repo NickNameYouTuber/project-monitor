@@ -12,6 +12,8 @@ export type TaskDto = {
   estimateMinutes?: number | null;
   createdAt?: string;
   updatedAt?: string;
+  repositoryId?: string | null;
+  repositoryBranch?: string | null;
 };
 
 function normalizeTask(raw: any): TaskDto {
@@ -27,6 +29,8 @@ function normalizeTask(raw: any): TaskDto {
     estimateMinutes: raw.estimateMinutes ?? raw.estimate_minutes ?? null,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
+    repositoryId: raw.repositoryId ?? raw.repository_id ?? null,
+    repositoryBranch: raw.repositoryBranch ?? raw.repository_branch ?? null,
   };
 }
 
@@ -35,7 +39,7 @@ export async function listTasks(projectId: string): Promise<TaskDto[]> {
   return Array.isArray(data) ? data.map(normalizeTask) : [];
 }
 
-export async function createTask(projectId: string, body: { title: string; description?: string; column_id: string; order?: number }): Promise<TaskDto> {
+export async function createTask(projectId: string, body: { title: string; description?: string; column_id: string; order?: number; repository_id?: string; repository_branch?: string }): Promise<TaskDto> {
   const { data } = await apiClient.post(`/projects/${projectId}/tasks`, body);
   return normalizeTask(data);
 }
@@ -78,6 +82,11 @@ export async function createTaskFromChat(request: TaskFromChatRequest): Promise<
 export async function getTask(taskId: string): Promise<TaskDto> {
   const { data } = await apiClient.get(`/tasks/${taskId}`);
   return normalizeTask(data);
+}
+
+export async function listRepositoryTasks(repositoryId: string): Promise<TaskDto[]> {
+  const { data } = await apiClient.get(`/repositories/${repositoryId}/tasks`);
+  return Array.isArray(data) ? data.map(normalizeTask) : [];
 }
 
 

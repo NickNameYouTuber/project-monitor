@@ -69,7 +69,11 @@ public class RepositoryMembersController {
         RepositoryMemberResponse r = new RepositoryMemberResponse();
         r.setId(m.getId());
         if (m.getRepository() != null) r.setRepositoryId(m.getRepository().getId());
-        if (m.getUser() != null) r.setUserId(m.getUser().getId());
+        if (m.getUser() != null) {
+            r.setUserId(m.getUser().getId());
+            r.setUsername(m.getUser().getUsername());
+            r.setEmail(m.getUser().getEmail());
+        }
         r.setRole(m.getRole());
         r.setCreatedAt(m.getCreatedAt());
         return r;

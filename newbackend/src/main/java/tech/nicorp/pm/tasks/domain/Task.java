@@ -61,6 +61,12 @@ public class Task {
             joinColumns = @JoinColumn(name = "task_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> assignees = new ArrayList<>();
+
+    @Column(name = "repository_id", columnDefinition = "uuid")
+    private UUID repositoryId;
+
+    @Column(name = "repository_branch")
+    private String repositoryBranch;
 }
 
 

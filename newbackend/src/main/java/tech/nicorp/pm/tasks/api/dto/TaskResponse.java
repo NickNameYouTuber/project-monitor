@@ -29,6 +29,10 @@ public class TaskResponse {
     private OffsetDateTime createdAt;
     @JsonProperty("updated_at")
     private OffsetDateTime updatedAt;
+    @JsonProperty("repository_id")
+    private UUID repositoryId;
+    @JsonProperty("repository_branch")
+    private String repositoryBranch;
 }
 
 

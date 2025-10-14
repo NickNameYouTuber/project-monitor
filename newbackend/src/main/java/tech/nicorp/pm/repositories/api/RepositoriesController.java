@@ -14,8 +14,11 @@ import tech.nicorp.pm.projects.repo.ProjectRepository;
 import tech.nicorp.pm.repositories.api.dto.RepositoryResponse;
 import tech.nicorp.pm.users.domain.User;
 import tech.nicorp.pm.users.repo.UserRepository;
+import tech.nicorp.pm.tasks.api.dto.TaskResponse;
+import tech.nicorp.pm.tasks.repo.TaskRepository;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,13 +31,15 @@ public class RepositoriesController {
     private final ProjectRepository projects;
     private final RepositoryMemberRepository members;
     private final UserRepository users;
+    private final TaskRepository tasks;
 
-    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects, RepositoryMemberRepository members, UserRepository users) {
+    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects, RepositoryMemberRepository members, UserRepository users, TaskRepository tasks) {
         this.git = git;
         this.repositories = repositories;
         this.projects = projects;
         this.members = members;
         this.users = users;
+        this.tasks = tasks;
     }
 
     @GetMapping("/{repoId}/refs/branches")
@@ -170,6 +175,36 @@ public class RepositoriesController {
             catch (IllegalArgumentException e) { return null; }
         }
         return null;
+    }
+
+    @GetMapping("/{repoId}/tasks")
+    public ResponseEntity<List<TaskResponse>> getRepositoryTasks(@PathVariable("repoId") UUID repoId) {
+        if (!repositories.existsById(repoId)) return ResponseEntity.notFound().build();
+        
+        List<TaskResponse> linkedTasks = tasks.findAll().stream()
+                .filter(t -> repoId.equals(t.getRepositoryId()))
+                .map(this::taskToResponse)
+                .toList();
+        
+        return ResponseEntity.ok(linkedTasks);
+    }
+
+    private TaskResponse taskToResponse(tech.nicorp.pm.tasks.domain.Task t) {
+        TaskResponse r = new TaskResponse();
+        r.setId(t.getId());
+        r.setTitle(t.getTitle());
+        r.setDescription(t.getDescription());
+        if (t.getColumn() != null) r.setColumnId(t.getColumn().getId());
+        if (t.getProject() != null) r.setProjectId(t.getProject().getId());
+        r.setOrder(t.getOrderIndex());
+        if (t.getReviewer() != null) r.setReviewerId(t.getReviewer().getId());
+        r.setDueDate(t.getDueDate());
+        r.setEstimateMinutes(t.getEstimateMinutes());
+        r.setCreatedAt(t.getCreatedAt());
+        r.setUpdatedAt(t.getUpdatedAt());
+        r.setRepositoryId(t.getRepositoryId());
+        r.setRepositoryBranch(t.getRepositoryBranch());
+        return r;
     }
 
     private RepositoryResponse toResponse(Repository r) {
