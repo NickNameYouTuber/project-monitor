@@ -38,7 +38,7 @@ export function CreateTaskDialog({
   const [priority, setPriority] = useState<Task['priority']>('medium');
   const [assignee, setAssignee] = useState('');
   const [dueDate, setDueDate] = useState<Date>();
-  const [selectedRepository, setSelectedRepository] = useState<string>('');
+  const [selectedRepository, setSelectedRepository] = useState<string | undefined>(undefined);
   const [selectedBranch, setSelectedBranch] = useState<string>('');
   const [newBranchName, setNewBranchName] = useState<string>('');
   const [baseBranch, setBaseBranch] = useState<string>('');
@@ -108,7 +108,7 @@ export function CreateTaskDialog({
     setPriority('medium');
     setAssignee('');
     setDueDate(undefined);
-    setSelectedRepository('');
+    setSelectedRepository(undefined);
     setSelectedBranch('');
     setNewBranchName('');
     setCreateNewBranch(false);

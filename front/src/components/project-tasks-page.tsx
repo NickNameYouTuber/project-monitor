@@ -637,6 +637,7 @@ export function ProjectTasksPage({
         availableStatuses={columns.map(col => ({ id: col.id, title: col.title }))}
         assigneeSuggestions={assigneeSuggestions}
         branchSuggestions={branchSuggestions}
+        projectId={project.id}
       />
 
       {editingTask && (
