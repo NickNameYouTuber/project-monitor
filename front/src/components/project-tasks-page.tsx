@@ -334,7 +334,6 @@ export function ProjectTasksPage({
     try {
       const { moveTask } = await import('../api/tasks');
       await moveTask(project.id, taskId, { column_id: newStatus });
-      console.log(`Task ${taskId} moved to ${newStatus}`);
     } catch (error) {
       console.error('Failed to move task:', error);
       setTasks(originalTasks);
