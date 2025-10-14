@@ -139,18 +139,16 @@ export function OrganizationsPage() {
                   >
                     Open
                   </Button>
-                  {(org.role === 'OWNER' || org.role === 'ADMIN') && (
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/organizations/${org.id}/settings`);
-                      }}
-                    >
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  )}
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/organizations/${org.id}/settings`);
+                    }}
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>

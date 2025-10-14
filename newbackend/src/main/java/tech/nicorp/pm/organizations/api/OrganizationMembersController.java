@@ -43,8 +43,9 @@ public class OrganizationMembersController {
         return ResponseEntity.ok(members.stream().map(this::toResponse).toList());
     }
 
-    @GetMapping("/me")
-    @Operation(summary = "Получить информацию о текущем участнике")
+    @GetMapping("/current")
+    @Transactional
+    @Operation(summary = "Получить текущего участника организации")
     public ResponseEntity<OrganizationMemberResponse> getCurrentMember(
             @PathVariable UUID orgId,
             Authentication auth) {
@@ -54,7 +55,7 @@ public class OrganizationMembersController {
             return ResponseEntity.status(401).build();
         }
         
-        return memberService.getMemberByOrgAndUser(orgId, userId)
+        return memberService.getMember(orgId, userId)
                 .map(this::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(403).build());

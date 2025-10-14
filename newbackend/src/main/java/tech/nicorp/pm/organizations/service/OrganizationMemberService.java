@@ -61,6 +61,11 @@ public class OrganizationMemberService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<OrganizationMember> getMember(UUID orgId, UUID userId) {
+        return memberRepository.findByOrganizationIdAndUserId(orgId, userId);
+    }
+
+    @Transactional(readOnly = true)
     public List<Organization> getUserOrganizations(UUID userId) {
         return memberRepository.findByUserId(userId).stream()
                 .map(OrganizationMember::getOrganization)
@@ -116,11 +121,6 @@ public class OrganizationMemberService {
     public Optional<OrganizationRole> getUserRole(UUID orgId, UUID userId) {
         return memberRepository.findByOrganizationIdAndUserId(orgId, userId)
                 .map(OrganizationMember::getRoleEnum);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<OrganizationMember> getMemberByOrgAndUser(UUID orgId, UUID userId) {
-        return memberRepository.findByOrganizationIdAndUserId(orgId, userId);
     }
 
     @Transactional
