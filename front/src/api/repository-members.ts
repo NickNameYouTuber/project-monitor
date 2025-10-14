@@ -9,7 +9,7 @@ export type RepositoryMemberDto = {
   user?: {
     id: string;
     username: string;
-    email: string;
+    displayName?: string;
   };
 };
 

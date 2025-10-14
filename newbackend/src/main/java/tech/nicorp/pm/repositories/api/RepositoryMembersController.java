@@ -76,7 +76,7 @@ public class RepositoryMembersController {
             UserBasicInfo userInfo = new UserBasicInfo();
             userInfo.setId(m.getUser().getId());
             userInfo.setUsername(m.getUser().getUsername());
-            userInfo.setEmail(m.getUser().getEmail());
+            userInfo.setDisplayName(m.getUser().getDisplayName());
             r.setUser(userInfo);
         }
         r.setRole(m.getRole());
