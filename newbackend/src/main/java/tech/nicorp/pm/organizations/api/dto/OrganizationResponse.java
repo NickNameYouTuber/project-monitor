@@ -49,5 +49,11 @@ public class OrganizationResponse {
     
     @JsonProperty("current_user_role")
     private String currentUserRole;
+    
+    @JsonProperty("sso_enabled")
+    private Boolean ssoEnabled;
+    
+    @JsonProperty("sso_require_sso")
+    private Boolean ssoRequireSSO;
 }
 

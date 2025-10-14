@@ -20,7 +20,8 @@ import { listMembers, addMember, removeMember, updateMemberRole, getCurrentMembe
 import { listInvites, createInvite, revokeInvite } from '../api/organization-invites';
 import { apiClient } from '../api/client';
 import type { Organization, OrganizationMember, OrganizationInvite } from '../types/organization';
-import { IdentityProviderSettings } from './identity-provider-settings';
+import { getSSOConfig, saveSSOConfig } from '../api/sso';
+import type { SSOConfiguration, SSOConfigurationRequest } from '../types/sso';
 
 export function OrganizationSettingsPage() {
   const { orgId } = useParams<{ orgId: string }>();
@@ -48,6 +49,17 @@ export function OrganizationSettingsPage() {
   const [inviteMaxUses, setInviteMaxUses] = useState('');
   const [inviteExpiresAt, setInviteExpiresAt] = useState('');
 
+  const [ssoConfig, setSSOConfig] = useState<SSOConfiguration | null>(null);
+  const [loadingSSO, setLoadingSSO] = useState(false);
+  const [ssoEnabled, setSSOEnabled] = useState(false);
+  const [ssoClientId, setSSOClientId] = useState('');
+  const [ssoClientSecret, setSSOClientSecret] = useState('');
+  const [ssoAuthEndpoint, setSSOAuthEndpoint] = useState('');
+  const [ssoTokenEndpoint, setSSOTokenEndpoint] = useState('');
+  const [ssoUserinfoEndpoint, setSSOUserinfoEndpoint] = useState('');
+  const [ssoIssuer, setSSOIssuer] = useState('');
+  const [ssoRequireSSO, setSSORequireSSO] = useState(false);
+
   useEffect(() => {
     if (orgId) {
       loadCurrentMember();
@@ -65,6 +77,7 @@ export function OrganizationSettingsPage() {
     if (orgId && organization) {
       loadMembers();
       loadInvites();
+      loadSSOConfig();
     }
   }, [orgId, organization]);
 
@@ -241,6 +254,53 @@ export function OrganizationSettingsPage() {
     }
   };
 
+  const loadSSOConfig = async () => {
+    if (!orgId) return;
+    setLoadingSSO(true);
+    try {
+      const config = await getSSOConfig(orgId);
+      if (config) {
+        setSSOConfig(config);
+        setSSOEnabled(config.enabled);
+        setSSOClientId(config.client_id);
+        setSSOAuthEndpoint(config.authorization_endpoint);
+        setSSOTokenEndpoint(config.token_endpoint);
+        setSSOUserinfoEndpoint(config.userinfo_endpoint);
+        setSSOIssuer(config.issuer);
+        setSSORequireSSO(config.require_sso);
+      }
+    } catch (error) {
+      console.error('Failed to load SSO config:', error);
+    } finally {
+      setLoadingSSO(false);
+    }
+  };
+
+  const handleSaveSSO = async () => {
+    if (!orgId) return;
+    
+    try {
+      const request: SSOConfigurationRequest = {
+        provider_type: 'OIDC',
+        enabled: ssoEnabled,
+        client_id: ssoClientId,
+        client_secret: ssoClientSecret || undefined,
+        authorization_endpoint: ssoAuthEndpoint,
+        token_endpoint: ssoTokenEndpoint,
+        userinfo_endpoint: ssoUserinfoEndpoint,
+        issuer: ssoIssuer,
+        require_sso: ssoRequireSSO,
+      };
+      
+      await saveSSOConfig(orgId, request);
+      toast.success('SSO configuration saved successfully');
+      setSSOClientSecret('');
+      loadSSOConfig();
+    } catch (error) {
+      toast.error('Failed to save SSO configuration');
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner stages={['Loading Organization Settings']} />;
   }
@@ -302,8 +362,8 @@ export function OrganizationSettingsPage() {
             <TabsTrigger value="general">General</TabsTrigger>
             {canManageSettings && <TabsTrigger value="members">Members</TabsTrigger>}
             {currentMember?.role === 'OWNER' && <TabsTrigger value="security">Security</TabsTrigger>}
+            {currentMember?.role === 'OWNER' && <TabsTrigger value="sso">SSO</TabsTrigger>}
             {canManageSettings && <TabsTrigger value="invites">Invites</TabsTrigger>}
-            {currentMember?.role === 'OWNER' && <TabsTrigger value="identity-provider">Identity Provider</TabsTrigger>}
           </TabsList>
           
           <TabsContent value="general" className="mt-6">
@@ -541,6 +601,118 @@ export function OrganizationSettingsPage() {
             </Dialog>
           </TabsContent>
           
+          <TabsContent value="sso" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Single Sign-On (SSO)</CardTitle>
+                <CardDescription>Configure OIDC/OAuth 2.0 identity provider for corporate authentication</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingSSO ? (
+                  <div className="flex items-center justify-center py-8">
+                    <LoadingSpinner stages={['Loading SSO configuration']} />
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Enable SSO</p>
+                        <p className="text-xs text-muted-foreground">
+                          Allow users to login using corporate identity provider
+                        </p>
+                      </div>
+                      <Switch
+                        checked={ssoEnabled}
+                        onCheckedChange={setSSOEnabled}
+                      />
+                    </div>
+
+                    {ssoEnabled && (
+                      <>
+                        <div className="space-y-4 pt-4 border-t">
+                          <div>
+                            <Label>Client ID</Label>
+                            <Input
+                              value={ssoClientId}
+                              onChange={(e) => setSSOClientId(e.target.value)}
+                              placeholder="Your OAuth 2.0 client ID"
+                            />
+                          </div>
+
+                          <div>
+                            <Label>Client Secret</Label>
+                            <Input
+                              type="password"
+                              value={ssoClientSecret}
+                              onChange={(e) => setSSOClientSecret(e.target.value)}
+                              placeholder="Leave empty to keep existing secret"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Secret is encrypted and securely stored
+                            </p>
+                          </div>
+
+                          <div>
+                            <Label>Authorization Endpoint</Label>
+                            <Input
+                              value={ssoAuthEndpoint}
+                              onChange={(e) => setSSOAuthEndpoint(e.target.value)}
+                              placeholder="https://your-idp.com/oauth2/authorize"
+                            />
+                          </div>
+
+                          <div>
+                            <Label>Token Endpoint</Label>
+                            <Input
+                              value={ssoTokenEndpoint}
+                              onChange={(e) => setSSOTokenEndpoint(e.target.value)}
+                              placeholder="https://your-idp.com/oauth2/token"
+                            />
+                          </div>
+
+                          <div>
+                            <Label>User Info Endpoint</Label>
+                            <Input
+                              value={ssoUserinfoEndpoint}
+                              onChange={(e) => setSSOUserinfoEndpoint(e.target.value)}
+                              placeholder="https://your-idp.com/oauth2/userinfo"
+                            />
+                          </div>
+
+                          <div>
+                            <Label>Issuer</Label>
+                            <Input
+                              value={ssoIssuer}
+                              onChange={(e) => setSSOIssuer(e.target.value)}
+                              placeholder="https://your-idp.com"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between pt-4 border-t">
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium">Require SSO</p>
+                              <p className="text-xs text-muted-foreground">
+                                Disable regular login, force SSO authentication
+                              </p>
+                            </div>
+                            <Switch
+                              checked={ssoRequireSSO}
+                              onCheckedChange={setSSORequireSSO}
+                            />
+                          </div>
+
+                          <Button onClick={handleSaveSSO} className="w-full">
+                            Save SSO Configuration
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
           <TabsContent value="invites" className="mt-6">
             <Card>
               <CardHeader>
@@ -668,10 +840,6 @@ export function OrganizationSettingsPage() {
                 </div>
               </DialogContent>
             </Dialog>
-          </TabsContent>
-          
-          <TabsContent value="identity-provider" className="mt-6">
-            {orgId && <IdentityProviderSettings organizationId={orgId} />}
           </TabsContent>
         </Tabs>
       </div>

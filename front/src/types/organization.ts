@@ -17,6 +17,8 @@ export interface Organization {
   member_count?: number;
   project_count?: number;
   current_user_role?: OrganizationRole;
+  sso_enabled?: boolean;
+  sso_require_sso?: boolean;
 }
 
 export interface OrganizationMember {

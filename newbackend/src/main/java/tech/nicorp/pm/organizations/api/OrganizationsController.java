@@ -12,6 +12,7 @@ import tech.nicorp.pm.organizations.domain.Organization;
 import tech.nicorp.pm.organizations.domain.OrganizationRole;
 import tech.nicorp.pm.organizations.service.OrganizationMemberService;
 import tech.nicorp.pm.organizations.service.OrganizationService;
+import tech.nicorp.pm.sso.repo.SSOConfigurationRepository;
 
 import java.net.URI;
 import java.util.List;
@@ -25,12 +26,15 @@ public class OrganizationsController {
 
     private final OrganizationService organizationService;
     private final OrganizationMemberService memberService;
+    private final SSOConfigurationRepository ssoConfigRepository;
 
     public OrganizationsController(
             OrganizationService organizationService,
-            OrganizationMemberService memberService) {
+            OrganizationMemberService memberService,
+            SSOConfigurationRepository ssoConfigRepository) {
         this.organizationService = organizationService;
         this.memberService = memberService;
+        this.ssoConfigRepository = ssoConfigRepository;
     }
 
     @GetMapping
@@ -173,6 +177,11 @@ public class OrganizationsController {
         
         memberService.getUserRole(org.getId(), currentUserId)
                 .ifPresent(role -> response.setCurrentUserRole(role.name()));
+        
+        ssoConfigRepository.findByOrganizationId(org.getId()).ifPresent(ssoConfig -> {
+            response.setSsoEnabled(ssoConfig.getEnabled());
+            response.setSsoRequireSSO(ssoConfig.getRequireSSO());
+        });
         
         return response;
     }

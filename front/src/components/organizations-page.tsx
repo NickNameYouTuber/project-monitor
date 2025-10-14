@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Link as LinkIcon, Settings, Users, FolderKanban } from 'lucide-react';
+import { Building2, Plus, Link as LinkIcon, Settings, Users, FolderKanban, Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -12,8 +12,7 @@ import { RoleBadge } from './role-badge';
 import { toast } from 'sonner';
 import { listOrganizations, verifyOrganizationPassword } from '../api/organizations';
 import type { Organization } from '../types/organization';
-import { getCorporateAuthStatus } from '../api/corporate-auth';
-import { CorporateAuthDialog } from './corporate-auth-dialog';
+import { initiateSSOLogin } from '../api/sso';
 
 export function OrganizationsPage() {
   const navigate = useNavigate();
@@ -25,8 +24,6 @@ export function OrganizationsPage() {
   const [selectedOrgForPassword, setSelectedOrgForPassword] = useState<Organization | null>(null);
   const [orgPassword, setOrgPassword] = useState('');
   const [verifying, setVerifying] = useState(false);
-  const [corporateAuthDialogOpen, setCorporateAuthDialogOpen] = useState(false);
-  const [selectedOrgForCorporateAuth, setSelectedOrgForCorporateAuth] = useState<Organization | null>(null);
 
   useEffect(() => {
     loadOrganizations();
@@ -43,18 +40,10 @@ export function OrganizationsPage() {
     }
   };
 
-  const handleSelectOrganization = async (org: Organization) => {
-    if (org.require_corporate_email) {
-      try {
-        const status = await getCorporateAuthStatus(org.id);
-        if (!status.linked) {
-          setSelectedOrgForCorporateAuth(org);
-          setCorporateAuthDialogOpen(true);
-          return;
-        }
-      } catch (error) {
-        console.error('Failed to check corporate auth status:', error);
-      }
+  const handleSelectOrganization = (org: Organization) => {
+    if (org.sso_enabled && org.sso_require_sso) {
+      handleSSOLogin(org);
+      return;
     }
     
     if (org.require_password) {
@@ -63,6 +52,15 @@ export function OrganizationsPage() {
     } else {
       localStorage.setItem('currentOrgId', org.id);
       navigate('/projects');
+    }
+  };
+
+  const handleSSOLogin = async (org: Organization) => {
+    try {
+      const response = await initiateSSOLogin(org.id);
+      window.location.href = response.authorization_url;
+    } catch (error) {
+      toast.error('Failed to initiate SSO login');
     }
   };
 
@@ -152,12 +150,32 @@ export function OrganizationsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button 
-                    className="flex-1" 
-                    onClick={() => handleSelectOrganization(org)}
-                  >
-                    Open
-                  </Button>
+                  {org.sso_enabled ? (
+                    <>
+                      <Button 
+                        className="flex-1" 
+                        onClick={() => handleSSOLogin(org)}
+                      >
+                        <Shield className="w-4 h-4 mr-2" />
+                        Sign in with SSO
+                      </Button>
+                      {!org.sso_require_sso && (
+                        <Button 
+                          variant="outline"
+                          onClick={() => handleSelectOrganization(org)}
+                        >
+                          Regular Login
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <Button 
+                      className="flex-1" 
+                      onClick={() => handleSelectOrganization(org)}
+                    >
+                      Open
+                    </Button>
+                  )}
                   {(org.current_user_role === 'OWNER' || org.current_user_role === 'ADMIN') && (
                     <Button 
                       variant="outline" 
@@ -258,24 +276,6 @@ export function OrganizationsPage() {
             </div>
           </DialogContent>
         </Dialog>
-
-        {selectedOrgForCorporateAuth && (
-          <CorporateAuthDialog
-            open={corporateAuthDialogOpen}
-            onOpenChange={setCorporateAuthDialogOpen}
-            organizationId={selectedOrgForCorporateAuth.id}
-            organizationName={selectedOrgForCorporateAuth.name}
-            onSuccess={() => {
-              if (selectedOrgForCorporateAuth.require_password) {
-                setSelectedOrgForPassword(selectedOrgForCorporateAuth);
-                setPasswordDialogOpen(true);
-              } else {
-                localStorage.setItem('currentOrgId', selectedOrgForCorporateAuth.id);
-                navigate('/projects');
-              }
-            }}
-          />
-        )}
       </div>
     </div>
   );

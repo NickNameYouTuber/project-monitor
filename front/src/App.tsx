@@ -17,6 +17,7 @@ import { OrganizationsPage } from './components/organizations-page';
 import { CreateOrganizationPage } from './components/create-organization-page';
 import { OrganizationSettingsPage } from './components/organization-settings-page';
 import { InvitePage } from './components/invite-page';
+import { SSOCallbackPage } from './components/sso-callback-page';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
 import { setAccessToken } from './api/client';
@@ -365,6 +366,7 @@ export default function App() {
                 location.pathname === '/organizations' || 
                 location.pathname === '/organizations/create' || 
                 location.pathname.startsWith('/invite/') ||
+                location.pathname.startsWith('/sso/') ||
                 location.pathname.startsWith('/organizations/') ? (
                   <Sidebar 
                     currentPage={currentPage} 
@@ -389,6 +391,7 @@ export default function App() {
                 <Route path="/organizations/create" element={<CreateOrganizationPage />} />
                 <Route path="/organizations/:orgId/settings" element={<OrganizationSettingsPage />} />
                 <Route path="/invite/:token" element={<InvitePage />} />
+                <Route path="/sso/callback" element={<SSOCallbackPage />} />
                 <Route path="/projects" element={
                   currentOrgId ? (
                     <ProjectsPage
