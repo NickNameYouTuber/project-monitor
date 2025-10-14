@@ -42,7 +42,6 @@ import type { Project, Task } from '../App';
 import { listRepositories, createBranch, deleteBranch, updateFile, updateRepository, type RepositoryDto } from '../api/repositories';
 import { listFiles, type FileEntry, listCommits, getFileContent } from '../api/repository-content';
 import { listMembers, addMember, removeMember, type RepositoryMemberDto } from '../api/repository-members';
-import { listRepositoryTasks, type TaskDto } from '../api/tasks';
 import { toast } from 'sonner';
 import UserAutocomplete from './calls/UserAutocomplete';
 import type { UserDto } from '../api/users';
@@ -410,7 +409,6 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [commits, setCommits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [linkedTasks, setLinkedTasks] = useState<TaskDto[]>([]);
 
   const getFileIcon = (fileName: string | undefined) => {
     if (!fileName) return 'text-gray-500';
@@ -439,16 +437,6 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
       const m = await listMembers(selectedRepoId);
       setMembers(m);
     } catch {}
-  };
-
-  const loadLinkedTasks = async () => {
-    if (!selectedRepoId) return;
-    try {
-      const t = await listRepositoryTasks(selectedRepoId);
-      setLinkedTasks(t);
-    } catch {
-      setLinkedTasks([]);
-    }
   };
 
   const handleAddMember = async () => {
@@ -605,7 +593,6 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   useEffect(() => {
     if (selectedRepoId) {
       loadMembers();
-      loadLinkedTasks();
       const repo = repositories.find(r => r.id === selectedRepoId);
       if (repo) {
         setRepoSettings({
@@ -617,6 +604,10 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
       }
     }
   }, [selectedRepoId, repositories]);
+  
+  const linkedTasks = selectedRepo 
+    ? tasks.filter(task => task.repository_id === selectedRepo.id)
+    : [];
 
   // Вычислить активный таб из URL
   const activeTab = useMemo(() => {
@@ -990,11 +981,11 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                         <div className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
                             <AvatarFallback>
-                              {(member.username || member.user_id || 'U').substring(0, 2).toUpperCase()}
+                              {(member.user?.username || 'U').substring(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">{member.username || member.user_id}</div>
+                            <div className="font-medium">{member.user?.username || member.user_id}</div>
                             <div className="text-sm text-muted-foreground capitalize">{member.role}</div>
                           </div>
                         </div>
@@ -1036,20 +1027,17 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                 <Card key={task.id}>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
+                      <Badge variant="outline">{task.priority}</Badge>
                       <div className="flex-1">
                         <p className="font-medium">{task.title}</p>
-                        {task.description && (
-                          <p className="text-sm text-muted-foreground">{task.description}</p>
-                        )}
+                        <p className="text-sm text-muted-foreground">{task.description}</p>
                       </div>
-                      {task.repositoryBranch && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <GitBranch className="w-4 h-4" />
-                          <code className="px-2 py-1 bg-muted rounded text-xs">
-                            {task.repositoryBranch}
-                          </code>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <GitBranch className="w-4 h-4" />
+                        <code className="px-2 py-1 bg-muted rounded text-xs">
+                          {task.repositoryBranch}
+                        </code>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

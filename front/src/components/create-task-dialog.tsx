@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { CalendarIcon, Plus } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { AutocompleteInput } from './autocomplete-input';
-import { listRepositories, getBranches, createBranch, type RepositoryDto } from '../api/repositories';
-import { toast } from 'sonner';
 import type { Task } from '../App';
+import { listRepositories } from '../api/repositories';
+import { apiClient } from '../api/client';
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -38,61 +38,58 @@ export function CreateTaskDialog({
   const [priority, setPriority] = useState<Task['priority']>('medium');
   const [assignee, setAssignee] = useState('');
   const [dueDate, setDueDate] = useState<Date>();
-  
-  const [repositories, setRepositories] = useState<RepositoryDto[]>([]);
-  const [selectedRepoId, setSelectedRepoId] = useState<string>('');
+  const [selectedRepository, setSelectedRepository] = useState<string>('');
+  const [selectedBranch, setSelectedBranch] = useState<string>('');
+  const [newBranchName, setNewBranchName] = useState<string>('');
+  const [baseBranch, setBaseBranch] = useState<string>('');
+  const [createNewBranch, setCreateNewBranch] = useState<boolean>(false);
+  const [repositories, setRepositories] = useState<Array<{ id: string; name: string }>>([]);
   const [branches, setBranches] = useState<string[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState('');
-  const [isCreatingNewBranch, setIsCreatingNewBranch] = useState(false);
-  const [newBranchName, setNewBranchName] = useState('');
   const [loadingBranches, setLoadingBranches] = useState(false);
 
   useEffect(() => {
     if (open && projectId) {
-      listRepositories({ project_id: projectId })
-        .then(repos => {
-          setRepositories(repos);
-          if (repos.length > 0 && !selectedRepoId) {
-            setSelectedRepoId(repos[0].id);
-          }
-        })
-        .catch(() => toast.error('Failed to load repositories'));
+      listRepositories({ project_id: projectId }).then(repos => {
+        setRepositories(repos.map(r => ({ id: r.id, name: r.name })));
+      }).catch(console.error);
     }
   }, [open, projectId]);
 
   useEffect(() => {
-    if (selectedRepoId) {
+    if (selectedRepository) {
       setLoadingBranches(true);
-      getBranches(selectedRepoId)
-        .then(branchList => {
-          setBranches(branchList);
-          if (branchList.length > 0 && !selectedBranch) {
-            setSelectedBranch(branchList[0]);
+      apiClient.get(`/repositories/${selectedRepository}/refs/branches`)
+        .then(({ data }) => {
+          setBranches(data);
+          if (data.length > 0) {
+            setBaseBranch(data[0]);
           }
         })
-        .catch(() => toast.error('Failed to load branches'))
+        .catch(console.error)
         .finally(() => setLoadingBranches(false));
+    } else {
+      setBranches([]);
     }
-  }, [selectedRepoId]);
+  }, [selectedRepository]);
 
-  const handleCreateNewBranch = async () => {
-    if (!selectedRepoId || !newBranchName.trim()) return;
-    try {
-      await createBranch(selectedRepoId, newBranchName, selectedBranch || undefined);
-      toast.success('Branch created');
-      const updatedBranches = await getBranches(selectedRepoId);
-      setBranches(updatedBranches);
-      setSelectedBranch(newBranchName);
-      setIsCreatingNewBranch(false);
-      setNewBranchName('');
-    } catch {
-      toast.error('Failed to create branch');
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+
+    let branchToUse = selectedBranch;
+
+    if (createNewBranch && newBranchName.trim() && selectedRepository) {
+      try {
+        await apiClient.post(`/repositories/${selectedRepository}/refs/branches`, {
+          name: newBranchName.trim(),
+          base_branch: baseBranch
+        });
+        branchToUse = newBranchName.trim();
+      } catch (error) {
+        console.error('Failed to create branch:', error);
+        return;
+      }
+    }
 
     onCreateTask({
       title: title.trim(),
@@ -101,7 +98,8 @@ export function CreateTaskDialog({
       priority,
       assignee: assignee.trim() || undefined,
       dueDate,
-      repositoryBranch: selectedBranch || undefined,
+      repository_id: selectedRepository || undefined,
+      repositoryBranch: branchToUse || undefined,
     });
 
     setTitle('');
@@ -110,10 +108,10 @@ export function CreateTaskDialog({
     setPriority('medium');
     setAssignee('');
     setDueDate(undefined);
-    setSelectedRepoId('');
+    setSelectedRepository('');
     setSelectedBranch('');
-    setIsCreatingNewBranch(false);
     setNewBranchName('');
+    setCreateNewBranch(false);
     onOpenChange(false);
   };
 
@@ -208,7 +206,6 @@ export function CreateTaskDialog({
                 <Button
                   variant="outline"
                   className="w-full justify-start text-left font-normal"
-                  type="button"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dueDate ? formatDate(dueDate) : "Pick a date"}
@@ -224,75 +221,75 @@ export function CreateTaskDialog({
               </PopoverContent>
             </Popover>
           </div>
+          
+          <div className="space-y-2">
+            <Label>Repository</Label>
+            <Select value={selectedRepository} onValueChange={setSelectedRepository}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select repository" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {repositories.map(repo => (
+                  <SelectItem key={repo.id} value={repo.id}>
+                    {repo.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          {repositories.length > 0 && (
+          {selectedRepository && (
             <>
               <div className="space-y-2">
-                <Label>Repository</Label>
-                <Select value={selectedRepoId} onValueChange={setSelectedRepoId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select repository" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {repositories.map(repo => (
-                      <SelectItem key={repo.id} value={repo.id}>
-                        {repo.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Branch</Label>
+                {loadingBranches ? (
+                  <div className="text-sm text-muted-foreground">Loading branches...</div>
+                ) : (
+                  <Select 
+                    value={createNewBranch ? 'new' : selectedBranch} 
+                    onValueChange={(val) => {
+                      if (val === 'new') {
+                        setCreateNewBranch(true);
+                        setSelectedBranch('');
+                      } else {
+                        setCreateNewBranch(false);
+                        setSelectedBranch(val);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select branch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches.map(branch => (
+                        <SelectItem key={branch} value={branch}>
+                          {branch}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="new">+ Create new branch</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
-              {selectedRepoId && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Branch</Label>
-                    {!isCreatingNewBranch && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsCreatingNewBranch(true)}
-                      >
-                        <Plus className="w-4 h-4 mr-1" />
-                        New Branch
-                      </Button>
-                    )}
+              {createNewBranch && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="newBranchName">New Branch Name</Label>
+                    <Input
+                      id="newBranchName"
+                      value={newBranchName}
+                      onChange={(e) => setNewBranchName(e.target.value)}
+                      placeholder="e.g., feature/task-implementation"
+                    />
                   </div>
-                  
-                  {isCreatingNewBranch ? (
-                    <div className="flex gap-2">
-                      <Input
-                        value={newBranchName}
-                        onChange={(e) => setNewBranchName(e.target.value)}
-                        placeholder="feature/task-name"
-                      />
-                      <Button
-                        type="button"
-                        onClick={handleCreateNewBranch}
-                        disabled={!newBranchName.trim()}
-                      >
-                        Create
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setIsCreatingNewBranch(false);
-                          setNewBranchName('');
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
-                    <Select 
-                      value={selectedBranch} 
-                      onValueChange={setSelectedBranch}
-                      disabled={loadingBranches || branches.length === 0}
-                    >
+
+                  <div className="space-y-2">
+                    <Label>Base Branch</Label>
+                    <Select value={baseBranch} onValueChange={setBaseBranch}>
                       <SelectTrigger>
-                        <SelectValue placeholder={loadingBranches ? "Loading..." : "Select branch"} />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {branches.map(branch => (
@@ -302,8 +299,8 @@ export function CreateTaskDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                  )}
-                </div>
+                  </div>
+                </>
               )}
             </>
           )}

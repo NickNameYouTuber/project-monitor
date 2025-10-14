@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import tech.nicorp.pm.repositories.api.dto.RepositoryMemberCreateRequest;
 import tech.nicorp.pm.repositories.api.dto.RepositoryMemberResponse;
+import tech.nicorp.pm.repositories.api.dto.UserBasicInfo;
 import tech.nicorp.pm.repositories.domain.Repository;
 import tech.nicorp.pm.repositories.domain.RepositoryMember;
 import tech.nicorp.pm.repositories.repo.RepositoryMemberRepository;
@@ -71,7 +72,12 @@ public class RepositoryMembersController {
         if (m.getRepository() != null) r.setRepositoryId(m.getRepository().getId());
         if (m.getUser() != null) {
             r.setUserId(m.getUser().getId());
-            r.setUsername(m.getUser().getUsername());
+            
+            UserBasicInfo userInfo = new UserBasicInfo();
+            userInfo.setId(m.getUser().getId());
+            userInfo.setUsername(m.getUser().getUsername());
+            userInfo.setEmail(m.getUser().getEmail());
+            r.setUser(userInfo);
         }
         r.setRole(m.getRole());
         r.setCreatedAt(m.getCreatedAt());

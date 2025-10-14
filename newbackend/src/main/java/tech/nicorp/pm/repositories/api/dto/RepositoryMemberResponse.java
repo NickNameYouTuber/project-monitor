@@ -13,10 +13,10 @@ public class RepositoryMemberResponse {
     private UUID id;
     private UUID repositoryId;
     private UUID userId;
-    private String username;
     @Schema(example = "developer")
     private String role;
     private OffsetDateTime createdAt;
+    private UserBasicInfo user;
 }
 
 

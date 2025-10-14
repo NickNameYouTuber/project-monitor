@@ -220,9 +220,9 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                     const actualStatus = getActualStatus(meeting);
                     const isJoinable = meeting.roomId && actualStatus !== 'completed' && actualStatus !== 'cancelled';
                     
-                    return (
+  return (
                       <Card key={meeting.id} className={`border-l-4 ${getStatusColor(actualStatus, meeting.id)} transition-all hover:shadow-md`}>
-                        <CardHeader className="pb-3">
+          <CardHeader className="pb-3">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
                               <CardTitle className="text-base flex items-center gap-2 mb-2">
@@ -231,8 +231,8 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                                 ) : (
                                   <Mic className="w-4 h-4 text-green-500" />
                                 )}
-                                {meeting.title}
-                              </CardTitle>
+              {meeting.title}
+            </CardTitle>
                               
                               {/* Дата и время */}
                               <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
@@ -306,13 +306,13 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                               </DropdownMenu>
                             </div>
                           </div>
-                        </CardHeader>
-                      </Card>
+          </CardHeader>
+        </Card>
                     );
                   })}
                 </div>
               </div>
-            ))}
+      ))}
           </div>
         )}
       </div>

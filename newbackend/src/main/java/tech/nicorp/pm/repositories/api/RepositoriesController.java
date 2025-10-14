@@ -15,6 +15,7 @@ import tech.nicorp.pm.repositories.api.dto.RepositoryResponse;
 import tech.nicorp.pm.users.domain.User;
 import tech.nicorp.pm.users.repo.UserRepository;
 import tech.nicorp.pm.tasks.api.dto.TaskResponse;
+import tech.nicorp.pm.tasks.domain.Task;
 import tech.nicorp.pm.tasks.repo.TaskRepository;
 
 import java.io.IOException;
@@ -55,6 +56,14 @@ public class RepositoriesController {
     @GetMapping("/{repoId}/refs/default")
     public ResponseEntity<Object> defaultBranch(@PathVariable("repoId") UUID repoId) throws IOException {
         return ResponseEntity.ok(Map.of("default", git.defaultBranch(repoId)));
+    }
+
+    @GetMapping("/{repoId}/tasks")
+    public ResponseEntity<List<TaskResponse>> getRepositoryTasks(@PathVariable("repoId") UUID repoId) {
+        List<Task> repoTasks = tasks.findAll().stream()
+                .filter(t -> repoId.equals(t.getRepositoryId()))
+                .toList();
+        return ResponseEntity.ok(repoTasks.stream().map(this::toTaskResponse).toList());
     }
 
     @GetMapping
@@ -177,19 +186,20 @@ public class RepositoriesController {
         return null;
     }
 
-    @GetMapping("/{repoId}/tasks")
-    public ResponseEntity<List<TaskResponse>> getRepositoryTasks(@PathVariable("repoId") UUID repoId) {
-        if (!repositories.existsById(repoId)) return ResponseEntity.notFound().build();
-        
-        List<TaskResponse> linkedTasks = tasks.findAll().stream()
-                .filter(t -> repoId.equals(t.getRepositoryId()))
-                .map(this::taskToResponse)
-                .toList();
-        
-        return ResponseEntity.ok(linkedTasks);
+    private RepositoryResponse toResponse(Repository r) {
+        RepositoryResponse resp = new RepositoryResponse();
+        resp.setId(r.getId());
+        resp.setName(r.getName());
+        resp.setDefaultBranch(r.getDefaultBranch());
+        resp.setCloneUrl(r.getCloneUrl());
+        resp.setVisibility(r.getVisibility());
+        resp.setDescription(r.getDescription());
+        if (r.getProject() != null) resp.setProjectId(r.getProject().getId());
+        resp.setCreatedAt(r.getCreatedAt());
+        return resp;
     }
 
-    private TaskResponse taskToResponse(tech.nicorp.pm.tasks.domain.Task t) {
+    private TaskResponse toTaskResponse(Task t) {
         TaskResponse r = new TaskResponse();
         r.setId(t.getId());
         r.setTitle(t.getTitle());
@@ -205,19 +215,6 @@ public class RepositoriesController {
         r.setRepositoryId(t.getRepositoryId());
         r.setRepositoryBranch(t.getRepositoryBranch());
         return r;
-    }
-
-    private RepositoryResponse toResponse(Repository r) {
-        RepositoryResponse resp = new RepositoryResponse();
-        resp.setId(r.getId());
-        resp.setName(r.getName());
-        resp.setDefaultBranch(r.getDefaultBranch());
-        resp.setCloneUrl(r.getCloneUrl());
-        resp.setVisibility(r.getVisibility());
-        resp.setDescription(r.getDescription());
-        if (r.getProject() != null) resp.setProjectId(r.getProject().getId());
-        resp.setCreatedAt(r.getCreatedAt());
-        return resp;
     }
 }
 

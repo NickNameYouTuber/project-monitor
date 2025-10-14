@@ -47,6 +47,7 @@ export interface Task {
   priority: 'low' | 'medium' | 'high';
   createdAt: Date;
   dueDate?: Date;
+  repository_id?: string;
   repositoryBranch?: string;
 }
 
