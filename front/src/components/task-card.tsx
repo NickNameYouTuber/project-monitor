@@ -4,15 +4,17 @@ import { Calendar, User, GitBranch, AlertCircle, MoreVertical } from 'lucide-rea
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { cn } from './ui/utils';
 import type { Task } from '../App';
 
 interface TaskCardProps {
   task: Task;
   onClick: () => void;
   onEdit?: (e: React.MouseEvent) => void;
+  highlighted?: boolean;
 }
 
-export function TaskCard({ task, onClick, onEdit }: TaskCardProps) {
+export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) {
   const [{ isDragging }, drag] = useDrag({
     type: 'task',
     item: { id: task.id },
@@ -32,10 +34,13 @@ export function TaskCard({ task, onClick, onEdit }: TaskCardProps) {
 
   return (
     <div
+      id={`task-${task.id}`}
       ref={drag}
-      className={`bg-card border border-border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow ${
-        isDragging ? 'opacity-50' : ''
-      }`}
+      className={cn(
+        "bg-card border border-border rounded-lg p-3 cursor-pointer hover:shadow-md transition-all",
+        isDragging && "opacity-50",
+        highlighted && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse"
+      )}
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-2">

@@ -53,6 +53,7 @@ interface RepositoryPageProps {
   tasks: Task[];
   initialRepoId?: string;
   defaultTab?: string;
+  selectedProject?: Project | null;
 }
 
 interface FileNode {
@@ -377,10 +378,10 @@ function RepositorySettings() {
   );
 }
 
-export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'files' }: RepositoryPageProps) {
+export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'files', selectedProject: propSelectedProject }: RepositoryPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(propSelectedProject || null);
   const [repositories, setRepositories] = useState<RepositoryDto[]>([]);
   const [selectedRepoId, setSelectedRepoId] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState('');
@@ -674,6 +675,11 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
       }
     })();
   }, [selectedRepoId, activeTab]);
+
+  const handleTaskClick = (task: Task) => {
+    if (!selectedProject?.id) return;
+    navigate(`/projects/${selectedProject.id}/tasks?highlightTask=${task.id}`);
+  };
 
   if (isLoading) {
     return <LoadingSpinner 
@@ -1073,7 +1079,11 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
             
             <div className="space-y-3">
               {linkedTasks.map((task) => (
-                <Card key={task.id}>
+                <Card 
+                  key={task.id}
+                  className="cursor-pointer hover:bg-accent transition-colors"
+                  onClick={() => handleTaskClick(task)}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <Badge variant="outline">{task.priority}</Badge>

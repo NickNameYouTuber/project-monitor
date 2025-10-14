@@ -58,6 +58,7 @@ interface ColumnProps {
   onDeleteColumn: (columnId: string) => void;
   onMoveColumn: (dragIndex: number, hoverIndex: number) => void;
   index: number;
+  highlightedTaskId?: string | null;
 }
 
 function Column({ 
@@ -69,7 +70,8 @@ function Column({
   onEditColumn, 
   onDeleteColumn,
   onMoveColumn,
-  index
+  index,
+  highlightedTaskId
 }: ColumnProps) {
   const [{ isDragging }, dragRef] = useDrag({
     type: 'column',
@@ -145,9 +147,9 @@ function Column({
             onClick={() => onTaskClick(task)}
             onEdit={(e) => {
               e.stopPropagation();
-              // Handle edit action - for now just call onTaskEdit
               onTaskEdit(task);
             }}
+            highlighted={task.id === highlightedTaskId}
           />
         ))}
       </div>
@@ -180,6 +182,7 @@ export function ProjectTasksPage({
     hasBranch: false
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
 
   if (!project) {
     return (
@@ -256,6 +259,25 @@ export function ProjectTasksPage({
       isCancelled = true; 
     };
   }, [project.id]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const taskId = params.get('highlightTask');
+    if (taskId) {
+      setHighlightedTaskId(taskId);
+      
+      setTimeout(() => {
+        const element = document.getElementById(`task-${taskId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        setTimeout(() => {
+          setHighlightedTaskId(null);
+        }, 3000);
+      }, 300);
+    }
+  }, []);
 
   if (isLoading) {
     return <LoadingSpinner 
@@ -640,6 +662,7 @@ export function ProjectTasksPage({
               onDeleteColumn={handleDeleteColumn}
               onMoveColumn={handleMoveColumn}
               index={index}
+              highlightedTaskId={highlightedTaskId}
             />
           ))}
         </div>

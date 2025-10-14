@@ -360,7 +360,7 @@ export default function App() {
                     />
                   }
                 />
-                <Route path="/repository" element={<RepositoryPage projects={projects} tasks={tasks} />} />
+                <Route path="/repository" element={<RepositoryPage projects={projects} tasks={tasks} selectedProject={selectedProject} />} />
                 <Route
                   path="/projects/:projectId/repository/:repoId/file/*"
                   element={<FileEditorPage />}
