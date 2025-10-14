@@ -609,15 +609,34 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   
   const selectedRepo = repositories.find(r => r.id === selectedRepoId);
   
+  // Вычислить активный таб из URL
+  const activeTab = useMemo(() => {
+    const path = location.pathname;
+    if (path.includes('/files')) return 'files';
+    if (path.includes('/commits')) return 'commits';
+    if (path.includes('/branches')) return 'branches';
+    if (path.includes('/members')) return 'members';
+    if (path.includes('/merge-requests')) return 'merge-requests';
+    if (path.includes('/tasks')) return 'tasks';
+    if (path.includes('/settings')) return 'settings';
+    return defaultTab;
+  }, [location.pathname, defaultTab]);
+
+  const handleTabChange = (value: string) => {
+    navigate(`/projects/${selectedProject?.id}/repository/${selectedRepoId}/${value}`);
+  };
+
   useEffect(() => {
-    if (!selectedRepoId) {
-      setLinkedTasks([]);
+    if (!selectedRepoId || activeTab !== 'tasks') {
       return;
     }
+    
+    console.log('Loading linked tasks for repository:', selectedRepoId);
     
     (async () => {
       try {
         const { data } = await apiClient.get(`/repositories/${selectedRepoId}/tasks`);
+        console.log('Loaded linked tasks:', data);
         const mappedTasks: Task[] = data.map((dto: any) => ({
           id: dto.id,
           projectId: dto.project_id ?? dto.projectId,
@@ -641,24 +660,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
         setLinkedTasks([]);
       }
     })();
-  }, [selectedRepoId]);
-
-  // Вычислить активный таб из URL
-  const activeTab = useMemo(() => {
-    const path = location.pathname;
-    if (path.includes('/files')) return 'files';
-    if (path.includes('/commits')) return 'commits';
-    if (path.includes('/branches')) return 'branches';
-    if (path.includes('/members')) return 'members';
-    if (path.includes('/merge-requests')) return 'merge-requests';
-    if (path.includes('/tasks')) return 'tasks';
-    if (path.includes('/settings')) return 'settings';
-    return defaultTab;
-  }, [location.pathname, defaultTab]);
-
-  const handleTabChange = (value: string) => {
-    navigate(`/projects/${selectedProject?.id}/repository/${selectedRepoId}/${value}`);
-  };
+  }, [selectedRepoId, activeTab]);
 
   if (isLoading) {
     return <LoadingSpinner 
