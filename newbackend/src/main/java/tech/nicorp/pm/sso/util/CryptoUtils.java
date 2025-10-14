@@ -16,14 +16,20 @@ public class CryptoUtils {
     private static final int GCM_IV_LENGTH = 12;
     private static final int GCM_TAG_LENGTH = 128;
     
-    private static final String ENCRYPTION_KEY = System.getenv("SSO_ENCRYPTION_KEY");
+    private static final String DEFAULT_KEY = "12345678901234567890123456789012";
+    
+    private static String getEncryptionKey() {
+        String envKey = System.getenv("SSO_ENCRYPTION_KEY");
+        if (envKey != null && !envKey.isEmpty()) {
+            return envKey;
+        }
+        return Base64.getEncoder().encodeToString(DEFAULT_KEY.getBytes(StandardCharsets.UTF_8));
+    }
     
     public static String encrypt(String plainText) throws Exception {
-        if (ENCRYPTION_KEY == null || ENCRYPTION_KEY.isEmpty()) {
-            throw new IllegalStateException("SSO_ENCRYPTION_KEY environment variable not set");
-        }
+        String keyString = getEncryptionKey();
         
-        byte[] keyBytes = Base64.getDecoder().decode(ENCRYPTION_KEY);
+        byte[] keyBytes = Base64.getDecoder().decode(keyString);
         SecretKey key = new SecretKeySpec(keyBytes, "AES");
         
         byte[] iv = new byte[GCM_IV_LENGTH];
@@ -44,11 +50,9 @@ public class CryptoUtils {
     }
     
     public static String decrypt(String encryptedText) throws Exception {
-        if (ENCRYPTION_KEY == null || ENCRYPTION_KEY.isEmpty()) {
-            throw new IllegalStateException("SSO_ENCRYPTION_KEY environment variable not set");
-        }
+        String keyString = getEncryptionKey();
         
-        byte[] keyBytes = Base64.getDecoder().decode(ENCRYPTION_KEY);
+        byte[] keyBytes = Base64.getDecoder().decode(keyString);
         SecretKey key = new SecretKeySpec(keyBytes, "AES");
         
         byte[] decodedBytes = Base64.getDecoder().decode(encryptedText);

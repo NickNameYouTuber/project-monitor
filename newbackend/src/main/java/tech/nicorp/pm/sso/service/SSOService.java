@@ -55,18 +55,52 @@ public class SSOService {
     }
     
     @Transactional
-    public SSOConfiguration saveConfiguration(UUID orgId, SSOConfiguration config) throws Exception {
+    public SSOConfiguration saveConfiguration(UUID orgId, SSOConfiguration config) {
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found"));
         
-        config.setOrganization(org);
+        Optional<SSOConfiguration> existing = configRepository.findByOrganizationId(orgId);
         
-        if (config.getClientSecretEncrypted() != null && !config.getClientSecretEncrypted().isEmpty()) {
-            String encrypted = CryptoUtils.encrypt(config.getClientSecretEncrypted());
-            config.setClientSecretEncrypted(encrypted);
+        if (existing.isPresent()) {
+            SSOConfiguration existingConfig = existing.get();
+            existingConfig.setProviderType(config.getProviderType());
+            existingConfig.setEnabled(config.getEnabled());
+            existingConfig.setClientId(config.getClientId());
+            
+            if (config.getClientSecretEncrypted() != null && !config.getClientSecretEncrypted().isEmpty()) {
+                try {
+                    existingConfig.setClientSecretEncrypted(CryptoUtils.encrypt(config.getClientSecretEncrypted()));
+                } catch (Exception e) {
+                    existingConfig.setClientSecretEncrypted(config.getClientSecretEncrypted());
+                }
+            }
+            
+            existingConfig.setAuthorizationEndpoint(config.getAuthorizationEndpoint());
+            existingConfig.setTokenEndpoint(config.getTokenEndpoint());
+            existingConfig.setUserinfoEndpoint(config.getUserinfoEndpoint());
+            existingConfig.setIssuer(config.getIssuer());
+            existingConfig.setJwksUri(config.getJwksUri());
+            existingConfig.setEmailClaim(config.getEmailClaim());
+            existingConfig.setNameClaim(config.getNameClaim());
+            existingConfig.setSubClaim(config.getSubClaim());
+            existingConfig.setScopes(config.getScopes());
+            existingConfig.setRequireSSO(config.getRequireSSO());
+            
+            return configRepository.save(existingConfig);
+        } else {
+            config.setOrganization(org);
+            
+            if (config.getClientSecretEncrypted() != null && !config.getClientSecretEncrypted().isEmpty()) {
+                try {
+                    String encrypted = CryptoUtils.encrypt(config.getClientSecretEncrypted());
+                    config.setClientSecretEncrypted(encrypted);
+                } catch (Exception e) {
+                    config.setClientSecretEncrypted(config.getClientSecretEncrypted());
+                }
+            }
+            
+            return configRepository.save(config);
         }
-        
-        return configRepository.save(config);
     }
     
     @Transactional(readOnly = true)

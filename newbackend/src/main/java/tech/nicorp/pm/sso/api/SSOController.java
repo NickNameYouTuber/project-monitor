@@ -73,7 +73,7 @@ public class SSOController {
             SSOConfiguration config = fromRequest(request);
             SSOConfiguration saved = ssoService.saveConfiguration(orgId, config);
             return ResponseEntity.ok(toResponse(saved));
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
     }
@@ -138,8 +138,10 @@ public class SSOController {
     
     private SSOConfiguration fromRequest(SSOConfigurationRequest request) {
         SSOConfiguration config = new SSOConfiguration();
-        config.setProviderType(SSOProviderType.valueOf(request.getProviderType()));
-        config.setEnabled(request.getEnabled());
+        config.setProviderType(request.getProviderType() != null 
+                ? SSOProviderType.valueOf(request.getProviderType()) 
+                : SSOProviderType.OIDC);
+        config.setEnabled(request.getEnabled() != null ? request.getEnabled() : false);
         config.setClientId(request.getClientId());
         config.setClientSecretEncrypted(request.getClientSecret());
         config.setAuthorizationEndpoint(request.getAuthorizationEndpoint());
@@ -147,11 +149,11 @@ public class SSOController {
         config.setUserinfoEndpoint(request.getUserinfoEndpoint());
         config.setIssuer(request.getIssuer());
         config.setJwksUri(request.getJwksUri());
-        config.setEmailClaim(request.getEmailClaim());
-        config.setNameClaim(request.getNameClaim());
-        config.setSubClaim(request.getSubClaim());
-        config.setScopes(request.getScopes());
-        config.setRequireSSO(request.getRequireSSO());
+        config.setEmailClaim(request.getEmailClaim() != null ? request.getEmailClaim() : "email");
+        config.setNameClaim(request.getNameClaim() != null ? request.getNameClaim() : "name");
+        config.setSubClaim(request.getSubClaim() != null ? request.getSubClaim() : "sub");
+        config.setScopes(request.getScopes() != null ? request.getScopes() : "openid,profile,email");
+        config.setRequireSSO(request.getRequireSSO() != null ? request.getRequireSSO() : false);
         return config;
     }
 }
