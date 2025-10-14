@@ -17,7 +17,7 @@ interface TaskCardProps {
 export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) {
   const [{ isDragging }, drag] = useDrag({
     type: 'task',
-    item: { id: task.id },
+    item: { id: task.id, type: 'task' },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
