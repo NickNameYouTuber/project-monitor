@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.projects.domain.Project;
 import tech.nicorp.pm.projects.repo.ProjectRepository;
@@ -43,6 +44,7 @@ public class ProjectsController {
     }
 
     @GetMapping
+    @Transactional
     @Operation(summary = "Список проектов")
     public ResponseEntity<List<ProjectResponse>> list(Authentication auth) {
         if (auth == null || auth.getName() == null) {
