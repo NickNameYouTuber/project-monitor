@@ -46,5 +46,8 @@ public class OrganizationResponse {
     
     @JsonProperty("project_count")
     private Long projectCount;
+    
+    @JsonProperty("current_user_role")
+    private String currentUserRole;
 }
 

@@ -44,7 +44,9 @@ public class OrganizationsController {
         try {
             UUID userId = UUID.fromString(auth.getName());
             List<Organization> userOrgs = memberService.getUserOrganizations(userId);
-            return ResponseEntity.ok(userOrgs.stream().map(this::toResponse).toList());
+            return ResponseEntity.ok(userOrgs.stream()
+                    .map(org -> toResponse(org, userId))
+                    .toList());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.ok(List.of());
         }
@@ -65,7 +67,7 @@ public class OrganizationsController {
             }
             
             Organization org = organizationService.getOrganization(id);
-            return ResponseEntity.ok(toResponse(org));
+            return ResponseEntity.ok(toResponse(org, userId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
@@ -110,7 +112,7 @@ public class OrganizationsController {
             
             return ResponseEntity
                     .created(URI.create("/api/organizations/" + org.getId()))
-                    .body(toResponse(org));
+                    .body(toResponse(org, userId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
@@ -153,7 +155,7 @@ public class OrganizationsController {
         }
     }
 
-    private OrganizationResponse toResponse(Organization org) {
+    private OrganizationResponse toResponse(Organization org, UUID currentUserId) {
         OrganizationResponse response = new OrganizationResponse();
         response.setId(org.getId());
         response.setName(org.getName());
@@ -168,6 +170,10 @@ public class OrganizationsController {
         response.setOwnerId(org.getOwner().getId());
         response.setCreatedAt(org.getCreatedAt());
         response.setUpdatedAt(org.getUpdatedAt());
+        
+        memberService.getUserRole(org.getId(), currentUserId)
+                .ifPresent(role -> response.setCurrentUserRole(role.name()));
+        
         return response;
     }
 }

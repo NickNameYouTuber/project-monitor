@@ -115,7 +115,9 @@ export function OrganizationsPage() {
                       <p className="text-xs text-muted-foreground">/{org.slug}</p>
                     </div>
                   </div>
-                  <RoleBadge role="OWNER" type="project" variant="secondary" />
+                  {org.current_user_role && (
+                    <RoleBadge role={org.current_user_role} type="project" variant="secondary" />
+                  )}
                 </div>
                 <CardDescription className="mt-2">
                   {org.description || 'No description'}
@@ -139,16 +141,18 @@ export function OrganizationsPage() {
                   >
                     Open
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/organizations/${org.id}/settings`);
-                    }}
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
+                  {(org.current_user_role === 'OWNER' || org.current_user_role === 'ADMIN') && (
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/organizations/${org.id}/settings`);
+                      }}
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

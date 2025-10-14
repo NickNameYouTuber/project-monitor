@@ -16,6 +16,7 @@ export interface Organization {
   updated_at: string;
   member_count?: number;
   project_count?: number;
+  current_user_role?: OrganizationRole;
 }
 
 export interface OrganizationMember {
