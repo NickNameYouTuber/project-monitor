@@ -361,16 +361,26 @@ export default function App() {
             <AuthPage onLogin={() => setIsAuthenticated(true)} />
           ) : (
             <div className="flex h-screen">
-              {!isStandaloneCall && 
-               location.pathname !== '/organizations' && 
-               location.pathname !== '/organizations/create' && 
-               !location.pathname.startsWith('/invite/') && (
-                <Sidebar 
-                  currentPage={currentPage} 
-                  onNavigate={handleNavigate} 
-                  selectedProject={selectedProject}
-                  currentOrgId={currentOrgId}
-                />
+              {!isStandaloneCall && (
+                location.pathname === '/organizations' || 
+                location.pathname === '/organizations/create' || 
+                location.pathname.startsWith('/invite/') ||
+                location.pathname.startsWith('/organizations/') ? (
+                  <Sidebar 
+                    currentPage={currentPage} 
+                    onNavigate={handleNavigate} 
+                    selectedProject={null}
+                    currentOrgId={null}
+                    simplified={true}
+                  />
+                ) : (
+                  <Sidebar 
+                    currentPage={currentPage} 
+                    onNavigate={handleNavigate} 
+                    selectedProject={selectedProject}
+                    currentOrgId={currentOrgId}
+                  />
+                )
               )}
               <main className={`flex-1 overflow-hidden ${currentPage === 'projects' || isStandaloneCall ? 'w-full' : ''}`}>
               <Routes>
