@@ -218,42 +218,62 @@ public class SSOService {
     @Transactional
     private User linkOrCreateUser(SSOConfiguration config, Map<String, Object> userInfo) {
         String ssoProviderId = (String) userInfo.get(config.getSubClaim());
-        String email = (String) userInfo.get(config.getEmailClaim());
+        String ssoEmail = (String) userInfo.get(config.getEmailClaim());
         String name = (String) userInfo.get(config.getNameClaim());
+        UUID orgId = config.getOrganization().getId();
         
+        System.out.println("[SSOService] Processing SSO login: providerId=" + ssoProviderId + ", email=" + ssoEmail);
+        
+        // 1. Проверить существующую связь SSO -> User
         Optional<SSOUserLink> existingLink = userLinkRepository
-                .findByOrganizationIdAndSsoProviderId(config.getOrganization().getId(), ssoProviderId);
+                .findByOrganizationIdAndSsoProviderId(orgId, ssoProviderId);
         
         if (existingLink.isPresent()) {
+            System.out.println("[SSOService] Found existing SSO link for provider " + ssoProviderId);
             SSOUserLink link = existingLink.get();
             link.setLastLoginAt(OffsetDateTime.now());
+            link.setSsoEmail(ssoEmail);
             userLinkRepository.save(link);
-            return link.getUser();
+            
+            User user = link.getUser();
+            System.out.println("[SSOService] Using existing user: " + user.getId() + " (" + user.getUsername() + ")");
+            
+            // Убедиться что пользователь в organization_members
+            ensureOrganizationMember(user, orgId, config);
+            
+            return user;
         }
         
-        Optional<User> existingUser = userRepository.findByUsername(email);
-        User user;
+        System.out.println("[SSOService] No existing link found, creating new user and link");
         
-        if (existingUser.isPresent()) {
-            user = existingUser.get();
-        } else {
-            user = new User();
-            user.setUsername(email);
-            user.setDisplayName(name != null ? name : email);
-            user = userRepository.save(user);
-        }
+        // 2. Создать нового пользователя для этой SSO связи
+        // Используем SSO email как основной username
+        User user = new User();
+        user.setUsername(ssoEmail);
+        user.setDisplayName(name != null ? name : ssoEmail);
+        user = userRepository.save(user);
         
+        System.out.println("[SSOService] Created new user: " + user.getId() + " (" + user.getUsername() + ")");
+        
+        // 3. Создать связь SSO -> User
         SSOUserLink newLink = new SSOUserLink();
         newLink.setUser(user);
         newLink.setOrganization(config.getOrganization());
         newLink.setSsoProviderId(ssoProviderId);
-        newLink.setSsoEmail(email);
+        newLink.setSsoEmail(ssoEmail);
         newLink.setLastLoginAt(OffsetDateTime.now());
         userLinkRepository.save(newLink);
         
-        // Добавить пользователя в члены организации с ролью по умолчанию
-        UUID orgId = config.getOrganization().getId();
-        System.out.println("[SSOService] Checking if user " + user.getId() + " has access to org " + orgId);
+        System.out.println("[SSOService] Created SSO link for user " + user.getId());
+        
+        // 4. Добавить в organization_members
+        ensureOrganizationMember(user, orgId, config);
+        
+        return user;
+    }
+    
+    private void ensureOrganizationMember(User user, UUID orgId, SSOConfiguration config) {
+        System.out.println("[SSOService] Ensuring user " + user.getId() + " is member of org " + orgId);
         
         try {
             if (!memberService.hasAccess(orgId, user.getId())) {
@@ -267,12 +287,9 @@ public class SSOService {
                 System.out.println("[SSOService] User already has access to organization");
             }
         } catch (Exception e) {
-            System.err.println("[SSOService] ERROR adding user to organization: " + e.getMessage());
+            System.err.println("[SSOService] ERROR ensuring organization membership: " + e.getMessage());
             e.printStackTrace();
-            // Не бросаем исключение дальше - пользователь все равно создан
         }
-        
-        return user;
     }
     
     @Transactional(readOnly = true)
