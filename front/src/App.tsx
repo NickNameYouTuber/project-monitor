@@ -26,7 +26,7 @@ import CallPage from './features/call/pages/CallPage';
 import { Toaster } from './components/ui/sonner';
 import { NotificationProvider } from './contexts/NotificationContext';
 
-export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'account' | 'project-settings' | 'merge-request';
+export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'account' | 'project-settings' | 'merge-request' | 'organizations';
 
 export interface Column {
   id: string;
@@ -365,17 +365,19 @@ export default function App() {
                 <Route
                   path="/projects/:projectId/:section"
                   element={
-                    <ProjectRouteWrapperComponent
-                      projects={projects}
-                      tasks={tasks}
-                      setTasks={memoizedSetTasks}
-                      taskColumns={taskColumns}
-                      setTaskColumns={memoizedSetTaskColumns}
-                      assigneeSuggestions={assigneeSuggestions}
-                      branchSuggestions={branchSuggestions}
-                      handleNavigate={handleNavigate}
-                      onProjectResolved={setSelectedProject}
-                    />
+                    <OrganizationGuard>
+                      <ProjectRouteWrapperComponent
+                        projects={projects}
+                        tasks={tasks}
+                        setTasks={memoizedSetTasks}
+                        taskColumns={taskColumns}
+                        setTaskColumns={memoizedSetTaskColumns}
+                        assigneeSuggestions={assigneeSuggestions}
+                        branchSuggestions={branchSuggestions}
+                        handleNavigate={handleNavigate}
+                        onProjectResolved={setSelectedProject}
+                      />
+                    </OrganizationGuard>
                   }
                 />
                 <Route path="/repository" element={<RepositoryPage projects={projects} tasks={tasks} selectedProject={selectedProject} />} />

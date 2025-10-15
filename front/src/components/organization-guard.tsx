@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { getOrganization, verifyOrganizationPassword } from '../api/organizations';
 import { initiateSSOLogin } from '../api/sso';
@@ -32,7 +31,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
     const orgVerified = sessionStorage.getItem(`org_verified_${currentOrgId}`);
     
     if (!currentOrgId) {
-      setLoading(false);
+      window.location.href = '/organizations';
       return;
     }
 
@@ -60,7 +59,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
         setLoading(false);
       }
     } catch (error) {
-      setLoading(false);
+      window.location.href = '/organizations';
     }
   };
 
@@ -99,21 +98,15 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
     return <LoadingSpinner stages={['Checking organization access']} />;
   }
 
-  const currentOrgId = localStorage.getItem('currentOrgId');
-  
-  if (!currentOrgId) {
-    return <Navigate to="/organizations" replace />;
-  }
-
   if (!verified) {
     return (
       <>
-        <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <Dialog open={showPasswordDialog} onOpenChange={() => {}}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Organization Password Required</DialogTitle>
               <DialogDescription>
-                This organization requires a password to access. Please enter the password to continue.
+                Enter the password to access {organization?.name}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -139,7 +132,8 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
             </div>
           </DialogContent>
         </Dialog>
-        <div className="h-screen flex items-center justify-center">
+        
+        <div className="h-screen flex items-center justify-center bg-background">
           <div className="text-center">
             <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
@@ -152,4 +146,3 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
 
   return <>{children}</>;
 }
-
