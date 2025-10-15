@@ -70,18 +70,26 @@ public class OrganizationsController {
     @Operation(summary = "Получить организацию по ID")
     public ResponseEntity<OrganizationResponse> get(@PathVariable UUID id, Authentication auth) {
         if (auth == null || auth.getName() == null) {
+            System.out.println("[OrganizationsController] Auth is null or no name");
             return ResponseEntity.status(401).build();
         }
         
         try {
             UUID userId = UUID.fromString(auth.getName());
-            if (!memberService.hasAccess(id, userId)) {
+            System.out.println("[OrganizationsController] Checking access for user: " + userId + " to org: " + id);
+            
+            boolean hasAccess = memberService.hasAccess(id, userId);
+            System.out.println("[OrganizationsController] hasAccess result: " + hasAccess);
+            
+            if (!hasAccess) {
+                System.out.println("[OrganizationsController] Access denied for user: " + userId);
                 return ResponseEntity.status(403).build();
             }
             
             Organization org = organizationService.getOrganization(id);
             return ResponseEntity.ok(toResponse(org, userId));
         } catch (IllegalArgumentException e) {
+            System.out.println("[OrganizationsController] Exception: " + e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }

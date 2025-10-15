@@ -253,11 +253,16 @@ public class SSOService {
         
         // Добавить пользователя в члены организации с ролью по умолчанию
         UUID orgId = config.getOrganization().getId();
+        System.out.println("[SSOService] Checking if user " + user.getId() + " has access to org " + orgId);
+        
         if (!memberService.hasAccess(orgId, user.getId())) {
             OrganizationRole defaultRole = config.getOrganization().getDefaultProjectRole() != null 
                 ? OrganizationRole.valueOf(config.getOrganization().getDefaultProjectRole())
                 : OrganizationRole.MEMBER;
+            System.out.println("[SSOService] Adding user to organization with role: " + defaultRole);
             memberService.addMember(orgId, user.getId(), defaultRole, null);
+        } else {
+            System.out.println("[SSOService] User already has access to organization");
         }
         
         return user;

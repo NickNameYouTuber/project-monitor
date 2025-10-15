@@ -4,7 +4,7 @@ import { LoadingSpinner } from './loading-spinner';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { handleSSOCallback } from '../api/sso';
-import { setAccessToken } from '../api/client';
+import { setAccessToken, getAccessToken } from '../api/client';
 
 export function SSOCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -70,6 +70,11 @@ export function SSOCallbackPage() {
       
       // Установить новый токен с org_verified
       setAccessToken(result.token);
+      
+      // Проверить что токен действительно установлен
+      const verifyToken = getAccessToken();
+      console.log('[SSO] Token verified in localStorage:', verifyToken === result.token);
+      
       localStorage.setItem('currentOrgId', result.organization_id);
       sessionStorage.setItem(`org_verified_${result.organization_id}`, 'true');
       
@@ -78,6 +83,7 @@ export function SSOCallbackPage() {
       // Небольшая задержка чтобы токен точно установился
       await new Promise(resolve => setTimeout(resolve, 100));
       
+      console.log('[SSO] Navigating to:', `/${result.organization_id}/projects`);
       navigate(`/${result.organization_id}/projects`, { replace: true });
     } catch (error) {
       console.error('[SSO] Callback error:', error);

@@ -37,18 +37,24 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
   const checkOrganization = async (currentOrgId: string) => {
     const orgVerified = sessionStorage.getItem(`org_verified_${currentOrgId}`);
     
+    console.log('[OrganizationGuard] Checking organization:', currentOrgId);
+    console.log('[OrganizationGuard] Verified flag:', orgVerified);
+    console.log('[OrganizationGuard] Current token:', getAccessToken()?.substring(0, 20) + '...');
+    
     if (!currentOrgId) {
       window.location.href = '/organizations';
       return;
     }
 
     if (orgVerified === 'true') {
+      console.log('[OrganizationGuard] Already verified, granting access');
       setVerified(true);
       setLoading(false);
       return;
     }
 
     try {
+      console.log('[OrganizationGuard] Fetching organization info...');
       const org = await getOrganization(currentOrgId);
       setOrganization(org);
       
