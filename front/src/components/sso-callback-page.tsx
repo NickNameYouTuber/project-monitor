@@ -17,6 +17,16 @@ export function SSOCallbackPage() {
     const orgId = searchParams.get('orgId');
     const code = searchParams.get('code');
     const state = searchParams.get('state');
+    const error = searchParams.get('error');
+
+    console.log('[SSO] Callback params:', { token: !!token, orgId, code: !!code, state: !!state, error });
+
+    // Проверка на ошибку от backend
+    if (error) {
+      setError(`SSO authentication failed: ${error}`);
+      setProcessing(false);
+      return;
+    }
 
     // Новый flow: токен напрямую из backend
     if (token && orgId && orgId !== 'undefined' && orgId !== 'null') {
@@ -25,37 +35,48 @@ export function SSOCallbackPage() {
       localStorage.setItem('currentOrgId', orgId);
       sessionStorage.setItem(`org_verified_${orgId}`, 'true');
       setProcessing(false);
-      navigate(`/${orgId}/projects`);
+      navigate(`/${orgId}/projects`, { replace: true });
       return;
     }
 
     // Старый flow: обработка через API (на случай если backend не обновлен)
     if (!code || !state) {
-      setError('Invalid callback parameters');
+      console.error('[SSO] Missing required parameters');
+      setError('Invalid callback parameters. Please try again.');
       setProcessing(false);
       return;
     }
 
+    console.log('[SSO] Using API callback flow');
     processCallback(code, state);
   }, [searchParams, navigate]);
 
   const processCallback = async (code: string, state: string) => {
     try {
+      console.log('[SSO] Calling handleSSOCallback API...');
       const result = await handleSSOCallback(code, state);
+      console.log('[SSO] API response:', result);
       
       if (!result.organization_id || result.organization_id === 'undefined') {
         throw new Error('Invalid organization_id from SSO callback');
       }
       
+      if (!result.token) {
+        throw new Error('No token received from SSO callback');
+      }
+      
       console.log('[SSO] Processing API callback with orgId:', result.organization_id);
+      
+      // Установить новый токен с org_verified
+      setAccessToken(result.token);
       localStorage.setItem('currentOrgId', result.organization_id);
       sessionStorage.setItem(`org_verified_${result.organization_id}`, 'true');
       
-      navigate(`/${result.organization_id}/projects`);
+      setProcessing(false);
+      navigate(`/${result.organization_id}/projects`, { replace: true });
     } catch (error) {
-      console.error('SSO callback error:', error);
-      setError('Failed to complete SSO authentication');
-    } finally {
+      console.error('[SSO] Callback error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to complete SSO authentication. Please try again.');
       setProcessing(false);
     }
   };

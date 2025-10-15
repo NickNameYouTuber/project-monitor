@@ -103,7 +103,7 @@ public class SSOController {
     
     @GetMapping("/callback")
     @Operation(summary = "Обработать SSO callback")
-    public ResponseEntity<Void> handleCallback(
+    public ResponseEntity<Map<String, Object>> handleCallback(
             @RequestParam String code,
             @RequestParam String state) {
         
@@ -121,20 +121,18 @@ public class SSOController {
                 Map.of("username", user.getUsername())
             );
             
-            String redirectUrl = String.format(
-                "https://nit.nicorp.tech/sso/callback?token=%s&orgId=%s",
-                token,
-                orgId
-            );
-            
-            return ResponseEntity.status(302)
-                    .header("Location", redirectUrl)
-                    .build();
+            // Вернуть JSON с токеном и orgId для frontend
+            return ResponseEntity.ok(Map.of(
+                "token", token,
+                "user_id", userId.toString(),
+                "organization_id", orgId.toString()
+            ));
                     
         } catch (Exception e) {
-            return ResponseEntity.status(302)
-                    .header("Location", "https://nit.nicorp.tech/organizations?error=sso_failed")
-                    .build();
+            return ResponseEntity.status(400).body(Map.of(
+                "error", "sso_failed",
+                "message", e.getMessage() != null ? e.getMessage() : "SSO authentication failed"
+            ));
         }
     }
     

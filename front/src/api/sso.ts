@@ -20,7 +20,7 @@ export async function initiateSSOLogin(orgId: string): Promise<SSOLoginResponse>
   return data;
 }
 
-export async function handleSSOCallback(code: string, state: string): Promise<{ user_id: string; organization_id: string }> {
+export async function handleSSOCallback(code: string, state: string): Promise<{ token: string; user_id: string; organization_id: string }> {
   const { data } = await apiClient.get(`/sso/callback`, {
     params: { code, state }
   });
