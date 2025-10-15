@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 import tech.nicorp.pm.organizations.domain.OrganizationRole;
 import tech.nicorp.pm.organizations.service.OrganizationMemberService;
 import tech.nicorp.pm.security.JwtService;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/sso")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @Tag(name = "SSO", description = "Single Sign-On интеграция")
 public class SSOController {
     
@@ -39,28 +41,41 @@ public class SSOController {
     }
     
     @GetMapping("/organizations/{orgId}/config")
+    @Transactional(readOnly = true)
     @Operation(summary = "Получить конфигурацию SSO организации")
     public ResponseEntity<SSOConfigurationResponse> getConfig(
             @PathVariable UUID orgId,
             Authentication auth) {
         
+        System.out.println("[SSOController] GET /organizations/" + orgId + "/config");
+        
         UUID userId = extractUserId(auth);
         if (userId == null) {
+            System.out.println("[SSOController] No userId extracted, returning 401");
             return ResponseEntity.status(401).build();
         }
         
+        System.out.println("[SSOController] UserId: " + userId);
+        
         OrganizationRole role = memberService.getUserRole(orgId, userId).orElse(null);
+        System.out.println("[SSOController] User role: " + role);
+        
         if (role != OrganizationRole.OWNER) {
+            System.out.println("[SSOController] User is not OWNER, returning 403");
             return ResponseEntity.status(403).build();
         }
         
-        return ssoService.getConfiguration(orgId)
+        var config = ssoService.getConfiguration(orgId);
+        System.out.println("[SSOController] Config found: " + config.isPresent());
+        
+        return config
                 .map(this::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
     
     @PostMapping("/organizations/{orgId}/config")
+    @Transactional
     @Operation(summary = "Сохранить конфигурацию SSO")
     public ResponseEntity<SSOConfigurationResponse> saveConfig(
             @PathVariable UUID orgId,
@@ -102,6 +117,7 @@ public class SSOController {
     }
     
     @GetMapping("/callback")
+    @Transactional
     @Operation(summary = "Обработать SSO callback")
     public ResponseEntity<Map<String, Object>> handleCallback(
             @RequestParam String code,
