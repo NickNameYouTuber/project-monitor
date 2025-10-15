@@ -48,9 +48,25 @@ public class AuthController {
         String username = body.getUsername();
         String password = body.getPassword();
         User u = users.findByUsername(username).orElse(null);
-        if (u == null || !BCrypt.checkpw(password, u.getPasswordHash())) {
+        
+        // Проверка существования пользователя
+        if (u == null) {
             return ResponseEntity.status(401).body(Map.of("error", "invalid_credentials"));
         }
+        
+        // Проверка что у пользователя есть пароль (не SSO-only аккаунт)
+        if (u.getPasswordHash() == null || u.getPasswordHash().isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of(
+                "error", "sso_only_account", 
+                "message", "This account can only be accessed via SSO"
+            ));
+        }
+        
+        // Проверка пароля
+        if (!BCrypt.checkpw(password, u.getPasswordHash())) {
+            return ResponseEntity.status(401).body(Map.of("error", "invalid_credentials"));
+        }
+        
         String token = jwt.createToken(u.getId().toString(), Map.of("username", u.getUsername()));
         return ResponseEntity.ok(Map.of("token", token));
     }

@@ -24,6 +24,7 @@ interface AuthPageProps {
 export function AuthPage({ onLogin }: AuthPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -34,6 +35,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     try {
       const mode = (e.target as HTMLFormElement).id;
       if (mode === 'login-form') {
@@ -44,8 +46,14 @@ export function AuthPage({ onLogin }: AuthPageProps) {
         await registerUser(formData.email, formData.password, formData.name);
       }
       onLogin();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      // Проверить тип ошибки
+      if (err?.response?.data?.error === 'sso_only_account') {
+        setError('This account can only be accessed via SSO. Please use SSO login from your organization page.');
+      } else {
+        setError('Invalid credentials. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -99,6 +107,11 @@ export function AuthPage({ onLogin }: AuthPageProps) {
               </TabsList>
 
               <TabsContent value="login" className="space-y-4">
+                {error && (
+                  <div className="bg-destructive/10 border border-destructive/20 text-destructive rounded-md p-3 text-sm">
+                    {error}
+                  </div>
+                )}
                 <form id="login-form" onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
