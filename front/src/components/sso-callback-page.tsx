@@ -66,6 +66,7 @@ export function SSOCallbackPage() {
       }
       
       console.log('[SSO] Processing API callback with orgId:', result.organization_id);
+      console.log('[SSO] Token received (length):', result.token.length);
       
       // Установить новый токен с org_verified
       setAccessToken(result.token);
@@ -73,6 +74,10 @@ export function SSOCallbackPage() {
       sessionStorage.setItem(`org_verified_${result.organization_id}`, 'true');
       
       setProcessing(false);
+      
+      // Небольшая задержка чтобы токен точно установился
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       navigate(`/${result.organization_id}/projects`, { replace: true });
     } catch (error) {
       console.error('[SSO] Callback error:', error);

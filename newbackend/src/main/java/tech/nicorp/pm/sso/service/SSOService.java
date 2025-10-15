@@ -11,7 +11,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import tech.nicorp.pm.organizations.domain.Organization;
+import tech.nicorp.pm.organizations.domain.OrganizationRole;
 import tech.nicorp.pm.organizations.repo.OrganizationRepository;
+import tech.nicorp.pm.organizations.service.OrganizationMemberService;
 import tech.nicorp.pm.sso.domain.SSOConfiguration;
 import tech.nicorp.pm.sso.domain.SSOProviderType;
 import tech.nicorp.pm.sso.domain.SSOState;
@@ -36,6 +38,7 @@ public class SSOService {
     private final SSOUserLinkRepository userLinkRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final OrganizationMemberService memberService;
     private final RestTemplate restTemplate;
     
     private static final String REDIRECT_URI_BASE = System.getenv("SSO_REDIRECT_URI") != null 
@@ -47,12 +50,14 @@ public class SSOService {
             SSOStateRepository stateRepository,
             SSOUserLinkRepository userLinkRepository,
             OrganizationRepository organizationRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            OrganizationMemberService memberService) {
         this.configRepository = configRepository;
         this.stateRepository = stateRepository;
         this.userLinkRepository = userLinkRepository;
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
+        this.memberService = memberService;
         this.restTemplate = new RestTemplate();
     }
     
@@ -245,6 +250,15 @@ public class SSOService {
         newLink.setSsoEmail(email);
         newLink.setLastLoginAt(OffsetDateTime.now());
         userLinkRepository.save(newLink);
+        
+        // Добавить пользователя в члены организации с ролью по умолчанию
+        UUID orgId = config.getOrganization().getId();
+        if (!memberService.hasAccess(orgId, user.getId())) {
+            OrganizationRole defaultRole = config.getOrganization().getDefaultProjectRole() != null 
+                ? OrganizationRole.valueOf(config.getOrganization().getDefaultProjectRole())
+                : OrganizationRole.MEMBER;
+            memberService.addMember(orgId, user.getId(), defaultRole, null);
+        }
         
         return user;
     }
