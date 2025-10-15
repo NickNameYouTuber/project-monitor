@@ -38,7 +38,9 @@ public class SSOService {
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
     
-    private static final String REDIRECT_URI_BASE = System.getenv("SSO_REDIRECT_URI");
+    private static final String REDIRECT_URI_BASE = System.getenv("SSO_REDIRECT_URI") != null 
+            ? System.getenv("SSO_REDIRECT_URI") 
+            : "https://nit.nicorp.tech";
     
     public SSOService(
             SSOConfigurationRepository configRepository,
