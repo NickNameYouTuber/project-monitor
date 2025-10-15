@@ -255,17 +255,29 @@ public class SSOService {
         UUID orgId = config.getOrganization().getId();
         System.out.println("[SSOService] Checking if user " + user.getId() + " has access to org " + orgId);
         
-        if (!memberService.hasAccess(orgId, user.getId())) {
-            OrganizationRole defaultRole = config.getOrganization().getDefaultProjectRole() != null 
-                ? OrganizationRole.valueOf(config.getOrganization().getDefaultProjectRole())
-                : OrganizationRole.MEMBER;
-            System.out.println("[SSOService] Adding user to organization with role: " + defaultRole);
-            memberService.addMember(orgId, user.getId(), defaultRole, null);
-        } else {
-            System.out.println("[SSOService] User already has access to organization");
+        try {
+            if (!memberService.hasAccess(orgId, user.getId())) {
+                OrganizationRole defaultRole = config.getOrganization().getDefaultProjectRole() != null 
+                    ? OrganizationRole.valueOf(config.getOrganization().getDefaultProjectRole())
+                    : OrganizationRole.MEMBER;
+                System.out.println("[SSOService] Adding user to organization with role: " + defaultRole);
+                memberService.addMember(orgId, user.getId(), defaultRole, null);
+                System.out.println("[SSOService] User successfully added to organization");
+            } else {
+                System.out.println("[SSOService] User already has access to organization");
+            }
+        } catch (Exception e) {
+            System.err.println("[SSOService] ERROR adding user to organization: " + e.getMessage());
+            e.printStackTrace();
+            // Не бросаем исключение дальше - пользователь все равно создан
         }
         
         return user;
+    }
+    
+    @Transactional(readOnly = true)
+    public Optional<SSOUserLink> getUserLink(UUID organizationId, UUID userId) {
+        return userLinkRepository.findByUserIdAndOrganizationId(userId, organizationId);
     }
     
     @Transactional

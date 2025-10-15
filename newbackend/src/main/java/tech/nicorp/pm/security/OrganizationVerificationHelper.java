@@ -44,31 +44,15 @@ public class OrganizationVerificationHelper {
     }
     
     public boolean isVerified(UUID organizationId, Authentication auth) {
-        System.out.println("[OrganizationVerificationHelper] Checking verification for org: " + organizationId);
-        
         if (!requiresVerification(organizationId)) {
-            System.out.println("[OrganizationVerificationHelper] Verification not required");
             return true; // Верификация не требуется
         }
         
-        System.out.println("[OrganizationVerificationHelper] Verification IS required");
-        
         String token = extractToken(auth);
-        if (token == null) {
-            System.out.println("[OrganizationVerificationHelper] No token found");
-            return false;
-        }
-        
-        System.out.println("[OrganizationVerificationHelper] Token found (first 30 chars): " + token.substring(0, Math.min(30, token.length())) + "...");
+        if (token == null) return false;
         
         Optional<String> orgVerified = jwtService.extractOrgVerified(token);
-        System.out.println("[OrganizationVerificationHelper] org_verified claim: " + orgVerified.orElse("NOT_FOUND"));
-        System.out.println("[OrganizationVerificationHelper] Expected org: " + organizationId.toString());
-        
-        boolean result = orgVerified.isPresent() && orgVerified.get().equals(organizationId.toString());
-        System.out.println("[OrganizationVerificationHelper] Verification result: " + result);
-        
-        return result;
+        return orgVerified.isPresent() && orgVerified.get().equals(organizationId.toString());
     }
     
     private String extractToken(Authentication auth) {

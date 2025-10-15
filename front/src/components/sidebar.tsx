@@ -52,6 +52,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
   const navigate = useNavigate();
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [ssoEmail, setSsoEmail] = useState<string | null>(null);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
 
   useEffect(() => {
@@ -70,12 +71,23 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
         try {
           const org = await getOrganization(currentOrgId);
           setCurrentOrg(org);
+          
+          // Загрузить SSO информацию если есть
+          try {
+            const { getCurrentSSOInfo } = await import('../api/sso-user');
+            const ssoInfo = await getCurrentSSOInfo(currentOrgId);
+            setSsoEmail(ssoInfo?.sso_email || null);
+          } catch {
+            setSsoEmail(null);
+          }
         } catch {
           setCurrentOrg(null);
+          setSsoEmail(null);
         }
       })();
     } else {
       setCurrentOrg(null);
+      setSsoEmail(null);
     }
   }, [currentOrgId]);
   return (
@@ -164,6 +176,11 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{userName}</p>
             <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+            {ssoEmail && ssoEmail !== userEmail && (
+              <p className="text-xs text-blue-500 truncate mt-0.5" title="SSO Account">
+                🔐 {ssoEmail}
+              </p>
+            )}
           </div>
         </div>
         <Button 
