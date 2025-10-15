@@ -16,6 +16,7 @@ import tech.nicorp.pm.organizations.service.OrganizationMemberService;
 import tech.nicorp.pm.organizations.service.OrganizationService;
 import tech.nicorp.pm.security.JwtService;
 import tech.nicorp.pm.sso.repo.SSOConfigurationRepository;
+import tech.nicorp.pm.users.domain.User;
 
 import java.net.URI;
 import java.util.List;
