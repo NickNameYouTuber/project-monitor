@@ -1,7 +1,10 @@
 package tech.nicorp.pm.security;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import tech.nicorp.pm.organizations.domain.Organization;
 import tech.nicorp.pm.organizations.repo.OrganizationRepository;
 import tech.nicorp.pm.sso.repo.SSOConfigurationRepository;
@@ -53,11 +56,26 @@ public class OrganizationVerificationHelper {
     }
     
     private String extractToken(Authentication auth) {
-        // В Spring Security JWT токен обычно хранится в credentials
+        // Попробовать извлечь из credentials
         Object credentials = auth.getCredentials();
-        if (credentials instanceof String) {
+        if (credentials instanceof String && !((String) credentials).isEmpty()) {
             return (String) credentials;
         }
+        
+        // Извлечь из HTTP request header
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                String authHeader = request.getHeader("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    return authHeader.substring(7);
+                }
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        
         return null;
     }
 }

@@ -295,14 +295,21 @@ export default function App() {
 
   useEffect(() => {
     const orgId = localStorage.getItem('currentOrgId');
-    setCurrentOrgId(orgId);
+    // Проверка на null, undefined и строку "undefined"
+    if (orgId && orgId !== 'undefined' && orgId !== 'null') {
+      setCurrentOrgId(orgId);
+    } else {
+      setCurrentOrgId(null);
+    }
   }, []);
 
   useEffect(() => {
     // Обновить currentOrgId из localStorage при изменении URL
     const orgId = localStorage.getItem('currentOrgId');
-    if (orgId !== currentOrgId) {
-      setCurrentOrgId(orgId);
+    // Проверка на null, undefined и строку "undefined"
+    const validOrgId = (orgId && orgId !== 'undefined' && orgId !== 'null') ? orgId : null;
+    if (validOrgId !== currentOrgId) {
+      setCurrentOrgId(validOrgId);
     }
   }, [location.pathname, currentOrgId]);
 
