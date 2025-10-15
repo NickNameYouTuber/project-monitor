@@ -18,6 +18,7 @@ import { CreateOrganizationPage } from './components/create-organization-page';
 import { OrganizationSettingsPage } from './components/organization-settings-page';
 import { InvitePage } from './components/invite-page';
 import { SSOCallbackPage } from './components/sso-callback-page';
+import { OrganizationGuard } from './components/organization-guard';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
 import { setAccessToken } from './api/client';
@@ -348,13 +349,15 @@ export default function App() {
                 <Route path="/sso/callback" element={<SSOCallbackPage />} />
                 <Route path="/projects" element={
                   currentOrgId ? (
-                    <ProjectsPage
-                      projects={projects}
-                      setProjects={setProjects}
-                      columns={projectColumns}
-                      setColumns={setProjectColumns}
-                      onProjectSelect={(project) => handleNavigate('tasks', project)}
-                    />
+                    <OrganizationGuard>
+                      <ProjectsPage
+                        projects={projects}
+                        setProjects={setProjects}
+                        columns={projectColumns}
+                        setColumns={setProjectColumns}
+                        onProjectSelect={(project) => handleNavigate('tasks', project)}
+                      />
+                    </OrganizationGuard>
                   ) : (
                     <Navigate to="/organizations" replace />
                   )

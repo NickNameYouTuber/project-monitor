@@ -51,6 +51,7 @@ export function OrganizationsPage() {
       setPasswordDialogOpen(true);
     } else {
       localStorage.setItem('currentOrgId', org.id);
+      sessionStorage.setItem(`org_verified_${org.id}`, 'true');
       navigate('/projects');
     }
   };
@@ -72,6 +73,7 @@ export function OrganizationsPage() {
       const isValid = await verifyOrganizationPassword(selectedOrgForPassword.id, orgPassword);
       if (isValid) {
         localStorage.setItem('currentOrgId', selectedOrgForPassword.id);
+        sessionStorage.setItem(`org_verified_${selectedOrgForPassword.id}`, 'true');
         setPasswordDialogOpen(false);
         setOrgPassword('');
         navigate('/projects');

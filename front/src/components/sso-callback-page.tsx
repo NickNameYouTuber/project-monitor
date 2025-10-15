@@ -30,6 +30,7 @@ export function SSOCallbackPage() {
       const result = await handleSSOCallback(code, state);
       
       localStorage.setItem('currentOrgId', result.organization_id);
+      sessionStorage.setItem(`org_verified_${result.organization_id}`, 'true');
       
       navigate('/projects');
     } catch (error) {
