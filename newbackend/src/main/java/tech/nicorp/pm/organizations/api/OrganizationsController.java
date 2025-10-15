@@ -132,6 +132,7 @@ public class OrganizationsController {
     }
 
     @PostMapping("/{id}/verify-password")
+    @Transactional
     @Operation(summary = "Проверить пароль организации")
     public ResponseEntity<Map<String, Object>> verifyPassword(
             @PathVariable UUID id,

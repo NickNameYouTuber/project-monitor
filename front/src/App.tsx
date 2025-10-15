@@ -299,11 +299,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (location.pathname === '/projects') {
-      const orgId = localStorage.getItem('currentOrgId');
-      if (orgId !== currentOrgId) {
-        setCurrentOrgId(orgId);
-      }
+    // Обновить currentOrgId из localStorage при изменении URL
+    const orgId = localStorage.getItem('currentOrgId');
+    if (orgId !== currentOrgId) {
+      setCurrentOrgId(orgId);
     }
   }, [location.pathname, currentOrgId]);
 
