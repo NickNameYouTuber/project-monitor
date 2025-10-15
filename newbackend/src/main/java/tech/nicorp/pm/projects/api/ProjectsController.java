@@ -50,7 +50,7 @@ public class ProjectsController {
     @Transactional
     @Operation(summary = "Список проектов")
     public ResponseEntity<List<ProjectResponse>> list(
-            @RequestParam(required = false) UUID organizationId,
+            @RequestParam(required = true) UUID organizationId,
             Authentication auth) {
         
         if (auth == null || auth.getName() == null) {
@@ -61,11 +61,9 @@ public class ProjectsController {
             UUID userId = UUID.fromString(auth.getName());
             List<Project> userProjects = projectMemberService.getProjectsByUserId(userId);
             
-            if (organizationId != null) {
-                userProjects = userProjects.stream()
-                        .filter(p -> p.getOrganization() != null && p.getOrganization().getId().equals(organizationId))
-                        .toList();
-            }
+            userProjects = userProjects.stream()
+                    .filter(p -> p.getOrganization() != null && p.getOrganization().getId().equals(organizationId))
+                    .toList();
             
             return ResponseEntity.ok(userProjects.stream().map(this::toResponse).toList());
         } catch (IllegalArgumentException e) {

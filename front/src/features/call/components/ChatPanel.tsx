@@ -101,7 +101,12 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     if (isTaskModalOpen && projects.length === 0) {
       (async () => {
         try {
-          const projectsData = await listProjects();
+          const currentOrgId = localStorage.getItem('currentOrgId');
+          if (!currentOrgId) {
+            setProjects([]);
+            return;
+          }
+          const projectsData = await listProjects(currentOrgId);
           setProjects(projectsData);
         } catch (error) {
           console.error('Ошибка загрузки проектов:', error);

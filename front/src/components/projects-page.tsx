@@ -140,7 +140,13 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
       try {
         setIsLoading(true);
         const { listProjects } = await import('../api/projects');
-        const data = await listProjects();
+        const currentOrgId = localStorage.getItem('currentOrgId');
+        if (!currentOrgId) {
+          setProjects([]);
+          setIsLoading(false);
+          return;
+        }
+        const data = await listProjects(currentOrgId);
         // map DTO -> UI Project
         const mapped: Project[] = data.map(d => ({
           id: d.id,
