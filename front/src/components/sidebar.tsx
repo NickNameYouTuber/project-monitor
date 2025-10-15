@@ -66,17 +66,19 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
   }, []);
 
   useEffect(() => {
+    setSsoEmail(null);
     if (currentOrgId) {
       (async () => {
         try {
           const org = await getOrganization(currentOrgId);
           setCurrentOrg(org);
           
-          // Загрузить SSO информацию если есть
           try {
             const { getCurrentSSOInfo } = await import('../api/sso-user');
             const ssoInfo = await getCurrentSSOInfo(currentOrgId);
-            setSsoEmail(ssoInfo?.sso_email || null);
+            if (ssoInfo?.sso_email) {
+              setSsoEmail(ssoInfo.sso_email);
+            }
           } catch {
             setSsoEmail(null);
           }
@@ -175,9 +177,11 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{userName}</p>
-            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+            <p className="text-xs text-muted-foreground truncate" title="Main Account">
+              {userEmail}
+            </p>
             {ssoEmail && ssoEmail !== userEmail && (
-              <p className="text-xs text-blue-500 truncate mt-0.5" title="SSO Account">
+              <p className="text-xs text-blue-500 truncate mt-0.5" title={`SSO Account for ${currentOrg?.name || 'this organization'}`}>
                 🔐 {ssoEmail}
               </p>
             )}
