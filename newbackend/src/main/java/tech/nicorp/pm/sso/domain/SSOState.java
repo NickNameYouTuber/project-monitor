@@ -28,6 +28,9 @@ public class SSOState {
     @Column(name = "redirect_uri", length = 500)
     private String redirectUri;
     
+    @Column(name = "user_id")
+    private UUID userId;
+    
     @Column(name = "created_at")
     private OffsetDateTime createdAt = OffsetDateTime.now();
     

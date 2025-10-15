@@ -116,7 +116,7 @@ public class SSOService {
     }
     
     @Transactional
-    public String generateAuthorizationUrl(UUID orgId) {
+    public String generateAuthorizationUrl(UUID orgId, UUID userId) {
         SSOConfiguration config = configRepository.findByOrganizationId(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("SSO not configured for organization"));
         
@@ -127,11 +127,14 @@ public class SSOService {
         String state = CryptoUtils.generateState();
         String codeVerifier = CryptoUtils.generateCodeVerifier();
         
+        System.out.println("[SSOService] Initiating SSO login for user: " + userId + ", org: " + orgId);
+        
         SSOState ssoState = new SSOState();
         ssoState.setState(state);
         ssoState.setOrganization(config.getOrganization());
         ssoState.setCodeVerifier(codeVerifier);
         ssoState.setRedirectUri(REDIRECT_URI_BASE + "/sso/callback");
+        ssoState.setUserId(userId);
         ssoState.setExpiresAt(OffsetDateTime.now().plusMinutes(10));
         stateRepository.save(ssoState);
         
@@ -153,19 +156,30 @@ public class SSOService {
             throw new IllegalStateException("State expired");
         }
         
+        UUID globalUserId = ssoState.getUserId();
+        if (globalUserId == null) {
+            System.err.println("[SSOService] SSO state has no userId - please re-initiate SSO login");
+            throw new IllegalStateException("SSO requires authenticated user. Please re-initiate SSO login.");
+        }
+        
+        System.out.println("[SSOService] Processing callback for global user: " + globalUserId);
+        
         SSOConfiguration config = configRepository.findByOrganizationId(ssoState.getOrganization().getId())
                 .orElseThrow(() -> new IllegalStateException("SSO configuration not found"));
         
         String accessToken = exchangeCodeForToken(config, code, ssoState.getRedirectUri());
         Map<String, Object> userInfo = getUserInfo(config, accessToken);
         
-        User user = linkOrCreateUser(config, userInfo);
+        String ssoEmail = (String) userInfo.get(config.getEmailClaim());
+        
+        User user = linkOrCreateUser(config, userInfo, globalUserId);
         
         stateRepository.delete(ssoState);
         
         return Map.of(
             "user_id", user.getId().toString(),
-            "organization_id", config.getOrganization().getId().toString()
+            "organization_id", config.getOrganization().getId().toString(),
+            "sso_email", ssoEmail != null ? ssoEmail : ""
         );
     }
     
@@ -216,15 +230,15 @@ public class SSOService {
     }
     
     @Transactional
-    private User linkOrCreateUser(SSOConfiguration config, Map<String, Object> userInfo) {
+    private User linkOrCreateUser(SSOConfiguration config, Map<String, Object> userInfo, UUID globalUserId) {
         String ssoProviderId = (String) userInfo.get(config.getSubClaim());
         String ssoEmail = (String) userInfo.get(config.getEmailClaim());
-        String name = (String) userInfo.get(config.getNameClaim());
         UUID orgId = config.getOrganization().getId();
         
-        System.out.println("[SSOService] Processing SSO login: providerId=" + ssoProviderId + ", email=" + ssoEmail);
+        System.out.println("[SSOService] Linking SSO to global user: " + globalUserId);
+        System.out.println("[SSOService] SSO providerId=" + ssoProviderId + ", email=" + ssoEmail);
         
-        // 1. Проверить существующую связь SSO -> User
+        // 1. Проверить существующую связь SSO providerId -> User
         Optional<SSOUserLink> existingLink = userLinkRepository
                 .findByOrganizationIdAndSsoProviderId(orgId, ssoProviderId);
         
@@ -236,7 +250,7 @@ public class SSOService {
             userLinkRepository.save(link);
             
             User user = link.getUser();
-            System.out.println("[SSOService] Using existing user: " + user.getId() + " (" + user.getUsername() + ")");
+            System.out.println("[SSOService] Using existing user from link: " + user.getId() + " (" + user.getUsername() + ")");
             
             // Убедиться что пользователь в organization_members
             ensureOrganizationMember(user, orgId, config);
@@ -244,32 +258,26 @@ public class SSOService {
             return user;
         }
         
-        System.out.println("[SSOService] No existing link found, creating new user and link");
+        // 2. Создать новую связь для ГЛОБАЛЬНОГО пользователя
+        User globalUser = userRepository.findById(globalUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Global user not found: " + globalUserId));
         
-        // 2. Создать нового пользователя для этой SSO связи
-        // Используем SSO email как основной username
-        User user = new User();
-        user.setUsername(ssoEmail);
-        user.setDisplayName(name != null ? name : ssoEmail);
-        user = userRepository.save(user);
+        System.out.println("[SSOService] Creating SSO link for global user: " + globalUser.getId() + " (" + globalUser.getUsername() + ")");
         
-        System.out.println("[SSOService] Created new user: " + user.getId() + " (" + user.getUsername() + ")");
-        
-        // 3. Создать связь SSO -> User
         SSOUserLink newLink = new SSOUserLink();
-        newLink.setUser(user);
+        newLink.setUser(globalUser);
         newLink.setOrganization(config.getOrganization());
         newLink.setSsoProviderId(ssoProviderId);
         newLink.setSsoEmail(ssoEmail);
         newLink.setLastLoginAt(OffsetDateTime.now());
         userLinkRepository.save(newLink);
         
-        System.out.println("[SSOService] Created SSO link for user " + user.getId());
+        System.out.println("[SSOService] Created SSO link: providerId=" + ssoProviderId + " -> user=" + globalUser.getId());
         
-        // 4. Добавить в organization_members
-        ensureOrganizationMember(user, orgId, config);
+        // 3. Добавить глобального пользователя в organization_members
+        ensureOrganizationMember(globalUser, orgId, config);
         
-        return user;
+        return globalUser;
     }
     
     private void ensureOrganizationMember(User user, UUID orgId, SSOConfiguration config) {

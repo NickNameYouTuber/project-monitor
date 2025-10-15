@@ -27,8 +27,14 @@ export function OrganizationsPage() {
   const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
+    const token = getAccessToken();
+    if (!token) {
+      toast.error('Please login first');
+      navigate('/auth');
+      return;
+    }
     loadOrganizations();
-  }, []);
+  }, [navigate]);
 
   const loadOrganizations = async () => {
     try {
@@ -58,10 +64,18 @@ export function OrganizationsPage() {
   };
 
   const handleSSOLogin = async (org: Organization) => {
+    const token = getAccessToken();
+    if (!token) {
+      toast.error('Please login first to use SSO');
+      navigate('/auth');
+      return;
+    }
+    
     try {
       const response = await initiateSSOLogin(org.id);
       window.location.href = response.authorization_url;
     } catch (error) {
+      console.error('SSO login error:', error);
       toast.error('Failed to initiate SSO login');
     }
   };

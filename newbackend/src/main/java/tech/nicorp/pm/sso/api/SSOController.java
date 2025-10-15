@@ -128,15 +128,27 @@ public class SSOController {
     
     @GetMapping("/organizations/{orgId}/login")
     @Operation(summary = "Инициировать SSO логин")
-    public ResponseEntity<SSOLoginResponse> initiateLogin(@PathVariable UUID orgId) {
+    public ResponseEntity<SSOLoginResponse> initiateLogin(
+            @PathVariable UUID orgId,
+            Authentication auth) {
+        
+        if (auth == null || auth.getName() == null) {
+            System.err.println("[SSOController] SSO login attempted without authentication");
+            return ResponseEntity.status(401).build();
+        }
+        
         try {
-            String authUrl = ssoService.generateAuthorizationUrl(orgId);
+            UUID userId = UUID.fromString(auth.getName());
+            System.out.println("[SSOController] Initiating SSO login for user: " + userId);
+            
+            String authUrl = ssoService.generateAuthorizationUrl(orgId, userId);
             
             SSOLoginResponse response = new SSOLoginResponse();
             response.setAuthorizationUrl(authUrl);
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            System.err.println("[SSOController] Error initiating SSO login: " + e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
@@ -155,14 +167,20 @@ public class SSOController {
             
             User user = userRepository.findById(userId).orElseThrow();
             
-            // Создать токен с org_verified и email
+            String ssoEmail = (String) result.get("sso_email");
+            
+            // Создать токен с org_verified, email и sso_email
+            Map<String, Object> claims = new java.util.HashMap<>();
+            claims.put("username", user.getUsername());
+            claims.put("email", user.getUsername());
+            if (ssoEmail != null && !ssoEmail.isEmpty()) {
+                claims.put("sso_email", ssoEmail);
+            }
+            
             String token = jwtService.createTokenWithOrgVerification(
                 userId.toString(),
                 orgId,
-                Map.of(
-                    "username", user.getUsername(),
-                    "email", user.getUsername()
-                )
+                claims
             );
             
             // Вернуть JSON с токеном и orgId для frontend
