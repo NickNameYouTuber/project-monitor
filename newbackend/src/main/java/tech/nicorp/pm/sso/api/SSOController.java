@@ -18,6 +18,7 @@ import tech.nicorp.pm.sso.service.SSOService;
 import tech.nicorp.pm.users.domain.User;
 import tech.nicorp.pm.users.repo.UserRepository;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -114,12 +115,14 @@ public class SSOController {
         }
         
         return ssoService.getUserLink(orgId, userId)
-                .map(link -> ResponseEntity.ok(Map.of(
-                    "sso_email", link.getSsoEmail(),
-                    "sso_provider_id", link.getSsoProviderId(),
-                    "linked_at", link.getLinkedAt().toString(),
-                    "last_login_at", link.getLastLoginAt() != null ? link.getLastLoginAt().toString() : ""
-                )))
+                .map(link -> {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("sso_email", link.getSsoEmail());
+                    response.put("sso_provider_id", link.getSsoProviderId());
+                    response.put("linked_at", link.getLinkedAt().toString());
+                    response.put("last_login_at", link.getLastLoginAt() != null ? link.getLastLoginAt().toString() : "");
+                    return ResponseEntity.ok(response);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
     
