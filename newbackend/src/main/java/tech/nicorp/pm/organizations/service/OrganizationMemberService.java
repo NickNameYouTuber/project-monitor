@@ -39,8 +39,11 @@ public class OrganizationMemberService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        if (memberRepository.existsByOrganizationIdAndUserId(orgId, userId)) {
-            throw new IllegalStateException("User is already a member of this organization");
+        // Проверить существующее членство
+        var existingMember = memberRepository.findByOrganizationIdAndUserId(orgId, userId);
+        if (existingMember.isPresent()) {
+            System.out.println("[OrganizationMemberService] User is already a member, returning existing");
+            return existingMember.get();
         }
 
         OrganizationMember member = new OrganizationMember();
@@ -52,7 +55,10 @@ public class OrganizationMemberService {
             userRepository.findById(invitedBy).ifPresent(member::setInvitedBy);
         }
         
-        return memberRepository.save(member);
+        System.out.println("[OrganizationMemberService] Saving new member: user=" + userId + ", org=" + orgId + ", role=" + role);
+        OrganizationMember saved = memberRepository.save(member);
+        System.out.println("[OrganizationMemberService] Member saved with id: " + saved.getId());
+        return saved;
     }
 
     @Transactional(readOnly = true)
