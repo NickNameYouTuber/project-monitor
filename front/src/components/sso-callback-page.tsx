@@ -19,10 +19,12 @@ export function SSOCallbackPage() {
     const state = searchParams.get('state');
 
     // Новый flow: токен напрямую из backend
-    if (token && orgId) {
+    if (token && orgId && orgId !== 'undefined' && orgId !== 'null') {
+      console.log('[SSO] Processing token callback with orgId:', orgId);
       setAccessToken(token);
       localStorage.setItem('currentOrgId', orgId);
       sessionStorage.setItem(`org_verified_${orgId}`, 'true');
+      setProcessing(false);
       navigate(`/${orgId}/projects`);
       return;
     }
@@ -35,12 +37,17 @@ export function SSOCallbackPage() {
     }
 
     processCallback(code, state);
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   const processCallback = async (code: string, state: string) => {
     try {
       const result = await handleSSOCallback(code, state);
       
+      if (!result.organization_id || result.organization_id === 'undefined') {
+        throw new Error('Invalid organization_id from SSO callback');
+      }
+      
+      console.log('[SSO] Processing API callback with orgId:', result.organization_id);
       localStorage.setItem('currentOrgId', result.organization_id);
       sessionStorage.setItem(`org_verified_${result.organization_id}`, 'true');
       
