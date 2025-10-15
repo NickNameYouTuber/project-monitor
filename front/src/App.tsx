@@ -312,24 +312,6 @@ export default function App() {
     }
   }, [location.pathname, currentOrgId]);
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    (async () => {
-      try {
-        const { listProjects } = await import('./api/projects');
-        const data = await listProjects(currentOrgId || undefined);
-        const mapped: Project[] = data.map(d => ({
-          id: d.id,
-          title: d.name,
-          description: d.description || '',
-          status: d.status || 'inPlans',
-          createdAt: d.createdAt ? new Date(d.createdAt) : new Date(),
-          color: d.color || '#6366f1',
-        }));
-        setProjects(mapped);
-      } catch {}
-    })();
-  }, [isAuthenticated, currentOrgId]);
 
   // Обновляем currentPage на основе URL
   useEffect(() => {

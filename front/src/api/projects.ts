@@ -28,9 +28,14 @@ export type ProjectCreateRequest = {
 
 export type ProjectUpdateRequest = Partial<ProjectCreateRequest>;
 
-export async function listProjects(organizationId?: string): Promise<ProjectDto[]> {
-  const params = organizationId ? { organizationId } : {};
-  const { data } = await apiClient.get<ProjectDto[]>('/projects', { params });
+export async function listProjects(organizationId: string): Promise<ProjectDto[]> {
+  if (!organizationId || organizationId === 'null' || organizationId === 'undefined') {
+    console.warn('listProjects called without valid organizationId:', organizationId);
+    return [];
+  }
+  const { data } = await apiClient.get<ProjectDto[]>('/projects', { 
+    params: { organizationId } 
+  });
   return data;
 }
 
