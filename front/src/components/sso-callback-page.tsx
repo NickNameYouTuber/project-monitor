@@ -13,9 +13,21 @@ export function SSOCallbackPage() {
   const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
+    const token = searchParams.get('token');
+    const orgId = searchParams.get('orgId');
     const code = searchParams.get('code');
     const state = searchParams.get('state');
 
+    // Новый flow: токен напрямую из backend
+    if (token && orgId) {
+      setAccessToken(token);
+      localStorage.setItem('currentOrgId', orgId);
+      sessionStorage.setItem(`org_verified_${orgId}`, 'true');
+      navigate(`/${orgId}/projects`);
+      return;
+    }
+
+    // Старый flow: обработка через API (на случай если backend не обновлен)
     if (!code || !state) {
       setError('Invalid callback parameters');
       setProcessing(false);
@@ -32,7 +44,7 @@ export function SSOCallbackPage() {
       localStorage.setItem('currentOrgId', result.organization_id);
       sessionStorage.setItem(`org_verified_${result.organization_id}`, 'true');
       
-      navigate('/projects');
+      navigate(`/${result.organization_id}/projects`);
     } catch (error) {
       console.error('SSO callback error:', error);
       setError('Failed to complete SSO authentication');

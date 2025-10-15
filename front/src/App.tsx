@@ -215,15 +215,25 @@ export default function App() {
   
   const handleNavigate = (page: Page, project?: Project) => {
     setCurrentPage(page);
+    const currentOrgId = localStorage.getItem('currentOrgId');
+    
     if (project) {
       setSelectedProject(project);
-      navigate(`/projects/${project.id}/${page}`);
+      if (currentOrgId) {
+        navigate(`/${currentOrgId}/projects/${project.id}/${page}`);
+      } else {
+        navigate('/organizations');
+      }
       return;
     }
     // Навигация с учетом выбранного проекта
     if (page === 'projects') {
       setSelectedProject(null);
-      navigate('/projects');
+      if (currentOrgId) {
+        navigate(`/${currentOrgId}/projects`);
+      } else {
+        navigate('/organizations');
+      }
       return;
     }
     if (page === 'calls' || page === 'account') {
@@ -235,16 +245,28 @@ export default function App() {
       return;
     }
     if (page === 'project-settings' && selectedProject) {
-      navigate(`/projects/${selectedProject.id}/settings`);
+      if (currentOrgId) {
+        navigate(`/${currentOrgId}/projects/${selectedProject.id}/settings`);
+      } else {
+        navigate('/organizations');
+      }
       return;
     }
     if ((page === 'tasks' || page === 'whiteboard' || page === 'repositories' || page === 'repository') && selectedProject) {
-      navigate(`/projects/${selectedProject.id}/${page}`);
+      if (currentOrgId) {
+        navigate(`/${currentOrgId}/projects/${selectedProject.id}/${page}`);
+      } else {
+        navigate('/organizations');
+      }
       return;
     }
     // Если проект не выбран — отправляем на список проектов
     if (page === 'tasks' || page === 'whiteboard' || page === 'repositories' || page === 'repository' || page === 'project-settings') {
-      navigate('/projects');
+      if (currentOrgId) {
+        navigate(`/${currentOrgId}/projects`);
+      } else {
+        navigate('/organizations');
+      }
       return;
     }
     navigate(`/${page}`);
@@ -347,23 +369,25 @@ export default function App() {
                 <Route path="/organizations/:orgId/settings" element={<OrganizationSettingsPage />} />
                 <Route path="/invite/:token" element={<InvitePage />} />
                 <Route path="/sso/callback" element={<SSOCallbackPage />} />
-                <Route path="/projects" element={
-                  currentOrgId ? (
-                    <OrganizationGuard>
-                      <ProjectsPage
-                        projects={projects}
-                        setProjects={setProjects}
-                        columns={projectColumns}
-                        setColumns={setProjectColumns}
-                        onProjectSelect={(project) => handleNavigate('tasks', project)}
-                      />
-                    </OrganizationGuard>
-                  ) : (
-                    <Navigate to="/organizations" replace />
-                  )
+                
+                {/* Redirect old routes */}
+                <Route path="/projects" element={<Navigate to="/organizations" replace />} />
+                <Route path="/projects/*" element={<Navigate to="/organizations" replace />} />
+                
+                {/* New routes with orgId */}
+                <Route path="/:orgId/projects" element={
+                  <OrganizationGuard>
+                    <ProjectsPage
+                      projects={projects}
+                      setProjects={setProjects}
+                      columns={projectColumns}
+                      setColumns={setProjectColumns}
+                      onProjectSelect={(project) => handleNavigate('tasks', project)}
+                    />
+                  </OrganizationGuard>
                 } />
                 <Route
-                  path="/projects/:projectId/:section"
+                  path="/:orgId/projects/:projectId/:section"
                   element={
                     <OrganizationGuard>
                       <ProjectRouteWrapperComponent

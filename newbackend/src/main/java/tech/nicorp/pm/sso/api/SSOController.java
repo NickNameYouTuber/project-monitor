@@ -7,12 +7,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.organizations.domain.OrganizationRole;
 import tech.nicorp.pm.organizations.service.OrganizationMemberService;
+import tech.nicorp.pm.security.JwtService;
 import tech.nicorp.pm.sso.api.dto.SSOConfigurationRequest;
 import tech.nicorp.pm.sso.api.dto.SSOConfigurationResponse;
 import tech.nicorp.pm.sso.api.dto.SSOLoginResponse;
 import tech.nicorp.pm.sso.domain.SSOConfiguration;
 import tech.nicorp.pm.sso.domain.SSOProviderType;
 import tech.nicorp.pm.sso.service.SSOService;
+import tech.nicorp.pm.users.domain.User;
+import tech.nicorp.pm.users.repo.UserRepository;
 
 import java.util.Map;
 import java.util.UUID;
@@ -24,10 +27,15 @@ public class SSOController {
     
     private final SSOService ssoService;
     private final OrganizationMemberService memberService;
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
     
-    public SSOController(SSOService ssoService, OrganizationMemberService memberService) {
+    public SSOController(SSOService ssoService, OrganizationMemberService memberService, 
+                        JwtService jwtService, UserRepository userRepository) {
         this.ssoService = ssoService;
         this.memberService = memberService;
+        this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
     
     @GetMapping("/organizations/{orgId}/config")
@@ -95,15 +103,38 @@ public class SSOController {
     
     @GetMapping("/callback")
     @Operation(summary = "Обработать SSO callback")
-    public ResponseEntity<Map<String, Object>> handleCallback(
+    public ResponseEntity<Void> handleCallback(
             @RequestParam String code,
             @RequestParam String state) {
         
         try {
             Map<String, Object> result = ssoService.handleCallback(code, state);
-            return ResponseEntity.ok(result);
+            UUID userId = UUID.fromString((String) result.get("user_id"));
+            UUID orgId = UUID.fromString((String) result.get("organization_id"));
+            
+            User user = userRepository.findById(userId).orElseThrow();
+            
+            // Создать токен с org_verified
+            String token = jwtService.createTokenWithOrgVerification(
+                userId.toString(),
+                orgId,
+                Map.of("username", user.getUsername())
+            );
+            
+            String redirectUrl = String.format(
+                "https://nit.nicorp.tech/sso/callback?token=%s&orgId=%s",
+                token,
+                orgId
+            );
+            
+            return ResponseEntity.status(302)
+                    .header("Location", redirectUrl)
+                    .build();
+                    
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(302)
+                    .header("Location", "https://nit.nicorp.tech/organizations?error=sso_failed")
+                    .build();
         }
     }
     

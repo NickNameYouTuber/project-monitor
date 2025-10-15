@@ -9,9 +9,12 @@ import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.organizations.api.dto.OrganizationCreateRequest;
 import tech.nicorp.pm.organizations.api.dto.OrganizationResponse;
 import tech.nicorp.pm.organizations.domain.Organization;
+import tech.nicorp.pm.organizations.domain.OrganizationMember;
 import tech.nicorp.pm.organizations.domain.OrganizationRole;
+import tech.nicorp.pm.organizations.repo.OrganizationMemberRepository;
 import tech.nicorp.pm.organizations.service.OrganizationMemberService;
 import tech.nicorp.pm.organizations.service.OrganizationService;
+import tech.nicorp.pm.security.JwtService;
 import tech.nicorp.pm.sso.repo.SSOConfigurationRepository;
 
 import java.net.URI;
@@ -27,14 +30,20 @@ public class OrganizationsController {
     private final OrganizationService organizationService;
     private final OrganizationMemberService memberService;
     private final SSOConfigurationRepository ssoConfigRepository;
+    private final OrganizationMemberRepository memberRepository;
+    private final JwtService jwtService;
 
     public OrganizationsController(
             OrganizationService organizationService,
             OrganizationMemberService memberService,
-            SSOConfigurationRepository ssoConfigRepository) {
+            SSOConfigurationRepository ssoConfigRepository,
+            OrganizationMemberRepository memberRepository,
+            JwtService jwtService) {
         this.organizationService = organizationService;
         this.memberService = memberService;
         this.ssoConfigRepository = ssoConfigRepository;
+        this.memberRepository = memberRepository;
+        this.jwtService = jwtService;
     }
 
     @GetMapping
@@ -124,17 +133,45 @@ public class OrganizationsController {
 
     @PostMapping("/{id}/verify-password")
     @Operation(summary = "Проверить пароль организации")
-    public ResponseEntity<Map<String, Boolean>> verifyPassword(
+    public ResponseEntity<Map<String, Object>> verifyPassword(
             @PathVariable UUID id,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body,
+            Authentication auth) {
         
-        String password = body.get("password");
-        if (password == null) {
-            return ResponseEntity.badRequest().build();
+        if (auth == null || auth.getName() == null) {
+            return ResponseEntity.status(401).build();
         }
         
-        boolean valid = organizationService.verifyOrganizationPassword(id, password);
-        return ResponseEntity.ok(Map.of("valid", valid));
+        try {
+            UUID userId = UUID.fromString(auth.getName());
+            
+            // Проверить членство
+            OrganizationMember member = memberRepository.findByOrganizationIdAndUserId(id, userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Not a member"));
+            
+            // Проверить пароль
+            String password = body.get("password");
+            if (password == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            
+            boolean isValid = organizationService.verifyOrganizationPassword(id, password);
+            
+            if (!isValid) {
+                return ResponseEntity.status(403).body(Map.of("error", "invalid_password"));
+            }
+            
+            // Создать новый JWT токен с org_verified claim
+            String newToken = jwtService.createTokenWithOrgVerification(
+                userId.toString(), 
+                id, 
+                Map.of("username", member.getUser().getUsername())
+            );
+            
+            return ResponseEntity.ok(Map.of("token", newToken));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(403).build();
+        }
     }
 
     @DeleteMapping("/{id}")

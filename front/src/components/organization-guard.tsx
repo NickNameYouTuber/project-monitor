@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Shield } from 'lucide-react';
-import { getOrganization, verifyOrganizationPassword } from '../api/organizations';
+import { getOrganization } from '../api/organizations';
 import { initiateSSOLogin } from '../api/sso';
 import type { Organization } from '../types/organization';
 import { LoadingSpinner } from './loading-spinner';
@@ -9,12 +10,16 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
+import { setAccessToken, getAccessToken } from '../api/client';
 
 interface OrganizationGuardProps {
   children: React.ReactNode;
 }
 
 export function OrganizationGuard({ children }: OrganizationGuardProps) {
+  const params = useParams<{ orgId: string }>();
+  const orgId = params.orgId;
+  
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [verified, setVerified] = useState(false);
@@ -23,11 +28,13 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
   const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
-    checkOrganization();
-  }, []);
+    if (orgId) {
+      localStorage.setItem('currentOrgId', orgId);
+      checkOrganization(orgId);
+    }
+  }, [orgId]);
 
-  const checkOrganization = async () => {
-    const currentOrgId = localStorage.getItem('currentOrgId');
+  const checkOrganization = async (currentOrgId: string) => {
     const orgVerified = sessionStorage.getItem(`org_verified_${currentOrgId}`);
     
     if (!currentOrgId) {
@@ -78,12 +85,24 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
     
     setVerifying(true);
     try {
-      const isValid = await verifyOrganizationPassword(organization.id, password);
-      if (isValid) {
-        sessionStorage.setItem(`org_verified_${organization.id}`, 'true');
-        setVerified(true);
-        setShowPasswordDialog(false);
-        setPassword('');
+      const response = await fetch(`/api/organizations/${organization.id}/verify-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${getAccessToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          setAccessToken(data.token);
+          sessionStorage.setItem(`org_verified_${organization.id}`, 'true');
+          setVerified(true);
+          setShowPasswordDialog(false);
+          setPassword('');
+        }
       } else {
         toast.error('Incorrect password');
       }

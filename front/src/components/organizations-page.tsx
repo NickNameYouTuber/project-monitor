@@ -10,9 +10,10 @@ import { Label } from './ui/label';
 import { LoadingSpinner } from './loading-spinner';
 import { RoleBadge } from './role-badge';
 import { toast } from 'sonner';
-import { listOrganizations, verifyOrganizationPassword } from '../api/organizations';
+import { listOrganizations } from '../api/organizations';
 import type { Organization } from '../types/organization';
 import { initiateSSOLogin } from '../api/sso';
+import { setAccessToken, getAccessToken } from '../api/client';
 
 export function OrganizationsPage() {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ export function OrganizationsPage() {
     } else {
       localStorage.setItem('currentOrgId', org.id);
       sessionStorage.setItem(`org_verified_${org.id}`, 'true');
-      navigate('/projects');
+      navigate(`/${org.id}/projects`);
     }
   };
 
@@ -70,13 +71,25 @@ export function OrganizationsPage() {
     
     setVerifying(true);
     try {
-      const isValid = await verifyOrganizationPassword(selectedOrgForPassword.id, orgPassword);
-      if (isValid) {
-        localStorage.setItem('currentOrgId', selectedOrgForPassword.id);
-        sessionStorage.setItem(`org_verified_${selectedOrgForPassword.id}`, 'true');
-        setPasswordDialogOpen(false);
-        setOrgPassword('');
-        navigate('/projects');
+      const response = await fetch(`/api/organizations/${selectedOrgForPassword.id}/verify-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${getAccessToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password: orgPassword })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          setAccessToken(data.token);
+          localStorage.setItem('currentOrgId', selectedOrgForPassword.id);
+          sessionStorage.setItem(`org_verified_${selectedOrgForPassword.id}`, 'true');
+          setPasswordDialogOpen(false);
+          setOrgPassword('');
+          navigate(`/${selectedOrgForPassword.id}/projects`);
+        }
       } else {
         toast.error('Incorrect password');
       }

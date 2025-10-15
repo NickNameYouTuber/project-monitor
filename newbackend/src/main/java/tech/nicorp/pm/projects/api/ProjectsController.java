@@ -26,6 +26,8 @@ import tech.nicorp.pm.projects.api.dto.ProjectsReorderRequest;
 import tech.nicorp.pm.projects.service.ProjectMemberService;
 import tech.nicorp.pm.projects.domain.ProjectRole;
 import tech.nicorp.pm.organizations.repo.OrganizationRepository;
+import tech.nicorp.pm.organizations.repo.OrganizationMemberRepository;
+import tech.nicorp.pm.security.OrganizationVerificationHelper;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -37,13 +39,20 @@ public class ProjectsController {
     private final DashboardRepository dashboards;
     private final ProjectMemberService projectMemberService;
     private final OrganizationRepository organizationRepository;
+    private final OrganizationMemberRepository organizationMemberRepository;
+    private final OrganizationVerificationHelper verificationHelper;
 
-    public ProjectsController(ProjectRepository projects, UserRepository users, DashboardRepository dashboards, ProjectMemberService projectMemberService, OrganizationRepository organizationRepository) {
+    public ProjectsController(ProjectRepository projects, UserRepository users, DashboardRepository dashboards, 
+                             ProjectMemberService projectMemberService, OrganizationRepository organizationRepository,
+                             OrganizationMemberRepository organizationMemberRepository,
+                             OrganizationVerificationHelper verificationHelper) {
         this.projects = projects;
         this.users = users;
         this.dashboards = dashboards;
         this.projectMemberService = projectMemberService;
         this.organizationRepository = organizationRepository;
+        this.organizationMemberRepository = organizationMemberRepository;
+        this.verificationHelper = verificationHelper;
     }
 
     @GetMapping
@@ -59,6 +68,17 @@ public class ProjectsController {
         
         try {
             UUID userId = UUID.fromString(auth.getName());
+            
+            // Проверка 1: Членство в организации
+            if (!organizationMemberRepository.findByOrganizationIdAndUserId(organizationId, userId).isPresent()) {
+                return ResponseEntity.status(403).build();
+            }
+            
+            // Проверка 2: Верификация (пароль/SSO)
+            if (!verificationHelper.isVerified(organizationId, auth)) {
+                return ResponseEntity.status(403).build();
+            }
+            
             List<Project> userProjects = projectMemberService.getProjectsByUserId(userId);
             
             userProjects = userProjects.stream()

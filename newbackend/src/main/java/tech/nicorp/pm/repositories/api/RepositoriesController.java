@@ -21,6 +21,9 @@ import tech.nicorp.pm.tasks.repo.TaskRepository;
 import tech.nicorp.pm.repositories.service.RepositoryMemberService;
 import tech.nicorp.pm.repositories.domain.RepositoryRole;
 import tech.nicorp.pm.projects.service.ProjectMemberService;
+import tech.nicorp.pm.organizations.repo.OrganizationMemberRepository;
+import tech.nicorp.pm.security.OrganizationVerificationHelper;
+import org.springframework.security.core.Authentication;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,8 +42,14 @@ public class RepositoriesController {
     private final TaskRepository tasks;
     private final RepositoryMemberService repositoryMemberService;
     private final ProjectMemberService projectMemberService;
+    private final OrganizationMemberRepository organizationMemberRepository;
+    private final OrganizationVerificationHelper verificationHelper;
 
-    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects, RepositoryMemberRepository members, UserRepository users, TaskRepository tasks, RepositoryMemberService repositoryMemberService, ProjectMemberService projectMemberService) {
+    public RepositoriesController(GitService git, RepositoryRepository repositories, ProjectRepository projects, 
+                                 RepositoryMemberRepository members, UserRepository users, TaskRepository tasks, 
+                                 RepositoryMemberService repositoryMemberService, ProjectMemberService projectMemberService,
+                                 OrganizationMemberRepository organizationMemberRepository,
+                                 OrganizationVerificationHelper verificationHelper) {
         this.git = git;
         this.repositories = repositories;
         this.projects = projects;
@@ -49,6 +58,8 @@ public class RepositoriesController {
         this.tasks = tasks;
         this.repositoryMemberService = repositoryMemberService;
         this.projectMemberService = projectMemberService;
+        this.organizationMemberRepository = organizationMemberRepository;
+        this.verificationHelper = verificationHelper;
     }
 
     @GetMapping("/{repoId}/refs/branches")
@@ -91,11 +102,14 @@ public class RepositoriesController {
     }
 
     @GetMapping
-    public ResponseEntity<Object> list(@RequestParam(name = "project_id", required = false) UUID projectId, @AuthenticationPrincipal Object principal) {
+    public ResponseEntity<Object> list(@RequestParam(name = "project_id", required = false) UUID projectId, @AuthenticationPrincipal Object principal, Authentication auth) {
         UUID userId = extractUserId(principal);
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "unauthorized"));
         
-        if (projectId != null && !projects.existsById(projectId)) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "project_not_found"));
+        if (projectId != null) {
+            if (!projects.existsById(projectId)) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "project_not_found"));
+            if (!checkProjectAccess(projectId, auth)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "access_denied"));
+        }
         
         var list = repositories.findByMemberUserId(userId).stream()
                 .filter(r -> projectId == null || (r.getProject() != null && projectId.equals(r.getProject().getId())))
@@ -281,6 +295,29 @@ public class RepositoriesController {
         response.put("can_create_issue", repositoryMemberService.canCreateIssue(role));
         
         return ResponseEntity.ok(response);
+    }
+    
+    private boolean checkProjectAccess(UUID projectId, Authentication auth) {
+        if (auth == null || auth.getName() == null) return false;
+        
+        try {
+            UUID userId = UUID.fromString(auth.getName());
+            Project project = projects.findById(projectId).orElse(null);
+            
+            if (project == null || project.getOrganization() == null) return false;
+            
+            UUID organizationId = project.getOrganization().getId();
+            
+            // Проверка 1: Членство в организации
+            if (!organizationMemberRepository.findByOrganizationIdAndUserId(organizationId, userId).isPresent()) {
+                return false;
+            }
+            
+            // Проверка 2: Верификация (пароль/SSO)
+            return verificationHelper.isVerified(organizationId, auth);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
 

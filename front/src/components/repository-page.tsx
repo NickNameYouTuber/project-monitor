@@ -475,7 +475,10 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
   const handleEditFile = (path: string) => {
     if (!selectedRepoId || !selectedProject) return;
-    navigate(`/projects/${selectedProject.id}/repository/${selectedRepoId}/file/${encodeURIComponent(path)}`);
+    const currentOrgId = localStorage.getItem('currentOrgId');
+    if (currentOrgId) {
+      navigate(`/${currentOrgId}/projects/${selectedProject.id}/repository/${selectedRepoId}/file/${encodeURIComponent(path)}`);
+    }
   };
 
   const handleCreateFile = async () => {
@@ -629,7 +632,10 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   }, [location.pathname, defaultTab]);
 
   const handleTabChange = (value: string) => {
-    navigate(`/projects/${selectedProject?.id}/repository/${selectedRepoId}/${value}`);
+    const currentOrgId = localStorage.getItem('currentOrgId');
+    if (currentOrgId && selectedProject) {
+      navigate(`/${currentOrgId}/projects/${selectedProject.id}/repository/${selectedRepoId}/${value}`);
+    }
   };
 
   useEffect(() => {
@@ -682,7 +688,10 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
   const handleTaskClick = (task: Task) => {
     if (!selectedProject?.id) return;
-    navigate(`/projects/${selectedProject.id}/tasks?highlightTask=${task.id}`);
+    const currentOrgId = localStorage.getItem('currentOrgId');
+    if (currentOrgId) {
+      navigate(`/${currentOrgId}/projects/${selectedProject.id}/tasks?highlightTask=${task.id}`);
+    }
   };
 
   if (isLoading) {
@@ -891,7 +900,10 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                   key={commit.id || commit.sha || idx}
                   className="cursor-pointer hover:border-primary transition-colors"
                   onClick={() => {
-                    navigate(`/projects/${selectedProject?.id}/repository/${selectedRepoId}/commit/${commit.sha || commit.id}`);
+                    const currentOrgId = localStorage.getItem('currentOrgId');
+                    if (currentOrgId && selectedProject) {
+                      navigate(`/${currentOrgId}/projects/${selectedProject.id}/repository/${selectedRepoId}/commit/${commit.sha || commit.id}`);
+                    }
                   }}
                 >
                   <CardContent className="p-4">

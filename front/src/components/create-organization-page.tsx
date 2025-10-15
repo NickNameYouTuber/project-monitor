@@ -48,7 +48,7 @@ export function CreateOrganizationPage() {
       
       toast.success(`Organization "${org.name}" created successfully`);
       localStorage.setItem('currentOrgId', org.id);
-      navigate('/projects');
+      navigate(`/${org.id}/projects`);
     } catch (error) {
       console.error('Failed to create organization:', error);
       toast.error('Failed to create organization');

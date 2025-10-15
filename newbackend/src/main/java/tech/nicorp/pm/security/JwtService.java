@@ -1,5 +1,6 @@
 package tech.nicorp.pm.security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -10,7 +11,10 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class JwtService {
@@ -36,6 +40,25 @@ public class JwtService {
                 .addClaims(claims)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public String createTokenWithOrgVerification(String subject, UUID organizationId, Map<String, Object> additionalClaims) {
+        Map<String, Object> claims = new HashMap<>(additionalClaims);
+        claims.put("org_verified", organizationId.toString());
+        return createToken(subject, claims);
+    }
+
+    public Optional<String> extractOrgVerified(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+            return Optional.ofNullable(claims.get("org_verified", String.class));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 }
 
