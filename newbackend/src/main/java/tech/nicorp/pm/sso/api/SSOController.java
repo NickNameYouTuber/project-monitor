@@ -155,11 +155,14 @@ public class SSOController {
             
             User user = userRepository.findById(userId).orElseThrow();
             
-            // Создать токен с org_verified
+            // Создать токен с org_verified и email
             String token = jwtService.createTokenWithOrgVerification(
                 userId.toString(),
                 orgId,
-                Map.of("username", user.getUsername())
+                Map.of(
+                    "username", user.getUsername(),
+                    "email", user.getUsername()
+                )
             );
             
             // Вернуть JSON с токеном и orgId для frontend

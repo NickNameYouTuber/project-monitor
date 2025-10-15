@@ -170,11 +170,15 @@ public class OrganizationsController {
                 return ResponseEntity.status(403).body(Map.of("error", "invalid_password"));
             }
             
-            // Создать новый JWT токен с org_verified claim
+            // Создать новый JWT токен с org_verified claim и email
+            User user = member.getUser();
             String newToken = jwtService.createTokenWithOrgVerification(
                 userId.toString(), 
                 id, 
-                Map.of("username", member.getUser().getUsername())
+                Map.of(
+                    "username", user.getUsername(),
+                    "email", user.getUsername()
+                )
             );
             
             return ResponseEntity.ok(Map.of("token", newToken));

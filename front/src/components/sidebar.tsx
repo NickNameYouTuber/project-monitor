@@ -51,7 +51,7 @@ const simplifiedNavigation = [
 export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId, simplified = false }: SidebarProps) {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
+  const [mainEmail, setMainEmail] = useState('');
   const [ssoEmail, setSsoEmail] = useState<string | null>(null);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
 
@@ -60,25 +60,23 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
       try {
         const me = await getCurrentUser();
         setUserName(me.displayName || me.username || '');
-        setUserEmail(me.username || '');
+        setMainEmail(me.username || '');
       } catch {}
     })();
   }, []);
 
   useEffect(() => {
-    setSsoEmail(null);
     if (currentOrgId) {
       (async () => {
         try {
           const org = await getOrganization(currentOrgId);
           setCurrentOrg(org);
           
+          // Загрузить SSO информацию если есть
           try {
             const { getCurrentSSOInfo } = await import('../api/sso-user');
             const ssoInfo = await getCurrentSSOInfo(currentOrgId);
-            if (ssoInfo?.sso_email) {
-              setSsoEmail(ssoInfo.sso_email);
-            }
+            setSsoEmail(ssoInfo?.sso_email || null);
           } catch {
             setSsoEmail(null);
           }
@@ -177,11 +175,9 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{userName}</p>
-            <p className="text-xs text-muted-foreground truncate" title="Main Account">
-              {userEmail}
-            </p>
-            {ssoEmail && ssoEmail !== userEmail && (
-              <p className="text-xs text-blue-500 truncate mt-0.5" title={`SSO Account for ${currentOrg?.name || 'this organization'}`}>
+            <p className="text-xs text-muted-foreground truncate">{mainEmail}</p>
+            {currentOrgId && ssoEmail && ssoEmail !== mainEmail && (
+              <p className="text-xs text-blue-500 truncate mt-0.5" title="SSO Account for this organization">
                 🔐 {ssoEmail}
               </p>
             )}
