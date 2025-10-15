@@ -124,9 +124,12 @@ public class SSOController {
             @RequestParam String state) {
         
         try {
+            System.out.println("[SSOController] Processing callback with code and state");
             Map<String, Object> result = ssoService.handleCallback(code, state);
             UUID userId = UUID.fromString((String) result.get("user_id"));
             UUID orgId = UUID.fromString((String) result.get("organization_id"));
+            
+            System.out.println("[SSOController] SSO callback result - userId: " + userId + ", orgId: " + orgId);
             
             User user = userRepository.findById(userId).orElseThrow();
             
@@ -136,6 +139,9 @@ public class SSOController {
                 orgId,
                 Map.of("username", user.getUsername())
             );
+            
+            System.out.println("[SSOController] Created token with org_verified for orgId: " + orgId);
+            System.out.println("[SSOController] Token (first 30 chars): " + token.substring(0, Math.min(30, token.length())) + "...");
             
             // Вернуть JSON с токеном и orgId для frontend
             return ResponseEntity.ok(Map.of(
