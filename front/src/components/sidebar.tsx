@@ -7,7 +7,8 @@ import {
   Settings,
   Folder,
   Video,
-  User as UserIcon
+  User as UserIcon,
+  LogOut
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
@@ -17,6 +18,8 @@ import { getCurrentUser } from '../api/users';
 import { NotificationBell } from './NotificationBell';
 import type { Organization } from '../types/organization';
 import { getOrganization } from '../api/organizations';
+import { setAccessToken } from '../api/client';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   currentPage: Page;
@@ -46,6 +49,7 @@ const simplifiedNavigation = [
 ];
 
 export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId, simplified = false }: SidebarProps) {
+  const navigate = useNavigate();
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
@@ -152,7 +156,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
         </div>
       </nav>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-2">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
             <span className="text-sm font-medium">{(userName || ' ').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</span>
@@ -162,6 +166,22 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
             <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
           </div>
         </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full justify-start gap-2"
+          onClick={() => {
+            // Очистить все данные
+            setAccessToken(null);
+            localStorage.removeItem('currentOrgId');
+            sessionStorage.clear();
+            // Редирект на страницу авторизации
+            navigate('/auth');
+          }}
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </Button>
       </div>
     </div>
   );
