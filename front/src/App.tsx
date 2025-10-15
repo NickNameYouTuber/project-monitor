@@ -89,34 +89,6 @@ function ProjectRouteWrapperComponent({
   const p = projects.find(pr => pr.id === params.projectId) || fetchedProject || null;
   const repoId = (params as any).repoId as string | undefined;
 
-  React.useEffect(() => {
-    let isCancelled = false;
-    if (!params.projectId) return;
-    if (projects.find(pr => pr.id === params.projectId)) return;
-    (async () => {
-      try {
-        const { getProject } = await import('./api/projects');
-        const dto = await getProject(params.projectId as string);
-        if (isCancelled) return;
-        const mapped: Project = {
-          id: dto.id,
-          title: dto.name,
-          description: dto.description || '',
-          status: dto.status || 'inPlans',
-          createdAt: dto.createdAt ? new Date(dto.createdAt) : new Date(),
-          color: dto.color || '#6366f1',
-        };
-        setFetchedProject(mapped);
-        // Устанавливаем выбранный проект, чтобы сайдбар и навигация знали о нем
-        try {
-          // setSelectedProject в верхнем уровне через window.dispatchEvent невозможен; используем URL-навиг.
-        } catch {}
-      } catch {
-        // ignore
-      }
-    })();
-    return () => { isCancelled = true; };
-  }, [params.projectId, projects]);
   
   // Сообщаем вверх о выбранном проекте для синхронизации сайдбара/навигации
   React.useEffect(() => {
