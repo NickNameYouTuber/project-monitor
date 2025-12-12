@@ -459,6 +459,14 @@ export function ProjectTasksPage({
     })();
   }; 
 
+  if (!project) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <LoadingSpinner stages={['Loading project...']} />
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col">
       <div className="border-b border-border p-6">

@@ -67,6 +67,7 @@ public class CallsController {
 
     @GetMapping("/by-room/{roomId}")
     @Operation(summary = "Получить звонок по roomId")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<CallResponse> getByRoom(@PathVariable("roomId") String roomId) {
         return service.getByRoomId(roomId).map(c -> ResponseEntity.ok(toResponse(c))).orElse(ResponseEntity.notFound().build());
     }
@@ -121,7 +122,7 @@ public class CallsController {
         
         Call saved = service.save(c);
         
-        if (currentUser != null && body.getParticipantIds() != null) {
+        if (currentUser != null) {
             participantService.addParticipantsToCall(saved, body.getParticipantIds(), currentUser);
         }
         
@@ -198,6 +199,29 @@ public class CallsController {
             .orElse(null);
         
         return ResponseEntity.ok(new CheckAccessResponse(hasAccess, role));
+    }
+
+    @GetMapping("/by-room/{roomId}/check-access")
+    @Operation(summary = "Проверить доступ текущего пользователя к звонку по roomId")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<CheckAccessResponse> checkAccessByRoom(
+            @PathVariable("roomId") String roomId,
+            @AuthenticationPrincipal Object principal) {
+        
+        UUID userId = extractUserId(principal);
+        if (userId == null) {
+            return ResponseEntity.ok(new CheckAccessResponse(false, null));
+        }
+        
+        return service.getByRoomId(roomId)
+            .map(call -> {
+                boolean hasAccess = participantService.hasAccess(call, userId);
+                String role = participantService.getUserRole(call, userId)
+                    .map(Enum::name)
+                    .orElse(null);
+                return ResponseEntity.ok(new CheckAccessResponse(hasAccess, role));
+            })
+            .orElse(ResponseEntity.ok(new CheckAccessResponse(false, null)));
     }
 
     @PatchMapping("/{callId}/status")

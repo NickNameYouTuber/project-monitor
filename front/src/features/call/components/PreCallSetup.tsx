@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Video, VideoOff, Mic, MicOff, Phone } from 'lucide-react';
+import { Video, VideoOff, Mic, MicOff, Phone, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
+import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../../../contexts/AppContext';
 
 interface PreCallSetupProps {
   roomId: string;
@@ -12,6 +14,8 @@ interface PreCallSetupProps {
 
 const PreCallSetup: React.FC<PreCallSetupProps> = ({ roomId, onJoin }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { currentOrganization, currentProject } = useAppContext();
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [microphoneEnabled, setMicrophoneEnabled] = useState(true);
   const [guestName, setGuestName] = useState('');
@@ -97,8 +101,27 @@ const PreCallSetup: React.FC<PreCallSetupProps> = ({ roomId, onJoin }) => {
   const displayName = user?.username || guestName || 'Гость';
   const hasVideo = previewStream && previewStream.getVideoTracks().length > 0 && cameraEnabled;
 
+  const handleBack = () => {
+    if (currentProject && currentOrganization) {
+      navigate(`/${currentOrganization.id}/projects/${currentProject.id}/calls`);
+    } else if (currentOrganization) {
+      navigate(`/${currentOrganization.id}/calls`);
+    } else {
+      navigate('/calls');
+    }
+  };
+
   return (
-    <div className="h-full flex items-center justify-center bg-background p-6">
+    <div className="h-full flex items-center justify-center bg-background p-6 relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleBack}
+        className="absolute top-4 left-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Назад
+      </Button>
       <div className="grid grid-cols-2 gap-6 w-full max-w-5xl">
         {/* Левая плитка - только превью камеры (16:10) */}
         <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ aspectRatio: '16/10' }}>

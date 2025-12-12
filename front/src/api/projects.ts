@@ -24,6 +24,7 @@ export type ProjectCreateRequest = {
   orderIndex?: number;
   dashboardId?: string;
   color?: string;
+  organizationId?: string;
 };
 
 export type ProjectUpdateRequest = Partial<ProjectCreateRequest>;
@@ -45,7 +46,12 @@ export async function getProject(id: string): Promise<ProjectDto> {
 }
 
 export async function createProject(body: ProjectCreateRequest): Promise<ProjectDto> {
-  const { data } = await apiClient.post<ProjectDto>('/projects', body);
+  const requestBody: any = { ...body };
+  if (requestBody.organizationId) {
+    requestBody.organization_id = requestBody.organizationId;
+    delete requestBody.organizationId;
+  }
+  const { data } = await apiClient.post<ProjectDto>('/projects', requestBody);
   return data;
 }
 

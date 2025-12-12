@@ -1,19 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { initCallConnect } from '../../utils/call-connect';
-import { getCurrentUser } from '../../api/users';
+import { useMainAccount } from '../../hooks/useAccountContext';
 
 export default function Initializer({ roomId, onLeave }: { roomId?: string; onLeave: () => void }) {
+  const { account: mainAccount } = useMainAccount();
   const initializedRef = useRef(false);
+  
+  useEffect(() => {
+    if (mainAccount) {
+      (window as any).currentUserDisplayName = mainAccount.displayName || mainAccount.username || '';
+      (window as any).currentUserName = mainAccount.username || '';
+    }
+  }, [mainAccount]);
+
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
-    (async () => {
-      try {
-        const me = await getCurrentUser();
-        (window as any).currentUserDisplayName = me.displayName || me.username || '';
-        (window as any).currentUserName = me.username || '';
-      } catch {}
-    })();
 
     initCallConnect();
     if (roomId) {

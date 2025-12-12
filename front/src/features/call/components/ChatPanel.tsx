@@ -12,6 +12,7 @@ import { Calendar } from '../../../components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover';
 import { Button } from '../../../components/ui/button';
 import { AutocompleteInput } from '../../../components/autocomplete-input';
+import { useCurrentOrganization } from '../../../hooks/useAppContext';
 
 interface ChatMessage {
   id: string;
@@ -58,6 +59,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   roomId,
 }) => {
   const navigate = useNavigate();
+  const { organizationId } = useCurrentOrganization();
   const [inputMessage, setInputMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -101,19 +103,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     if (isTaskModalOpen && projects.length === 0) {
       (async () => {
         try {
-          const currentOrgId = localStorage.getItem('currentOrgId');
-          if (!currentOrgId) {
+          if (!organizationId) {
             setProjects([]);
             return;
           }
-          const projectsData = await listProjects(currentOrgId);
+          const projectsData = await listProjects(organizationId);
           setProjects(projectsData);
         } catch (error) {
           console.error('Ошибка загрузки проектов:', error);
         }
       })();
     }
-  }, [isTaskModalOpen, projects.length]);
+  }, [isTaskModalOpen, projects.length, organizationId]);
 
   // Загружаем колонки при выборе проекта
   useEffect(() => {

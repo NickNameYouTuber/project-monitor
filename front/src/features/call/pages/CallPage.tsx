@@ -85,18 +85,22 @@ const CallPage: React.FC = () => {
       if (!callId) return;
       
       try {
+        console.log('🔍 Проверка доступа к звонку, roomId:', callId);
         const response = await checkCallAccess(callId);
+        console.log('✅ Результат проверки доступа:', response);
         setHasAccess(response.hasAccess);
         setUserRole(response.role as 'ORGANIZER' | 'PARTICIPANT' | null);
         setAccessChecked(true);
         
         if (!response.hasAccess) {
-          console.warn('Access denied to call:', callId);
-          // Редирект через 2 секунды чтобы показать сообщение
+          console.warn('❌ Доступ запрещен к звонку:', callId, 'Роль:', response.role);
           setTimeout(() => navigate('/calls'), 2000);
+        } else {
+          console.log('✅ Доступ разрешен, роль:', response.role);
         }
-      } catch (error) {
-        console.error('Ошибка проверки доступа:', error);
+      } catch (error: any) {
+        console.error('❌ Ошибка проверки доступа:', error);
+        console.error('Детали ошибки:', error.response?.data || error.message);
         setAccessChecked(true);
         setHasAccess(false);
         setTimeout(() => navigate('/calls'), 2000);

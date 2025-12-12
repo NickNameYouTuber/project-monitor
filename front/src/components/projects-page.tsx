@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { LoadingSpinner } from './loading-spinner';
 import type { Project, Column } from '../App';
+import { useCurrentOrganization, useAppContext } from '../hooks/useAppContext';
 
 interface ProjectsPageProps {
   projects: Project[];
@@ -134,19 +135,27 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
   const [editingColumn, setEditingColumn] = useState<Column | null>(null);
   const [isCreateColumnOpen, setIsCreateColumnOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { organizationId } = useCurrentOrganization();
+  const { isLoading: orgLoading } = useAppContext();
 
   useEffect(() => {
+    if (orgLoading) {
+      return;
+    }
+    
     (async () => {
       try {
         setIsLoading(true);
         const { listProjects } = await import('../api/projects');
-        const currentOrgId = localStorage.getItem('currentOrgId');
-        if (!currentOrgId) {
+        if (!organizationId) {
+          console.warn('ProjectsPage: No organizationId, clearing projects');
           setProjects([]);
           setIsLoading(false);
           return;
         }
-        const data = await listProjects(currentOrgId);
+        console.log('ProjectsPage: Loading projects for organization:', organizationId);
+        const data = await listProjects(organizationId);
+        console.log('ProjectsPage: Loaded projects:', data.length);
         // map DTO -> UI Project
         const mapped: Project[] = data.map(d => ({
           id: d.id,
@@ -174,12 +183,14 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
             });
           await Promise.all(updates);
         } catch {}
-      } catch {}
-      finally {
+      } catch (error) {
+        console.error('ProjectsPage: Failed to load projects:', error);
+        setProjects([]);
+      } finally {
         setIsLoading(false);
       }
     })();
-  }, [setProjects]);
+  }, [setProjects, organizationId, orgLoading]);
 
   const filteredProjects = projects.filter(project =>
     project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -208,20 +219,21 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
 
   const handleCreateProject = async (projectData: Omit<Project, 'id' | 'createdAt'>) => {
     try {
-      const currentOrgId = localStorage.getItem('currentOrgId');
-      if (!currentOrgId) {
-        console.error('No organization selected');
+      if (!organizationId) {
+        console.error('ProjectsPage: No organization selected, cannot create project');
         return;
       }
       
+      console.log('ProjectsPage: Creating project with organizationId:', organizationId);
       const { createProject } = await import('../api/projects');
       const created = await createProject({
         name: projectData.title,
         description: projectData.description,
         status: projectData.status,
         color: projectData.color,
-        organizationId: currentOrgId,
+        organizationId: organizationId,
       });
+      console.log('ProjectsPage: Project created:', created.id);
       const mapped: Project = {
         id: created.id,
         title: created.name,
@@ -237,7 +249,9 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
         map[mapped.id] = mapped.color;
         localStorage.setItem('projectColors', JSON.stringify(map));
       } catch {}
-    } catch {}
+    } catch (error) {
+      console.error('ProjectsPage: Failed to create project:', error);
+    }
   };
 
   const handleUpdateProject = (updatedProject: Project) => {

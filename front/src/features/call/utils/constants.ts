@@ -1,7 +1,23 @@
 // Константы для звонков в project-monitor
 
-// Socket.IO URL - используем относительный путь, так как проксируется через Nginx
-export const SOCKET_URL = window.location.origin;
+// Socket.IO URL - используем проксирование через nginx в production, прямой URL в dev
+const getSocketUrl = () => {
+  if (import.meta.env.VITE_SOCKET_URL) {
+    console.log('🔧 Используется VITE_SOCKET_URL:', import.meta.env.VITE_SOCKET_URL);
+    return import.meta.env.VITE_SOCKET_URL;
+  }
+  
+  const isDev = import.meta.env.MODE === 'development' || 
+                import.meta.env.DEV || 
+                window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1';
+  
+  const url = isDev ? 'http://localhost:4000' : window.location.origin;
+  console.log('🔧 Socket URL определен:', url, 'isDev:', isDev, 'MODE:', import.meta.env.MODE, 'DEV:', import.meta.env.DEV);
+  return url;
+};
+
+export const SOCKET_URL = getSocketUrl();
 
 // API Base URL для NIMeet API
 export const API_BASE_URL = window.location.origin + '/meet-api';

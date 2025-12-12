@@ -58,9 +58,7 @@ public class RecurringCallService {
                 Call call = createSingleRecurringCall(request, currentDate, time, offset, groupId, creator);
                 calls.add(call);
                 
-                if (participantIds != null && !participantIds.isEmpty()) {
-                    participantService.addParticipantsToCall(call, participantIds, creator);
-                }
+                participantService.addParticipantsToCall(call, participantIds, creator);
             }
             
             currentDate = getNextDate(currentDate, request.getRecurrenceType());

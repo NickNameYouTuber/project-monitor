@@ -17,6 +17,9 @@ import CalendarContainer from './calls/CalendarContainer';
 import CallDetailsPanel from './calls/CallDetailsPanel';
 import { listCalls, createCall, getCallsInRange, CallResponse } from '../api/calls';
 import { useNotifications } from '../hooks/useNotifications';
+import { useCurrentProject, useCurrentOrganization } from '../hooks/useAppContext';
+import { useRouteState } from '../hooks/useRouteState';
+import { useMainAccount } from '../hooks/useAccountContext';
 
 interface Meeting {
   id: string;
@@ -52,6 +55,14 @@ export function CallsPage() {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { showToast, addNotification } = useNotifications();
+  const { projectId } = useCurrentProject();
+  const { organizationId } = useCurrentOrganization();
+  const routeState = useRouteState();
+  const { account: mainAccount } = useMainAccount();
+  
+  const isGlobalCalls = !routeState.isInOrganization && !routeState.isInProject;
+  const isOrganizationCalls = routeState.isInOrganization && !routeState.isInProject;
+  const isProjectCalls = routeState.isInProject;
   
   // ЕДИНСТВЕННЫЙ ИСТОЧНИК ИСТИНЫ - calls из API
   const [calls, setCalls] = useState<CallResponse[]>([]);
@@ -86,14 +97,27 @@ export function CallsPage() {
     try {
       const callsData = await listCalls();
       console.log('✅ Загружено звонков из API:', callsData.length);
-      setCalls(callsData);
+      
+      let filteredCalls = callsData;
+      
+      if (isProjectCalls && projectId) {
+        filteredCalls = callsData.filter(c => c.project_id === projectId);
+        console.log(`📋 Фильтрация по проекту ${projectId}: ${filteredCalls.length} звонков`);
+      } else if (isOrganizationCalls && organizationId) {
+        filteredCalls = callsData.filter(c => !c.project_id || c.project_id);
+        console.log(`🏢 Фильтрация по организации ${organizationId}: ${filteredCalls.length} звонков`);
+      } else {
+        console.log('🌐 Показываем все звонки (глобальный режим)');
+      }
+      
+      setCalls(filteredCalls);
     } catch (err: any) {
       console.error('❌ Ошибка загрузки звонков:', err);
       setError('Не удалось загрузить звонки. Попробуйте обновить страницу.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isProjectCalls, isOrganizationCalls, projectId, organizationId]);
 
   // Начальная загрузка + автообновление каждую минуту
   useEffect(() => {
@@ -105,7 +129,7 @@ export function CallsPage() {
     }, 60000);
     
     return () => clearInterval(intervalId);
-  }, [loadCallsFromAPI]);
+  }, [loadCallsFromAPI, isProjectCalls, isOrganizationCalls, projectId, organizationId]);
 
   useEffect(() => {
     if (roomId) {
@@ -186,12 +210,13 @@ export function CallsPage() {
     // Фильтр по поиску
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(m => 
-        m.title.toLowerCase().includes(query) ||
-        m.description?.toLowerCase().includes(query) ||
-        m.participants.some(p => p.toLowerCase().includes(query)) ||
-        m.roomId?.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter(m => {
+        const titleMatch = m.title.toLowerCase().includes(query);
+        const descMatch = m.description?.toLowerCase().includes(query);
+        const participantsMatch = Array.isArray(m.participants) && m.participants.some((p: string) => String(p).toLowerCase().includes(query));
+        const roomMatch = m.roomId?.toLowerCase().includes(query);
+        return titleMatch || descMatch || participantsMatch || roomMatch;
+      });
     }
     
     return filtered;
@@ -210,6 +235,12 @@ export function CallsPage() {
     const roomId = Date.now().toString();
 
     try {
+      const participantIds = newMeeting.participants?.map((u: any) => u.id) || [];
+      
+      if (mainAccount?.id && !participantIds.includes(mainAccount.id)) {
+        participantIds.push(mainAccount.id);
+      }
+      
       const payload: any = {
         room_id: roomId,
         title: newMeeting.title,
@@ -219,8 +250,12 @@ export function CallsPage() {
         scheduled_time: meetingDate.toISOString(),
         duration_minutes: newMeeting.duration,
         status: 'SCHEDULED',
-        participant_ids: newMeeting.participants?.map((u: any) => u.id) || [],
+        participant_ids: participantIds,
       };
+      
+      if (projectId) {
+        payload.project_id = projectId;
+      }
       
       if (newMeeting.isRecurring) {
         payload.is_recurring = true;

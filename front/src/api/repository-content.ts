@@ -3,11 +3,19 @@ import { apiClient } from './client';
 export type FileEntry = { path: string; type: 'blob' | 'tree'; size?: number; name: string };
 
 export async function listFiles(repoId: string, ref: string, path?: string): Promise<FileEntry[]> {
-  const { data } = await apiClient.get<any[]>(`/repositories/${repoId}/files`, { params: { ref, path } });
-  return data.map(item => ({
-    ...item,
-    name: item.name || item.path.split('/').pop() || item.path
-  }));
+  try {
+    const { data } = await apiClient.get<any[]>(`/repositories/${repoId}/files`, { params: { ref, path } });
+    return data.map(item => ({
+      ...item,
+      name: item.name || item.path.split('/').pop() || item.path
+    }));
+  } catch (error: any) {
+    console.error('Ошибка загрузки файлов репозитория:', error);
+    if (error.response?.status === 500) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function getFileContent(repoId: string, ref: string, path: string): Promise<string> {
@@ -16,8 +24,16 @@ export async function getFileContent(repoId: string, ref: string, path: string):
 }
 
 export async function listCommits(repoId: string, ref: string): Promise<any[]> {
-  const { data } = await apiClient.get<any[]>(`/repositories/${repoId}/commits`, { params: { ref } });
-  return data;
+  try {
+    const { data } = await apiClient.get<any[]>(`/repositories/${repoId}/commits`, { params: { ref } });
+    return data;
+  } catch (error: any) {
+    console.error('Ошибка загрузки коммитов репозитория:', error);
+    if (error.response?.status === 500) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function getCommitDiff(repoId: string, sha: string): Promise<any> {

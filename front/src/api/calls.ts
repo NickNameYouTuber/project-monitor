@@ -126,11 +126,15 @@ export async function getCallParticipants(callId: string): Promise<CallParticipa
 }
 
 /**
- * Проверить доступ текущего пользователя к звонку
+ * Проверить доступ текущего пользователя к звонку по roomId
  */
-export async function checkCallAccess(callId: string): Promise<{ hasAccess: boolean; role?: string }> {
-  const response = await apiClient.get(`/calls/${callId}/check-access`);
-  return response.data;
+export async function checkCallAccess(roomId: string): Promise<{ hasAccess: boolean; role?: string }> {
+  const response = await apiClient.get(`/calls/by-room/${roomId}/check-access`);
+  const data = response.data;
+  return {
+    hasAccess: data.has_access ?? data.hasAccess ?? false,
+    role: data.role
+  };
 }
 
 /**

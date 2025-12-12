@@ -49,6 +49,7 @@ import type { UserDto } from '../api/users';
 import { Copy } from 'lucide-react';
 import { useRepositoryPermissions } from '../hooks/useRepositoryPermissions';
 import { RoleBadge } from './role-badge';
+import { useCurrentOrganization } from '../hooks/useAppContext';
 
 interface RepositoryPageProps {
   projects: Project[];
@@ -381,6 +382,7 @@ function RepositorySettings() {
 }
 
 export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'files', selectedProject: propSelectedProject }: RepositoryPageProps) {
+  const { organizationId } = useCurrentOrganization();
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedProject, setSelectedProject] = useState<Project | null>(propSelectedProject || null);
@@ -474,11 +476,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   };
 
   const handleEditFile = (path: string) => {
-    if (!selectedRepoId || !selectedProject) return;
-    const currentOrgId = localStorage.getItem('currentOrgId');
-    if (currentOrgId) {
-      navigate(`/${currentOrgId}/projects/${selectedProject.id}/repository/${selectedRepoId}/file/${encodeURIComponent(path)}`);
-    }
+    if (!selectedRepoId || !selectedProject || !organizationId) return;
+    navigate(`/${organizationId}/projects/${selectedProject.id}/repository/${selectedRepoId}/file/${encodeURIComponent(path)}`);
   };
 
   const handleCreateFile = async () => {
@@ -580,10 +579,15 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
         const { getDefaultBranch, getBranches } = await import('../api/repositories');
         const def = await getDefaultBranch(selectedRepoId).catch(() => ({ default: 'main' }));
         const brs = await getBranches(selectedRepoId).catch(() => []);
-        setBranches(brs && brs.length ? brs : (def.default ? [def.default] : []));
-        setSelectedBranch(def.default || brs[0] || '');
+        setBranches(brs && brs.length ? brs : (def.default ? [def.default] : ['main']));
+        setSelectedBranch(def.default || brs[0] || 'main');
         setCurrentPath('');
-      } catch {}
+      } catch (error) {
+        console.error('Ошибка загрузки веток репозитория:', error);
+        setBranches(['main']);
+        setSelectedBranch('main');
+        setCurrentPath('');
+      }
     })();
   }, [selectedRepoId]);
 
@@ -592,12 +596,16 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
       if (!selectedRepoId || !selectedBranch) return;
       try {
         const [fs, cs] = await Promise.all([
-          listFiles(selectedRepoId, selectedBranch, currentPath || undefined),
-          listCommits(selectedRepoId, selectedBranch)
+          listFiles(selectedRepoId, selectedBranch, currentPath || undefined).catch(() => []),
+          listCommits(selectedRepoId, selectedBranch).catch(() => [])
         ]);
-        setEntries(fs);
-        setCommits(cs);
-      } catch {}
+        setEntries(fs || []);
+        setCommits(cs || []);
+      } catch (error) {
+        console.error('Ошибка загрузки данных репозитория:', error);
+        setEntries([]);
+        setCommits([]);
+      }
     })();
   }, [selectedRepoId, selectedBranch, currentPath]);
 
@@ -632,9 +640,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   }, [location.pathname, defaultTab]);
 
   const handleTabChange = (value: string) => {
-    const currentOrgId = localStorage.getItem('currentOrgId');
-    if (currentOrgId && selectedProject) {
-      navigate(`/${currentOrgId}/projects/${selectedProject.id}/repository/${selectedRepoId}/${value}`);
+    if (organizationId && selectedProject) {
+      navigate(`/${organizationId}/projects/${selectedProject.id}/repository/${selectedRepoId}/${value}`);
     }
   };
 
@@ -687,11 +694,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   }, [selectedRepoId, activeTab]);
 
   const handleTaskClick = (task: Task) => {
-    if (!selectedProject?.id) return;
-    const currentOrgId = localStorage.getItem('currentOrgId');
-    if (currentOrgId) {
-      navigate(`/${currentOrgId}/projects/${selectedProject.id}/tasks?highlightTask=${task.id}`);
-    }
+    if (!selectedProject?.id || !organizationId) return;
+    navigate(`/${organizationId}/projects/${selectedProject.id}/tasks?highlightTask=${task.id}`);
   };
 
   if (isLoading) {
@@ -900,9 +904,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                   key={commit.id || commit.sha || idx}
                   className="cursor-pointer hover:border-primary transition-colors"
                   onClick={() => {
-                    const currentOrgId = localStorage.getItem('currentOrgId');
-                    if (currentOrgId && selectedProject) {
-                      navigate(`/${currentOrgId}/projects/${selectedProject.id}/repository/${selectedRepoId}/commit/${commit.sha || commit.id}`);
+                    if (organizationId && selectedProject) {
+                      navigate(`/${organizationId}/projects/${selectedProject.id}/repository/${selectedRepoId}/commit/${commit.sha || commit.id}`);
                     }
                   }}
                 >

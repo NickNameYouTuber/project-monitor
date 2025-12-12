@@ -14,15 +14,22 @@ class SocketService {
       return this.socket;
     }
 
-    this.socket = io(SOCKET_URL, {
+    const socketOptions: any = {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000, // Увеличено с 500 до 1000
-      reconnectionDelayMax: 10000, // Увеличено с 5000 до 10000
-      timeout: 20000, // Таймаут подключения 20 секунд
-    });
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      timeout: 20000,
+    };
+
+    if (SOCKET_URL === window.location.origin) {
+      socketOptions.path = '/socket.io/';
+    }
+
+    console.log('🔌 Подключение к Socket.IO:', SOCKET_URL, socketOptions);
+    this.socket = io(SOCKET_URL, socketOptions);
 
     this.socket.on('connect', () => {
       console.log('Socket подключен:', this.socket?.id);
@@ -66,14 +73,21 @@ class SocketService {
       return this.socket;
     }
 
-    this.socket = io(SOCKET_URL, {
+    const socketOptions: any = {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000, // Увеличено с 500 до 1000
-      reconnectionDelayMax: 10000, // Увеличено с 5000 до 10000
-      timeout: 20000, // Таймаут подключения 20 секунд
-    });
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      timeout: 20000,
+    };
+
+    if (SOCKET_URL === window.location.origin) {
+      socketOptions.path = '/socket.io/';
+    }
+
+    console.log('🔌 Подключение к Socket.IO (гость):', SOCKET_URL, socketOptions);
+    this.socket = io(SOCKET_URL, socketOptions);
 
     this.socket.on('connect', () => {
       console.log('Socket подключен (гость):', this.socket?.id);

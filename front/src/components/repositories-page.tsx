@@ -61,10 +61,10 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
       if (createType === 'empty') {
         await createRepository({
           name: newRepo.name,
-          description: newRepo.description,
-          default_branch: newRepo.default_branch,
-          visibility: newRepo.visibility,
-          project_id: project?.id
+          description: newRepo.description || undefined,
+          default_branch: newRepo.default_branch || undefined,
+          visibility: newRepo.visibility || undefined,
+          project_id: project?.id ? String(project.id) : undefined
         });
         toast.success('Репозиторий создан');
       } else {
@@ -75,14 +75,16 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
         await cloneRepository({
           url: newRepo.url,
           name: newRepo.name,
-          description: newRepo.description,
-          default_branch: newRepo.default_branch,
-          visibility: newRepo.visibility,
-          project_id: project?.id,
+          description: newRepo.description || undefined,
+          default_branch: newRepo.default_branch || undefined,
+          visibility: newRepo.visibility || undefined,
+          project_id: project?.id ? String(project.id) : undefined,
           auth_token: newRepo.auth_token || undefined
         });
         toast.success('Репозиторий клонирован');
       }
+      setIsDialogOpen(false);
+      loadRepositories();
       
       setIsDialogOpen(false);
       setNewRepo({
@@ -95,7 +97,12 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
       });
       await loadRepositories();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Ошибка при создании репозитория');
+      console.error('Ошибка при создании репозитория:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Ошибка при создании репозитория';
+      toast.error(errorMessage);
     } finally {
       setIsCreating(false);
     }

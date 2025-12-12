@@ -14,9 +14,11 @@ import { listOrganizations } from '../api/organizations';
 import type { Organization } from '../types/organization';
 import { initiateSSOLogin } from '../api/sso';
 import { setAccessToken, getAccessToken } from '../api/client';
+import { useAppContext } from '../hooks/useAppContext';
 
 export function OrganizationsPage() {
   const navigate = useNavigate();
+  const { setCurrentOrganization } = useAppContext();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
@@ -57,9 +59,8 @@ export function OrganizationsPage() {
       setSelectedOrgForPassword(org);
       setPasswordDialogOpen(true);
     } else {
-      localStorage.setItem('currentOrgId', org.id);
       sessionStorage.setItem(`org_verified_${org.id}`, 'true');
-      navigate(`/${org.id}/projects`);
+      setCurrentOrganization(org);
     }
   };
 
@@ -98,11 +99,10 @@ export function OrganizationsPage() {
         const data = await response.json();
         if (data.token) {
           setAccessToken(data.token);
-          localStorage.setItem('currentOrgId', selectedOrgForPassword.id);
           sessionStorage.setItem(`org_verified_${selectedOrgForPassword.id}`, 'true');
           setPasswordDialogOpen(false);
           setOrgPassword('');
-          navigate(`/${selectedOrgForPassword.id}/projects`);
+          setCurrentOrganization(selectedOrgForPassword);
         }
       } else {
         toast.error('Incorrect password');

@@ -16,7 +16,7 @@ export async function listRepositories(params?: { project_id?: string }): Promis
   return data;
 }
 
-export async function createRepository(body: { name: string; default_branch?: string; project_id?: string }): Promise<RepositoryDto> {
+export async function createRepository(body: { name: string; default_branch?: string; description?: string; visibility?: string; project_id?: string }): Promise<RepositoryDto> {
   const { data } = await apiClient.post<RepositoryDto>('/repositories', body);
   return data;
 }
@@ -32,8 +32,16 @@ export async function getTags(repoId: string): Promise<string[]> {
 }
 
 export async function getDefaultBranch(repoId: string): Promise<{ default: string }> {
-  const { data } = await apiClient.get<{ default: string }>(`/repositories/${repoId}/refs/default`);
-  return data;
+  try {
+    const { data } = await apiClient.get<{ default: string }>(`/repositories/${repoId}/refs/default`);
+    return data;
+  } catch (error: any) {
+    console.error('Ошибка получения default branch:', error);
+    if (error.response?.status === 500) {
+      return { default: 'main' };
+    }
+    throw error;
+  }
 }
 
 export async function updateRepository(id: string, body: { name?: string; default_branch?: string; description?: string; visibility?: string }): Promise<RepositoryDto> {

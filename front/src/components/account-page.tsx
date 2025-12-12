@@ -22,11 +22,13 @@ import { Textarea } from './ui/textarea';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
 import { LoadingSpinner } from './loading-spinner';
+import { useMainAccount, useAccountContext } from '../hooks/useAccountContext';
 
 export function AccountPage() {
+  const { mainAccount, updateMainAccount } = useAccountContext();
   const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john@example.com',
+    name: '',
+    email: '',
     bio: 'Product Manager at NIGIt',
     timezone: 'UTC-5',
   });
@@ -46,16 +48,19 @@ export function AccountPage() {
   const [newTokenName, setNewTokenName] = useState('token');
 
   useEffect(() => {
+    if (mainAccount) {
+      setProfile((prev) => ({
+        ...prev,
+        name: mainAccount.displayName || mainAccount.username || '',
+        email: mainAccount.username || '',
+      }));
+    }
+  }, [mainAccount]);
+
+  useEffect(() => {
     (async () => {
       try {
         setIsLoading(true);
-        const { getCurrentUser } = await import('../api/users');
-        const me = await getCurrentUser();
-        setProfile((prev) => ({
-          ...prev,
-          name: me.displayName || me.username,
-          email: me.username,
-        }));
         const { listTokens } = await import('../api/tokens');
         const ts = await listTokens();
         setTokens(ts.map(t => ({ id: t.id, name: t.name, created_at: t.created_at })));
@@ -74,7 +79,7 @@ export function AccountPage() {
     setNotifications(prev => ({ ...prev, [field]: value }));
   };
 
-  if (isLoading) {
+  if (isLoading || !mainAccount) {
     return <LoadingSpinner 
       stages={['Auth User', 'Load Profile', 'Fetch Tokens', 'Ready']}
     />;
@@ -174,8 +179,7 @@ export function AccountPage() {
                 
                 <Button onClick={async () => {
                   try {
-                    const { updateCurrentUser } = await import('../api/users');
-                    await updateCurrentUser({ displayName: profile.name, username: profile.email });
+                    await updateMainAccount({ displayName: profile.name, username: profile.email });
                   } catch {}
                 }}>Save Changes</Button>
               </CardContent>

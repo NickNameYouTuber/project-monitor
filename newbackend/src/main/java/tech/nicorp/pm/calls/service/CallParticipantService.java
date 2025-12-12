@@ -108,23 +108,47 @@ public class CallParticipantService {
     /**
      * Проверить доступ пользователя к звонку
      */
+    @Transactional(readOnly = true)
     public boolean hasAccess(UUID callId, UUID userId) {
-        Call call = callRepository.findById(callId)
+        Call call = callRepository.findByIdWithParticipants(callId)
             .orElseThrow(() -> new IllegalArgumentException("Call not found: " + callId));
         
+        return hasAccess(call, userId);
+    }
+    
+    /**
+     * Проверить доступ пользователя к звонку (с уже загруженным Call)
+     */
+    public boolean hasAccess(Call call, UUID userId) {
+        if (call.getParticipants() == null || call.getParticipants().isEmpty()) {
+            return false;
+        }
+        
         return call.getParticipants().stream()
-            .anyMatch(p -> p.getUser().getId().equals(userId));
+            .anyMatch(p -> p.getUser() != null && p.getUser().getId().equals(userId));
     }
 
     /**
      * Получить роль пользователя в звонке
      */
+    @Transactional(readOnly = true)
     public Optional<ParticipantRole> getUserRole(UUID callId, UUID userId) {
-        Call call = callRepository.findById(callId)
+        Call call = callRepository.findByIdWithParticipants(callId)
             .orElseThrow(() -> new IllegalArgumentException("Call not found: " + callId));
         
+        return getUserRole(call, userId);
+    }
+    
+    /**
+     * Получить роль пользователя в звонке (с уже загруженным Call)
+     */
+    public Optional<ParticipantRole> getUserRole(Call call, UUID userId) {
+        if (call.getParticipants() == null || call.getParticipants().isEmpty()) {
+            return Optional.empty();
+        }
+        
         return call.getParticipants().stream()
-            .filter(p -> p.getUser().getId().equals(userId))
+            .filter(p -> p.getUser() != null && p.getUser().getId().equals(userId))
             .map(CallParticipant::getRole)
             .findFirst();
     }
