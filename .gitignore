@@ -63,3 +63,8 @@ backend/.pytest_cache
 whiteboard-frontend/
 for_zip/
 backend/
+
+# Project specific
+whiteboard-frontend/
+for_zip/
+backend/

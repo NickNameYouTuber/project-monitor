@@ -64,33 +64,65 @@ public class GitService {
             if (full != null && full.startsWith("refs/heads/")) {
                 return full.substring("refs/heads/".length());
             }
-            return "master";
+            
+            try (Git git = new Git(r)) {
+                List<String> branches = git.branchList().call().stream()
+                    .map(ref -> ref.getName().replace("refs/heads/", ""))
+                    .toList();
+                
+                if (branches.contains("main")) {
+                    return "main";
+                }
+                if (branches.contains("master")) {
+                    return "master";
+                }
+                if (!branches.isEmpty()) {
+                    return branches.get(0);
+                }
+            }
+            
+            return "main";
+        } catch (Exception e) {
+            throw new IOException("Failed to get default branch: " + e.getMessage(), e);
         }
     }
 
     public List<Map<String, Object>> listFiles(UUID repoId, String ref, String path) throws IOException {
         try (Repository r = openRepo(repoId)) {
             ObjectId commitId = r.resolve(ref);
-            if (commitId == null) return List.of();
+            if (commitId == null) {
+                List<String> branches = branches(repoId);
+                if (branches.isEmpty()) {
+                    return List.of();
+                }
+                String defaultBranch = branches.contains("main") ? "main" : 
+                                      branches.contains("master") ? "master" : branches.get(0);
+                commitId = r.resolve(defaultBranch);
+                if (commitId == null) {
+                    return List.of();
+                }
+            }
             
             try (RevWalk walk = new RevWalk(r)) {
                 RevCommit commit = walk.parseCommit(commitId);
                 RevTree tree = commit.getTree();
                 
-                // Если path указан, найти поддерево
                 if (path != null && !path.isEmpty()) {
                     try (TreeWalk pathWalk = TreeWalk.forPath(r, path, tree)) {
-                        if (pathWalk == null || !pathWalk.isSubtree()) {
+                        if (pathWalk == null) {
                             return List.of();
                         }
-                        tree = walk.parseTree(pathWalk.getObjectId(0));
+                        if (pathWalk.isSubtree()) {
+                            tree = walk.parseTree(pathWalk.getObjectId(0));
+                        } else {
+                            return List.of();
+                        }
                     }
                 }
                 
-                // Теперь обойти найденное дерево
                 try (TreeWalk tw = new TreeWalk(r)) {
                     tw.addTree(tree);
-                    tw.setRecursive(false);  // Всегда нерекурсивно - только прямые дочерние
+                    tw.setRecursive(false);
                     
                     List<Map<String, Object>> res = new ArrayList<>();
                     while (tw.next()) {
@@ -109,6 +141,8 @@ public class GitService {
                     return res;
                 }
             }
+        } catch (Exception e) {
+            throw new IOException("Failed to list files: " + e.getMessage(), e);
         }
     }
 

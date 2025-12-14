@@ -116,8 +116,12 @@ public class ChatController {
         }
 
         Chat chat = chatRepository.findById(id).orElse(null);
-        if (chat == null || !chat.getUser().getId().equals(userId)) {
+        if (chat == null) {
             return ResponseEntity.notFound().build();
+        }
+        
+        if (!chat.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(403).build();
         }
 
         try {
@@ -133,13 +137,16 @@ public class ChatController {
                 try {
                     actions = objectMapper.readValue(aiMessage.getActions(), new TypeReference<List<Map<String, Object>>>() {});
                 } catch (Exception e) {
+                    System.err.println("Error parsing actions JSON: " + e.getMessage());
                 }
             }
             response.setActions(actions);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).build();
+            System.err.println("Error sending message to chat " + id + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
         }
     }
 

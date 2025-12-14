@@ -2,6 +2,7 @@ package tech.nicorp.pm.ai.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ChatService {
     private final ChatRepository chatRepository;
@@ -72,70 +74,95 @@ public class ChatService {
     }
 
     public ChatMessage sendMessage(UUID chatId, String userMessage, UUID userId, UUID organizationId, UUID projectId) {
-        Chat chat = chatRepository.findById(chatId).orElse(null);
-        if (chat == null || !chat.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Chat not found or access denied");
-        }
-
-        ChatMessage userMsg = new ChatMessage();
-        userMsg.setChat(chat);
-        userMsg.setRole("user");
-        userMsg.setContent(userMessage);
-        chatMessageRepository.save(userMsg);
-
-        String context = buildContext(userId, organizationId, projectId);
-        List<Map<String, String>> messagesForAI = buildMessagesForAI(chat, context, userMessage);
-
-        String aiResponseText = gptunnelService.chatCompletion(messagesForAI);
-
-        ChatMessage aiMessage = new ChatMessage();
-        aiMessage.setChat(chat);
-        aiMessage.setRole("assistant");
+        log.info("Sending message to chat {} from user {}", chatId, userId);
         
-        String messageText = aiResponseText;
-        try {
-            Map<String, Object> responseMap = objectMapper.readValue(aiResponseText, new TypeReference<Map<String, Object>>() {});
-            if (responseMap.containsKey("message") && responseMap.get("message") instanceof String) {
-                messageText = (String) responseMap.get("message");
-            }
-        } catch (Exception e) {
+        Chat chat = chatRepository.findById(chatId).orElse(null);
+        if (chat == null) {
+            log.error("Chat not found: {}", chatId);
+            throw new RuntimeException("Chat not found");
         }
-        aiMessage.setContent(messageText);
+        
+        if (!chat.getUser().getId().equals(userId)) {
+            log.error("Access denied: user {} trying to access chat {} owned by {}", userId, chatId, chat.getUser().getId());
+            throw new RuntimeException("Access denied");
+        }
 
-        List<AIAction> actions = actionExecutor.parseActions(aiResponseText);
-        List<AIAction> executedActions = new ArrayList<>();
-        List<Map<String, Object>> actionsJson = new ArrayList<>();
+        try {
+            ChatMessage userMsg = new ChatMessage();
+            userMsg.setChat(chat);
+            userMsg.setRole("user");
+            userMsg.setContent(userMessage);
+            chatMessageRepository.save(userMsg);
+            log.debug("User message saved: {}", userMsg.getId());
 
-        for (AIAction action : actions) {
-            AIAction executed = actionExecutor.executeAction(action, userId, organizationId, projectId);
-            executedActions.add(executed);
+            String context = buildContext(userId, organizationId, projectId);
+            List<Map<String, String>> messagesForAI = buildMessagesForAI(chat, context, userMessage);
+            log.debug("Built {} messages for AI", messagesForAI.size());
+
+            String aiResponseText = gptunnelService.chatCompletion(messagesForAI);
+            log.debug("Received AI response, length: {}", aiResponseText != null ? aiResponseText.length() : 0);
+
+            ChatMessage aiMessage = new ChatMessage();
+            aiMessage.setChat(chat);
+            aiMessage.setRole("assistant");
             
-            Map<String, Object> actionJson = new HashMap<>();
-            actionJson.put("type", executed.getType());
-            actionJson.put("params", executed.getParams());
-            actionJson.put("result", executed.getResult());
-            if (executed.getNotification() != null) {
-                Map<String, String> notification = new HashMap<>();
-                notification.put("message", executed.getNotification().getMessage());
-                notification.put("link", executed.getNotification().getLink());
-                notification.put("linkText", executed.getNotification().getLinkText());
-                actionJson.put("notification", notification);
+            String messageText = aiResponseText;
+            try {
+                Map<String, Object> responseMap = objectMapper.readValue(aiResponseText, new TypeReference<Map<String, Object>>() {});
+                if (responseMap.containsKey("message") && responseMap.get("message") instanceof String) {
+                    messageText = (String) responseMap.get("message");
+                }
+            } catch (Exception e) {
+                log.warn("Failed to parse AI response as JSON, using raw text: {}", e.getMessage());
             }
-            actionsJson.add(actionJson);
-        }
+            aiMessage.setContent(messageText);
 
-        try {
-            String actionsJsonStr = objectMapper.writeValueAsString(actionsJson);
-            aiMessage.setActions(actionsJsonStr);
+            List<AIAction> actions = actionExecutor.parseActions(aiResponseText);
+            log.debug("Parsed {} actions from AI response", actions.size());
+            
+            List<AIAction> executedActions = new ArrayList<>();
+            List<Map<String, Object>> actionsJson = new ArrayList<>();
+
+            for (AIAction action : actions) {
+                try {
+                    AIAction executed = actionExecutor.executeAction(action, userId, organizationId, projectId);
+                    executedActions.add(executed);
+                    
+                    Map<String, Object> actionJson = new HashMap<>();
+                    actionJson.put("type", executed.getType());
+                    actionJson.put("params", executed.getParams());
+                    actionJson.put("result", executed.getResult());
+                    if (executed.getNotification() != null) {
+                        Map<String, String> notification = new HashMap<>();
+                        notification.put("message", executed.getNotification().getMessage());
+                        notification.put("link", executed.getNotification().getLink());
+                        notification.put("linkText", executed.getNotification().getLinkText());
+                        actionJson.put("notification", notification);
+                    }
+                    actionsJson.add(actionJson);
+                } catch (Exception e) {
+                    log.error("Error executing action {}: {}", action.getType(), e.getMessage(), e);
+                }
+            }
+
+            try {
+                String actionsJsonStr = objectMapper.writeValueAsString(actionsJson);
+                aiMessage.setActions(actionsJsonStr);
+            } catch (Exception e) {
+                log.error("Error serializing actions to JSON: {}", e.getMessage(), e);
+            }
+
+            chatMessageRepository.save(aiMessage);
+            log.debug("AI message saved: {}", aiMessage.getId());
+
+            chat.setUpdatedAt(OffsetDateTime.now());
+            chatRepository.save(chat);
+
+            return aiMessage;
         } catch (Exception e) {
+            log.error("Error in sendMessage for chat {}: {}", chatId, e.getMessage(), e);
+            throw e;
         }
-
-        chatMessageRepository.save(aiMessage);
-
-        chat.setUpdatedAt(OffsetDateTime.now());
-        chatRepository.save(chat);
-
-        return aiMessage;
     }
 
     private String buildContext(UUID userId, UUID organizationId, UUID projectId) {

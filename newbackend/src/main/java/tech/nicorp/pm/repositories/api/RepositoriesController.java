@@ -88,8 +88,19 @@ public class RepositoriesController {
     }
 
     @GetMapping("/{repoId}/refs/default")
-    public ResponseEntity<Object> defaultBranch(@PathVariable("repoId") UUID repoId) throws IOException {
-        return ResponseEntity.ok(Map.of("default", git.defaultBranch(repoId)));
+    public ResponseEntity<Object> defaultBranch(@PathVariable("repoId") UUID repoId) {
+        try {
+            String defaultBranch = git.defaultBranch(repoId);
+            return ResponseEntity.ok(Map.of("default", defaultBranch));
+        } catch (IOException e) {
+            System.err.println("Error getting default branch for repo " + repoId + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to get default branch", "message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Unexpected error getting default branch for repo " + repoId + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Unexpected error", "message", e.getMessage()));
+        }
     }
 
     @GetMapping("/{repoId}/tasks")

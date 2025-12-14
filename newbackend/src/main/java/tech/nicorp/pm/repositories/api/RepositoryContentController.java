@@ -23,8 +23,18 @@ public class RepositoryContentController {
     }
 
     @GetMapping("/files")
-    public ResponseEntity<Object> listFiles(@PathVariable("repoId") UUID repoId, @RequestParam("ref") String ref, @RequestParam(value = "path", required = false) String path) throws IOException {
-        return ResponseEntity.ok(git.listFiles(repoId, ref, path));
+    public ResponseEntity<Object> listFiles(@PathVariable("repoId") UUID repoId, @RequestParam("ref") String ref, @RequestParam(value = "path", required = false) String path) {
+        try {
+            return ResponseEntity.ok(git.listFiles(repoId, ref, path));
+        } catch (IOException e) {
+            System.err.println("Error listing files for repo " + repoId + " ref " + ref + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to list files", "message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Unexpected error listing files for repo " + repoId + " ref " + ref + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Unexpected error", "message", e.getMessage()));
+        }
     }
 
     @GetMapping(value = "/file", produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE})
