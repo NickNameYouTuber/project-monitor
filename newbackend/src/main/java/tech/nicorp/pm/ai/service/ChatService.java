@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import tech.nicorp.pm.ai.domain.Chat;
@@ -73,6 +74,7 @@ public class ChatService {
         this.objectMapper = objectMapper;
     }
 
+    @Transactional
     public ChatMessage sendMessage(UUID chatId, String userMessage, UUID userId, UUID organizationId, UUID projectId) {
         log.info("Sending message to chat {} from user {}", chatId, userId);
         

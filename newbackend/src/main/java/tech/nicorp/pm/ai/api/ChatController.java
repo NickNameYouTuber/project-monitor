@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.ai.api.dto.*;
 import tech.nicorp.pm.ai.domain.Chat;
@@ -107,6 +108,7 @@ public class ChatController {
 
     @PostMapping("/{id}/messages")
     @Operation(summary = "Отправить сообщение в чат")
+    @Transactional
     public ResponseEntity<SendMessageResponse> sendMessage(@PathVariable("id") UUID id,
                                                           @RequestBody SendMessageRequest request,
                                                           Authentication auth) {
@@ -120,8 +122,14 @@ public class ChatController {
             return ResponseEntity.notFound().build();
         }
         
-        if (!chat.getUser().getId().equals(userId)) {
-            return ResponseEntity.status(403).build();
+        try {
+            if (!chat.getUser().getId().equals(userId)) {
+                return ResponseEntity.status(403).build();
+            }
+        } catch (Exception e) {
+            System.err.println("Error accessing chat user: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
         }
 
         try {
@@ -143,8 +151,12 @@ public class ChatController {
             response.setActions(actions);
 
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.err.println("Error sending message to chat " + id + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        } catch (Exception e) {
+            System.err.println("Unexpected error sending message to chat " + id + ": " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body(null);
         }
