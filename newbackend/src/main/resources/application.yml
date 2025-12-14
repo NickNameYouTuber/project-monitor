@@ -57,7 +57,7 @@ logging:
 
 gptunnel:
   base-url: ${GPTUNNEL_BASE_URL:https://gptunnel.com/v1}
-  api-key: ${GPTUNNEL_API_KEY:shds-Q7XSucXbqaZwXvwHpP18XYOlSN9}
+  api-key: ${GPTUNNEL_API_KEY:shds-Lq3Vw7K18HYtAZfAYWSKjpmBefh}
   model: ${LLM_MODEL:gpt-4o}
 
 

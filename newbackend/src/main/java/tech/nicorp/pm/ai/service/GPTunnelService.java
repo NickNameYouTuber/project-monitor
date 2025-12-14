@@ -17,7 +17,7 @@ public class GPTunnelService {
     private final String model;
 
     public GPTunnelService(@Value("${gptunnel.base-url:https://gptunnel.com/v1}") String baseUrl,
-                          @Value("${gptunnel.api-key:shds-Q7XSucXbqaZwXvwHpP18XYOlSN9}") String apiKey,
+                          @Value("${gptunnel.api-key:shds-Lq3Vw7K18HYtAZfAYWSKjpmBefh}") String apiKey,
                           @Value("${gptunnel.model:gpt-4o}") String model,
                           RestTemplate restTemplate) {
         this.baseUrl = baseUrl;
