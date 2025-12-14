@@ -113,6 +113,7 @@ public class RepositoriesController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<Object> list(@RequestParam(name = "project_id", required = false) UUID projectId, @AuthenticationPrincipal Object principal, Authentication auth) {
         UUID userId = extractUserId(principal);
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "unauthorized"));
@@ -123,13 +124,22 @@ public class RepositoriesController {
         }
         
         var list = repositories.findByMemberUserId(userId).stream()
-                .filter(r -> projectId == null || (r.getProject() != null && projectId.equals(r.getProject().getId())))
+                .filter(r -> {
+                    if (projectId == null) return true;
+                    try {
+                        Project project = r.getProject();
+                        return project != null && projectId.equals(project.getId());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
                 .map(this::toResponse)
                 .toList();
         return ResponseEntity.ok(list);
     }
 
     @PostMapping
+    @Transactional
     public ResponseEntity<Object> create(@RequestBody Map<String, Object> body, @AuthenticationPrincipal Object principal) {
         UUID userId = extractUserId(principal);
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "unauthorized"));
@@ -141,9 +151,18 @@ public class RepositoriesController {
         r.setDefaultBranch(body.get("default_branch") != null ? (String) body.get("default_branch") : "master");
         if (body.get("description") != null) r.setDescription((String) body.get("description"));
         if (body.get("visibility") != null) r.setVisibility((String) body.get("visibility"));
+        
+        Project project = null;
         if (body.get("project_id") instanceof String s) {
-            try { var pid = UUID.fromString(s); projects.findById(pid).ifPresent(r::setProject); } catch (IllegalArgumentException ignored) {}
+            try { 
+                var pid = UUID.fromString(s); 
+                project = projects.findById(pid).orElse(null);
+                if (project != null) {
+                    r.setProject(project);
+                }
+            } catch (IllegalArgumentException ignored) {}
         }
+        
         Repository saved = repositories.save(r);
         
         User creator = users.findById(userId).orElse(null);
@@ -155,8 +174,8 @@ public class RepositoriesController {
             members.save(creatorMember);
         }
         
-        if (saved.getProject() != null) {
-            User projectOwner = saved.getProject().getOwner();
+        if (project != null) {
+            User projectOwner = project.getOwner();
             if (projectOwner != null && !projectOwner.getId().equals(userId)) {
                 RepositoryMember ownerMember = new RepositoryMember();
                 ownerMember.setRepository(saved);
@@ -166,14 +185,16 @@ public class RepositoriesController {
             }
         }
         
+        UUID savedId = saved.getId();
         try {
-            git.initRepository(saved.getId());
+            git.initRepository(savedId);
         } catch (IOException e) {
-            repositories.deleteById(saved.getId());
+            repositories.deleteById(savedId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "init_failed", "message", e.getMessage()));
         }
         
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
+        RepositoryResponse response = toResponse(saved);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -246,6 +267,7 @@ public class RepositoriesController {
         return null;
     }
 
+    @Transactional(readOnly = true)
     private RepositoryResponse toResponse(Repository r) {
         RepositoryResponse resp = new RepositoryResponse();
         resp.setId(r.getId());
@@ -254,7 +276,16 @@ public class RepositoriesController {
         resp.setCloneUrl(r.getCloneUrl());
         resp.setVisibility(r.getVisibility());
         resp.setDescription(r.getDescription());
-        if (r.getProject() != null) resp.setProjectId(r.getProject().getId());
+        
+        try {
+            Project project = r.getProject();
+            if (project != null) {
+                resp.setProjectId(project.getId());
+            }
+        } catch (Exception e) {
+            System.err.println("Error accessing project in toResponse: " + e.getMessage());
+        }
+        
         resp.setCreatedAt(r.getCreatedAt());
         return resp;
     }
