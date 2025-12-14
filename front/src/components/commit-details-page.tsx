@@ -6,7 +6,7 @@ import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import { ArrowLeft, Plus, Minus, Edit, File as FileIcon, GitCommit } from 'lucide-react';
 import { getCommitDiffDetails, type CommitDiff, type FileDiff } from '../api/repository-content';
-import { toast } from 'sonner';
+import { useNotifications } from '../hooks/useNotifications';
 import { LoadingSpinner } from './loading-spinner';
 
 interface ParsedDiff {
@@ -251,6 +251,7 @@ function FileGroup({ type, files }: { type: 'added' | 'modified' | 'deleted'; fi
 export function CommitDetailsPage() {
   const { repoId, commitSha } = useParams();
   const navigate = useNavigate();
+  const { showError } = useNotifications();
   const [diff, setDiff] = useState<CommitDiff | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -263,7 +264,7 @@ export function CommitDetailsPage() {
         const data = await getCommitDiffDetails(repoId, commitSha);
         setDiff(data);
       } catch (error) {
-        toast.error('Ошибка загрузки коммита');
+        showError('Ошибка загрузки коммита');
       } finally {
         setIsLoading(false);
       }

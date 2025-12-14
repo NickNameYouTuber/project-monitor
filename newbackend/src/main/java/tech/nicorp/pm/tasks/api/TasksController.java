@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.organizations.repo.OrganizationMemberRepository;
 import tech.nicorp.pm.projects.domain.Project;
 import tech.nicorp.pm.projects.domain.TaskColumn;
+import tech.nicorp.pm.realtime.RealtimeEventService;
 import tech.nicorp.pm.projects.repo.ProjectRepository;
 import tech.nicorp.pm.projects.repo.TaskColumnRepository;
 import tech.nicorp.pm.repositories.domain.Repository;
@@ -35,11 +36,13 @@ public class TasksController {
     private final UserRepository users;
     private final OrganizationMemberRepository organizationMemberRepository;
     private final OrganizationVerificationHelper verificationHelper;
+    private final RealtimeEventService realtimeEventService;
 
     public TasksController(TaskRepository tasks, ProjectRepository projects, TaskColumnRepository columns, 
                           RepositoryRepository repositories, UserRepository users,
                           OrganizationMemberRepository organizationMemberRepository,
-                          OrganizationVerificationHelper verificationHelper) {
+                          OrganizationVerificationHelper verificationHelper,
+                          RealtimeEventService realtimeEventService) {
         this.tasks = tasks;
         this.projects = projects;
         this.columns = columns;
@@ -47,6 +50,7 @@ public class TasksController {
         this.users = users;
         this.organizationMemberRepository = organizationMemberRepository;
         this.verificationHelper = verificationHelper;
+        this.realtimeEventService = realtimeEventService;
     }
 
     @GetMapping("/tasks")
@@ -75,7 +79,14 @@ public class TasksController {
         if (body.getRepositoryId() != null) t.setRepositoryId(body.getRepositoryId());
         if (body.getRepositoryBranch() != null) t.setRepositoryBranch(body.getRepositoryBranch());
         Task saved = tasks.save(t);
-        return ResponseEntity.created(URI.create("/api/projects/" + projectId + "/tasks/" + saved.getId())).body(toResponse(saved));
+        TaskResponse response = toResponse(saved);
+        
+        try {
+            realtimeEventService.sendTaskCreated(projectId, response);
+        } catch (Exception e) {
+        }
+        
+        return ResponseEntity.created(URI.create("/api/projects/" + projectId + "/tasks/" + saved.getId())).body(response);
     }
 
     @PutMapping("/tasks/{taskId}")
@@ -107,12 +118,21 @@ public class TasksController {
             return ResponseEntity.status(403).build();
         }
         return tasks.findById(taskId).map(t -> {
+            UUID projId = t.getProject() != null ? t.getProject().getId() : projectId;
             if (body.get("column_id") instanceof String s) {
                 try { UUID cid = UUID.fromString(s); columns.findById(cid).ifPresent(t::setColumn); } catch (IllegalArgumentException ignored) {}
             }
             Object orderVal = body.get("order");
             if (orderVal instanceof Number n) t.setOrderIndex(n.intValue());
-            return ResponseEntity.ok(toResponse(tasks.save(t)));
+            Task saved = tasks.save(t);
+            TaskResponse response = toResponse(saved);
+            
+            try {
+                realtimeEventService.sendTaskUpdated(projId, response);
+            } catch (Exception e) {
+            }
+            
+            return ResponseEntity.ok(response);
         }).orElse(ResponseEntity.notFound().build());
     }
 
@@ -148,7 +168,17 @@ public class TasksController {
                 tasks.save(t);
             }
         }
-        List<TaskResponse> result = tasks.findByColumn_IdOrderByOrderIndexAsc(columnId).stream().map(this::toResponse).toList();
+        List<Task> savedTasks = tasks.findByColumn_IdOrderByOrderIndexAsc(columnId);
+        List<TaskResponse> result = savedTasks.stream().map(this::toResponse).toList();
+        
+        for (Task savedTask : savedTasks) {
+            try {
+                TaskResponse taskResponse = toResponse(savedTask);
+                realtimeEventService.sendTaskUpdated(projectId, taskResponse);
+            } catch (Exception e) {
+            }
+        }
+        
         return ResponseEntity.ok(result);
     }
 

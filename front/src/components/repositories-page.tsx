@@ -11,7 +11,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import type { Project } from '../App';
 import { listRepositories, createRepository, cloneRepository, type RepositoryDto } from '../api/repositories';
-import { toast } from 'sonner';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface RepositoriesPageProps {
   project: Project | null;
@@ -19,6 +19,7 @@ interface RepositoriesPageProps {
 }
 
 export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPageProps) {
+  const { showSuccess, showError } = useNotifications();
   const [repositories, setRepositories] = useState<RepositoryDto[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +53,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
 
   const handleCreateRepository = async () => {
     if (!newRepo.name.trim()) {
-      toast.error('Введите название репозитория');
+      showError('Ошибка', 'Введите название репозитория');
       return;
     }
 
@@ -66,10 +67,10 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
           visibility: newRepo.visibility || undefined,
           project_id: project?.id ? String(project.id) : undefined
         });
-        toast.success('Репозиторий создан');
+        showSuccess('Репозиторий создан');
       } else {
         if (!newRepo.url.trim()) {
-          toast.error('Введите URL репозитория');
+          showError('Введите URL репозитория');
           return;
         }
         await cloneRepository({
@@ -81,7 +82,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
           project_id: project?.id ? String(project.id) : undefined,
           auth_token: newRepo.auth_token || undefined
         });
-        toast.success('Репозиторий клонирован');
+        showSuccess('Репозиторий клонирован');
       }
       setIsDialogOpen(false);
       loadRepositories();
@@ -102,7 +103,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                           error.response?.data?.error || 
                           error.message || 
                           'Ошибка при создании репозитория';
-      toast.error(errorMessage);
+      showError('Ошибка', errorMessage);
     } finally {
       setIsCreating(false);
     }

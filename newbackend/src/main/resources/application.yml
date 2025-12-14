@@ -55,4 +55,9 @@ logging:
     tech.nicorp.pm.calls: INFO
     org.springframework.scheduling: DEBUG
 
+gptunnel:
+  base-url: ${GPTUNNEL_BASE_URL:https://gptunnel.com/v1}
+  api-key: ${GPTUNNEL_API_KEY:shds-Q7XSucXbqaZwXvwHpP18XYOlSN9}
+  model: ${LLM_MODEL:gpt-4o}
+
 

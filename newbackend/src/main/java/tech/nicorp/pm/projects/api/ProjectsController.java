@@ -28,6 +28,7 @@ import tech.nicorp.pm.projects.domain.ProjectRole;
 import tech.nicorp.pm.organizations.repo.OrganizationRepository;
 import tech.nicorp.pm.organizations.repo.OrganizationMemberRepository;
 import tech.nicorp.pm.security.OrganizationVerificationHelper;
+import tech.nicorp.pm.realtime.RealtimeEventService;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -41,11 +42,13 @@ public class ProjectsController {
     private final OrganizationRepository organizationRepository;
     private final OrganizationMemberRepository organizationMemberRepository;
     private final OrganizationVerificationHelper verificationHelper;
+    private final RealtimeEventService realtimeEventService;
 
-    public ProjectsController(ProjectRepository projects, UserRepository users, DashboardRepository dashboards, 
+    public ProjectsController(ProjectRepository projects, UserRepository users, DashboardRepository dashboards,
                              ProjectMemberService projectMemberService, OrganizationRepository organizationRepository,
                              OrganizationMemberRepository organizationMemberRepository,
-                             OrganizationVerificationHelper verificationHelper) {
+                             OrganizationVerificationHelper verificationHelper,
+                             RealtimeEventService realtimeEventService) {
         this.projects = projects;
         this.users = users;
         this.dashboards = dashboards;
@@ -53,6 +56,7 @@ public class ProjectsController {
         this.organizationRepository = organizationRepository;
         this.organizationMemberRepository = organizationMemberRepository;
         this.verificationHelper = verificationHelper;
+        this.realtimeEventService = realtimeEventService;
     }
 
     @GetMapping
@@ -138,7 +142,16 @@ public class ProjectsController {
             }
         }
         
-        return ResponseEntity.created(URI.create("/api/projects/" + saved.getId())).body(toResponse(saved));
+        ProjectResponse response = toResponse(saved);
+        
+        if (saved.getOrganization() != null) {
+            try {
+                realtimeEventService.sendProjectCreated(saved.getOrganization().getId(), response);
+            } catch (Exception e) {
+            }
+        }
+        
+        return ResponseEntity.created(URI.create("/api/projects/" + saved.getId())).body(response);
     }
 
     @PutMapping("/{id}")
@@ -175,7 +188,10 @@ public class ProjectsController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить проект")
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id, Authentication auth) {
-        if (!projects.existsById(id)) return ResponseEntity.notFound().build();
+        Project project = projects.findById(id).orElse(null);
+        if (project == null) return ResponseEntity.notFound().build();
+        
+        UUID organizationId = project.getOrganization() != null ? project.getOrganization().getId() : null;
         
         if (auth == null || auth.getName() == null) {
             return ResponseEntity.status(401).build();
@@ -193,6 +209,14 @@ public class ProjectsController {
         }
         
         projects.deleteById(id);
+        
+        if (organizationId != null) {
+            try {
+                realtimeEventService.sendProjectDeleted(organizationId, id);
+            } catch (Exception e) {
+            }
+        }
+        
         return ResponseEntity.noContent().build();
     }
 

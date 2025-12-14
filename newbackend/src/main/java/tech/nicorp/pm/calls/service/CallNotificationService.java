@@ -18,6 +18,7 @@ import java.util.Map;
 public class CallNotificationService {
 
     private final RestTemplate restTemplate;
+    private final tech.nicorp.pm.calls.api.CallNotificationController callNotificationController;
     
     @Value("${nimeet.backend.url:http://localhost:3001}")
     private String nimeetBackendUrl;
@@ -41,14 +42,14 @@ public class CallNotificationService {
             }
             
             try {
-                tech.nicorp.pm.calls.api.CallNotificationController.sendCallStarting(
+                callNotificationController.sendCallStarting(
                     user.getId(),
                     call.getId().toString(),
                     call.getTitle(),
                     call.getRoomId()
                 );
                 
-                log.info("✅ SSE уведомление о начале звонка отправлено пользователю {} (userId={})", 
+                log.info("✅ WebSocket уведомление о начале звонка отправлено пользователю {} (userId={})", 
                     user.getUsername(), user.getId());
             } catch (Exception e) {
                 log.error("❌ Ошибка отправки уведомления пользователю {}: {}", user.getUsername(), e.getMessage(), e);
@@ -66,14 +67,14 @@ public class CallNotificationService {
             if (user == null) continue;
             
             try {
-                tech.nicorp.pm.calls.api.CallNotificationController.sendCallReminder(
+                callNotificationController.sendCallReminder(
                     user.getId(),
                     call.getId().toString(),
                     call.getTitle(),
                     minutesUntil
                 );
                 
-                log.info("✅ SSE напоминание о звонке отправлено пользователю {} (через {} мин)", user.getUsername(), minutesUntil);
+                log.info("✅ WebSocket напоминание о звонке отправлено пользователю {} (через {} мин)", user.getUsername(), minutesUntil);
             } catch (Exception e) {
                 log.error("❌ Ошибка отправки напоминания пользователю {}: {}", user.getUsername(), e.getMessage());
             }

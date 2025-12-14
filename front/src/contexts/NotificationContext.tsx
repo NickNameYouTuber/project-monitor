@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { sseService } from '../services/sseService';
+import { websocketService } from '../services/websocketService';
 
 export interface Notification {
   id: string;
-  type: 'call' | 'task';
+  type: 'call' | 'task' | 'success' | 'error' | 'info' | 'warning';
   title: string;
   message: string;
   timestamp: Date;
@@ -14,6 +14,7 @@ export interface Notification {
     callId?: string;
     taskId?: string;
     projectId?: string;
+    [key: string]: any;
   };
 }
 
@@ -25,13 +26,83 @@ interface NotificationContextType {
   markAllAsRead: () => void;
   clearNotification: (id: string) => void;
   clearAll: () => void;
-  showToast: (title: string, description?: string, type?: 'success' | 'error' | 'info') => void;
+  showToast: (title: string, description?: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
+  showSuccess: (title: string, description?: string) => void;
+  showError: (title: string, description?: string) => void;
+  showInfo: (title: string, description?: string) => void;
+  showWarning: (title: string, description?: string) => void;
+  showCallNotification: (title: string, description?: string, actionUrl?: string, metadata?: any) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'notifications_history';
+const MAX_NOTIFICATIONS = 100;
+const MAX_AGE_DAYS = 7;
+
+const loadNotificationsFromStorage = (): Notification[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+    
+    const parsed = JSON.parse(stored);
+    const now = new Date();
+    const maxAge = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+    
+    return parsed
+      .map((n: any) => ({
+        ...n,
+        timestamp: new Date(n.timestamp)
+      }))
+      .filter((n: Notification) => {
+        const age = now.getTime() - n.timestamp.getTime();
+        return age < maxAge;
+      })
+      .slice(0, MAX_NOTIFICATIONS);
+  } catch (error) {
+    console.error('Ошибка загрузки уведомлений из localStorage:', error);
+    return [];
+  }
+};
+
+const saveNotificationsToStorage = (notifications: Notification[]) => {
+  try {
+    const toSave = notifications.slice(0, MAX_NOTIFICATIONS);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch (error) {
+    console.error('Ошибка сохранения уведомлений в localStorage:', error);
+  }
+};
+
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>(() => loadNotificationsFromStorage());
+
+  useEffect(() => {
+    const loaded = loadNotificationsFromStorage();
+    if (loaded.length > 0) {
+      setNotifications(loaded);
+    }
+  }, []);
+
+  useEffect(() => {
+    saveNotificationsToStorage(notifications);
+  }, [notifications]);
+
+  const showToast = useCallback((title: string, description?: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+    switch (type) {
+      case 'success':
+        toast.success(title, { description });
+        break;
+      case 'error':
+        toast.error(title, { description });
+        break;
+      case 'warning':
+        toast.warning(title, { description });
+        break;
+      default:
+        toast(title, { description });
+    }
+  }, []);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
@@ -41,10 +112,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       read: false,
     };
     
-    setNotifications(prev => [newNotification, ...prev]);
+    setNotifications(prev => {
+      const updated = [newNotification, ...prev];
+      const cleaned = updated
+        .filter(n => {
+          const age = Date.now() - n.timestamp.getTime();
+          return age < MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+        })
+        .slice(0, MAX_NOTIFICATIONS);
+      return cleaned;
+    });
     
-    showToast(notification.title, notification.message, 'info');
-  }, []);
+    if (notification.type !== 'call' && notification.type !== 'task') {
+      showToast(notification.title, notification.message, notification.type);
+    }
+  }, [showToast]);
 
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev =>
@@ -68,18 +150,62 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setNotifications([]);
   }, []);
 
-  const showToast = useCallback((title: string, description?: string, type: 'success' | 'error' | 'info' = 'info') => {
-    switch (type) {
-      case 'success':
+  const showSuccess = useCallback((title: string, description?: string) => {
+    addNotification({
+      type: 'success',
+      title,
+      message: description || title,
+    });
         toast.success(title, { description });
-        break;
-      case 'error':
+  }, [addNotification]);
+
+  const showError = useCallback((title: string, description?: string) => {
+    addNotification({
+      type: 'error',
+      title,
+      message: description || title,
+    });
         toast.error(title, { description });
-        break;
-      default:
-        toast(title, { description });
-    }
-  }, []);
+  }, [addNotification]);
+
+  const showInfo = useCallback((title: string, description?: string) => {
+    addNotification({
+      type: 'info',
+      title,
+      message: description || title,
+    });
+    toast.info(title, { description });
+  }, [addNotification]);
+
+  const showWarning = useCallback((title: string, description?: string) => {
+    addNotification({
+      type: 'warning',
+      title,
+      message: description || title,
+    });
+    toast.warning(title, { description });
+  }, [addNotification]);
+
+  const showCallNotification = useCallback((title: string, description?: string, actionUrl?: string, metadata?: any) => {
+    addNotification({
+      type: 'call',
+      title,
+      message: description || title,
+      actionUrl,
+      metadata,
+    });
+    
+    toast(title, {
+      description,
+      duration: 15000,
+      action: actionUrl ? {
+        label: 'Перейти',
+        onClick: () => {
+          window.location.href = actionUrl;
+        }
+      } : undefined
+    });
+  }, [addNotification]);
 
   useEffect(() => {
     const handleCallStarting = (data: { callId: string, title: string, roomId: string }) => {
@@ -117,10 +243,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       });
     };
     
-    sseService.connect(handleCallStarting, handleCallReminder);
+    websocketService.connectCallNotifications(handleCallStarting, handleCallReminder);
     
     return () => {
-      sseService.disconnect();
+      websocketService.disconnectCallNotifications();
     };
   }, [addNotification]);
 
@@ -135,6 +261,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     clearNotification,
     clearAll,
     showToast,
+    showSuccess,
+    showError,
+    showInfo,
+    showWarning,
+    showCallNotification,
   };
 
   return (

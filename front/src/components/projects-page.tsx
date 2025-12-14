@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { LoadingSpinner } from './loading-spinner';
 import type { Project, Column } from '../App';
 import { useCurrentOrganization, useAppContext } from '../hooks/useAppContext';
+import { websocketService } from '../services/websocketService';
 
 interface ProjectsPageProps {
   projects: Project[];
@@ -138,6 +139,20 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
   const { organizationId } = useCurrentOrganization();
   const { isLoading: orgLoading } = useAppContext();
 
+  const mapDtoToProject = (d: any): Project => ({
+    id: d.id,
+    title: d.name,
+    description: d.description || '',
+    status: d.status || 'inPlans',
+    createdAt: d.createdAt ? new Date(d.createdAt) : new Date(),
+    color: d.color || (() => {
+      try {
+        const local = JSON.parse(localStorage.getItem('projectColors') || '{}');
+        return local[d.id] || '#6366f1';
+      } catch { return '#6366f1'; }
+    })(),
+  });
+
   useEffect(() => {
     if (orgLoading) {
       return;
@@ -157,19 +172,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
         const data = await listProjects(organizationId);
         console.log('ProjectsPage: Loaded projects:', data.length);
         // map DTO -> UI Project
-        const mapped: Project[] = data.map(d => ({
-          id: d.id,
-          title: d.name,
-          description: d.description || '',
-          status: d.status || 'inPlans',
-          createdAt: d.createdAt ? new Date(d.createdAt) : new Date(),
-          color: d.color || (() => {
-            try {
-              const local = JSON.parse(localStorage.getItem('projectColors') || '{}');
-              return local[d.id] || '#6366f1';
-            } catch { return '#6366f1'; }
-          })(),
-        }));
+        const mapped: Project[] = data.map(mapDtoToProject);
         setProjects(mapped);
 
         // миграция локальных цветов на сервер
@@ -191,6 +194,73 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
       }
     })();
   }, [setProjects, organizationId, orgLoading]);
+
+  useEffect(() => {
+    if (!organizationId || orgLoading) {
+      console.log('ProjectsPage: Skipping realtime subscription setup - organizationId:', organizationId, 'orgLoading:', orgLoading);
+      return;
+    }
+
+    console.log('🔌 ProjectsPage: Setting up realtime subscription for organization:', organizationId);
+    
+    const handlers = {
+      onProjectCreated: (projectData: any) => {
+        console.log('🎉 ProjectsPage: onProjectCreated called with data:', projectData);
+        
+        setProjects(prev => {
+          console.log('📋 Previous projects count:', prev.length);
+          console.log('📋 Previous projects IDs:', prev.map(p => p.id));
+          console.log('📋 New project ID:', projectData.id);
+          
+          if (prev.some(p => p.id === projectData.id)) {
+            console.log('⚠️ Project already exists, skipping:', projectData.id);
+            return prev;
+          }
+          
+          const newProject = mapDtoToProject(projectData);
+          console.log('✅ Adding new project to list:', newProject);
+          
+          // Сохранить цвет локально
+          try {
+            const map = JSON.parse(localStorage.getItem('projectColors') || '{}');
+            map[newProject.id] = newProject.color;
+            localStorage.setItem('projectColors', JSON.stringify(map));
+          } catch {}
+          
+          const updated = [...prev, newProject];
+          console.log('📊 Updated projects count:', updated.length);
+          console.log('📋 Updated projects IDs:', updated.map(p => p.id));
+          return updated;
+        });
+      },
+      onProjectUpdated: (projectData: any) => {
+        console.log('🔄 ProjectsPage: onProjectUpdated called with data:', projectData);
+        setProjects(prev => {
+          const updated = prev.map(p => 
+            p.id === projectData.id ? mapDtoToProject(projectData) : p
+          );
+          console.log('✅ Project updated in list');
+          return updated;
+        });
+      },
+      onProjectDeleted: (data: any) => {
+        console.log('🗑️ ProjectsPage: onProjectDeleted called with data:', data);
+        setProjects(prev => {
+          const updated = prev.filter(p => p.id !== data.id);
+          console.log('✅ Project removed from list');
+          return updated;
+        });
+      },
+    };
+    
+    console.log('🔗 Connecting to realtime WebSocket with handlers:', Object.keys(handlers));
+    websocketService.connectRealtime(organizationId, undefined, handlers);
+
+    return () => {
+      console.log('🔌 ProjectsPage: Cleaning up realtime subscription');
+      websocketService.disconnectRealtime();
+    };
+  }, [organizationId, orgLoading]);
 
   const filteredProjects = projects.filter(project =>
     project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -234,19 +304,11 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
         organizationId: organizationId,
       });
       console.log('ProjectsPage: Project created:', created.id);
-      const mapped: Project = {
-        id: created.id,
-        title: created.name,
-        description: created.description || '',
-        status: created.status || 'inPlans',
-        createdAt: created.createdAt ? new Date(created.createdAt) : new Date(),
-        color: created.color || projectData.color,
-      };
-      setProjects(prev => [...prev, mapped]);
-      // сохранить цвет локально
+      // Проект будет добавлен через WebSocket событие project-created
+      // Сохранить цвет локально
       try {
         const map = JSON.parse(localStorage.getItem('projectColors') || '{}');
-        map[mapped.id] = mapped.color;
+        map[created.id] = created.color || projectData.color;
         localStorage.setItem('projectColors', JSON.stringify(map));
       } catch {}
     } catch (error) {

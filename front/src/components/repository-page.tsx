@@ -43,7 +43,7 @@ import { listRepositories, createBranch, deleteBranch, updateFile, updateReposit
 import { listFiles, type FileEntry, listCommits, getFileContent } from '../api/repository-content';
 import { listMembers, addMember, removeMember, type RepositoryMemberDto } from '../api/repository-members';
 import { apiClient } from '../api/client';
-import { toast } from 'sonner';
+import { useNotifications } from '../hooks/useNotifications';
 import UserAutocomplete from './calls/UserAutocomplete';
 import type { UserDto } from '../api/users';
 import { Copy } from 'lucide-react';
@@ -408,6 +408,8 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
   const [newBranchName, setNewBranchName] = useState('');
   const [newBranchFrom, setNewBranchFrom] = useState('');
+
+  const { showSuccess, showError } = useNotifications();
   
   const [repoSettings, setRepoSettings] = useState({
     name: '',
@@ -455,12 +457,12 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
       for (const user of selectedUsers) {
         await addMember(selectedRepoId, user.id, newMemberRole);
       }
-      toast.success('Участники добавлены');
+      showSuccess('Участники добавлены');
       setIsAddMemberOpen(false);
       setSelectedUsers([]);
       await loadMembers();
     } catch {
-      toast.error('Ошибка при добавлении участников');
+      showError('Ошибка при добавлении участников');
     }
   };
 
@@ -468,10 +470,10 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
     if (!selectedRepoId) return;
     try {
       await removeMember(selectedRepoId, memberId);
-      toast.success('Участник удалён');
+      showSuccess('Участник удалён');
       await loadMembers();
     } catch {
-      toast.error('Ошибка при удалении участника');
+      showError('Ошибка при удалении участника');
     }
   };
 
@@ -489,14 +491,14 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
     
     try {
       await updateFile(selectedRepoId, selectedBranch, fullPath, '', `Create ${newFileName}`);
-      toast.success('Файл создан');
+      showSuccess('Файл создан');
       setIsNewFileOpen(false);
       setNewFileName('');
       
       const fs = await listFiles(selectedRepoId, selectedBranch, currentPath || undefined);
       setEntries(fs);
     } catch {
-      toast.error('Ошибка при создании файла');
+      showError('Ошибка при создании файла');
     }
   };
 
@@ -504,14 +506,14 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
     if (!selectedRepoId || !newBranchName) return;
     try {
       await createBranch(selectedRepoId, newBranchName, newBranchFrom || selectedBranch);
-      toast.success('Ветка создана');
+      showSuccess('Ветка создана');
       setIsCreateBranchOpen(false);
       setNewBranchName('');
       const { getBranches } = await import('../api/repositories');
       const brs = await getBranches(selectedRepoId);
       setBranches(brs);
     } catch {
-      toast.error('Ошибка при создании ветки');
+      showError('Ошибка при создании ветки');
     }
   };
 
@@ -519,12 +521,12 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
     if (!selectedRepoId || !window.confirm(`Удалить ветку ${branchName}?`)) return;
     try {
       await deleteBranch(selectedRepoId, branchName);
-      toast.success('Ветка удалена');
+      showSuccess('Ветка удалена');
       const { getBranches } = await import('../api/repositories');
       const brs = await getBranches(selectedRepoId);
       setBranches(brs);
     } catch {
-      toast.error('Ошибка при удалении ветки');
+      showError('Ошибка при удалении ветки');
     }
   };
 
@@ -532,9 +534,9 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
     if (!selectedRepoId) return;
     try {
       await updateRepository(selectedRepoId, repoSettings);
-      toast.success('Настройки сохранены');
+      showSuccess('Настройки сохранены');
     } catch {
-      toast.error('Ошибка при сохранении настроек');
+      showError('Ошибка при сохранении настроек');
     }
   };
 
@@ -1220,7 +1222,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                       variant="outline"
                       onClick={() => {
                         navigator.clipboard.writeText(`git clone https://nit.nicorp.tech/git/${selectedRepoId}.git`);
-                        toast.success('Команда скопирована');
+                        showSuccess('Команда скопирована');
                       }}
                     >
                       <Copy className="w-4 h-4" />

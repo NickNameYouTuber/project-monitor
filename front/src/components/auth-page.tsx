@@ -5,9 +5,6 @@ import {
   User, 
   Eye, 
   EyeOff, 
-  Github, 
-  Chrome,
-  MessageCircle,
   GitBranch
 } from 'lucide-react';
 import { Button } from './ui/button';
@@ -54,23 +51,6 @@ export function AuthPage({ onLogin }: AuthPageProps) {
       } else {
         setError('Invalid credentials. Please try again.');
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSocialLogin = async (provider: string) => {
-    setIsLoading(true);
-    try {
-      if (provider === 'telegram') {
-        const { loginWithTelegram } = await import('../api/auth');
-        // Здесь интеграция с Telegram Login Widget должна предоставить payload
-        // Временно шлём пустышку с обязательными полями для ручной проверки
-        await loginWithTelegram({ telegram_id: 0, hash: '' });
-        onLogin();
-      }
-    } catch (err) {
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -257,72 +237,6 @@ export function AuthPage({ onLogin }: AuthPageProps) {
             </Tabs>
 
             <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator className="w-full" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => handleSocialLogin('github')}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <Github className="w-4 h-4 mr-2" />
-                  GitHub
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleSocialLogin('google')}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <Chrome className="w-4 h-4 mr-2" />
-                  Google
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mt-3">
-                <Button
-                  variant="outline"
-                  onClick={() => handleSocialLogin('gitlab')}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <GitBranch className="w-4 h-4 mr-2" />
-                  GitLab
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleSocialLogin('telegram')}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Telegram
-                </Button>
-              </div>
-
-              <div className="mt-3">
-                <Button
-                  variant="outline"
-                  onClick={() => handleSocialLogin('yandex')}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <span className="w-4 h-4 mr-2 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                    Я
-                  </span>
-                  Yandex
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>

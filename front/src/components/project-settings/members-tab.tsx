@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
 import { RoleBadge } from '../role-badge';
-import { toast } from 'sonner';
+import { useNotifications } from '../../hooks/useNotifications';
 import UserAutocomplete from '../calls/UserAutocomplete';
 import type { UserDto } from '../../api/users';
 import { listProjectMembers, addProjectMember, removeProjectMember, updateProjectMemberRole, type ProjectMemberDto } from '../../api/project-members';
@@ -19,6 +19,7 @@ interface MembersTabProps {
 }
 
 export function MembersTab({ projectId, permissions }: MembersTabProps) {
+  const { showSuccess, showError } = useNotifications();
   const [members, setMembers] = useState<ProjectMemberDto[]>([]);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
@@ -33,7 +34,7 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
       setMembers(data);
     } catch (error) {
       console.error('Failed to load members:', error);
-      toast.error('Failed to load project members');
+      showError('Failed to load project members');
     } finally {
       setLoading(false);
     }
@@ -50,14 +51,14 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
       for (const user of selectedUsers) {
         await addProjectMember(projectId, user.id, newMemberRole);
       }
-      toast.success(`Added ${selectedUsers.length} member(s) to project`);
+      showSuccess(`Added ${selectedUsers.length} member(s) to project`);
       setSelectedUsers([]);
       setNewMemberRole('DEVELOPER');
       setIsAddMemberOpen(false);
       loadMembers();
     } catch (error) {
       console.error('Failed to add member:', error);
-      toast.error('Failed to add member to project');
+      showError('Failed to add member to project');
     }
   };
 
@@ -81,13 +82,13 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
 
     try {
       await updateProjectMemberRole(projectId, editingMember.id, newRole);
-      toast.success('Member role updated');
+      showSuccess('Member role updated');
       setEditingMember(null);
       setNewRole('');
       loadMembers();
     } catch (error) {
       console.error('Failed to update role:', error);
-      toast.error('Failed to update member role');
+      showError('Failed to update member role');
     }
   };
 

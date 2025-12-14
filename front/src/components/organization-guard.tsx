@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
-import { toast } from 'sonner';
+import { useNotifications } from '../hooks/useNotifications';
 import { setAccessToken, getAccessToken } from '../api/client';
 
 interface OrganizationGuardProps {
@@ -81,7 +81,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
       const response = await initiateSSOLogin(org.id);
       window.location.href = response.authorization_url;
     } catch (error) {
-      toast.error('Failed to initiate SSO login');
+      showError('Failed to initiate SSO login');
       setLoading(false);
     }
   };
@@ -110,10 +110,10 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
           setPassword('');
         }
       } else {
-        toast.error('Incorrect password');
+        showError('Incorrect password');
       }
     } catch (error) {
-      toast.error('Failed to verify password');
+      showError('Failed to verify password');
     } finally {
       setVerifying(false);
     }

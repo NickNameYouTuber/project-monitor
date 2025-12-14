@@ -21,7 +21,10 @@ public interface CallRepository extends JpaRepository<Call, UUID> {
     @Query("SELECT c FROM Call c WHERE c.scheduledTime >= :start AND c.scheduledTime < :end ORDER BY c.scheduledTime")
     List<Call> findByScheduledTimeBetween(OffsetDateTime start, OffsetDateTime end);
     
-    @Query("SELECT DISTINCT c FROM Call c LEFT JOIN FETCH c.participants p LEFT JOIN FETCH p.user " +
+    @Query("SELECT DISTINCT c FROM Call c " +
+           "LEFT JOIN FETCH c.participants p LEFT JOIN FETCH p.user " +
+           "LEFT JOIN FETCH c.project " +
+           "LEFT JOIN FETCH c.task " +
            "WHERE c.id IN (SELECT cp.call.id FROM CallParticipant cp WHERE cp.user.id = :userId) " +
            "ORDER BY c.scheduledTime DESC")
     List<Call> findByParticipantUserId(@Param("userId") UUID userId);

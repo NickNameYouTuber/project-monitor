@@ -28,6 +28,8 @@ public class WhiteboardElementResponse {
     private String fontFamily;
     @JsonProperty("font_size")
     private int fontSize;
+    @JsonProperty("task_id")
+    private UUID taskId;
 }
 
 

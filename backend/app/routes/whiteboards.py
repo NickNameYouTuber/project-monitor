@@ -51,14 +51,48 @@ def create_element(board_id: str, payload: WhiteboardElementCreate, db: Session 
 
 @router.patch("/whiteboard-elements/{element_id}", response_model=WhiteboardElementResponse)
 def update_element(element_id: str, payload: WhiteboardElementUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    try:
     el = db.query(WhiteboardElement).filter(WhiteboardElement.id == element_id).first()
     if not el:
         raise HTTPException(status_code=404, detail="Element not found")
-    for key, value in payload.dict(exclude_unset=True).items():
+        
+        update_data = payload.dict(exclude_unset=True)
+        allowed_fields = {'x', 'y', 'width', 'height', 'rotation', 'z_index', 'text', 'fill', 'text_color', 'font_family', 'font_size'}
+        
+        for key, value in update_data.items():
+            if key in allowed_fields:
         setattr(el, key, value)
+        
     db.commit()
     db.refresh(el)
-    return el
+        
+        element_dict = {
+            'id': el.id,
+            'board_id': el.board_id,
+            'type': el.type,
+            'x': el.x,
+            'y': el.y,
+            'width': el.width,
+            'height': el.height,
+            'rotation': el.rotation,
+            'z_index': el.z_index,
+            'text': el.text,
+            'fill': el.fill,
+            'text_color': el.text_color,
+            'font_family': el.font_family,
+            'font_size': el.font_size,
+            'created_at': el.created_at,
+            'updated_at': el.updated_at
+        }
+        return WhiteboardElementResponse(**element_dict)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating whiteboard element: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error updating element: {str(e)}")
 
 
 @router.delete("/whiteboard-elements/{element_id}")

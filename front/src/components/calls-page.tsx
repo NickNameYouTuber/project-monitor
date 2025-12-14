@@ -54,7 +54,7 @@ export function CallsPage() {
   const [error, setError] = useState<string | null>(null);
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const { showToast, addNotification } = useNotifications();
+  const { showSuccess, showError, showToast } = useNotifications();
   const { projectId } = useCurrentProject();
   const { organizationId } = useCurrentOrganization();
   const routeState = useRouteState();
@@ -299,7 +299,7 @@ export function CallsPage() {
     } catch (err: any) {
       console.error('❌ Ошибка создания звонка:', err);
       setError('Не удалось создать звонок. Попробуйте еще раз.');
-      showToast('Ошибка', 'Не удалось создать звонок. Попробуйте еще раз.', 'error');
+      showError('Ошибка', 'Не удалось создать звонок. Попробуйте еще раз.');
     }
   };
 
@@ -451,7 +451,7 @@ export function CallsPage() {
               items={filteredMeetings} 
               onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
               isLoading={isLoading}
-              onCopyLink={(roomId) => showToast('Ссылка скопирована', undefined, 'success')}
+              onCopyLink={(roomId) => showSuccess('Ссылка скопирована')}
             />
           )}
         </div>

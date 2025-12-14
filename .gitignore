@@ -58,3 +58,8 @@ frontend/dist
 frontend/.cache
 backend/__pycache__
 backend/.pytest_cache
+
+# Project specific
+whiteboard-frontend/
+for_zip/
+backend/

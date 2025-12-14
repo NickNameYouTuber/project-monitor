@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   CheckSquare, 
   PaintBucket, 
@@ -7,7 +7,8 @@ import {
   Video,
   User as UserIcon,
   LogOut,
-  Shield
+  Shield,
+  Building2
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
@@ -19,6 +20,10 @@ import { useMainAccount, useSSOAccount } from '../hooks/useAccountContext';
 import { useAppContext } from '../contexts/AppContext';
 import { useAccountContext } from '../hooks/useAccountContext';
 import { useRouteState } from '../hooks/useRouteState';
+import { AIAssistantButton } from './ai-assistant-button';
+import { AIAssistantSheet } from './ai-assistant-sheet';
+import { useChatHistory } from '../hooks/useChatHistory';
+import type { Chat } from '../api/chat';
 
 interface SidebarProps {
   currentPage: Page;
@@ -29,6 +34,7 @@ interface SidebarProps {
 }
 
 const organizationsNavigation = [
+  { id: 'organizations' as Page, label: 'Organizations', icon: Building2 },
   { id: 'account' as Page, label: 'Account', icon: UserIcon },
 ];
 
@@ -54,6 +60,13 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
   const { clearAccounts } = useAccountContext();
   const routeState = useRouteState();
   const { isOrganizationsPage, isInOrganization, isInProject } = routeState;
+  
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const { chats, createNewChat } = useChatHistory(
+    currentOrganization?.id || null,
+    currentProject?.id || null
+  );
 
   const userName = mainAccount?.displayName || mainAccount?.username || '';
   const mainEmail = mainAccount?.username || '';
@@ -110,7 +123,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
         <div className="space-y-2">
           {(() => {
             let navigation;
-            if (isOrganizationsPage) {
+            if (isOrganizationsPage || currentPage === 'account') {
               navigation = organizationsNavigation;
             } else if (isInProject) {
               navigation = projectNavigation;
@@ -143,13 +156,13 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
 
       <div className="p-4 border-t border-border space-y-2">
         {isOrganizationsPage ? (
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium">{(userName || ' ').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{userName}</p>
-              <p className="text-xs text-muted-foreground truncate">{mainEmail}</p>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+            <span className="text-sm font-medium">{(userName || ' ').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{userName}</p>
+            <p className="text-xs text-muted-foreground truncate">{mainEmail}</p>
             </div>
           </div>
         ) : (
@@ -172,10 +185,16 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
               <div className="flex-1 min-w-0">
                 <p className={cn("text-sm font-medium truncate", ssoEmail && ssoEmail !== mainEmail && "text-xs text-muted-foreground")}>{userName}</p>
                 <p className={cn("text-xs truncate", ssoEmail && ssoEmail !== mainEmail ? "text-xs text-muted-foreground" : "text-muted-foreground")}>{mainEmail}</p>
-              </div>
-            </div>
+          </div>
+        </div>
           </>
         )}
+        <AIAssistantButton
+          onClick={() => {
+            setIsAIAssistantOpen(true);
+          }}
+          hasUnreadMessages={false}
+        />
         <Button 
           variant="outline" 
           size="sm" 
@@ -198,6 +217,17 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           Logout
         </Button>
       </div>
+      
+      <AIAssistantSheet
+        open={isAIAssistantOpen}
+        onOpenChange={setIsAIAssistantOpen}
+        chatId={currentChatId}
+        organizationId={currentOrganization?.id || null}
+        projectId={currentProject?.id || null}
+        onChatCreated={(chat: Chat) => {
+          setCurrentChatId(chat.id);
+        }}
+      />
     </div>
   );
 }

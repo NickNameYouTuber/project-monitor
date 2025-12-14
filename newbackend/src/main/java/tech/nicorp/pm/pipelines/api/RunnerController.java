@@ -1,12 +1,10 @@
 package tech.nicorp.pm.pipelines.api;
 
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.pipelines.domain.PipelineJob;
 import tech.nicorp.pm.pipelines.repo.PipelineLogChunkRepository;
 import tech.nicorp.pm.pipelines.service.RunnerService;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -50,12 +48,6 @@ public class RunnerController {
     public ResponseEntity<Void> submitStatus(@PathVariable UUID jobId, @RequestBody Map<String, Object> status) {
         runnerService.updateStatus(jobId, status);
         return ResponseEntity.noContent().build();
-    }
-
-    // Minimal SSE endpoint for job logs
-    @GetMapping(path = "/jobs/{jobId}/logs/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamLogs(@PathVariable UUID jobId) {
-        return runnerService.streamLogs(jobId);
     }
 }
 

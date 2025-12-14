@@ -8,11 +8,12 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
-import { toast } from 'sonner';
 import { createOrganization } from '../api/organizations';
+import { useNotifications } from '../hooks/useNotifications';
 
 export function CreateOrganizationPage() {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useNotifications();
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -46,12 +47,12 @@ export function CreateOrganizationPage() {
         require_corporate_email: formData.requireCorporateEmail,
       });
       
-      toast.success(`Organization "${org.name}" created successfully`);
+      showSuccess(`Organization "${org.name}" created successfully`);
       localStorage.setItem('currentOrgId', org.id);
       navigate(`/${org.id}/projects`);
     } catch (error) {
       console.error('Failed to create organization:', error);
-      toast.error('Failed to create organization');
+      showError('Failed to create organization');
     } finally {
       setCreating(false);
     }

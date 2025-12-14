@@ -11,8 +11,8 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
-import { toast } from 'sonner';
 import { RoleBadge } from './role-badge';
+import { useNotifications } from '../hooks/useNotifications';
 import UserAutocomplete from './calls/UserAutocomplete';
 import type { UserDto } from '../api/users';
 import { getOrganization } from '../api/organizations';
@@ -26,6 +26,7 @@ import type { SSOConfiguration, SSOConfigurationRequest } from '../types/sso';
 export function OrganizationSettingsPage() {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useNotifications();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentMember, setCurrentMember] = useState<OrganizationMember | null>(null);
@@ -89,7 +90,7 @@ export function OrganizationSettingsPage() {
       await loadOrganization();
     } catch (error) {
       console.error('Failed to load current member:', error);
-      toast.error('You do not have access to this organization');
+      showError('You do not have access to this organization');
       navigate('/organizations');
     }
   };
@@ -113,7 +114,7 @@ export function OrganizationSettingsPage() {
       const data = await listMembers(orgId);
       setMembers(data);
     } catch (error) {
-      toast.error('Failed to load members');
+      showError('Failed to load members');
     } finally {
       setLoadingMembers(false);
     }
@@ -140,10 +141,10 @@ export function OrganizationSettingsPage() {
     if (!confirm('Are you sure you want to remove this member?')) return;
     try {
       await removeMember(orgId, memberId);
-      toast.success('Member removed successfully');
+      showSuccess('Member removed successfully');
       loadMembers();
     } catch (error) {
-      toast.error('Failed to remove member');
+      showError('Failed to remove member');
     }
   };
 
@@ -166,10 +167,10 @@ export function OrganizationSettingsPage() {
     } else {
       try {
         await apiClient.patch(`/organizations/${orgId}`, { require_password: false });
-        toast.success('Password requirement disabled');
+        showSuccess('Password requirement disabled');
         loadOrganization();
       } catch (error) {
-        toast.error('Failed to disable password');
+        showError('Failed to disable password');
       }
     }
   };
@@ -197,10 +198,10 @@ export function OrganizationSettingsPage() {
         corporate_domain: corporateDomain || null,
         require_corporate_email: requireCorporateEmail,
       });
-      toast.success('Security settings saved');
+      showSuccess('Security settings saved');
       loadOrganization();
     } catch (error) {
-      toast.error('Failed to save settings');
+      showError('Failed to save settings');
     }
   };
 
@@ -230,14 +231,14 @@ export function OrganizationSettingsPage() {
         max_uses: inviteMaxUses ? parseInt(inviteMaxUses) : undefined,
         expires_at: expiresAtFormatted,
       });
-      toast.success('Invitation link created');
+      showSuccess('Invitation link created');
       setCreateInviteDialogOpen(false);
       setInviteRole('MEMBER');
       setInviteMaxUses('');
       setInviteExpiresAt('');
       loadInvites();
     } catch (error) {
-      toast.error('Failed to create invite');
+      showError('Failed to create invite');
     }
   };
 
@@ -247,10 +248,10 @@ export function OrganizationSettingsPage() {
     
     try {
       await revokeInvite(orgId, inviteId);
-      toast.success('Invitation revoked');
+      showSuccess('Invitation revoked');
       loadInvites();
     } catch (error) {
-      toast.error('Failed to revoke invite');
+      showError('Failed to revoke invite');
     }
   };
 
@@ -770,7 +771,7 @@ export function OrganizationSettingsPage() {
                             size="icon"
                             onClick={() => {
                               navigator.clipboard.writeText(`${window.location.origin}/invite/${invite.token}`);
-                              toast.success('Link copied to clipboard');
+                              showSuccess('Link copied to clipboard');
                             }}
                           >
                             <Copy className="w-4 h-4" />

@@ -28,6 +28,9 @@ services:
       - POSTGRES_PASSWORD=postgres
       - GIT_REPOS_ROOT=/git-repos
       - JWT_SECRET=dev-secret-key-at-least-256-bits-for-hmac-sha-algorithms-security-requirement
+      - GPTUNNEL_BASE_URL=https://gptunnel.com/v1
+      - GPTUNNEL_API_KEY=shds-Lq3Vw7K18HYtAZfAYWSKjpmBefh
+      - LLM_MODEL=gpt-4o
     volumes:
       - gitrepos:/git-repos
     networks:

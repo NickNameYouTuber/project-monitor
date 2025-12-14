@@ -90,12 +90,23 @@ async def create_repository(
     """
     Создать новый репозиторий.
     """
+    try:
+        repository_data = repository.dict(exclude_unset=True)
     db_repository = Repository(
-        **repository.dict(),
+            name=repository_data.get('name'),
+            description=repository_data.get('description'),
+            visibility=repository_data.get('visibility', 'private'),
         owner_id=current_user.id
     )
     
-    try:
+        if repository_data.get('project_id'):
+            try:
+                from uuid import UUID
+                project_uuid = UUID(repository_data['project_id']) if isinstance(repository_data['project_id'], str) else repository_data['project_id']
+                db_repository.project_id = project_uuid
+            except (ValueError, TypeError) as e:
+                print(f"Warning: Invalid project_id format: {repository_data.get('project_id')}, error: {e}")
+        
         db.add(db_repository)
         db.commit()
         db.refresh(db_repository)

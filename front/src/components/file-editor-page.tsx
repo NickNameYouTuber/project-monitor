@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ArrowLeft, Save, GitBranch, FileCode, Edit, Eye, Image as ImageIcon } from 'lucide-react';
 import { getFileContent } from '../api/repository-content';
 import { updateFile } from '../api/repositories';
-import { toast } from 'sonner';
+import { useNotifications } from '../hooks/useNotifications';
 import { LoadingSpinner } from './loading-spinner';
 import { FileTree } from './repository/FileTree';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -36,6 +36,7 @@ import 'prismjs/themes/prism-tomorrow.css';
 export function FileEditorPage() {
   const { repoId, '*': initialFilePath } = useParams();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useNotifications();
   const [filePath, setFilePath] = useState(initialFilePath || '');
   const [branch, setBranch] = useState('master');
   const [content, setContent] = useState('');
@@ -106,7 +107,7 @@ export function FileEditorPage() {
         setOriginalContent(fileContent);
         setCommitMessage(`Update ${filePath.split('/').pop()}`);
       } catch (error) {
-        toast.error('Ошибка при загрузке файла');
+        showError('Ошибка при загрузке файла');
       } finally {
         setIsLoading(false);
       }
@@ -128,11 +129,11 @@ export function FileEditorPage() {
     setIsSaving(true);
     try {
       await updateFile(repoId, branch, filePath, content, commitMessage);
-      toast.success('Файл сохранён');
+      showSuccess('Файл сохранён');
       setOriginalContent(content);
       setIsEditing(false);
     } catch (error) {
-      toast.error('Ошибка при сохранении файла');
+      showError('Ошибка при сохранении файла');
     } finally {
       setIsSaving(false);
     }

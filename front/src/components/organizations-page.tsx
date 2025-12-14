@@ -9,12 +9,12 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { LoadingSpinner } from './loading-spinner';
 import { RoleBadge } from './role-badge';
-import { toast } from 'sonner';
 import { listOrganizations } from '../api/organizations';
 import type { Organization } from '../types/organization';
 import { initiateSSOLogin } from '../api/sso';
 import { setAccessToken, getAccessToken } from '../api/client';
 import { useAppContext } from '../hooks/useAppContext';
+import { useNotifications } from '../hooks/useNotifications';
 
 export function OrganizationsPage() {
   const navigate = useNavigate();
@@ -27,16 +27,17 @@ export function OrganizationsPage() {
   const [selectedOrgForPassword, setSelectedOrgForPassword] = useState<Organization | null>(null);
   const [orgPassword, setOrgPassword] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const { showError } = useNotifications();
 
   useEffect(() => {
     const token = getAccessToken();
     if (!token) {
-      toast.error('Please login first');
+      showError('Please login first');
       navigate('/auth');
       return;
     }
     loadOrganizations();
-  }, [navigate]);
+  }, [navigate, showError]);
 
   const loadOrganizations = async () => {
     try {
@@ -67,7 +68,7 @@ export function OrganizationsPage() {
   const handleSSOLogin = async (org: Organization) => {
     const token = getAccessToken();
     if (!token) {
-      toast.error('Please login first to use SSO');
+      showError('Please login first to use SSO');
       navigate('/auth');
       return;
     }
@@ -77,7 +78,7 @@ export function OrganizationsPage() {
       window.location.href = response.authorization_url;
     } catch (error) {
       console.error('SSO login error:', error);
-      toast.error('Failed to initiate SSO login');
+      showError('Failed to initiate SSO login');
     }
   };
 
@@ -121,7 +122,7 @@ export function OrganizationsPage() {
       navigate(`/invite/${token}`);
       setJoinDialogOpen(false);
     } else {
-      toast.error('Invalid invitation link');
+      showError('Invalid invitation link');
     }
   };
 

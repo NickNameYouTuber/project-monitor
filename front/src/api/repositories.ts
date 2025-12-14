@@ -33,8 +33,8 @@ export async function getTags(repoId: string): Promise<string[]> {
 
 export async function getDefaultBranch(repoId: string): Promise<{ default: string }> {
   try {
-    const { data } = await apiClient.get<{ default: string }>(`/repositories/${repoId}/refs/default`);
-    return data;
+  const { data } = await apiClient.get<{ default: string }>(`/repositories/${repoId}/refs/default`);
+  return data;
   } catch (error: any) {
     console.error('Ошибка получения default branch:', error);
     if (error.response?.status === 500) {

@@ -1,0 +1,304 @@
+package tech.nicorp.pm.ai.service;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import tech.nicorp.pm.ai.domain.Chat;
+import tech.nicorp.pm.ai.domain.ChatMessage;
+import tech.nicorp.pm.ai.repo.ChatMessageRepository;
+import tech.nicorp.pm.ai.repo.ChatRepository;
+import tech.nicorp.pm.organizations.domain.Organization;
+import tech.nicorp.pm.organizations.repo.OrganizationRepository;
+import tech.nicorp.pm.projects.domain.Project;
+import tech.nicorp.pm.projects.domain.TaskColumn;
+import tech.nicorp.pm.projects.repo.ProjectRepository;
+import tech.nicorp.pm.projects.repo.TaskColumnRepository;
+import tech.nicorp.pm.tasks.domain.Task;
+import tech.nicorp.pm.tasks.repo.TaskRepository;
+import tech.nicorp.pm.users.domain.User;
+import tech.nicorp.pm.users.repo.UserRepository;
+import tech.nicorp.pm.whiteboards.domain.Whiteboard;
+import tech.nicorp.pm.whiteboards.domain.WhiteboardElement;
+import tech.nicorp.pm.whiteboards.repo.WhiteboardRepository;
+import tech.nicorp.pm.whiteboards.repo.WhiteboardElementRepository;
+
+import java.time.OffsetDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+public class ChatService {
+    private final ChatRepository chatRepository;
+    private final ChatMessageRepository chatMessageRepository;
+    private final GPTunnelService gptunnelService;
+    private final AIActionExecutor actionExecutor;
+    private final ProjectRepository projectRepository;
+    private final TaskRepository taskRepository;
+    private final TaskColumnRepository taskColumnRepository;
+    private final WhiteboardRepository whiteboardRepository;
+    private final WhiteboardElementRepository whiteboardElementRepository;
+    private final OrganizationRepository organizationRepository;
+    private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
+
+    @Autowired
+    public ChatService(ChatRepository chatRepository,
+                      ChatMessageRepository chatMessageRepository,
+                      GPTunnelService gptunnelService,
+                      AIActionExecutor actionExecutor,
+                      ProjectRepository projectRepository,
+                      TaskRepository taskRepository,
+                      TaskColumnRepository taskColumnRepository,
+                      WhiteboardRepository whiteboardRepository,
+                      WhiteboardElementRepository whiteboardElementRepository,
+                      OrganizationRepository organizationRepository,
+                      UserRepository userRepository,
+                      ObjectMapper objectMapper) {
+        this.chatRepository = chatRepository;
+        this.chatMessageRepository = chatMessageRepository;
+        this.gptunnelService = gptunnelService;
+        this.actionExecutor = actionExecutor;
+        this.projectRepository = projectRepository;
+        this.taskRepository = taskRepository;
+        this.taskColumnRepository = taskColumnRepository;
+        this.whiteboardRepository = whiteboardRepository;
+        this.whiteboardElementRepository = whiteboardElementRepository;
+        this.organizationRepository = organizationRepository;
+        this.userRepository = userRepository;
+        this.objectMapper = objectMapper;
+    }
+
+    public ChatMessage sendMessage(UUID chatId, String userMessage, UUID userId, UUID organizationId, UUID projectId) {
+        Chat chat = chatRepository.findById(chatId).orElse(null);
+        if (chat == null || !chat.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Chat not found or access denied");
+        }
+
+        ChatMessage userMsg = new ChatMessage();
+        userMsg.setChat(chat);
+        userMsg.setRole("user");
+        userMsg.setContent(userMessage);
+        chatMessageRepository.save(userMsg);
+
+        String context = buildContext(userId, organizationId, projectId);
+        List<Map<String, String>> messagesForAI = buildMessagesForAI(chat, context, userMessage);
+
+        String aiResponseText = gptunnelService.chatCompletion(messagesForAI);
+
+        ChatMessage aiMessage = new ChatMessage();
+        aiMessage.setChat(chat);
+        aiMessage.setRole("assistant");
+        
+        String messageText = aiResponseText;
+        try {
+            Map<String, Object> responseMap = objectMapper.readValue(aiResponseText, new TypeReference<Map<String, Object>>() {});
+            if (responseMap.containsKey("message") && responseMap.get("message") instanceof String) {
+                messageText = (String) responseMap.get("message");
+            }
+        } catch (Exception e) {
+        }
+        aiMessage.setContent(messageText);
+
+        List<AIAction> actions = actionExecutor.parseActions(aiResponseText);
+        List<AIAction> executedActions = new ArrayList<>();
+        List<Map<String, Object>> actionsJson = new ArrayList<>();
+
+        for (AIAction action : actions) {
+            AIAction executed = actionExecutor.executeAction(action, userId, organizationId, projectId);
+            executedActions.add(executed);
+            
+            Map<String, Object> actionJson = new HashMap<>();
+            actionJson.put("type", executed.getType());
+            actionJson.put("params", executed.getParams());
+            actionJson.put("result", executed.getResult());
+            if (executed.getNotification() != null) {
+                Map<String, String> notification = new HashMap<>();
+                notification.put("message", executed.getNotification().getMessage());
+                notification.put("link", executed.getNotification().getLink());
+                notification.put("linkText", executed.getNotification().getLinkText());
+                actionJson.put("notification", notification);
+            }
+            actionsJson.add(actionJson);
+        }
+
+        try {
+            String actionsJsonStr = objectMapper.writeValueAsString(actionsJson);
+            aiMessage.setActions(actionsJsonStr);
+        } catch (Exception e) {
+        }
+
+        chatMessageRepository.save(aiMessage);
+
+        chat.setUpdatedAt(OffsetDateTime.now());
+        chatRepository.save(chat);
+
+        return aiMessage;
+    }
+
+    private String buildContext(UUID userId, UUID organizationId, UUID projectId) {
+        StringBuilder context = new StringBuilder();
+
+        context.append("You are an AI assistant helping with project management.\n\n");
+
+        User user = userRepository.findById(userId).orElse(null);
+        String userName = user != null ? (user.getDisplayName() != null ? user.getDisplayName() : user.getUsername()) : "Unknown";
+        context.append("Current User: ").append(userName).append(" (ID: ").append(userId).append(")\n");
+
+        if (organizationId != null) {
+            Organization org = organizationRepository.findById(organizationId).orElse(null);
+            if (org != null) {
+                context.append("Current Organization: ").append(org.getName());
+                if (org.getSlug() != null) {
+                    context.append(" (slug: /").append(org.getSlug()).append(")");
+                }
+                context.append(" (ID: ").append(organizationId).append(")\n\n");
+
+                context.append("Available Project Statuses (columns):\n");
+                context.append("- backlog (default)\n");
+                context.append("- in-progress\n");
+                context.append("- review\n");
+                context.append("- completed\n");
+                context.append("When creating a project, use status parameter to specify which column it should be placed in.\n\n");
+
+                List<Project> projects = projectRepository.findByOrganization_Id(organizationId);
+                if (!projects.isEmpty()) {
+                    context.append("Available Projects in this organization:\n");
+                    for (Project p : projects) {
+                        context.append("- ").append(p.getName());
+                        if (p.getDescription() != null && !p.getDescription().isEmpty()) {
+                            context.append(" (").append(p.getDescription()).append(")");
+                        }
+                        context.append(" (ID: ").append(p.getId()).append(", status: ").append(p.getStatus()).append(")\n");
+                    }
+                    context.append("\n");
+                } else {
+                    context.append("No projects in this organization yet.\n\n");
+                }
+
+                context.append("IMPORTANT: ALL projects must be created in organization ID: ").append(organizationId).append("\n\n");
+            }
+        } else {
+            context.append("WARNING: No organization ID provided. You cannot create projects without an organization.\n\n");
+        }
+
+        if (projectId != null) {
+            Project project = projectRepository.findById(projectId).orElse(null);
+            if (project != null) {
+                context.append("Current Project: ").append(project.getName());
+                if (project.getDescription() != null && !project.getDescription().isEmpty()) {
+                    context.append(" (").append(project.getDescription()).append(")");
+                }
+                context.append(" (ID: ").append(projectId).append(")\n\n");
+
+                List<TaskColumn> columns = taskColumnRepository.findByProject_IdOrderByOrderIndexAsc(projectId);
+                if (!columns.isEmpty()) {
+                    context.append("Task Columns in current project:\n");
+                    for (TaskColumn col : columns) {
+                        context.append("- ").append(col.getName()).append(" (ID: ").append(col.getId()).append(")\n");
+                    }
+                    context.append("\n");
+                } else {
+                    context.append("No task columns in this project yet.\n\n");
+                }
+
+                List<Task> tasks = taskRepository.findByProject_IdOrderByOrderIndexAsc(projectId);
+                if (!tasks.isEmpty()) {
+                    context.append("Tasks in current project:\n");
+                    for (Task task : tasks) {
+                        String columnName = task.getColumn() != null ? task.getColumn().getName() : "Unknown Column";
+                        context.append("- ").append(task.getTitle());
+                        if (task.getDescription() != null && !task.getDescription().isEmpty()) {
+                            context.append(" (").append(task.getDescription()).append(")");
+                        }
+                        context.append(" in column '").append(columnName).append("'\n");
+                    }
+                    context.append("\n");
+                } else {
+                    context.append("No tasks in this project yet.\n\n");
+                }
+
+                Whiteboard whiteboard = whiteboardRepository.findByProject_Id(projectId).orElse(null);
+                if (whiteboard != null) {
+                    List<WhiteboardElement> sections = whiteboardElementRepository.findAll().stream()
+                        .filter(e -> e.getBoard() != null && e.getBoard().getId().equals(whiteboard.getId()) && "section".equals(e.getType()))
+                        .collect(Collectors.toList());
+                    if (!sections.isEmpty()) {
+                        context.append("Whiteboard sections:\n");
+                        for (WhiteboardElement section : sections) {
+                            context.append("- ").append(section.getText() != null ? section.getText() : "Untitled Section").append("\n");
+                        }
+                        context.append("\n");
+                    }
+                }
+            }
+        }
+
+        return context.toString();
+    }
+
+    private List<Map<String, String>> buildMessagesForAI(Chat chat, String context, String userMessage) {
+        List<Map<String, String>> messages = new ArrayList<>();
+
+        Map<String, String> systemMsg = new HashMap<>();
+        systemMsg.put("role", "system");
+        systemMsg.put("content", context + "\n\nYou can perform the following actions:\n\n" +
+            "1. CREATE_TASK: Create a new task in the current project.\n" +
+            "   Params: {\n" +
+            "     title: string (required) - Task title\n" +
+            "     description?: string - Task description\n" +
+            "     column_name?: string - Column name (e.g., \"TEST\", \"Backlog\") OR\n" +
+            "     column_id?: string - Column UUID (use if you know the exact ID)\n" +
+            "   }\n" +
+            "   Example: {\"type\": \"CREATE_TASK\", \"params\": {\"title\": \"Test task\", \"column_name\": \"TEST\"}}\n" +
+            "   Note: Use column_name when user specifies column by name. If neither column_name nor column_id is provided, the first column will be used.\n\n" +
+            "2. CREATE_PROJECT: Create a new project in the current organization.\n" +
+            "   Params: {\n" +
+            "     name: string (required) - Project name\n" +
+            "     description?: string - Project description\n" +
+            "     status?: string - Project status/column (e.g., \"backlog\", \"in-progress\", \"review\", \"completed\"). Default: \"backlog\"\n" +
+            "   }\n" +
+            "   Example: {\"type\": \"CREATE_PROJECT\", \"params\": {\"name\": \"Test Project\", \"status\": \"backlog\"}}\n" +
+            "   Example: {\"type\": \"CREATE_PROJECT\", \"params\": {\"name\": \"My Project\", \"description\": \"Description\", \"status\": \"in-progress\"}}\n" +
+            "   Note: Project will be created in the current organization automatically. If user says \"in backlog\" or \"to backlog\", use status: \"backlog\".\n\n" +
+            "3. CREATE_WHITEBOARD_SECTION: Create a section on the whiteboard.\n" +
+            "   Params: {\n" +
+            "     label: string (required) - Section label\n" +
+            "     x?: number - X position (default: 100)\n" +
+            "     y?: number - Y position (default: 100)\n" +
+            "     width?: number - Width (default: 300)\n" +
+            "     height?: number - Height (default: 200)\n" +
+            "   }\n\n" +
+            "4. LINK_TASK_TO_SECTION: Link a task to a whiteboard section.\n" +
+            "   Params: {\n" +
+            "     task_id: string (required) - Task UUID\n" +
+            "     element_id: string (required) - Section element UUID\n" +
+            "   }\n\n" +
+            "IMPORTANT:\n" +
+            "- Always respond in JSON format: {\"message\": \"your friendly text response\", \"actions\": [{type: \"ACTION_TYPE\", params: {...}}]}\n" +
+            "- Always include a message field with a friendly response to the user\n" +
+            "- When user asks to create a task in a specific column by name (e.g., \"in TEST column\", \"in Backlog\"), use column_name parameter\n" +
+            "- When user asks to create a project \"in backlog\" or \"to backlog\" or \"в backlog\", use status: \"backlog\" in CREATE_PROJECT params\n" +
+            "- When user asks to create a project \"in progress\" or \"to in-progress\", use status: \"in-progress\" in CREATE_PROJECT params\n" +
+            "- Default status for new projects is \"backlog\" if not specified\n" +
+            "- When creating tasks or projects, use the IDs and names from the context above\n");
+        messages.add(systemMsg);
+
+        List<ChatMessage> chatMessages = chatMessageRepository.findByChat_IdOrderByCreatedAtAsc(chat.getId());
+        for (ChatMessage msg : chatMessages) {
+            Map<String, String> msgMap = new HashMap<>();
+            msgMap.put("role", msg.getRole());
+            msgMap.put("content", msg.getContent());
+            messages.add(msgMap);
+        }
+
+        Map<String, String> newUserMsg = new HashMap<>();
+        newUserMsg.put("role", "user");
+        newUserMsg.put("content", userMessage);
+        messages.add(newUserMsg);
+
+        return messages;
+    }
+}

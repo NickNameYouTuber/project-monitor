@@ -4,13 +4,14 @@ import { Building2, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { LoadingSpinner } from './loading-spinner';
-import { toast } from 'sonner';
+import { useNotifications } from '../hooks/useNotifications';
 import { getInviteInfo, acceptInvite } from '../api/organization-invites';
 import type { OrganizationInvite } from '../types/organization';
 
 export function InvitePage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useNotifications();
   const [invite, setInvite] = useState<OrganizationInvite | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
@@ -42,10 +43,10 @@ export function InvitePage() {
     setAccepting(true);
     try {
       await acceptInvite(token);
-      toast.success('Successfully joined organization!');
+      showSuccess('Successfully joined organization!');
       navigate('/organizations');
     } catch (error) {
-      toast.error('Failed to accept invitation');
+      showError('Failed to accept invitation');
     } finally {
       setAccepting(false);
     }

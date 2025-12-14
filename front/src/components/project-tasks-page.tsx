@@ -19,6 +19,7 @@ import { LoadingSpinner } from './loading-spinner';
 import { useNavigate } from 'react-router-dom';
 import { ActiveCallIndicator } from './active-call-indicator';
 import type { Project, Task, Column } from '../App';
+import { websocketService } from '../services/websocketService';
 
 /**
  * ЗАГЛУШКА: Система уведомлений о задачах
@@ -227,7 +228,7 @@ export function ProjectTasksPage({
         // map columns
         setColumns(cols.map((c) => ({ id: c.id, title: c.name, color: colorMap[c.id] || 'bg-gray-500', order: c.orderIndex })));
         // map tasks
-        setTasks(tks.map((t) => ({
+        const mapDtoToTask = (t: any): Task => ({
           id: t.id,
           projectId: t.projectId,
           title: t.title,
@@ -243,9 +244,44 @@ export function ProjectTasksPage({
             repositoryName: t.repository_info.repository_name,
             branch: t.repository_info.branch
           } : undefined,
-        })));
+        });
+        
+        setTasks(tks.map(mapDtoToTask));
+        
+        // Подписка на события в реальном времени
+        websocketService.connectRealtime(undefined, currentProjectId, {
+          onTaskCreated: (taskData: any) => {
+            console.log('Realtime: task created', taskData);
+            if (taskData.projectId === currentProjectId) {
+              setTasks(prev => {
+                if (prev.some(t => t.id === taskData.id)) {
+                  return prev;
+                }
+                return [...prev, mapDtoToTask(taskData)];
+              });
+            }
+          },
+          onTaskUpdated: (taskData: any) => {
+            console.log('Realtime: task updated', taskData);
+            if (taskData.projectId === currentProjectId) {
+              setTasks(prev => prev.map(t => 
+                t.id === taskData.id ? mapDtoToTask(taskData) : t
+              ));
+            }
+          },
+          onTaskDeleted: (data: any) => {
+            console.log('Realtime: task deleted', data);
+            if (data.projectId === currentProjectId) {
+              setTasks(prev => prev.filter(t => t.id !== data.id));
+            }
+          },
+        });
         
         loadedProjectRef.current = currentProjectId;
+        
+        return () => {
+          websocketService.disconnectRealtime();
+        };
       } catch (error) {
         console.error('Error loading project data:', error);
       } finally {
@@ -256,7 +292,8 @@ export function ProjectTasksPage({
     })();
     return () => { 
       console.log(`Cleanup for project ${currentProjectId}`);
-      isCancelled = true; 
+      isCancelled = true;
+      websocketService.disconnectRealtime();
     };
   }, [project.id]);
 
@@ -717,6 +754,7 @@ export function ProjectTasksPage({
           task={selectedTask}
           isOpen={!!selectedTask}
           onClose={() => setSelectedTask(null)}
+          projectId={project?.id}
         />
       )}
     </div>

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import tech.nicorp.pm.tasks.domain.Task;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -57,6 +58,10 @@ public class WhiteboardElement {
 
     @Column(name = "font_size", nullable = false)
     private int fontSize = 14;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id")
+    private Task task;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();

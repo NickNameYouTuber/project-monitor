@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { X, Calendar, User, GitBranch, AlertCircle, MessageSquare, Plus, Send, GitCommit, Video, Folder } from 'lucide-react';
+import { X, Calendar, User, GitBranch, AlertCircle, MessageSquare, Plus, Send, GitCommit, Video, Folder, ExternalLink } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
@@ -23,14 +24,17 @@ interface TaskDetailSidebarProps {
   task: Task;
   isOpen: boolean;
   onClose: () => void;
+  projectId?: string;
 }
 
-export function TaskDetailSidebar({ task, isOpen, onClose }: TaskDetailSidebarProps) {
+export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDetailSidebarProps) {
   const navigate = useNavigate();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [branches, setBranches] = useState<{ name: string; createdAt: Date }[]>([]);
   const [newBranch, setNewBranch] = useState('');
+  const [sections, setSections] = useState<any[]>([]);
+  const [linkedSections, setLinkedSections] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -287,6 +291,73 @@ export function TaskDetailSidebar({ task, isOpen, onClose }: TaskDetailSidebarPr
                   }}>Attach</Button>
                 </div>
               </div>
+
+              {/* Whiteboard Sections */}
+              {projectId && (
+                <div className="mt-6 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Folder className="w-4 h-4" />
+                    <h4 className="font-medium">Whiteboard Sections</h4>
+                  </div>
+                  {linkedSections.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-sm text-muted-foreground">Linked sections:</div>
+                      {linkedSections.map((section: any) => (
+                        <div key={section.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                          <span className="text-sm">{section.text || 'Untitled Section'}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              try {
+                                const { getOrCreateWhiteboard } = await import('../api/whiteboards');
+                                const board = await getOrCreateWhiteboard(projectId);
+                                const sectionElement = board.elements.find((e: any) => e.id === section.id);
+                                if (sectionElement) {
+                                  const orgId = window.location.pathname.split('/')[1];
+                                  navigate(`/${orgId}/projects/${projectId}/whiteboard?elementId=${section.id}`);
+                                  onClose();
+                                }
+                              } catch (error) {
+                                console.error('Failed to navigate to section:', error);
+                              }
+                            }}
+                          >
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            Go to
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Select onValueChange={async (sectionId) => {
+                      try {
+                        const { linkElementToTask } = await import('../api/whiteboards');
+                        await linkElementToTask(sectionId, task.id);
+                        const { getProjectSections } = await import('../api/whiteboards');
+                        const allSections = await getProjectSections(projectId);
+                        setSections(allSections);
+                        const linked = allSections.filter((s: any) => s.task_id === task.id);
+                        setLinkedSections(linked);
+                      } catch (error) {
+                        console.error('Failed to link section:', error);
+                      }
+                    }}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select section" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sections.filter((s: any) => s.task_id !== task.id).map((section: any) => (
+                          <SelectItem key={section.id} value={section.id}>
+                            {section.text || 'Untitled Section'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </ScrollArea>

@@ -6,9 +6,9 @@ import { motion } from 'framer-motion';
 import { Sidebar } from './components/sidebar';
 import { ProjectsPage } from './components/projects-page';
 import { ProjectTasksPage } from './components/project-tasks-page';
-import { WhiteboardPage } from './components/whiteboard-page';
 import { RepositoryPage } from './components/repository-page';
 import { RepositoriesPage } from './components/repositories-page';
+import { WhiteboardPage } from './components/whiteboard-page';
 import { FileEditorPage } from './components/file-editor-page';
 import { CommitDetailsPage } from './components/commit-details-page';
 import { AccountPage } from './components/account-page';
@@ -31,6 +31,8 @@ import { AccountProvider } from './contexts/AccountContext';
 import { useRouteState } from './hooks/useRouteState';
 import { getAccessToken } from './api/client';
 import { useCurrentProject } from './hooks/useAppContext';
+import { listProjectMembers } from './api/project-members';
+import { useMainAccount } from './hooks/useAccountContext';
 
 export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'account' | 'account-organization' | 'project-settings' | 'merge-request' | 'organizations';
 
@@ -196,6 +198,7 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('projects');
   const { currentOrganization, currentProject, setCurrentProject, organizationId } = useAppContext();
   const routeState = useRouteState();
+  const { account: mainAccount } = useMainAccount();
 
   // Default project columns
   const [projectColumns, setProjectColumns] = useState<Column[]>([
@@ -218,7 +221,7 @@ function AppContent() {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   // Suggestion data
-  const [assigneeSuggestions] = useState<string[]>([]);
+  const [assigneeSuggestions, setAssigneeSuggestions] = useState<string[]>([]);
 
   const [branchSuggestions] = useState<string[]>([]);
 
@@ -261,6 +264,11 @@ function AppContent() {
       return;
     }
     
+    if (page === 'organizations') {
+      navigate('/organizations');
+      return;
+    }
+    
     if (page === 'account') {
       navigate('/account');
       return;
@@ -274,11 +282,6 @@ function AppContent() {
       } else {
         navigate('/organizations');
       }
-      return;
-    }
-    
-    if (page === 'organizations') {
-      navigate('/organizations');
       return;
     }
     
@@ -323,6 +326,54 @@ function AppContent() {
   }, []);
 
   // Убираем внутренний компонент маршрута, чтобы не вызывать размонтирование/монтаж при каждом рендере App
+
+  useEffect(() => {
+    if (currentProject?.id) {
+      listProjectMembers(currentProject.id)
+        .then(members => {
+          const names = new Set<string>();
+          
+          members.forEach(member => {
+            const user = member.user;
+            if (user) {
+              const name = user.display_name || user.username || '';
+              if (name.length > 0) {
+                names.add(name);
+              }
+            }
+          });
+          
+          if (mainAccount) {
+            const currentUserName = mainAccount.displayName || mainAccount.username || '';
+            if (currentUserName.length > 0) {
+              names.add(currentUserName);
+            }
+          }
+          
+          setAssigneeSuggestions(Array.from(names));
+        })
+        .catch(error => {
+          console.error('Ошибка загрузки участников проекта:', error);
+          const fallbackNames: string[] = [];
+          if (mainAccount) {
+            const currentUserName = mainAccount.displayName || mainAccount.username || '';
+            if (currentUserName.length > 0) {
+              fallbackNames.push(currentUserName);
+            }
+          }
+          setAssigneeSuggestions(fallbackNames);
+        });
+    } else {
+      const fallbackNames: string[] = [];
+      if (mainAccount) {
+        const currentUserName = mainAccount.displayName || mainAccount.username || '';
+        if (currentUserName.length > 0) {
+          fallbackNames.push(currentUserName);
+        }
+      }
+      setAssigneeSuggestions(fallbackNames);
+    }
+  }, [currentProject?.id, mainAccount]);
 
   useEffect(() => {
     const checkAuth = () => {

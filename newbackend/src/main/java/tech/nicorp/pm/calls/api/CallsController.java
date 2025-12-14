@@ -44,6 +44,7 @@ public class CallsController {
 
     @GetMapping
     @Operation(summary = "Список звонков текущего пользователя")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<CallResponse>> list(@AuthenticationPrincipal Object principal) {
         UUID userId = extractUserId(principal);
         System.out.println("🔍 DEBUG: principal = " + principal);
@@ -89,6 +90,7 @@ public class CallsController {
 
     @PostMapping
     @Operation(summary = "Создать звонок или серию повторяющихся звонков")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> create(
             @RequestBody tech.nicorp.pm.calls.api.dto.CallCreateRequest body,
             @AuthenticationPrincipal Object principal) {
@@ -265,9 +267,18 @@ public class CallsController {
         r.setScheduledTime(c.getScheduledTime());
         r.setDurationMinutes(c.getDurationMinutes());
         r.setStatus(c.getStatus() != null ? c.getStatus().name() : null);
-        if (c.getProject() != null) r.setProjectId(c.getProject().getId());
-        if (c.getTask() != null) r.setTaskId(c.getTask().getId());
-        if (c.getCreatedBy() != null) r.setCreatedBy(c.getCreatedBy().getId());
+        
+        if (c.getProject() != null) {
+            r.setProjectId(c.getProject().getId());
+        }
+        
+        if (c.getTask() != null) {
+            r.setTaskId(c.getTask().getId());
+        }
+        
+        if (c.getCreatedBy() != null) {
+            r.setCreatedBy(c.getCreatedBy().getId());
+        }
         
         r.setRecurrenceGroupId(c.getRecurrenceGroupId());
         r.setIsRecurring(c.getIsRecurring());
