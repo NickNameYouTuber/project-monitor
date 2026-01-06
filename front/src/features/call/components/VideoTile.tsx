@@ -1,228 +1,154 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
+import { MicOff, VideoOff, Volume2, VolumeX } from 'lucide-react';
+import { Participant, Track } from 'livekit-client';
+import { useParticipantTracks } from '@livekit/components-react';
+import { VideoTileBorder } from './VideoTileBorder';
 
 interface VideoTileProps {
-  videoStream: MediaStream | null;
-  audioStream: MediaStream | null;
-  isLocal: boolean;
-  isCameraEnabled?: boolean;
-  isMicEnabled?: boolean;
-  username?: string;
-  isGuest?: boolean;
-  isSpeaking?: boolean;
-  isHandRaised?: boolean;
+    participant: Participant;
+    isLocal: boolean;
+    isCameraEnabled: boolean;
+    isMicEnabled: boolean;
+    isSpeaking: boolean;
+    isHandRaised: boolean;
+    volume?: number;
+    onVolumeChange?: (volume: number) => void;
 }
 
-const VideoTile: React.FC<VideoTileProps> = ({ 
-  videoStream, 
-  audioStream,
-  isLocal, 
-  isCameraEnabled = true,
-  isMicEnabled = true,
-  username,
-  isGuest = false,
-  isSpeaking = false,
-  isHandRaised = false
+export const VideoTile: React.FC<VideoTileProps> = ({
+    participant,
+    isLocal,
+    isCameraEnabled,
+    isMicEnabled,
+    isSpeaking,
+    isHandRaised,
+    volume = 1.0,
+    onVolumeChange,
 }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [showFrozenFrame, setShowFrozenFrame] = useState(false);
-  const [isStreamLost, setIsStreamLost] = useState(false);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [showVolumeControl, setShowVolumeControl] = useState(false);
 
-  // Захват последнего кадра в canvas
-  const captureFrame = () => {
-    if (videoRef.current && canvasRef.current && videoRef.current.readyState >= 2) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      
-      if (context && video.videoWidth > 0 && video.videoHeight > 0) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      }
-    }
-  };
+    // Use LiveKit hook to properly subscribe to track changes
+    const tracks = useParticipantTracks([Track.Source.Camera, Track.Source.Microphone], participant.identity);
 
-  useEffect(() => {
-    if (videoRef.current) {
-      if (videoStream && videoStream.getVideoTracks().length > 0 && isCameraEnabled) {
-        videoRef.current.srcObject = videoStream;
-        videoRef.current.play().catch((error) => {
-          console.warn('Не удалось воспроизвести видео автоматически:', error);
-        });
+    const cameraTrack = tracks.find(t => t.source === Track.Source.Camera);
+    const microphoneTrack = tracks.find(t => t.source === Track.Source.Microphone);
+    const hasVideo = !!cameraTrack?.publication?.track && isCameraEnabled;
 
-        // Запускаем захват кадров каждые 500ms
-        frameIntervalRef.current = setInterval(captureFrame, 500);
+    useEffect(() => {
+        if (!audioRef.current) return;
 
-        // Сбрасываем состояние замороженного кадра
-        setShowFrozenFrame(false);
-        setIsStreamLost(false);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-          timeoutRef.current = null;
+        const audioTrack = microphoneTrack?.publication?.track;
+        if (audioTrack) {
+            audioTrack.attach(audioRef.current);
+            return () => {
+                audioTrack.detach(audioRef.current!);
+            };
         }
-      } else {
-        videoRef.current.srcObject = null;
-        if (frameIntervalRef.current) {
-          clearInterval(frameIntervalRef.current);
-          frameIntervalRef.current = null;
+    }, [microphoneTrack]);
+
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = volume;
         }
-      }
-    }
+    }, [volume]);
 
-    return () => {
-      if (frameIntervalRef.current) {
-        clearInterval(frameIntervalRef.current);
-        frameIntervalRef.current = null;
-      }
-    };
-  }, [videoStream, isCameraEnabled]);
+    useEffect(() => {
+        if (!videoRef.current) return;
 
-  // Отслеживание потери стрима
-  useEffect(() => {
-    if (!videoStream || !isCameraEnabled) return;
+        if (!isCameraEnabled) {
+            videoRef.current.srcObject = null;
+            return;
+        }
 
-    const tracks = videoStream.getVideoTracks();
-    if (tracks.length === 0) return;
+        const videoTrack = cameraTrack?.publication?.track;
+        if (videoTrack) {
+            videoTrack.attach(videoRef.current);
+            return () => {
+                videoTrack.detach(videoRef.current!);
+            };
+        } else {
+            videoRef.current.srcObject = null;
+        }
+    }, [cameraTrack, isCameraEnabled]);
 
-    const track = tracks[0];
+    const displayName = participant.name || participant.identity;
 
-    const handleTrackEnded = () => {
-      console.log('🔴 Трек завершен, показываем замороженный кадр');
-      setShowFrozenFrame(true);
-      
-      // Через 10 секунд показываем placeholder
-      timeoutRef.current = setTimeout(() => {
-        console.log('⏱️ 10 секунд прошло, показываем placeholder');
-        setIsStreamLost(true);
-      }, 10000);
-    };
+    return (
+        <div className="relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm border border-border">
+            {hasVideo ? (
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover -scale-x-100"
+                />
+            ) : (
+                <div className="flex items-center justify-center w-full h-full bg-muted">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                        <span className="text-2xl sm:text-3xl text-muted-foreground font-semibold">
+                            {displayName?.[0]?.toUpperCase() || '?'}
+                        </span>
+                    </div>
+                </div>
+            )}
 
-    const handleTrackMute = () => {
-      console.log('🔇 Трек замучен, показываем замороженный кадр');
-      setShowFrozenFrame(true);
-      
-      timeoutRef.current = setTimeout(() => {
-        setIsStreamLost(true);
-      }, 10000);
-    };
+            <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-black/80 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
+                <span className="text-white text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                    {!hasVideo && (
+                        <VideoOff className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                    )}
+                    {!isMicEnabled && (
+                        <MicOff className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                    )}
+                    {displayName}
+                    {isLocal && <span className="text-gray-400 text-xs">(You)</span>}
+                </span>
+            </div>
 
-    const handleTrackUnmute = () => {
-      console.log('🔊 Трек размучен, восстанавливаем видео');
-      setShowFrozenFrame(false);
-      setIsStreamLost(false);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
+            {!isLocal && onVolumeChange && (
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowVolumeControl(!showVolumeControl)}
+                            className="p-1.5 bg-black/80 hover:bg-black/90 rounded-lg transition-colors"
+                            title="Настройки громкости"
+                        >
+                            {volume > 0 ? (
+                                <Volume2 className="w-4 h-4 text-white" />
+                            ) : (
+                                <VolumeX className="w-4 h-4 text-red-400" />
+                            )}
+                        </button>
+                        {showVolumeControl && (
+                            <div className="absolute top-full right-0 mt-2 bg-card border border-border rounded-lg p-3 shadow-xl z-50 min-w-[120px]">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Volume2 className="w-4 h-4" />
+                                    <span className="text-sm font-medium">Громкость</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.1"
+                                    value={volume}
+                                    onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+                                    className="w-full"
+                                />
+                                <div className="text-xs text-muted-foreground text-center mt-1">
+                                    {Math.round(volume * 100)}%
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
-    track.addEventListener('ended', handleTrackEnded);
-    track.addEventListener('mute', handleTrackMute);
-    track.addEventListener('unmute', handleTrackUnmute);
+            {!isLocal && <audio ref={audioRef} autoPlay playsInline style={{ display: 'none' }} />}
 
-    return () => {
-      track.removeEventListener('ended', handleTrackEnded);
-      track.removeEventListener('mute', handleTrackMute);
-      track.removeEventListener('unmute', handleTrackUnmute);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-  }, [videoStream, isCameraEnabled]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      if (audioStream && audioStream.getAudioTracks().length > 0 && !isLocal) {
-        audioRef.current.srcObject = audioStream;
-        audioRef.current.play().catch((error) => {
-          console.warn('Не удалось воспроизвести удаленное аудио автоматически:', error);
-        });
-      } else {
-        audioRef.current.srcObject = null;
-      }
-    }
-  }, [audioStream, isLocal]);
-
-  const displayName = isLocal ? 'Вы' : username || 'Участник';
-  const hasVideo = videoStream && videoStream.getVideoTracks().length > 0 && isCameraEnabled;
-  const hasAudio = audioStream && audioStream.getAudioTracks().length > 0;
-
-  return (
-    <div className="relative w-full h-full bg-card rounded-lg overflow-hidden group shadow-sm border border-border">
-      <audio ref={audioRef} autoPlay muted={isLocal} style={{ display: 'none' }} />
-      
-      {/* Canvas для замороженного кадра (скрыт по умолчанию) */}
-      <canvas
-        ref={canvasRef}
-        className={`absolute inset-0 w-full h-full object-cover ${showFrozenFrame && !isStreamLost ? 'block' : 'hidden'}`}
-      />
-      
-      {hasVideo && !isStreamLost ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted={isLocal}
-          className={`w-full h-full object-cover ${showFrozenFrame ? 'opacity-0' : 'opacity-100'}`}
-        />
-      ) : (
-        <div className="flex items-center justify-center w-full h-full bg-muted">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center">
-            <span className="text-2xl sm:text-3xl text-muted-foreground font-semibold">
-              {displayName[0].toUpperCase()}
-            </span>
-          </div>
+            <VideoTileBorder isSpeaking={isSpeaking} isHandRaised={isHandRaised} />
         </div>
-      )}
-      
-      {/* Индикатор восстановления соединения */}
-      {showFrozenFrame && !isStreamLost && (
-        <div className="absolute top-2 left-2 bg-yellow-600/90 px-2 py-1 rounded-lg">
-          <span className="text-white text-xs font-medium">Восстановление...</span>
-        </div>
-      )}
-
-      <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-black/80 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
-        <span className="text-white text-xs sm:text-sm font-medium flex items-center gap-1.5">
-          {(!isCameraEnabled || !hasVideo) && (
-            <VideoOff className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
-          )}
-          {!isLocal && !isMicEnabled && (
-            <MicOff className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
-          )}
-          {displayName}
-          {isGuest && !isLocal && (
-            <span className="text-gray-400 text-xs">(Гость)</span>
-          )}
-        </span>
-      </div>
-
-      {isLocal && (
-        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-blue-600 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-white text-xs font-semibold">
-          ВЫ
-        </div>
-      )}
-    </div>
-  );
+    );
 };
-
-// Мемоизация: видео не будет перерендериваться при изменении статусов, бордер рисуется отдельно
-export default React.memo(VideoTile, (prev, next) => {
-  return (
-    prev.videoStream === next.videoStream &&
-    prev.audioStream === next.audioStream &&
-    prev.isLocal === next.isLocal &&
-    prev.isCameraEnabled === next.isCameraEnabled &&
-    prev.isMicEnabled === next.isMicEnabled &&
-    prev.username === next.username &&
-    prev.isGuest === next.isGuest
-    // isSpeaking/isHandRaised специально не учитываем — их отображает VideoTileBorder
-  );
-});
-

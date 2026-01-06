@@ -33,7 +33,11 @@ services:
       - LLM_MODEL=gpt-4o
       - NIID_BASE_URL=https://api.id.nicorp.tech
       - NIID_CLIENT_ID=r0n86C5hVO6J04nDJwe_0A
+      - NIID_CLIENT_ID=r0n86C5hVO6J04nDJwe_0A
       - NIID_CLIENT_SECRET=GdtZHuGg5eGvcqU-1OlGsPB3woH3ItMOdAWSCi600_c
+      - LIVEKIT_API_URL=http://livekit:7880
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret_must_be_at_least_32_chars_long_for_security_reasons
     volumes:
       - gitrepos:/git-repos
     networks:
@@ -172,6 +176,22 @@ services:
       - "3478:3478/tcp"
     volumes:
       - ./turn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: project-monitor-livekit
+    command: --config /etc/livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit.yaml
+    depends_on:
+      - redis
     networks:
       - project-monitor-network
     restart: unless-stopped
