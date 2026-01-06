@@ -35,6 +35,7 @@ public class AuthController {
     @PostMapping("/niid")
     @Operation(summary = "NIID Callback Handler", description = "Exchanges NIID code for App Token")
     public ResponseEntity<Map<String, Object>> niidLogin(@RequestBody Map<String, String> body) {
+        String code = body.get("code");
         String redirectUri = body.getOrDefault("redirectUri", "http://localhost:5173/sso/niid/callback");
         
         tech.nicorp.pm.auth.service.NiidService.NiidUserInfo userInfo = niidService.exchangeCode(code, redirectUri);
