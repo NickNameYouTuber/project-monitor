@@ -29,7 +29,8 @@ export function SSOCallbackPage() {
 
             try {
                 // Exchange code for session in project-monitor backend
-                const response = await apiClient.post('/auth/niid', { code });
+                const redirectUri = window.location.origin + window.location.pathname;
+                const response = await apiClient.post('/auth/niid', { code, redirectUri });
 
                 const { token } = response.data;
 

@@ -31,14 +31,18 @@ public class NiidService {
         String tokenUrl = niidBaseUrl + "/oauth/token";
         
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.setBasicAuth(clientId, clientSecret);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        // Construct JSON body manually or use a Map
+        Map<String, String> bodyMap = Map.of(
+            "grant_type", "authorization_code",
+            "code", code,
+            "redirect_uri", redirectUri,
+            "client_id", clientId,
+            "client_secret", clientSecret
+        );
 
-        String body = "grant_type=authorization_code" +
-                "&code=" + code +
-                "&redirect_uri=" + redirectUri;
-
-        HttpEntity<String> request = new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, String>> request = new HttpEntity<>(bodyMap, headers);
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
