@@ -436,246 +436,249 @@ function AppContent() {
       <DndProvider backend={HTML5Backend}>
         <Toaster position="top-right" richColors />
         <div className="dark min-h-screen bg-background text-foreground">
-          {!isAuthenticated ? (
-            <AuthPage onLogin={() => setIsAuthenticated(true)} />
-          ) : (
-            <div className="flex h-screen">
-              {!isStandaloneCall && (
-                location.pathname === '/organizations' ||
-                  location.pathname === '/organizations/create' ||
-                  location.pathname.startsWith('/invite/') ||
-                  location.pathname.startsWith('/sso/') ||
-                  location.pathname.startsWith('/organizations/') ? (
-                  <Sidebar
-                    currentPage={currentPage}
-                    onNavigate={handleNavigate}
-                    selectedProject={null}
-                    currentOrgId={null}
-                    simplified={true}
-                  />
-                ) : (
-                  <Sidebar
-                    currentPage={currentPage}
-                    onNavigate={handleNavigate}
-                    selectedProject={currentProject}
-                    currentOrgId={organizationId}
-                  />
-                )
-              )}
-              <main className={`flex-1 overflow-hidden ${currentPage === 'projects' || isStandaloneCall ? 'w-full' : ''}`}>
-                <Routes>
-                  <Route path="/" element={<Navigate to="/organizations" replace />} />
-                  <Route path="/organizations" element={<OrganizationsPage />} />
-                  <Route path="/organizations/create" element={<CreateOrganizationPage />} />
-                  <Route path="/organizations/:orgId/settings" element={<OrganizationSettingsPage />} />
-                  <Route path="/invite/:token" element={<InvitePage />} />
-                  <Route path="/sso/callback" element={<SSOCallbackPage />} />
-                  <Route path="/sso/niid/callback" element={<SSOCallbackPage />} />
-
-                  {/* Redirect old routes */}
-                  <Route path="/projects" element={<Navigate to="/organizations" replace />} />
-                  <Route path="/projects/*" element={<Navigate to="/organizations" replace />} />
-
-                  {/* New routes with orgId */}
-                  <Route path="/:orgId/account-organization" element={
-                    <OrganizationGuard>
-                      <AccountOrganizationPage />
-                    </OrganizationGuard>
-                  } />
-                  <Route path="/:orgId/projects" element={
-                    <OrganizationGuard>
-                      <ProjectsPage
-                        projects={projects}
-                        setProjects={setProjects}
-                        columns={projectColumns}
-                        setColumns={setProjectColumns}
-                        onProjectSelect={(project) => handleNavigate('tasks', project)}
+          <Routes>
+            <Route path="/sso/niid/callback" element={<SSOCallbackPage />} />
+            <Route path="*" element={
+              !isAuthenticated ? (
+                <AuthPage onLogin={() => setIsAuthenticated(true)} />
+              ) : (
+                <div className="flex h-screen">
+                  {!isStandaloneCall && (
+                    location.pathname === '/organizations' ||
+                      location.pathname === '/organizations/create' ||
+                      location.pathname.startsWith('/invite/') ||
+                      location.pathname.startsWith('/sso/') ||
+                      location.pathname.startsWith('/organizations/') ? (
+                      <Sidebar
+                        currentPage={currentPage}
+                        onNavigate={handleNavigate}
+                        selectedProject={null}
+                        currentOrgId={null}
+                        simplified={true}
                       />
-                    </OrganizationGuard>
-                  } />
-                  <Route
-                    path="/:orgId/projects/:projectId/:section"
-                    element={
-                      <OrganizationGuard>
-                        <ProjectRouteWrapperComponent
-                          projects={projects}
-                          tasks={tasks}
-                          setTasks={memoizedSetTasks}
-                          taskColumns={taskColumns}
-                          setTaskColumns={memoizedSetTaskColumns}
-                          assigneeSuggestions={assigneeSuggestions}
-                          branchSuggestions={branchSuggestions}
-                          handleNavigate={handleNavigate}
+                    ) : (
+                      <Sidebar
+                        currentPage={currentPage}
+                        onNavigate={handleNavigate}
+                        selectedProject={currentProject}
+                        currentOrgId={organizationId}
+                      />
+                    )
+                  )}
+                  <main className={`flex-1 overflow-hidden ${currentPage === 'projects' || isStandaloneCall ? 'w-full' : ''}`}>
+                    <Routes>
+                      <Route path="/" element={<Navigate to="/organizations" replace />} />
+                      <Route path="/organizations" element={<OrganizationsPage />} />
+                      <Route path="/organizations/create" element={<CreateOrganizationPage />} />
+                      <Route path="/organizations/:orgId/settings" element={<OrganizationSettingsPage />} />
+                      <Route path="/invite/:token" element={<InvitePage />} />
+                      <Route path="/sso/callback" element={<SSOCallbackPage />} />
+                      <Route path="/sso/niid/callback" element={<SSOCallbackPage />} />
+
+                      {/* Redirect old routes */}
+                      <Route path="/projects" element={<Navigate to="/organizations" replace />} />
+                      <Route path="/projects/*" element={<Navigate to="/organizations" replace />} />
+
+                      {/* New routes with orgId */}
+                      <Route path="/:orgId/account-organization" element={
+                        <OrganizationGuard>
+                          <AccountOrganizationPage />
+                        </OrganizationGuard>
+                      } />
+                      <Route path="/:orgId/projects" element={
+                        <OrganizationGuard>
+                          <ProjectsPage
+                            projects={projects}
+                            setProjects={setProjects}
+                            columns={projectColumns}
+                            setColumns={setProjectColumns}
+                            onProjectSelect={(project) => handleNavigate('tasks', project)}
+                          />
+                        </OrganizationGuard>
+                      } />
+                      <Route
+                        path="/:orgId/projects/:projectId/:section"
+                        element={
+                          <OrganizationGuard>
+                            <ProjectRouteWrapperComponent
+                              projects={projects}
+                              tasks={tasks}
+                              setTasks={memoizedSetTasks}
+                              taskColumns={taskColumns}
+                              setTaskColumns={memoizedSetTaskColumns}
+                              assigneeSuggestions={assigneeSuggestions}
+                              branchSuggestions={branchSuggestions}
+                              handleNavigate={handleNavigate}
+                            />
+                          </OrganizationGuard>
+                        }
+                      />
+                      <Route path="/:orgId/calls" element={
+                        <OrganizationGuard>
+                          <CallsPage />
+                        </OrganizationGuard>
+                      } />
+                      <Route path="/:orgId/projects/:projectId/calls" element={
+                        <OrganizationGuard>
+                          <CallsPage />
+                        </OrganizationGuard>
+                      } />
+                      <Route
+                        path="/:orgId/projects/:projectId/repository/:repoId/file/*"
+                        element={
+                          <OrganizationGuard>
+                            <FileEditorPage />
+                          </OrganizationGuard>
+                        }
+                      />
+                      <Route
+                        path="/:orgId/projects/:projectId/repository/:repoId/commit/:commitSha"
+                        element={
+                          <OrganizationGuard>
+                            <CommitDetailsPage />
+                          </OrganizationGuard>
+                        }
+                      />
+                      <Route path="/:orgId/projects/:projectId/repository/:repoId">
+                        <Route index element={<Navigate to="files" replace />} />
+                        <Route
+                          path="files"
+                          element={
+                            <OrganizationGuard>
+                              <ProjectRouteWrapperComponent
+                                projects={projects}
+                                tasks={tasks}
+                                setTasks={memoizedSetTasks}
+                                taskColumns={taskColumns}
+                                setTaskColumns={memoizedSetTaskColumns}
+                                assigneeSuggestions={assigneeSuggestions}
+                                branchSuggestions={branchSuggestions}
+                                handleNavigate={handleNavigate}
+                              />
+                            </OrganizationGuard>
+                          }
                         />
-                      </OrganizationGuard>
-                    }
-                  />
-                  <Route path="/:orgId/calls" element={
-                    <OrganizationGuard>
-                      <CallsPage />
-                    </OrganizationGuard>
-                  } />
-                  <Route path="/:orgId/projects/:projectId/calls" element={
-                    <OrganizationGuard>
-                      <CallsPage />
-                    </OrganizationGuard>
-                  } />
-                  <Route
-                    path="/:orgId/projects/:projectId/repository/:repoId/file/*"
-                    element={
-                      <OrganizationGuard>
-                        <FileEditorPage />
-                      </OrganizationGuard>
-                    }
-                  />
-                  <Route
-                    path="/:orgId/projects/:projectId/repository/:repoId/commit/:commitSha"
-                    element={
-                      <OrganizationGuard>
-                        <CommitDetailsPage />
-                      </OrganizationGuard>
-                    }
-                  />
-                  <Route path="/:orgId/projects/:projectId/repository/:repoId">
-                    <Route index element={<Navigate to="files" replace />} />
-                    <Route
-                      path="files"
-                      element={
-                        <OrganizationGuard>
-                          <ProjectRouteWrapperComponent
-                            projects={projects}
-                            tasks={tasks}
-                            setTasks={memoizedSetTasks}
-                            taskColumns={taskColumns}
-                            setTaskColumns={memoizedSetTaskColumns}
-                            assigneeSuggestions={assigneeSuggestions}
-                            branchSuggestions={branchSuggestions}
-                            handleNavigate={handleNavigate}
-                          />
-                        </OrganizationGuard>
-                      }
-                    />
-                    <Route
-                      path="commits"
-                      element={
-                        <OrganizationGuard>
-                          <ProjectRouteWrapperComponent
-                            projects={projects}
-                            tasks={tasks}
-                            setTasks={memoizedSetTasks}
-                            taskColumns={taskColumns}
-                            setTaskColumns={memoizedSetTaskColumns}
-                            assigneeSuggestions={assigneeSuggestions}
-                            branchSuggestions={branchSuggestions}
-                            handleNavigate={handleNavigate}
-                          />
-                        </OrganizationGuard>
-                      }
-                    />
-                    <Route
-                      path="branches"
-                      element={
-                        <OrganizationGuard>
-                          <ProjectRouteWrapperComponent
-                            projects={projects}
-                            tasks={tasks}
-                            setTasks={memoizedSetTasks}
-                            taskColumns={taskColumns}
-                            setTaskColumns={memoizedSetTaskColumns}
-                            assigneeSuggestions={assigneeSuggestions}
-                            branchSuggestions={branchSuggestions}
-                            handleNavigate={handleNavigate}
-                          />
-                        </OrganizationGuard>
-                      }
-                    />
-                    <Route
-                      path="members"
-                      element={
-                        <OrganizationGuard>
-                          <ProjectRouteWrapperComponent
-                            projects={projects}
-                            tasks={tasks}
-                            setTasks={memoizedSetTasks}
-                            taskColumns={taskColumns}
-                            setTaskColumns={memoizedSetTaskColumns}
-                            assigneeSuggestions={assigneeSuggestions}
-                            branchSuggestions={branchSuggestions}
-                            handleNavigate={handleNavigate}
-                          />
-                        </OrganizationGuard>
-                      }
-                    />
-                    <Route
-                      path="merge-requests"
-                      element={
-                        <OrganizationGuard>
-                          <ProjectRouteWrapperComponent
-                            projects={projects}
-                            tasks={tasks}
-                            setTasks={memoizedSetTasks}
-                            taskColumns={taskColumns}
-                            setTaskColumns={memoizedSetTaskColumns}
-                            assigneeSuggestions={assigneeSuggestions}
-                            branchSuggestions={branchSuggestions}
-                            handleNavigate={handleNavigate}
-                          />
-                        </OrganizationGuard>
-                      }
-                    />
-                    <Route
-                      path="tasks"
-                      element={
-                        <OrganizationGuard>
-                          <ProjectRouteWrapperComponent
-                            projects={projects}
-                            tasks={tasks}
-                            setTasks={memoizedSetTasks}
-                            taskColumns={taskColumns}
-                            setTaskColumns={memoizedSetTaskColumns}
-                            assigneeSuggestions={assigneeSuggestions}
-                            branchSuggestions={branchSuggestions}
-                            handleNavigate={handleNavigate}
-                          />
-                        </OrganizationGuard>
-                      }
-                    />
-                    <Route
-                      path="settings"
-                      element={
-                        <OrganizationGuard>
-                          <ProjectRouteWrapperComponent
-                            projects={projects}
-                            tasks={tasks}
-                            setTasks={memoizedSetTasks}
-                            taskColumns={taskColumns}
-                            setTaskColumns={memoizedSetTaskColumns}
-                            assigneeSuggestions={assigneeSuggestions}
-                            branchSuggestions={branchSuggestions}
-                            handleNavigate={handleNavigate}
-                          />
-                        </OrganizationGuard>
-                      }
-                    />
-                  </Route>
-                  <Route path="/calls" element={<CallsPage />} />
-                  <Route
-                    path="/call/:callId"
-                    element={
-                      <div className="flex h-screen">
-                        <Sidebar currentPage="calls" onNavigate={handleNavigate} selectedProject={currentProject} currentOrgId={organizationId} />
-                        <main className="flex-1 overflow-hidden">
-                          <CallPage />
-                        </main>
-                      </div>
-                    }
-                  />
-                  <Route path="/account" element={<AccountPage />} />
-                  <Route path="*" element={<Navigate to="/organizations" replace />} />
-                </Routes>
-              </main>
-            </div>
-          )}
+                        <Route
+                          path="commits"
+                          element={
+                            <OrganizationGuard>
+                              <ProjectRouteWrapperComponent
+                                projects={projects}
+                                tasks={tasks}
+                                setTasks={memoizedSetTasks}
+                                taskColumns={taskColumns}
+                                setTaskColumns={memoizedSetTaskColumns}
+                                assigneeSuggestions={assigneeSuggestions}
+                                branchSuggestions={branchSuggestions}
+                                handleNavigate={handleNavigate}
+                              />
+                            </OrganizationGuard>
+                          }
+                        />
+                        <Route
+                          path="branches"
+                          element={
+                            <OrganizationGuard>
+                              <ProjectRouteWrapperComponent
+                                projects={projects}
+                                tasks={tasks}
+                                setTasks={memoizedSetTasks}
+                                taskColumns={taskColumns}
+                                setTaskColumns={memoizedSetTaskColumns}
+                                assigneeSuggestions={assigneeSuggestions}
+                                branchSuggestions={branchSuggestions}
+                                handleNavigate={handleNavigate}
+                              />
+                            </OrganizationGuard>
+                          }
+                        />
+                        <Route
+                          path="members"
+                          element={
+                            <OrganizationGuard>
+                              <ProjectRouteWrapperComponent
+                                projects={projects}
+                                tasks={tasks}
+                                setTasks={memoizedSetTasks}
+                                taskColumns={taskColumns}
+                                setTaskColumns={memoizedSetTaskColumns}
+                                assigneeSuggestions={assigneeSuggestions}
+                                branchSuggestions={branchSuggestions}
+                                handleNavigate={handleNavigate}
+                              />
+                            </OrganizationGuard>
+                          }
+                        />
+                        <Route
+                          path="merge-requests"
+                          element={
+                            <OrganizationGuard>
+                              <ProjectRouteWrapperComponent
+                                projects={projects}
+                                tasks={tasks}
+                                setTasks={memoizedSetTasks}
+                                taskColumns={taskColumns}
+                                setTaskColumns={memoizedSetTaskColumns}
+                                assigneeSuggestions={assigneeSuggestions}
+                                branchSuggestions={branchSuggestions}
+                                handleNavigate={handleNavigate}
+                              />
+                            </OrganizationGuard>
+                          }
+                        />
+                        <Route
+                          path="tasks"
+                          element={
+                            <OrganizationGuard>
+                              <ProjectRouteWrapperComponent
+                                projects={projects}
+                                tasks={tasks}
+                                setTasks={memoizedSetTasks}
+                                taskColumns={taskColumns}
+                                setTaskColumns={memoizedSetTaskColumns}
+                                assigneeSuggestions={assigneeSuggestions}
+                                branchSuggestions={branchSuggestions}
+                                handleNavigate={handleNavigate}
+                              />
+                            </OrganizationGuard>
+                          }
+                        />
+                        <Route
+                          path="settings"
+                          element={
+                            <OrganizationGuard>
+                              <ProjectRouteWrapperComponent
+                                projects={projects}
+                                tasks={tasks}
+                                setTasks={memoizedSetTasks}
+                                taskColumns={taskColumns}
+                                setTaskColumns={memoizedSetTaskColumns}
+                                assigneeSuggestions={assigneeSuggestions}
+                                branchSuggestions={branchSuggestions}
+                                handleNavigate={handleNavigate}
+                              />
+                            </OrganizationGuard>
+                          }
+                        />
+                      </Route>
+                      <Route path="/calls" element={<CallsPage />} />
+                      <Route
+                        path="/call/:callId"
+                        element={
+                          <div className="flex h-screen">
+                            <Sidebar currentPage="calls" onNavigate={handleNavigate} selectedProject={currentProject} currentOrgId={organizationId} />
+                            <main className="flex-1 overflow-hidden">
+                              <CallPage />
+                            </main>
+                          </div>
+                        }
+                      />
+                    </Routes>
+                  </main>
+                </div>
+              )
+            } />
+          </Routes>
         </div>
       </DndProvider>
     </NotificationProvider>
