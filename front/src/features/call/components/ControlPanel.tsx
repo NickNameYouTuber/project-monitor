@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, MessageSquare, Hand, PhoneOff, Youtube, Settings, RefreshCw, Disc } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/components/ui/utils';
 
 interface ControlPanelProps {
     isCameraEnabled: boolean;

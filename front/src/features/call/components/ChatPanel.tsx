@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Send, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/components/ui/utils';
 
 interface ChatMessage {
     id: string;
@@ -35,7 +35,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     return (
         <>
             {isOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/50 z-40 md:hidden"
                     onClick={onClose}
                 />
@@ -49,8 +49,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             )}>
                 <div className="flex items-center justify-between px-3 md:px-4 py-3 md:py-2 border-b border-border">
                     <h3 className="font-semibold text-base md:text-lg">In-Call Messages</h3>
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="p-2 md:p-1 hover:bg-secondary rounded min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center"
                     >
                         <X className="w-5 h-5" />
@@ -77,8 +77,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                         />
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="bg-primary text-primary-foreground p-3 md:p-2 rounded-md hover:bg-primary/90 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center"
                         >
                             <Send className="w-5 h-5 md:w-4 md:h-4" />
