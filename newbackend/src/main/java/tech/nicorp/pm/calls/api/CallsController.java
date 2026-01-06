@@ -227,8 +227,8 @@ public class CallsController {
     }
 
     @GetMapping("/{callId}/check-access")
-    @Operation(summary = "Проверить доступ текущего пользователя к звонку")
-    public ResponseEntity<CheckAccessResponse> checkAccess(
+    @Operation(summary = "Проверить доступ текущего пользователя к звонку (детально)")
+    public ResponseEntity<CheckAccessResponse> checkAccessDetailed(
             @PathVariable("callId") UUID callId,
             @AuthenticationPrincipal Object principal) {
         
