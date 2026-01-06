@@ -89,7 +89,7 @@ public class NiidService {
     }
 
     public static class NiidUserInfo {
-        @JsonProperty("sub")
+        @JsonProperty("id")
         public String id;
         
         @JsonProperty("email")
