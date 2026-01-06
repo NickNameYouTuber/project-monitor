@@ -7,7 +7,8 @@ import { NIIDClient } from '@niid/sdk';
 // Configure NIID Client
 const niid = new NIIDClient({
   clientId: import.meta.env.VITE_NIID_CLIENT_ID || 'project-monitor-app',
-  domain: import.meta.env.VITE_NIID_DOMAIN || 'https://id.nicorp.tech',
+  ssoUrl: import.meta.env.VITE_NIID_SSO_URL || 'http://localhost:8000',
+  apiUrl: import.meta.env.VITE_NIID_API_URL || 'http://localhost:8000',
   redirectUri: window.location.origin + '/sso/niid/callback'
 });
 
@@ -18,10 +19,16 @@ interface AuthPageProps {
 export function AuthPage({ onLogin }: AuthPageProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setIsLoading(true);
-    // Redirect to NIID
-    niid.auth.login();
+    try {
+      console.log('Starting login with config:', niid);
+      // Method is directly on instance, not under .auth
+      niid.login();
+    } catch (e) {
+      console.error('Login failed', e);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -53,9 +60,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
               {isLoading ? 'Redirecting...' : 'Continue with NIID'}
             </Button>
 
-            <div className="text-center text-xs text-muted-foreground mt-4">
-              Local login has been disabled in favor of NIID ecosystem security.
-            </div>
+
           </CardContent>
         </Card>
       </div>
