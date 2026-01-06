@@ -56,7 +56,12 @@ public class NiidService {
             // 2. Get User Info
             return getUserInfo(accessToken);
 
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            String resp = e.getResponseBodyAsString();
+            System.err.println("NIID Error: " + resp); // Quick log for docker logs
+            throw new RuntimeException("NIID Auth Failed: " + resp, e);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("NIID Auth Failed: " + e.getMessage(), e);
         }
     }
