@@ -22,53 +22,64 @@ public class AuthController {
     private final UserRepository users;
     private final JwtService jwt;
 
-    public AuthController(UserRepository users, JwtService jwt) {
+    private final tech.nicorp.pm.auth.service.NiidService niidService;
+
+    public AuthController(UserRepository users, JwtService jwt, tech.nicorp.pm.auth.service.NiidService niidService) {
         this.users = users;
         this.jwt = jwt;
+        this.niidService = niidService;
+    }
+
+    // ... existing endpoints ...
+
+    @PostMapping("/niid")
+    @Operation(summary = "NIID Callback Handler", description = "Exchanges NIID code for App Token")
+    public ResponseEntity<Map<String, Object>> niidLogin(@RequestBody Map<String, String> body) {
+        String code = body.get("code");
+        // Redirect URI must match what frontend sent to NIID
+        // It's usually configured in frontend, but backend needs to send the same one for verification
+        // For now, we can hardcode or accept it from body if we want flexibility, but strict OAuth requires exact match.
+        // Let's assume frontend sends or we know it.
+        String redirectUri = "http://localhost:5173/sso/niid/callback"; // TODO: Move to config
+        
+        tech.nicorp.pm.auth.service.NiidService.NiidUserInfo userInfo = niidService.exchangeCode(code, redirectUri);
+        
+        // Find or Create User
+        // We match by EMAIL
+        User u = users.findByUsername(userInfo.email).orElse(null);
+        
+        if (u == null) {
+            u = new User();
+            u.setUsername(userInfo.email);
+            u.setDisplayName(userInfo.name);
+            // No password for NIID users
+            users.save(u);
+        } else {
+            // Update info if needed
+            if (userInfo.name != null && !userInfo.name.isEmpty()) {
+                u.setDisplayName(userInfo.name);
+                users.save(u);
+            }
+        }
+        
+        String token = jwt.createToken(u.getId().toString(), Map.of(
+            "username", u.getUsername(),
+            "niid_sub", userInfo.id
+        ));
+        
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Регистрация нового пользователя", description = "Создаёт нового пользователя и возвращает JWT токен")
+    @Operation(summary = "Регистрация нового пользователя", description = "DEPRECATED: Use NIID SSO")
     public ResponseEntity<Map<String, Object>> register(@RequestBody RegisterRequest body) {
-        String username = body.getUsername();
-        String password = body.getPassword();
-        String displayName = body.getDisplay_name() != null ? body.getDisplay_name() : username;
-        User u = new User();
-        u.setUsername(username);
-        u.setPasswordHash(BCrypt.hashpw(password, BCrypt.gensalt()));
-        u.setDisplayName(displayName);
-        users.save(u);
-        String token = jwt.createToken(u.getId().toString(), Map.of("username", u.getUsername()));
-        return ResponseEntity.ok(Map.of("token", token));
+        return ResponseEntity.status(403).body(Map.of("error", "Local registration is disabled. Use NIID SSO."));
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Вход в систему", description = "Аутентификация пользователя. Тестовый пользователь: test/test123")
+    @Operation(summary = "Вход в систему", description = "DEPRECATED: Use NIID SSO")
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest body) {
-        String username = body.getUsername();
-        String password = body.getPassword();
-        User u = users.findByUsername(username).orElse(null);
-        
-        // Проверка существования пользователя
-        if (u == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "invalid_credentials"));
-        }
-        
-        // Проверка что у пользователя есть пароль (не SSO-only аккаунт)
-        if (u.getPasswordHash() == null || u.getPasswordHash().isEmpty()) {
-            return ResponseEntity.status(401).body(Map.of(
-                "error", "sso_only_account", 
-                "message", "This account can only be accessed via SSO"
-            ));
-        }
-        
-        // Проверка пароля
-        if (!BCrypt.checkpw(password, u.getPasswordHash())) {
-            return ResponseEntity.status(401).body(Map.of("error", "invalid_credentials"));
-        }
-        
-        String token = jwt.createToken(u.getId().toString(), Map.of("username", u.getUsername()));
-        return ResponseEntity.ok(Map.of("token", token));
+        return ResponseEntity.status(403).body(Map.of("error", "Local login is disabled. Use NIID SSO."));
     }
 
     @PostMapping("/telegram")
