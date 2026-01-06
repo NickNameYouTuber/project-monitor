@@ -19,6 +19,7 @@ import tech.nicorp.pm.users.domain.User;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -40,6 +41,33 @@ public class CallsController {
         this.participantService = participantService;
         this.statusManager = statusManager;
         this.recurringService = recurringService;
+    }
+
+    @PostMapping("/token")
+    @Operation(summary = "Generate LiveKit Token")
+    public ResponseEntity<Map<String, String>> getToken(
+            @AuthenticationPrincipal Object principal,
+            @RequestBody Map<String, String> body
+    ) {
+        String roomName = body.get("roomName");
+        if (roomName == null || roomName.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "roomName is required"));
+        }
+
+        UUID userId = extractUserId(principal);
+        User user = userId != null ? service.resolveUser(userId) : null;
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String token = service.createToken(user, roomName);
+        return ResponseEntity.ok(Map.of("token", token));
+    }
+
+    @PostMapping("/create")
+    @Operation(summary = "Create a new call room ID")
+    public ResponseEntity<Map<String, String>> createRoomId() {
+        return ResponseEntity.ok(Map.of("roomId", UUID.randomUUID().toString()));
     }
 
     @GetMapping
@@ -182,6 +210,20 @@ public class CallsController {
             @PathVariable("callId") UUID callId) {
         List<CallParticipant> participants = participantService.getParticipants(callId);
         return ResponseEntity.ok(participants.stream().map(this::toParticipantResponse).toList());
+    }
+
+    @GetMapping("/{callId}/access")
+    @Operation(summary = "Check access to call (LiveKit compat)")
+    public ResponseEntity<Map<String, Object>> checkAccess(@PathVariable UUID callId, @AuthenticationPrincipal Object principal) {
+        UUID userId = extractUserId(principal);
+        if (userId == null) {
+            return ResponseEntity.ok(Map.of("hasAccess", false, "role", "NONE"));
+        }
+        boolean hasAccess = participantService.hasAccess(callId, userId);
+        String role = participantService.getUserRole(callId, userId)
+                .map(Enum::name)
+                .orElse("PARTICIPANT");
+        return ResponseEntity.ok(Map.of("hasAccess", hasAccess, "role", role));
     }
 
     @GetMapping("/{callId}/check-access")
