@@ -5,9 +5,10 @@ import { InviteParticipantsDialog } from '@/components/calls/InviteParticipantsD
 
 interface ShareLinkTileProps {
     callId: string;
+    participantIds: string[];
 }
 
-export const ShareLinkTile: React.FC<ShareLinkTileProps> = ({ callId }) => {
+export const ShareLinkTile: React.FC<ShareLinkTileProps> = ({ callId, participantIds }) => {
     const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
     return (
@@ -42,8 +43,8 @@ export const ShareLinkTile: React.FC<ShareLinkTileProps> = ({ callId }) => {
                 isOpen={isInviteDialogOpen}
                 onClose={() => setIsInviteDialogOpen(false)}
                 callId={callId}
+                excludeUserIds={participantIds}
             />
         </>
     );
 };
-

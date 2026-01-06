@@ -10,9 +10,10 @@ interface InviteParticipantsDialogProps {
     isOpen: boolean;
     onClose: () => void;
     callId: string;
+    excludeUserIds?: string[];
 }
 
-export const InviteParticipantsDialog: React.FC<InviteParticipantsDialogProps> = ({ isOpen, onClose, callId }) => {
+export const InviteParticipantsDialog: React.FC<InviteParticipantsDialogProps> = ({ isOpen, onClose, callId, excludeUserIds = [] }) => {
     const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
     const [isInviting, setIsInviting] = useState(false);
 
@@ -56,6 +57,7 @@ export const InviteParticipantsDialog: React.FC<InviteParticipantsDialogProps> =
                     <UserAutocomplete
                         selectedUsers={selectedUsers}
                         onUsersChange={setSelectedUsers}
+                        excludeUserIds={excludeUserIds}
                         label="Поиск пользователей"
                     />
                 </div>

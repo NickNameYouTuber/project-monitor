@@ -722,8 +722,11 @@ const CallPage: React.FC = () => {
 
     const handleDisconnected = React.useCallback((reason?: any) => {
         console.log('Disconnected from room:', reason);
+        const returnPath = sessionStorage.getItem('callReturnPath') || '/calls';
+
         if (reason === 'CLIENT_REQUESTED') {
-            window.location.href = '/';
+            sessionStorage.removeItem('callReturnPath');
+            window.location.href = returnPath;
             return;
         }
 
@@ -734,7 +737,8 @@ const CallPage: React.FC = () => {
         setConnectionError(`Соединение прервано: ${reason || 'Неизвестная причина'}`);
         setTimeout(() => {
             if (!isReconnectingRef.current) {
-                window.location.href = '/';
+                sessionStorage.removeItem('callReturnPath');
+                window.location.href = returnPath;
             }
         }, 5000);
     }, []);

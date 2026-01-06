@@ -5,13 +5,13 @@ import { Video, Calendar, Clock, MoreVertical, Copy, Trash2, Mic } from 'lucide-
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../ui/dropdown-menu';
 
 interface MeetingsListProps {
-  items: { 
-    id: string; 
-    title: string; 
-    date: Date; 
-    duration: number; 
-    color?: string; 
-    roomId?: string; 
+  items: {
+    id: string;
+    title: string;
+    date: Date;
+    duration: number;
+    color?: string;
+    roomId?: string;
     status?: string;
     description?: string;
     participants?: string[];
@@ -34,12 +34,12 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
     const activeItems = items.filter(m => {
       const status = m.status?.toLowerCase();
       const isActiveStatus = status === 'active' || status === 'in-progress';
-      
+
       if (!isActiveStatus) return false;
-      
+
       const startTime = m.date;
       const endTime = new Date(startTime.getTime() + m.duration * 60000);
-      
+
       return startTime <= now && now < endTime;
     }).sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -99,7 +99,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
     }
 
     // 6. Завершенные
-    const completedItems = items.filter(m => 
+    const completedItems = items.filter(m =>
       m.status?.toLowerCase() === 'completed'
     ).sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -108,7 +108,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
     }
 
     // 7. Отмененные
-    const cancelledItems = items.filter(m => 
+    const cancelledItems = items.filter(m =>
       m.status?.toLowerCase() === 'cancelled'
     ).sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -123,28 +123,28 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
   const getActualStatus = (meeting: any) => {
     const now = new Date();
     const apiStatus = meeting.status?.toLowerCase();
-    
+
     // Если API говорит completed/cancelled/active - верим ему
     if (apiStatus === 'completed' || apiStatus === 'cancelled' || apiStatus === 'active' || apiStatus === 'in-progress') {
       return apiStatus;
     }
-    
+
     // Если scheduled, но время прошло - это "завершенный"
     if (apiStatus === 'scheduled' && meeting.date < now) {
       return 'completed';
     }
-    
+
     return apiStatus || 'scheduled';
   };
 
   const getStatusColor = (status?: string, itemId?: string) => {
     const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'in-progress';
     const shouldAnimate = isActive && itemId && !animatedItemsRef.current.has(itemId);
-    
+
     if (shouldAnimate && itemId) {
       animatedItemsRef.current.add(itemId);
     }
-    
+
     switch (status?.toLowerCase()) {
       case 'scheduled':
         return 'border-green-500';
@@ -163,7 +163,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
   const getStatusBadge = (status?: string, itemId?: string) => {
     const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'in-progress';
     const shouldAnimate = isActive && itemId && !animatedItemsRef.current.has(itemId);
-    
+
     switch (status?.toLowerCase()) {
       case 'scheduled':
         return <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Запланирован</span>;
@@ -182,7 +182,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
   const handleCopyLink = (roomId: string) => {
     const link = `${window.location.origin}/call/${roomId}`;
     navigator.clipboard.writeText(link);
-    
+
     if (onCopyLink) {
       onCopyLink(roomId);
     }
@@ -203,116 +203,101 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
             <p className="text-sm text-muted-foreground mb-4">Создайте первый звонок, чтобы начать</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {groupedMeetings.map((group, groupIdx) => (
               <div key={groupIdx}>
-                {/* Заголовок группы */}
-                <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-                  📅 {group.label}
-                  <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
+                <h3 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2 uppercase tracking-tight ml-1">
+                  {group.label}
+                  <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
                     {group.meetings.length}
                   </span>
                 </h3>
-                
-                {/* Карточки в группе */}
-                <div className="space-y-3">
+
+                <div className="space-y-2">
                   {group.meetings.map((meeting) => {
                     const actualStatus = getActualStatus(meeting);
                     const isJoinable = meeting.roomId && actualStatus !== 'completed' && actualStatus !== 'cancelled';
-                    
-  return (
-                      <Card key={meeting.id} className={`border-l-4 ${getStatusColor(actualStatus, meeting.id)} transition-all hover:shadow-md`}>
-          <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <CardTitle className="text-base flex items-center gap-2 mb-2">
-                                {meeting.type === 'video' ? (
-                                  <Video className="w-4 h-4 text-blue-500" />
-                                ) : (
-                                  <Mic className="w-4 h-4 text-green-500" />
-                                )}
-              {meeting.title}
-            </CardTitle>
-                              
-                              {/* Дата и время */}
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                                <div className="flex items-center gap-1.5">
-                                  <Calendar className="w-4 h-4" />
-                                  <span>{meeting.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</span>
+
+                    return (
+                      <Card key={meeting.id} className={`border-l-4 ${getStatusColor(actualStatus, meeting.id)} transition-all hover:shadow-sm hover:border-gray-300 dark:hover:border-gray-700`}>
+                        <div className="p-3 flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              {meeting.type === 'video' ? (
+                                <Video className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                              ) : (
+                                <Mic className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                              )}
+                              <h4 className="font-medium text-sm truncate leading-none pt-0.5">
+                                {meeting.title}
+                              </h4>
+                              {getStatusBadge(actualStatus, meeting.id)}
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                <span>{meeting.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                <span>{meeting.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })} ({meeting.duration} мин)</span>
+                              </div>
+                              {meeting.participants && meeting.participants.length > 0 && (
+                                <div className="flex items-center gap-1" title="Участники">
+                                  <span>👤 {meeting.participants.length}</span>
                                 </div>
-                                <span>в</span>
-                                <div className="flex items-center gap-1.5">
-                                  <Clock className="w-4 h-4" />
-                                  <span>{meeting.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
-                                </div>
-                                <span>•</span>
-                                <span>{meeting.duration} мин</span>
-                                {meeting.participants && meeting.participants.length > 0 && (
+                              )}
+                            </div>
+
+                            {meeting.description && (
+                              <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">
+                                {meeting.description}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            {isJoinable && onJoinCall && (
+                              <Button
+                                size="sm"
+                                onClick={() => onJoinCall(meeting.roomId!)}
+                                className="h-7 text-xs px-2"
+                              >
+                                Join
+                              </Button>
+                            )}
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                  <MoreVertical className="w-3.5 h-3.5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {meeting.roomId && (
                                   <>
-                                    <span>•</span>
-                                    <span>👤 {meeting.participants.length} участник{meeting.participants.length > 1 ? 'а' : ''}</span>
+                                    <DropdownMenuItem onClick={() => handleCopyLink(meeting.roomId!)}>
+                                      <Copy className="w-4 h-4 mr-2" />
+                                      Скопировать ссылку
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
                                   </>
                                 )}
-                              </div>
-                              
-                              {/* Description preview */}
-                              {meeting.description && (
-                                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                  {meeting.description}
-                                </p>
-                              )}
-                              
-                              {/* Статус badge */}
-                              <div className="mt-2">
-                                {getStatusBadge(actualStatus, meeting.id)}
-                              </div>
-                            </div>
-                            
-                            {/* Actions */}
-                            <div className="flex items-center gap-2">
-                              {isJoinable && onJoinCall && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => onJoinCall(meeting.roomId!)}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Video className="w-4 h-4" />
-                                  Join
-                                </Button>
-                              )}
-                              
-                              {/* Quick Actions Menu */}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <MoreVertical className="w-4 h-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  {meeting.roomId && (
-                                    <>
-                                      <DropdownMenuItem onClick={() => handleCopyLink(meeting.roomId!)}>
-                                        <Copy className="w-4 h-4 mr-2" />
-                                        Скопировать ссылку
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                    </>
-                                  )}
-                                  <DropdownMenuItem className="text-red-600 dark:text-red-400">
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Удалить
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
+                                <DropdownMenuItem className="text-red-600 dark:text-red-400">
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Удалить
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
-          </CardHeader>
-        </Card>
+                        </div>
+                      </Card>
                     );
                   })}
                 </div>
               </div>
-      ))}
+            ))}
           </div>
         )}
       </div>
