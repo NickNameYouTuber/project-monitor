@@ -60,4 +60,9 @@ gptunnel:
   api-key: ${GPTUNNEL_API_KEY:shds-Lq3Vw7K18HYtAZfAYWSKjpmBefh}
   model: ${LLM_MODEL:gpt-4o}
 
+niid:
+  base-url: ${NIID_BASE_URL:https://api.id.nicorp.tech}
+  client-id: ${NIID_CLIENT_ID:r0n86C5hVO6J04nDJwe_0A}
+  client-secret: ${NIID_CLIENT_SECRET:GdtZHuGg5eGvcqU-1OlGsPB3woH3ItMOdAWSCi600_c}
+
 

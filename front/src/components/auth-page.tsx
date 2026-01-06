@@ -6,7 +6,7 @@ import { NIIDClient } from '@niid/sdk';
 
 // Configure NIID Client
 const niid = new NIIDClient({
-  clientId: import.meta.env.VITE_NIID_CLIENT_ID || 'project-monitor-app',
+  clientId: import.meta.env.VITE_NIID_CLIENT_ID || 'r0n86C5hVO6J04nDJwe_0A',
   ssoUrl: import.meta.env.VITE_NIID_SSO_URL || 'https://auth.id.nicorp.tech',
   apiUrl: import.meta.env.VITE_NIID_API_URL || 'https://api.id.nicorp.tech',
   redirectUri: window.location.origin + '/sso/niid/callback'
