@@ -7,8 +7,8 @@ import { NIIDClient } from '@niid/sdk';
 // Configure NIID Client
 const niid = new NIIDClient({
   clientId: import.meta.env.VITE_NIID_CLIENT_ID || 'project-monitor-app',
-  ssoUrl: import.meta.env.VITE_NIID_SSO_URL || 'http://localhost:8000',
-  apiUrl: import.meta.env.VITE_NIID_API_URL || 'http://localhost:8000',
+  ssoUrl: import.meta.env.VITE_NIID_SSO_URL || 'https://id.nicorp.tech',
+  apiUrl: import.meta.env.VITE_NIID_API_URL || 'https://api.id.nicorp.tech',
   redirectUri: window.location.origin + '/sso/niid/callback'
 });
 
