@@ -392,8 +392,6 @@ export function CallsPage() {
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
-              onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)}
-              upcomingCount={upcomingMeetings.length}
               className="w-full"
             />
           </div>
@@ -452,15 +450,40 @@ export function CallsPage() {
                   Неделя
                 </Button>
               </div>
+
+              {/* Upcoming button - matching style */}
+              <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
+                <Button
+                  variant={isUpcomingOpen ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
+                  className={cn("h-8 px-3 text-sm", isUpcomingOpen && "bg-background shadow-sm")}
+                >
+                  Upcoming ({upcomingMeetings.length})
+                </Button>
+              </div>
             </div>
           )}
 
           {/* List Filters - only in list view */}
           {activeTab === 'list' && (
-            <MeetingFilters
-              statusFilter={statusFilter}
-              onStatusFilterChange={setStatusFilter}
-            />
+            <>
+              <MeetingFilters
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+              />
+              {/* Upcoming button for list view too */}
+              <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
+                <Button
+                  variant={isUpcomingOpen ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
+                  className={cn("h-8 px-3 text-sm", isUpcomingOpen && "bg-background shadow-sm")}
+                >
+                  Upcoming ({upcomingMeetings.length})
+                </Button>
+              </div>
+            </>
           )}
         </div>
       </div>
