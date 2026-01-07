@@ -1,8 +1,10 @@
 import React, { useMemo, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Video, Calendar, Clock, MoreVertical, Copy, Trash2, Mic } from 'lucide-react';
+import { Video, Calendar, Clock, MoreVertical, Copy, Trash2, Mic, Users, ArrowRight } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../ui/dropdown-menu';
+import { cn } from '../ui/utils';
+import { Badge } from '../ui/badge';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 
 interface MeetingsListProps {
   items: {
@@ -24,100 +26,6 @@ interface MeetingsListProps {
 }
 
 export default function MeetingsList({ items, activeTab = 'list', onTabChange, onJoinCall, isLoading, onCopyLink }: MeetingsListProps) {
-  const animatedItemsRef = useRef<Set<string>>(new Set());
-  // Группировка по статусу и времени
-  const groupedMeetings = useMemo(() => {
-    const now = new Date();
-    const groups: { label: string; meetings: typeof items }[] = [];
-
-    // 1. Идут сейчас (ACTIVE/IN-PROGRESS И время начала <= now < время окончания)
-    const activeItems = items.filter(m => {
-      const status = m.status?.toLowerCase();
-      const isActiveStatus = status === 'active' || status === 'in-progress';
-
-      if (!isActiveStatus) return false;
-
-      const startTime = m.date;
-      const endTime = new Date(startTime.getTime() + m.duration * 60000);
-
-      return startTime <= now && now < endTime;
-    }).sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    if (activeItems.length > 0) {
-      groups.push({ label: '🔵 Идут сейчас', meetings: activeItems });
-    }
-
-    // 2. Сегодня (предстоящие сегодня)
-    const todayItems = items.filter(m => {
-      const isToday = m.date.toDateString() === now.toDateString();
-      const notStarted = m.date > now;
-      const isScheduled = m.status?.toLowerCase() === 'scheduled';
-      return isToday && notStarted && isScheduled;
-    }).sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    if (todayItems.length > 0) {
-      groups.push({ label: '📅 Сегодня', meetings: todayItems });
-    }
-
-    // 3. Завтра
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowItems = items.filter(m => {
-      const isTomorrow = m.date.toDateString() === tomorrow.toDateString();
-      const isScheduled = m.status?.toLowerCase() === 'scheduled';
-      return isTomorrow && isScheduled;
-    }).sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    if (tomorrowItems.length > 0) {
-      groups.push({ label: '📅 Завтра', meetings: tomorrowItems });
-    }
-
-    // 4. На этой неделе
-    const weekEnd = new Date(now);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    weekEnd.setHours(23, 59, 59, 999);
-    const thisWeekItems = items.filter(m => {
-      const afterTomorrow = m.date > tomorrow;
-      const beforeWeekEnd = m.date <= weekEnd;
-      const isScheduled = m.status?.toLowerCase() === 'scheduled';
-      return afterTomorrow && beforeWeekEnd && isScheduled;
-    }).sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    if (thisWeekItems.length > 0) {
-      groups.push({ label: '📅 На этой неделе', meetings: thisWeekItems });
-    }
-
-    // 5. Позже (будущие, но не на этой неделе)
-    const laterItems = items.filter(m => {
-      const afterWeek = m.date > weekEnd;
-      const isScheduled = m.status?.toLowerCase() === 'scheduled';
-      return afterWeek && isScheduled;
-    }).sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    if (laterItems.length > 0) {
-      groups.push({ label: '📅 Позже', meetings: laterItems });
-    }
-
-    // 6. Завершенные
-    const completedItems = items.filter(m =>
-      m.status?.toLowerCase() === 'completed'
-    ).sort((a, b) => b.date.getTime() - a.date.getTime());
-
-    if (completedItems.length > 0) {
-      groups.push({ label: '🟡 Завершенные', meetings: completedItems });
-    }
-
-    // 7. Отмененные
-    const cancelledItems = items.filter(m =>
-      m.status?.toLowerCase() === 'cancelled'
-    ).sort((a, b) => b.date.getTime() - a.date.getTime());
-
-    if (cancelledItems.length > 0) {
-      groups.push({ label: '🔴 Отмененные', meetings: cancelledItems });
-    }
-
-    return groups;
-  }, [items]);
 
   // Вычисляем актуальный статус на основе времени
   const getActualStatus = (meeting: any) => {
@@ -137,169 +45,159 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
     return apiStatus || 'scheduled';
   };
 
-  const getStatusColor = (status?: string, itemId?: string) => {
-    const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'in-progress';
-    const shouldAnimate = isActive && itemId && !animatedItemsRef.current.has(itemId);
-
-    if (shouldAnimate && itemId) {
-      animatedItemsRef.current.add(itemId);
-    }
-
-    switch (status?.toLowerCase()) {
-      case 'scheduled':
-        return 'border-green-500';
-      case 'in-progress':
+  const getStatusBadge = (status: string) => {
+    switch (status) {
       case 'active':
-        return `border-blue-500 ${shouldAnimate ? 'animate-pulse-limited' : ''}`;
-      case 'completed':
-        return 'border-yellow-500';
-      case 'cancelled':
-        return 'border-red-500';
-      default:
-        return 'border-gray-500';
-    }
-  };
-
-  const getStatusBadge = (status?: string, itemId?: string) => {
-    const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'in-progress';
-    const shouldAnimate = isActive && itemId && !animatedItemsRef.current.has(itemId);
-
-    switch (status?.toLowerCase()) {
-      case 'scheduled':
-        return <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Запланирован</span>;
       case 'in-progress':
-      case 'active':
-        return <span className={`px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 ${shouldAnimate ? 'animate-pulse-limited' : ''}`}>Идет сейчас</span>;
+        return <Badge className="bg-blue-500 hover:bg-blue-600 border-0">Live</Badge>;
+      case 'scheduled':
+        return <Badge variant="outline" className="border-green-500 text-green-500">Scheduled</Badge>;
       case 'completed':
-        return <span className="px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">Завершен</span>;
+        return <Badge variant="secondary">Finished</Badge>;
       case 'cancelled':
-        return <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Отменен</span>;
+        return <Badge variant="destructive" className="opacity-70">Cancelled</Badge>;
       default:
-        return null;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const handleCopyLink = (roomId: string) => {
     const link = `${window.location.origin}/call/${roomId}`;
     navigator.clipboard.writeText(link);
-
-    if (onCopyLink) {
-      onCopyLink(roomId);
-    }
+    if (onCopyLink) onCopyLink(roomId);
   };
 
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      // Active first
+      const aStatus = getActualStatus(a);
+      const bStatus = getActualStatus(b);
+      if ((aStatus === 'active' || aStatus === 'in-progress') && (bStatus !== 'active' && bStatus !== 'in-progress')) return -1;
+      if ((bStatus === 'active' || bStatus === 'in-progress') && (aStatus !== 'active' && aStatus !== 'in-progress')) return 1;
+
+      // Then by date
+      return b.date.getTime() - a.date.getTime();
+    })
+  }, [items]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (!items.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center h-full">
+        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+          <Calendar className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">No meetings found</h3>
+        <p className="text-muted-foreground max-w-sm">
+          Check back later or create a new meeting to get started.
+        </p>
+      </div>
+    )
+  }
+
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Список встреч с группировкой */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : !items.length ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Calendar className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Нет запланированных звонков</h3>
-            <p className="text-sm text-muted-foreground mb-4">Создайте первый звонок, чтобы начать</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {groupedMeetings.map((group, groupIdx) => (
-              <div key={groupIdx}>
-                <h3 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2 uppercase tracking-tight ml-1">
-                  {group.label}
-                  <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
-                    {group.meetings.length}
-                  </span>
-                </h3>
+    <div className="h-full overflow-y-auto p-6">
+      <div className="max-w-5xl mx-auto space-y-1">
+        {sortedItems.map((meeting) => {
+          const status = getActualStatus(meeting);
+          const isJoinable = meeting.roomId && status !== 'completed' && status !== 'cancelled';
+          const isLive = status === 'active' || status === 'in-progress';
 
-                <div className="space-y-2">
-                  {group.meetings.map((meeting) => {
-                    const actualStatus = getActualStatus(meeting);
-                    const isJoinable = meeting.roomId && actualStatus !== 'completed' && actualStatus !== 'cancelled';
+          return (
+            <div
+              key={meeting.id}
+              className={cn(
+                "group flex items-center justify-between p-4 rounded-xl border transition-all duration-200",
+                isLive
+                  ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                  : "bg-card hover:bg-muted/50 border-border"
+              )}
+            >
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                {/* Date Box */}
+                <div className={cn(
+                  "flex flex-col items-center justify-center w-14 h-14 rounded-lg bg-muted/50 border border-border flex-shrink-0",
+                  isLive && "bg-blue-100/50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700"
+                )}>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase">{meeting.date.toLocaleDateString('en-US', { month: 'short' })}</span>
+                  <span className="text-lg font-bold">{meeting.date.getDate()}</span>
+                </div>
 
-                    return (
-                      <Card key={meeting.id} className={`border-l-4 ${getStatusColor(actualStatus, meeting.id)} transition-all hover:shadow-sm hover:border-gray-300 dark:hover:border-gray-700`}>
-                        <div className="p-3 flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              {meeting.type === 'video' ? (
-                                <Video className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                              ) : (
-                                <Mic className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                              )}
-                              <h4 className="font-medium text-sm truncate leading-none pt-0.5">
-                                {meeting.title}
-                              </h4>
-                              {getStatusBadge(actualStatus, meeting.id)}
-                            </div>
-
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                <span>{meeting.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                <span>{meeting.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })} ({meeting.duration} мин)</span>
-                              </div>
-                              {meeting.participants && meeting.participants.length > 0 && (
-                                <div className="flex items-center gap-1" title="Участники">
-                                  <span>👤 {meeting.participants.length}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {meeting.description && (
-                              <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">
-                                {meeting.description}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-1">
-                            {isJoinable && onJoinCall && (
-                              <Button
-                                size="sm"
-                                onClick={() => onJoinCall(meeting.roomId!)}
-                                className="h-7 text-xs px-2"
-                              >
-                                Join
-                              </Button>
-                            )}
-
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                                  <MoreVertical className="w-3.5 h-3.5" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {meeting.roomId && (
-                                  <>
-                                    <DropdownMenuItem onClick={() => handleCopyLink(meeting.roomId!)}>
-                                      <Copy className="w-4 h-4 mr-2" />
-                                      Скопировать ссылку
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                  </>
-                                )}
-                                <DropdownMenuItem className="text-red-600 dark:text-red-400">
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Удалить
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                      </Card>
-                    );
-                  })}
+                {/* Info */}
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-semibold text-base truncate">{meeting.title}</h4>
+                    {getStatusBadge(status)}
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>
+                        {meeting.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                        <span className="mx-1">•</span>
+                        {meeting.duration} min
+                      </span>
+                    </div>
+                    {meeting.participants && meeting.participants.length > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" />
+                        <span>{meeting.participants.length} invited</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pl-4">
+                {isJoinable && onJoinCall && (
+                  <Button
+                    onClick={() => onJoinCall(meeting.roomId!)}
+                    size="sm"
+                    className={cn(
+                      "gap-2 shadow-sm",
+                      isLive ? "bg-blue-600 hover:bg-blue-700 text-white" : ""
+                    )}
+                  >
+                    {isLive ? (
+                      <>Join Live <ArrowRight className="w-3 h-3" /></>
+                    ) : (
+                      "Start"
+                    )}
+                  </Button>
+                )}
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {meeting.roomId && (
+                      <DropdownMenuItem onClick={() => handleCopyLink(meeting.roomId!)}>
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy Link
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive focus:text-destructive">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Meeting
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

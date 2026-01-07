@@ -361,221 +361,220 @@ export function CallsPage() {
             <p className="text-muted-foreground">Schedule and manage your team meetings</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Compact View Toggle */}
-            <div className="flex items-center bg-muted p-1 rounded-lg">
-              <button
-                onClick={() => setActiveTab('calendar')}
-                className={cn(
-                  "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
-                  activeTab === 'calendar'
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Calendar
-              </button>
-              <button
-                onClick={() => setActiveTab('list')}
-                className={cn(
-                  "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
-                  activeTab === 'list'
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                List
-              </button>
-            </div>
-
-            <Button onClick={() => setIsCreateMeetingOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Meeting
+          {/* Compact View Toggle */}
+          <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border h-10">
+            <Button
+              variant={activeTab === 'calendar' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('calendar')}
+              className={cn(
+                "h-8 px-3 text-sm font-medium transition-all",
+                activeTab === 'calendar' ? "bg-background shadow-sm hover:bg-background" : "hover:bg-muted-foreground/10"
+              )}
+            >
+              Calendar
+            </Button>
+            <Button
+              variant={activeTab === 'list' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('list')}
+              className={cn(
+                "h-8 px-3 text-sm font-medium transition-all",
+                activeTab === 'list' ? "bg-background shadow-sm hover:bg-background" : "hover:bg-muted-foreground/10"
+              )}
+            >
+              List
             </Button>
           </div>
-          <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
+
+          <Button onClick={() => setIsCreateMeetingOpen(true)} className="h-10">
+            <Plus className="w-4 h-4 mr-2" />
+            New Meeting
+          </Button>
         </div>
+        <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
+      </div>
 
-        {/* Second Row: Search & Contextual Controls */}
-        <div className="flex items-center justify-between gap-4">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)}
-            upcomingCount={upcomingMeetings.length}
-            className="w-full max-w-md"
-          />
+      {/* Second Row: Search & Contextual Controls */}
+      <div className="flex items-center justify-between gap-4 h-10">
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)}
+          upcomingCount={upcomingMeetings.length}
+          className="w-full max-w-md h-10"
+        />
 
-          {/* Calendar Controls */}
-          {activeTab === 'calendar' && (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg border border-border">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => {
-                    const newDate = new Date(currentDate);
-                    if (calendarView === 'month') newDate.setMonth(newDate.getMonth() - 1);
-                    else newDate.setDate(newDate.getDate() - 7);
-                    setCurrentDate(newDate);
-                  }}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm font-medium min-w-[140px] text-center">
-                  {calendarView === 'month'
-                    ? currentDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
-                    : (() => {
-                      const start = new Date(currentDate);
-                      const day = start.getDay();
-                      const diff = start.getDate() - day + (day === 0 ? -6 : 1);
-                      start.setDate(diff);
-                      const end = new Date(start);
-                      end.setDate(end.getDate() + 6);
-                      return `${start.getDate()} ${start.toLocaleDateString('ru-RU', { month: 'short' })} - ${end.getDate()} ${end.toLocaleDateString('ru-RU', { month: 'short' })}`;
-                    })()
-                  }
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => {
-                    const newDate = new Date(currentDate);
-                    if (calendarView === 'month') newDate.setMonth(newDate.getMonth() + 1);
-                    else newDate.setDate(newDate.getDate() + 7);
-                    setCurrentDate(newDate);
-                  }}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div className="h-6 w-px bg-border" />
-
-              <div className="flex items-center bg-muted p-1 rounded-lg">
-                <button
-                  onClick={() => setCalendarView('month')}
-                  className={cn(
-                    "px-3 py-1 text-xs font-medium rounded-md transition-all",
-                    calendarView === 'month'
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Месяц
-                </button>
-                <button
-                  onClick={() => setCalendarView('week')}
-                  className={cn(
-                    "px-3 py-1 text-xs font-medium rounded-md transition-all",
-                    calendarView === 'week'
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Неделя
-                </button>
-              </div>
+        {/* Calendar Controls */}
+        {activeTab === 'calendar' && (
+          <div className="flex items-center gap-4 h-10">
+            <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border h-full">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  const newDate = new Date(currentDate);
+                  if (calendarView === 'month') newDate.setMonth(newDate.getMonth() - 1);
+                  else newDate.setDate(newDate.getDate() - 7);
+                  setCurrentDate(newDate);
+                }}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-medium min-w-[140px] text-center flex items-center justify-center h-full pt-0.5">
+                {calendarView === 'month'
+                  ? currentDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
+                  : (() => {
+                    const start = new Date(currentDate);
+                    const day = start.getDay();
+                    const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+                    start.setDate(diff);
+                    const end = new Date(start);
+                    end.setDate(end.getDate() + 6);
+                    return `${start.getDate()} ${start.toLocaleDateString('ru-RU', { month: 'short' })} - ${end.getDate()} ${end.toLocaleDateString('ru-RU', { month: 'short' })}`;
+                  })()
+                }
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  const newDate = new Date(currentDate);
+                  if (calendarView === 'month') newDate.setMonth(newDate.getMonth() + 1);
+                  else newDate.setDate(newDate.getDate() + 7);
+                  setCurrentDate(newDate);
+                }}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-          )}
 
-          {/* List Filters */}
-          {activeTab === 'list' && (
-            <MeetingFilters
-              statusFilter={statusFilter}
-              onStatusFilterChange={setStatusFilter}
-              className="flex-none"
-            />
-          )}
-        </div>
+            <div className="h-6 w-px bg-border" />
 
-        {/* Error banner */}
-        {error && (
-          <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-3 flex items-center justify-between">
-            <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
-            >
-              ✕
-            </button>
+            <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border h-full">
+              <Button
+                variant={calendarView === 'month' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setCalendarView('month')}
+                className={cn(
+                  "h-8 px-3 text-xs font-medium transition-all",
+                  calendarView === 'month' ? "bg-background shadow-sm hover:bg-background" : "hover:bg-muted-foreground/10"
+                )}
+              >
+                Месяц
+              </Button>
+              <Button
+                variant={calendarView === 'week' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setCalendarView('week')}
+                className={cn(
+                  "h-8 px-3 text-xs font-medium transition-all",
+                  calendarView === 'week' ? "bg-background shadow-sm hover:bg-background" : "hover:bg-muted-foreground/10"
+                )}
+              >
+                Неделя
+              </Button>
+            </div>
           </div>
+        )}
+
+        {/* List Filters */}
+        {activeTab === 'list' && (
+          <MeetingFilters
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            className="flex-none"
+          />
         )}
       </div>
 
-      {/* Content area - растягивается на оставшееся пространство */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
+      {/* Error banner */}
+      {error && (
+        <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-3 flex items-center justify-between">
+          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+    </div>
 
-        {/* Tabs content - растягивается на оставшееся пространство */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          {activeTab === 'calendar' ? (
-            <CalendarContainer>
-              {calendarView === 'month' ? (
-                <MonthView
-                  currentDate={currentDate}
-                  calls={calendarCalls}
-                  onDateChange={setCurrentDate}
-                  onDayClick={(date) => {
-                    setCurrentDate(date);
-                    setCalendarView('week');
-                  }}
-                  onCallClick={(call) => {
-                    setSelectedCall(call);
-                    setIsCallDetailsPanelOpen(true);
-                  }}
-                  calendarView={calendarView}
-                  onCalendarViewChange={setCalendarView}
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
-                />
-              ) : (
-                <WeekView
-                  currentDate={currentDate}
-                  calls={calendarCalls}
-                  onDateChange={setCurrentDate}
-                  onCallClick={(call) => {
-                    setSelectedCall(call);
-                    setIsCallDetailsPanelOpen(true);
-                  }}
-                  calendarView={calendarView}
-                  onCalendarViewChange={setCalendarView}
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
-                />
-              )}
-            </CalendarContainer>
+      {/* Content area - растягивается на оставшееся пространство */ }
+  <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
+
+    {/* Tabs content - растягивается на оставшееся пространство */}
+    <div className="flex-1 min-h-0 overflow-hidden">
+      {activeTab === 'calendar' ? (
+        <CalendarContainer>
+          {calendarView === 'month' ? (
+            <MonthView
+              currentDate={currentDate}
+              calls={calendarCalls}
+              onDateChange={setCurrentDate}
+              onDayClick={(date) => {
+                setCurrentDate(date);
+                setCalendarView('week');
+              }}
+              onCallClick={(call) => {
+                setSelectedCall(call);
+                setIsCallDetailsPanelOpen(true);
+              }}
+              calendarView={calendarView}
+              onCalendarViewChange={setCalendarView}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+            />
           ) : (
-            <MeetingsList
-              items={filteredMeetings}
-              onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
-              isLoading={isLoading}
-              onCopyLink={(roomId) => showSuccess('Ссылка скопирована')}
+            <WeekView
+              currentDate={currentDate}
+              calls={calendarCalls}
+              onDateChange={setCurrentDate}
+              onCallClick={(call) => {
+                setSelectedCall(call);
+                setIsCallDetailsPanelOpen(true);
+              }}
+              calendarView={calendarView}
+              onCalendarViewChange={setCalendarView}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
             />
           )}
-        </div>
-
-        {/* Sliding Upcoming Meetings Panel */}
-        <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={(id) => {
-          const m = meetings.find(mm => mm.id === id);
-          startCall(m);
-        }} />
-
-        {/* Overlay when panel is open */}
-        <UpcomingOverlay open={isUpcomingOpen} onClick={() => setIsUpcomingOpen(false)} />
-
-        {/* Call Details Panel */}
-        <CallDetailsPanel
-          call={selectedCall}
-          open={isCallDetailsPanelOpen}
-          onClose={() => {
-            setIsCallDetailsPanelOpen(false);
-            setSelectedCall(null);
-          }}
+        </CalendarContainer>
+      ) : (
+        <MeetingsList
+          items={filteredMeetings}
           onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
+          isLoading={isLoading}
+          onCopyLink={(roomId) => showSuccess('Ссылка скопирована')}
         />
-      </div>
+      )}
     </div>
+
+    {/* Sliding Upcoming Meetings Panel */}
+    <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={(id) => {
+      const m = meetings.find(mm => mm.id === id);
+      startCall(m);
+    }} />
+
+    {/* Overlay when panel is open */}
+    <UpcomingOverlay open={isUpcomingOpen} onClick={() => setIsUpcomingOpen(false)} />
+
+    {/* Call Details Panel */}
+    <CallDetailsPanel
+      call={selectedCall}
+      open={isCallDetailsPanelOpen}
+      onClose={() => {
+        setIsCallDetailsPanelOpen(false);
+        setSelectedCall(null);
+      }}
+      onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
+    />
+  </div>
+    </div >
   );
 }

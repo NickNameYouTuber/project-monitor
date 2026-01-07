@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Video, VideoOff, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { cn } from '@/components/ui/utils';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent } from '../../../components/ui/card';
+import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
+import { Switch } from '../../../components/ui/switch';
+import { cn } from '../../../components/ui/utils';
 
 interface PreCallSetupProps {
     onJoin: (settings: { cameraEnabled: boolean; microphoneEnabled: boolean; name: string }) => void;
@@ -133,8 +134,8 @@ export const PreCallSetup: React.FC<PreCallSetupProps> = ({ onJoin, defaultName 
 
                             <div className="space-y-4">
                                 <Card className="border-none shadow-none bg-muted/40">
-                                    <CardContent className="p-2 space-y-2">
-                                        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-background transition-colors">
+                                    <CardContent className="p-4 space-y-4">
+                                        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-background transition-colors bg-background/50">
                                             <div className="flex items-center gap-4">
                                                 <div className={cn("p-3 rounded-full transition-colors", microphoneEnabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
                                                     {microphoneEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
@@ -153,23 +154,22 @@ export const PreCallSetup: React.FC<PreCallSetupProps> = ({ onJoin, defaultName 
                                             </Button>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-background transition-colors">
+                                        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-background transition-colors bg-background/50">
                                             <div className="flex items-center gap-4">
                                                 <div className={cn("p-3 rounded-full transition-colors", cameraEnabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
                                                     {cameraEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
                                                 </div>
                                                 <div className="text-left">
                                                     <div className="font-semibold">Камера</div>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        {cameraEnabled ? "Включена" : "Выключена"}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <Button
-                                                variant={cameraEnabled ? "secondary" : "destructive"}
-                                                size="sm"
-                                                onClick={() => setCameraEnabled(!cameraEnabled)}
-                                                className="min-w-[100px]"
-                                            >
-                                                {cameraEnabled ? "Включена" : "Выключена"}
-                                            </Button>
+                                            <Switch
+                                                checked={cameraEnabled}
+                                                onCheckedChange={setCameraEnabled}
+                                            />
                                         </div>
                                     </CardContent>
                                 </Card>
