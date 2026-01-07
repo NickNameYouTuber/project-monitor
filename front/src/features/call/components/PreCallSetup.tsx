@@ -73,7 +73,7 @@ export const PreCallSetup: React.FC<PreCallSetupProps> = ({ onJoin, defaultName 
     };
 
     return (
-        <div className="min-h-screen w-full bg-background flex flex-col overflow-y-auto">
+        <div className="h-screen w-full bg-background flex flex-col overflow-y-auto">
             <div className="p-4 md:p-6 sticky top-0 z-10 bg-background/80 backdrop-blur-sm">
                 <Button variant="ghost" onClick={handleGoBack} className="gap-2 pl-0 hover:pl-2 transition-all">
                     <ArrowLeft className="w-4 h-4" />

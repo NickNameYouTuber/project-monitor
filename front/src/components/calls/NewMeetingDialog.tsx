@@ -19,7 +19,7 @@ interface NewMeetingDialogProps {
   setOpen: (open: boolean) => void;
   newMeeting: any;
   setNewMeeting: React.Dispatch<React.SetStateAction<any>>;
-  colors: string[];
+  colors: { name: string; value: string; bg?: string }[];
   onCreate: () => void;
 }
 
@@ -66,11 +66,6 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
               onUsersChange={(users) => setNewMeeting((prev: any) => ({ ...prev, participants: users }))}
               label=""
             />
-            {newMeeting.participants && newMeeting.participants.length > 0 && (
-              <div className="text-xs text-muted-foreground mt-1 text-right">
-                Выбрано: {newMeeting.participants.length}
-              </div>
-            )}
           </div>
 
           {/* Date & Time Row */}
@@ -90,11 +85,11 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
                     {newMeeting.date ? format(newMeeting.date, "d MMMM yyyy", { locale: ru }) : <span>Выберите дату</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0" align="start" side="top">
                   <Calendar
                     mode="single"
                     selected={newMeeting.date}
-                    onSelect={(date) => date && setNewMeeting((prev: any) => ({ ...prev, date }))}
+                    onSelect={(date: Date | undefined) => date && setNewMeeting((prev: any) => ({ ...prev, date }))}
                     initialFocus
                   />
                 </PopoverContent>
@@ -109,7 +104,7 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
                   <Input
                     type="time"
                     value={newMeeting.time}
-                    onChange={(e) => setNewMeeting((prev: any) => ({ ...prev, time: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMeeting((prev: any) => ({ ...prev, time: e.target.value }))}
                     className="pl-9"
                   />
                 </div>
@@ -154,7 +149,7 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
                 <div className="flex gap-4">
                   <Select
                     value={newMeeting.recurrenceType || 'WEEKLY'}
-                    onValueChange={(value) => setNewMeeting((prev: any) => ({ ...prev, recurrenceType: value }))}
+                    onValueChange={(value: string) => setNewMeeting((prev: any) => ({ ...prev, recurrenceType: value }))}
                   >
                     <SelectTrigger className="w-[140px]">
                       <SelectValue />
@@ -182,8 +177,8 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
                       <Calendar
                         mode="single"
                         selected={newMeeting.recurrenceEndDate}
-                        onSelect={(date) => date && setNewMeeting((prev: any) => ({ ...prev, recurrenceEndDate: date }))}
-                        disabled={(date) => date < new Date()}
+                        onSelect={(date: Date | undefined) => date && setNewMeeting((prev: any) => ({ ...prev, recurrenceEndDate: date }))}
+                        disabled={(date: Date) => date < new Date()}
                         initialFocus
                       />
                     </PopoverContent>

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Plus,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
@@ -351,13 +353,15 @@ export function CallsPage() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Header - фиксированная высота */}
-      <div className="flex-none border-b border-border p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="flex-none bg-background border-b border-border p-6 pb-4">
+        {/* Top Row: Title, View Toggle, Action */}
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Calls & Meetings</h1>
             <p className="text-muted-foreground">Schedule and manage your team meetings</p>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-3">
             {/* Compact View Toggle */}
             <div className="flex items-center bg-muted p-1 rounded-lg">
               <button
@@ -389,17 +393,103 @@ export function CallsPage() {
               New Meeting
             </Button>
           </div>
-          <NewMeetingDialog
-            open={isCreateMeetingOpen}
-            setOpen={setIsCreateMeetingOpen}
-            newMeeting={newMeeting}
-            setNewMeeting={setNewMeeting}
-            colors={MEETING_COLORS.map(c => c.value)}
-            onCreate={handleCreateMeeting}
-          />
+          <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
         </div>
 
-        <SearchBar value={searchQuery} onChange={setSearchQuery} onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)} upcomingCount={upcomingMeetings.length} />
+        {/* Second Row: Search & Contextual Controls */}
+        <div className="flex items-center justify-between gap-4">
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)}
+            upcomingCount={upcomingMeetings.length}
+            className="w-full max-w-md"
+          />
+
+          {/* Calendar Controls */}
+          {activeTab === 'calendar' && (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg border border-border">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    const newDate = new Date(currentDate);
+                    if (calendarView === 'month') newDate.setMonth(newDate.getMonth() - 1);
+                    else newDate.setDate(newDate.getDate() - 7);
+                    setCurrentDate(newDate);
+                  }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm font-medium min-w-[140px] text-center">
+                  {calendarView === 'month'
+                    ? currentDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
+                    : (() => {
+                      const start = new Date(currentDate);
+                      const day = start.getDay();
+                      const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+                      start.setDate(diff);
+                      const end = new Date(start);
+                      end.setDate(end.getDate() + 6);
+                      return `${start.getDate()} ${start.toLocaleDateString('ru-RU', { month: 'short' })} - ${end.getDate()} ${end.toLocaleDateString('ru-RU', { month: 'short' })}`;
+                    })()
+                  }
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    const newDate = new Date(currentDate);
+                    if (calendarView === 'month') newDate.setMonth(newDate.getMonth() + 1);
+                    else newDate.setDate(newDate.getDate() + 7);
+                    setCurrentDate(newDate);
+                  }}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="h-6 w-px bg-border" />
+
+              <div className="flex items-center bg-muted p-1 rounded-lg">
+                <button
+                  onClick={() => setCalendarView('month')}
+                  className={cn(
+                    "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                    calendarView === 'month'
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Месяц
+                </button>
+                <button
+                  onClick={() => setCalendarView('week')}
+                  className={cn(
+                    "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                    calendarView === 'week'
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Неделя
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* List Filters */}
+          {activeTab === 'list' && (
+            <MeetingFilters
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              className="flex-none"
+            />
+          )}
+        </div>
 
         {/* Error banner */}
         {error && (
@@ -417,16 +507,6 @@ export function CallsPage() {
 
       {/* Content area - растягивается на оставшееся пространство */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
-
-        {/* Фильтры (только для List view) */}
-        {activeTab === 'list' && (
-          <MeetingFilters
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-          />
-        )}
-
-        {/* Hidden old tabs */}
 
         {/* Tabs content - растягивается на оставшееся пространство */}
         <div className="flex-1 min-h-0 overflow-hidden">

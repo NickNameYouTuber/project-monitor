@@ -1,8 +1,6 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import { CallResponse } from '../../api/calls';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CallCard from './CallCard';
-import { Button } from '../ui/button';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -18,9 +16,9 @@ interface WeekViewProps {
 const DAYS_OF_WEEK_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
-const WeekView: React.FC<WeekViewProps> = ({ 
-  currentDate, 
-  calls, 
+const WeekView: React.FC<WeekViewProps> = ({
+  currentDate,
+  calls,
   onDateChange,
   onCallClick,
   calendarView = 'week',
@@ -36,7 +34,7 @@ const WeekView: React.FC<WeekViewProps> = ({
     const day = start.getDay();
     const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday
     start.setDate(diff);
-    
+
     return Array.from({ length: 7 }, (_, i) => {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
@@ -47,14 +45,14 @@ const WeekView: React.FC<WeekViewProps> = ({
   // Группируем звонки по дням
   const callsByDay = useMemo(() => {
     const map = new Map<string, CallResponse[]>();
-    
+
     console.log('WeekView: всего звонков для отображения:', calls.length, calls);
-    
+
     weekDays.forEach(day => {
       const dateKey = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
       map.set(dateKey, []);
     });
-    
+
     calls.forEach(call => {
       // Используем scheduled_time или start_at
       const timeStr = call.scheduled_time || call.start_at;
@@ -62,54 +60,56 @@ const WeekView: React.FC<WeekViewProps> = ({
         console.log('WeekView: звонок без scheduled_time и start_at:', call);
         return;
       }
-      
+
       const date = new Date(timeStr);
       const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-      
+
       console.log(`WeekView: добавляем звонок "${call.title}" на дату ${dateKey} (источник: ${call.scheduled_time ? 'scheduled_time' : 'start_at'})`, call);
-      
+
       if (map.has(dateKey)) {
         map.get(dateKey)!.push(call);
       }
     });
-    
+
     console.log('WeekView: итоговая карта звонков по дням:', map);
-    
+
     return map;
   }, [calls, weekDays]);
 
   // Вычисляем наложения для каждого дня
   const callsWithLayout = useMemo(() => {
     const result = new Map<string, Array<CallResponse & { column: number; columnSpan: number; }>>();
-    
+
     callsByDay.forEach((dayCalls, dateKey) => {
       const sorted = [...dayCalls].sort((a, b) => {
-        const timeA = (a.scheduled_time || a.start_at) ? new Date(a.scheduled_time || a.start_at).getTime() : 0;
-        const timeB = (b.scheduled_time || b.start_at) ? new Date(b.scheduled_time || b.start_at).getTime() : 0;
+        const strA = a.scheduled_time || a.start_at;
+        const strB = b.scheduled_time || b.start_at;
+        const timeA = strA ? new Date(strA).getTime() : 0;
+        const timeB = strB ? new Date(strB).getTime() : 0;
         return timeA - timeB;
       });
-      
+
       const layout: Array<CallResponse & { column: number; columnSpan: number; }> = [];
-      
+
       sorted.forEach(call => {
         const timeStr = call.scheduled_time || call.start_at;
         const startTime = timeStr ? new Date(timeStr) : new Date();
         const endTime = new Date(startTime.getTime() + (call.duration_minutes || 30) * 60000);
-        
+
         // Находим свободную колонку
         let column = 0;
         let foundConflict = true;
-        
+
         while (foundConflict) {
           foundConflict = false;
-          
+
           for (const existing of layout) {
             if (existing.column !== column) continue;
-            
+
             const existingTimeStr = existing.scheduled_time || existing.start_at;
             const existingStart = existingTimeStr ? new Date(existingTimeStr) : new Date();
             const existingEnd = new Date(existingStart.getTime() + (existing.duration_minutes || 30) * 60000);
-            
+
             // Проверка наложения
             if (startTime < existingEnd && endTime > existingStart) {
               foundConflict = true;
@@ -118,21 +118,21 @@ const WeekView: React.FC<WeekViewProps> = ({
             }
           }
         }
-        
+
         layout.push({ ...call, column, columnSpan: 1 });
       });
-      
+
       // Вычисляем максимальное количество колонок для каждого временного слота
       const maxColumns = Math.max(1, ...layout.map(c => c.column + 1));
-      
+
       // Обновляем columnSpan
       layout.forEach(call => {
         call.columnSpan = maxColumns;
       });
-      
+
       result.set(dateKey, layout);
     });
-    
+
     return result;
   }, [callsByDay]);
 
@@ -162,15 +162,15 @@ const WeekView: React.FC<WeekViewProps> = ({
   const getCallPosition = (call: CallResponse) => {
     const timeStr = call.scheduled_time || call.start_at;
     if (!timeStr) return { top: 0, height: 90 };
-    
+
     const date = new Date(timeStr);
     const hours = date.getHours();
     const minutes = date.getMinutes();
-    
+
     // Масштаб 1.5x: 90px на час вместо 60px
     const top = (hours * 90 + minutes * 1.5);
     const height = (call.duration_minutes || 30) * 1.5;
-    
+
     return { top, height };
   };
 
@@ -201,95 +201,6 @@ const WeekView: React.FC<WeekViewProps> = ({
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-background overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-background">
-        <div className="flex items-center gap-4">
-          {/* Табы Calendar / List */}
-          {onTabChange && (
-            <div className="flex items-center rounded-none bg-transparent p-0 mr-2">
-              <button
-                onClick={() => onTabChange('calendar')}
-                className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
-                  activeTab === 'calendar'
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Calendar
-              </button>
-              <button
-                onClick={() => onTabChange('list')}
-                className={`inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-none border-b-2 ${
-                  activeTab === 'list'
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                List
-              </button>
-            </div>
-          )}
-
-          <button
-            onClick={handlePrevWeek}
-            className="p-2 hover:bg-accent rounded-lg transition"
-            aria-label="Предыдущая неделя"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <h2 className="text-xl font-semibold">
-            {formatDateRange()}
-          </h2>
-          <button
-            onClick={handleNextWeek}
-            className="p-2 hover:bg-accent rounded-lg transition"
-            aria-label="Следующая неделя"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
-          {/* Переключатель месяц/неделя */}
-          {onCalendarViewChange && (
-            <div className="flex items-center gap-2 border-l pl-4 ml-2">
-              <Button
-                variant={calendarView === 'month' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onCalendarViewChange('month')}
-              >
-                Месяц
-              </Button>
-              <Button
-                variant={calendarView === 'week' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onCalendarViewChange('week')}
-              >
-                Неделя
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Легенда статусов */}
-        <div className="flex items-center gap-3 text-sm">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-muted-foreground">Предстоящие</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-muted-foreground">Сейчас</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <span className="text-muted-foreground">Завершенные</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-muted-foreground">Отмененные</span>
-          </div>
-        </div>
-      </div>
-
       {/* Week Grid */}
       <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0" ref={containerRef}>
         <div className="grid grid-cols-[80px_repeat(7,1fr)] min-h-full">
@@ -308,7 +219,7 @@ const WeekView: React.FC<WeekViewProps> = ({
             const dateKey = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
             const dayCalls = callsWithLayout.get(dateKey) || [];
             const today = isToday(day);
-            
+
             return (
               <div key={dayIndex} className="border-r border-border relative">
                 {/* Day header */}
@@ -322,17 +233,17 @@ const WeekView: React.FC<WeekViewProps> = ({
                   </div>
                 </div>
 
-                  {/* Hour rows */}
-                  {HOURS.map(hour => (
-                    <div key={hour} className="h-[90px] border-b border-border" />
-                  ))}
+                {/* Hour rows */}
+                {HOURS.map(hour => (
+                  <div key={hour} className="h-[90px] border-b border-border" />
+                ))}
 
                 {/* Calls */}
                 {dayCalls.map((call, index) => {
                   const { top, height } = getCallPosition(call);
                   const widthPercent = 100 / call.columnSpan;
                   const leftPercent = (call.column / call.columnSpan) * 100;
-                  
+
                   return (
                     <div
                       key={index}
