@@ -502,79 +502,78 @@ export function CallsPage() {
           </button>
         </div>
       )}
-    </div>
 
-      {/* Content area - растягивается на оставшееся пространство */ }
-  <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
+      {/* Content area - растягивается на оставшееся пространство */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
 
-    {/* Tabs content - растягивается на оставшееся пространство */}
-    <div className="flex-1 min-h-0 overflow-hidden">
-      {activeTab === 'calendar' ? (
-        <CalendarContainer>
-          {calendarView === 'month' ? (
-            <MonthView
-              currentDate={currentDate}
-              calls={calendarCalls}
-              onDateChange={setCurrentDate}
-              onDayClick={(date) => {
-                setCurrentDate(date);
-                setCalendarView('week');
-              }}
-              onCallClick={(call) => {
-                setSelectedCall(call);
-                setIsCallDetailsPanelOpen(true);
-              }}
-              calendarView={calendarView}
-              onCalendarViewChange={setCalendarView}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-            />
+        {/* Tabs content - растягивается на оставшееся пространство */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {activeTab === 'calendar' ? (
+            <CalendarContainer>
+              {calendarView === 'month' ? (
+                <MonthView
+                  currentDate={currentDate}
+                  calls={calendarCalls}
+                  onDateChange={setCurrentDate}
+                  onDayClick={(date) => {
+                    setCurrentDate(date);
+                    setCalendarView('week');
+                  }}
+                  onCallClick={(call) => {
+                    setSelectedCall(call);
+                    setIsCallDetailsPanelOpen(true);
+                  }}
+                  calendarView={calendarView}
+                  onCalendarViewChange={setCalendarView}
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
+                />
+              ) : (
+                <WeekView
+                  currentDate={currentDate}
+                  calls={calendarCalls}
+                  onDateChange={setCurrentDate}
+                  onCallClick={(call) => {
+                    setSelectedCall(call);
+                    setIsCallDetailsPanelOpen(true);
+                  }}
+                  calendarView={calendarView}
+                  onCalendarViewChange={setCalendarView}
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
+                />
+              )}
+            </CalendarContainer>
           ) : (
-            <WeekView
-              currentDate={currentDate}
-              calls={calendarCalls}
-              onDateChange={setCurrentDate}
-              onCallClick={(call) => {
-                setSelectedCall(call);
-                setIsCallDetailsPanelOpen(true);
-              }}
-              calendarView={calendarView}
-              onCalendarViewChange={setCalendarView}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
+            <MeetingsList
+              items={filteredMeetings}
+              onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
+              isLoading={isLoading}
+              onCopyLink={(roomId) => showSuccess('Ссылка скопирована')}
             />
           )}
-        </CalendarContainer>
-      ) : (
-        <MeetingsList
-          items={filteredMeetings}
+        </div>
+
+        {/* Sliding Upcoming Meetings Panel */}
+        <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={(id) => {
+          const m = meetings.find(mm => mm.id === id);
+          startCall(m);
+        }} />
+
+        {/* Overlay when panel is open */}
+        <UpcomingOverlay open={isUpcomingOpen} onClick={() => setIsUpcomingOpen(false)} />
+
+        {/* Call Details Panel */}
+        <CallDetailsPanel
+          call={selectedCall}
+          open={isCallDetailsPanelOpen}
+          onClose={() => {
+            setIsCallDetailsPanelOpen(false);
+            setSelectedCall(null);
+          }}
           onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
-          isLoading={isLoading}
-          onCopyLink={(roomId) => showSuccess('Ссылка скопирована')}
         />
-      )}
-    </div>
-
-    {/* Sliding Upcoming Meetings Panel */}
-    <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={(id) => {
-      const m = meetings.find(mm => mm.id === id);
-      startCall(m);
-    }} />
-
-    {/* Overlay when panel is open */}
-    <UpcomingOverlay open={isUpcomingOpen} onClick={() => setIsUpcomingOpen(false)} />
-
-    {/* Call Details Panel */}
-    <CallDetailsPanel
-      call={selectedCall}
-      open={isCallDetailsPanelOpen}
-      onClose={() => {
-        setIsCallDetailsPanelOpen(false);
-        setSelectedCall(null);
-      }}
-      onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
-    />
-  </div>
+      </div>
     </div >
   );
 }
