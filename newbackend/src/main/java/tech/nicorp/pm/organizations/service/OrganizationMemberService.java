@@ -8,6 +8,8 @@ import tech.nicorp.pm.organizations.domain.OrganizationMember;
 import tech.nicorp.pm.organizations.domain.OrganizationRole;
 import tech.nicorp.pm.organizations.repo.OrganizationMemberRepository;
 import tech.nicorp.pm.organizations.repo.OrganizationRepository;
+import tech.nicorp.pm.organizations.repo.OrgRoleRepository;
+import tech.nicorp.pm.organizations.domain.OrgRole;
 import tech.nicorp.pm.users.domain.User;
 import tech.nicorp.pm.users.repo.UserRepository;
 
