@@ -14,18 +14,8 @@ CREATE TABLE org_role_permissions (
     PRIMARY KEY (role_id, permission)
 );
 
--- Organization Members updates
--- 1. Add new column as nullable first
+-- Organization Members updates (nullable role_id for migration)
 ALTER TABLE organization_members ADD COLUMN role_id UUID REFERENCES org_roles(id);
-
--- 2. Migrate existing data (Optional/Advanced: Create default roles for existing orgs via script or code on startup)
--- For now, we make sure that NEW inserts (via code) will fill role_id.
--- But the "role" column (varchar) still exists and has NOT NULL constraint.
--- If code stops writing to "role", inserts fail.
-
--- We should loosen the constraint on the old "role" column if we plan to stop using it.
-ALTER TABLE organization_members ALTER COLUMN role DROP NOT NULL;
 
 -- Organization Invites updates
 ALTER TABLE organization_invites ADD COLUMN role_id UUID REFERENCES org_roles(id);
-ALTER TABLE organization_invites ALTER COLUMN role DROP NOT NULL;
