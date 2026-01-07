@@ -97,6 +97,8 @@ public class RoleService {
         adminPerms.add(OrgPermission.DELETE_PROJECT);
         admin.setPermissions(adminPerms);
         roleRepository.save(admin);
+        
+        roleRepository.flush();
 
         // Member - Create Projects, View everything except Settings/Billing specific manage actions
         OrgRole member = new OrgRole();
