@@ -18,8 +18,15 @@ public class UserService {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new RuntimeException("No authenticated user found");
         }
-        String username = authentication.getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        String userIdString = authentication.getName();
+        try {
+            java.util.UUID userId = java.util.UUID.fromString(userIdString);
+            return userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found by ID: " + userId));
+        } catch (IllegalArgumentException e) {
+            // Fallback: maybe it's a username after all
+            return userRepository.findByUsername(userIdString)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + userIdString));
+        }
     }
 }
