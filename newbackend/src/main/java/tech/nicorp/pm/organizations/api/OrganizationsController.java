@@ -96,7 +96,6 @@ public class OrganizationsController {
     }
 
     @PostMapping
-    @Transactional
     @Operation(summary = "Создать новую организацию")
     public ResponseEntity<?> create(
             @RequestBody OrganizationCreateRequest request, 
@@ -113,12 +112,14 @@ public class OrganizationsController {
                     ? request.getSlug() 
                     : organizationService.generateSlug(request.getName());
             
+            // 1. Create Organization (Transactional)
             Organization org = organizationService.createOrganization(
                     request.getName(), 
                     slug, 
                     userId
             );
             
+            // 2. Update optional fields (Transactional update)
             if (request.getDescription() != null) org.setDescription(request.getDescription());
             if (request.getLogoUrl() != null) org.setLogoUrl(request.getLogoUrl());
             if (request.getWebsite() != null) org.setWebsite(request.getWebsite());
@@ -127,7 +128,15 @@ public class OrganizationsController {
             
             org = organizationService.updateOrganization(org.getId(), org);
             
-            memberService.addMember(org.getId(), userId, "Owner", null);
+            // 3. Add Owner Member
+            // Note: If this fails, we have a zombie organization. We should refactor to Service layer later.
+            try {
+                memberService.addMember(org.getId(), userId, "Owner", null);
+            } catch (Exception e) {
+                // Try to cleanup
+                organizationService.deleteOrganization(org.getId());
+                throw e;
+            }
             
             if (Boolean.TRUE.equals(request.getRequirePassword()) && request.getPassword() != null) {
                 organizationService.setOrganizationPassword(org.getId(), request.getPassword());
