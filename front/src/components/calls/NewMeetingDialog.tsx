@@ -23,9 +23,10 @@ interface NewMeetingDialogProps {
   setNewMeeting: React.Dispatch<React.SetStateAction<any>>;
   colors: { name: string; value: string; bg?: string }[];
   onCreate: () => void;
+  organizationId?: string; // NEW: For filtering users to org members
 }
 
-export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeeting, colors, onCreate }: NewMeetingDialogProps) {
+export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeeting, colors, onCreate, organizationId }: NewMeetingDialogProps) {
 
   const handleRecurrenceDayToggle = (dayValue: number) => {
     const days = newMeeting.recurrenceDays || [];
@@ -71,6 +72,7 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
                   selectedUsers={newMeeting.participants || []}
                   onUsersChange={(users) => setNewMeeting((prev: any) => ({ ...prev, participants: users }))}
                   label=""
+                  organizationId={organizationId}
                 />
               </div>
 

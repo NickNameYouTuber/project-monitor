@@ -45,10 +45,14 @@ public class UsersController {
     }
 
     @GetMapping
-    @Operation(summary = "Список пользователей")
-    public ResponseEntity<List<User>> list(@RequestParam(name = "limit", required = false, defaultValue = "100") int limit) {
-        List<User> all = users.findAll();
-        return ResponseEntity.ok(all.subList(0, Math.min(all.size(), limit)));
+    @Operation(summary = "Список пользователей - ОТКЛЮЧЕНО для приватности")
+    public ResponseEntity<?> list(@RequestParam(name = "limit", required = false, defaultValue = "100") int limit) {
+        // SECURITY: Public user listing is disabled. 
+        // Use /api/organizations/{orgId}/members to get users within an organization context.
+        return ResponseEntity.status(403).body(java.util.Map.of(
+            "error", "Listing all users is not allowed for privacy reasons",
+            "hint", "Use /api/organizations/{orgId}/members to get organization members"
+        ));
     }
 }
 

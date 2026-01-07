@@ -6,8 +6,9 @@ import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Check, ChevronsUpDown, X, UserPlus } from 'lucide-react';
 import { cn } from '../ui/utils';
-import { listUsers, UserDto } from '../../api/users';
+import { UserDto } from '../../api/users';
 import { getProjectUsers } from '../../api/project-users';
+import { listMembers } from '../../api/organization-members';
 
 interface UserAutocompleteProps {
   selectedUsers: UserDto[];
@@ -15,6 +16,7 @@ interface UserAutocompleteProps {
   excludeUserIds?: string[];
   label?: string;
   projectId?: string;
+  organizationId?: string; // NEW: Filter by organization members
 }
 
 export default function UserAutocomplete({
@@ -22,7 +24,8 @@ export default function UserAutocomplete({
   onUsersChange,
   excludeUserIds = [],
   label = 'Участники',
-  projectId
+  projectId,
+  organizationId
 }: UserAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<UserDto[]>([]);
@@ -34,9 +37,25 @@ export default function UserAutocomplete({
     const loadUsers = async () => {
       setIsLoading(true);
       try {
-        const allUsers = projectId
-          ? await getProjectUsers(projectId)
-          : await listUsers(100);
+        let allUsers: UserDto[] = [];
+
+        if (projectId) {
+          // Load project users
+          allUsers = await getProjectUsers(projectId);
+        } else if (organizationId) {
+          // Load organization members - PRIVACY FIX
+          const members = await listMembers(organizationId);
+          allUsers = members.map(m => ({
+            id: m.user?.id || m.user_id,
+            username: m.user?.username || '',
+            displayName: m.user?.display_name
+          }));
+        } else {
+          // No organization context - show empty (no access to all users)
+          console.warn('UserAutocomplete: No organizationId provided, cannot load users');
+          allUsers = [];
+        }
+
         setUsers(allUsers.filter(u => !excludeUserIds.includes(u.id)));
       } catch (error) {
         console.error('Ошибка загрузки пользователей:', error);
@@ -46,7 +65,7 @@ export default function UserAutocomplete({
     };
 
     loadUsers();
-  }, [open, projectId]);
+  }, [open, projectId, organizationId]);
 
   const handleSelect = (user: UserDto) => {
     const isSelected = selectedUsers.some(u => u.id === user.id);
