@@ -352,36 +352,57 @@ export function CallsPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
-      {/* Header - фиксированная высота */}
-      {/* Header - Compact Single Row */}
-      <div className="flex-none bg-background border-b border-border p-4 flex items-center justify-between gap-4">
-        {/* Left: Title */}
-        <div className="flex items-center gap-4 min-w-0">
-          <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">Calls & Meetings</h1>
-          {/* Vertical Separator */}
-          <div className="h-6 w-px bg-border hidden md:block" />
+      {/* Header - matching Projects page layout */}
+      <div className="border-b border-border p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1>Calls & Meetings</h1>
+            <p className="text-muted-foreground">Schedule and manage your team meetings</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* View Toggle */}
+            <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
+              <Button
+                variant={activeTab === 'calendar' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setActiveTab('calendar')}
+                className={cn("h-8 px-3 text-sm", activeTab === 'calendar' && "bg-background shadow-sm")}
+              >
+                Calendar
+              </Button>
+              <Button
+                variant={activeTab === 'list' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setActiveTab('list')}
+                className={cn("h-8 px-3 text-sm", activeTab === 'list' && "bg-background shadow-sm")}
+              >
+                List
+              </Button>
+            </div>
+            <Button onClick={() => setIsCreateMeetingOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Meeting
+            </Button>
+          </div>
+        </div>
 
-          {/* Search Bar - Integrated */}
-          <div className="w-full max-w-sm hidden md:block">
+        {/* Second row: Search and contextual controls */}
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
               onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)}
               upcomingCount={upcomingMeetings.length}
-              className="h-9"
+              className="w-full"
             />
           </div>
-        </div>
 
-        {/* Right: Controls */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Mobile Search Trigger could go here if needed, sticking to desktop first */}
-
-          {/* Calendar Nav Controls (Only in Calendar Tab) */}
+          {/* Calendar Controls - only in calendar view */}
           {activeTab === 'calendar' && (
-            <div className="flex items-center gap-1 mr-2">
-              <div className="flex items-center bg-muted/50 p-0.5 rounded-md border border-border">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+            <div className="flex items-center gap-2">
+              <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                   const newDate = new Date(currentDate);
                   if (calendarView === 'month') newDate.setMonth(newDate.getMonth() - 1);
                   else newDate.setDate(newDate.getDate() - 7);
@@ -389,7 +410,7 @@ export function CallsPage() {
                 }}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-xs font-medium min-w-[100px] text-center px-2">
+                <span className="text-sm font-medium min-w-[120px] text-center">
                   {calendarView === 'month'
                     ? currentDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
                     : (() => {
@@ -399,11 +420,11 @@ export function CallsPage() {
                       start.setDate(diff);
                       const end = new Date(start);
                       end.setDate(end.getDate() + 6);
-                      return `${start.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
+                      return `${start.getDate()} ${start.toLocaleDateString('ru-RU', { month: 'short' })} - ${end.getDate()} ${end.toLocaleDateString('ru-RU', { month: 'short' })}`;
                     })()
                   }
                 </span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                   const newDate = new Date(currentDate);
                   if (calendarView === 'month') newDate.setMonth(newDate.getMonth() + 1);
                   else newDate.setDate(newDate.getDate() + 7);
@@ -413,12 +434,12 @@ export function CallsPage() {
                 </Button>
               </div>
 
-              <div className="flex items-center bg-muted/50 p-0.5 rounded-md border border-border">
+              <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
                 <Button
                   variant={calendarView === 'month' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setCalendarView('month')}
-                  className={cn("h-7 px-2 text-xs", calendarView === 'month' && "bg-background shadow-xs")}
+                  className={cn("h-8 px-3 text-sm", calendarView === 'month' && "bg-background shadow-sm")}
                 >
                   Месяц
                 </Button>
@@ -426,7 +447,7 @@ export function CallsPage() {
                   variant={calendarView === 'week' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setCalendarView('week')}
-                  className={cn("h-7 px-2 text-xs", calendarView === 'week' && "bg-background shadow-xs")}
+                  className={cn("h-8 px-3 text-sm", calendarView === 'week' && "bg-background shadow-sm")}
                 >
                   Неделя
                 </Button>
@@ -434,44 +455,17 @@ export function CallsPage() {
             </div>
           )}
 
-          {/* View Toggle */}
-          <div className="flex items-center bg-muted/50 p-0.5 rounded-lg border border-border">
-            <Button
-              variant={activeTab === 'calendar' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('calendar')}
-              className={cn("h-8 px-3 text-sm", activeTab === 'calendar' && "bg-background shadow-sm")}
-            >
-              Calendar
-            </Button>
-            <Button
-              variant={activeTab === 'list' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('list')}
-              className={cn("h-8 px-3 text-sm", activeTab === 'list' && "bg-background shadow-sm")}
-            >
-              List
-            </Button>
-          </div>
-
-          {/* Filters (List View Only) */}
+          {/* List Filters - only in list view */}
           {activeTab === 'list' && (
             <MeetingFilters
               statusFilter={statusFilter}
               onStatusFilterChange={setStatusFilter}
-              className="h-9"
             />
           )}
-
-          <div className="w-px h-6 bg-border mx-1" />
-
-          <Button onClick={() => setIsCreateMeetingOpen(true)} size="sm" className="h-9">
-            <Plus className="w-4 h-4 mr-2" />
-            New Meeting
-          </Button>
         </div>
-        <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
       </div>
+
+      <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
 
       {/* Error banner */}
       {error && (

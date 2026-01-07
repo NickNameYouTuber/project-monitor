@@ -95,7 +95,7 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
             </div>
           </div>
           {/* Right Column: Time & Settings */}
-          <div className="w-[40%] bg-muted/5 p-6 flex flex-col gap-6 h-full overflow-y-auto">
+          <div className="w-[40%] bg-muted p-6 flex flex-col gap-6 h-full overflow-y-auto">
             <div className="space-y-1">
               <h3 className="font-semibold text-sm">Время и дата</h3>
               <p className="text-xs text-muted-foreground">Когда состоится встреча?</p>
