@@ -63,7 +63,18 @@ public class OrgRoleController {
     public OrgRoleResponse createRole(
             @PathVariable UUID organizationId,
             @Valid @RequestBody CreateOrgRoleRequest request) {
-//...
+        
+        User currentUser = userService.getCurrentUser();
+        // Permission check
+        var member = memberService.getMember(organizationId, currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("Not a member of organization"));
+        if (!member.getRole().getPermissions().contains(tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ROLES)) {
+             throw new RuntimeException("Missing permission: MANAGE_ROLES");
+        }
+
+        Organization org = organizationService.getOrganization(organizationId);
+        OrgRole role = roleService.createRole(org, request.getName(), request.getColor(), request.getPermissions());
+        return toResponse(role);
     }
 
     @PutMapping("/{roleId}")
@@ -74,7 +85,22 @@ public class OrgRoleController {
             @PathVariable UUID organizationId,
             @PathVariable UUID roleId,
             @Valid @RequestBody UpdateOrgRoleRequest request) {
-//...
+        
+        User currentUser = userService.getCurrentUser();
+        // Permission check inline to ensure transactional safety or use helper if confident
+        var member = memberService.getMember(organizationId, currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("Not a member of organization"));
+        if (!member.getRole().getPermissions().contains(tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ROLES)) {
+             throw new RuntimeException("Missing permission: MANAGE_ROLES");
+        }
+
+        OrgRole role = roleService.getRole(roleId);
+        if (!role.getOrganization().getId().equals(organizationId)) {
+            throw new IllegalArgumentException("Role does not belong to this organization");
+        }
+
+        OrgRole updated = roleService.updateRole(roleId, request.getName(), request.getColor(), request.getPermissions());
+        return toResponse(updated);
     }
 
     @DeleteMapping("/{roleId}")
@@ -84,7 +110,22 @@ public class OrgRoleController {
     public ResponseEntity<Void> deleteRole(
             @PathVariable UUID organizationId,
             @PathVariable UUID roleId) {
-//...
+        
+        User currentUser = userService.getCurrentUser();
+        // Permission check
+        var member = memberService.getMember(organizationId, currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("Not a member of organization"));
+        if (!member.getRole().getPermissions().contains(tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ROLES)) {
+             throw new RuntimeException("Missing permission: MANAGE_ROLES");
+        }
+
+        OrgRole role = roleService.getRole(roleId);
+        if (!role.getOrganization().getId().equals(organizationId)) {
+            throw new IllegalArgumentException("Role does not belong to this organization");
+        }
+
+        roleService.deleteRole(roleId);
+        return ResponseEntity.noContent().build();
     }
 
     private void checkPermission(UUID orgId, UUID userId, tech.nicorp.pm.organizations.domain.OrgPermission permission) {
