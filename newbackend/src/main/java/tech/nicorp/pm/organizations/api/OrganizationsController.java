@@ -126,7 +126,7 @@ public class OrganizationsController {
             
             org = organizationService.updateOrganization(org.getId(), org);
             
-            memberService.addMember(org.getId(), userId, OrganizationRole.OWNER.name(), null);
+            memberService.addMember(org.getId(), userId, "Owner", null);
             
             if (Boolean.TRUE.equals(request.getRequirePassword()) && request.getPassword() != null) {
                 organizationService.setOrganizationPassword(org.getId(), request.getPassword());
