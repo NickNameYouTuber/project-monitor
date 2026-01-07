@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.organizations.api.dto.CreateOrgRoleRequest;
 import tech.nicorp.pm.organizations.api.dto.OrgRoleResponse;
@@ -34,20 +35,25 @@ public class OrgRoleController {
     private final UserService userService;
 
     @GetMapping
+    @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List organization roles")
-    public List<OrgRoleResponse> listRoles(@PathVariable UUID organizationId) {
-        User currentUser = userService.getCurrentUser();
-        if (!memberService.hasAccess(organizationId, currentUser.getId())) {
-             // For now, allow reading roles if you are a member of the org? 
-             // Or maybe we should check permissions. Let's assume all members can see roles for now 
-             // to be able to see who is who.
-             throw new RuntimeException("Access denied");
+    public ResponseEntity<?> listRoles(@PathVariable UUID organizationId) {
+        try {
+            User currentUser = userService.getCurrentUser();
+            if (!memberService.hasAccess(organizationId, currentUser.getId())) {
+                 return ResponseEntity.status(403).body("Access denied");
+            }
+            
+            List<OrgRoleResponse> roles = roleService.getRoles(organizationId).stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+                    
+            return ResponseEntity.ok(roles);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
-        
-        return roleService.getRoles(organizationId).stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
     }
 
     @PostMapping
@@ -58,8 +64,6 @@ public class OrgRoleController {
             @Valid @RequestBody CreateOrgRoleRequest request) {
         
         User currentUser = userService.getCurrentUser();
-        // Check permission MANAGE_ROLES
-        // We need a helper to check permission easily
         checkPermission(organizationId, currentUser.getId(), tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ROLES);
 
         Organization org = organizationService.getOrganization(organizationId);
@@ -78,7 +82,6 @@ public class OrgRoleController {
         User currentUser = userService.getCurrentUser();
         checkPermission(organizationId, currentUser.getId(), tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ROLES);
 
-        // Verify role belongs to org (implicit in service logic mostly, but good to check)
         OrgRole role = roleService.getRole(roleId);
         if (!role.getOrganization().getId().equals(organizationId)) {
             throw new IllegalArgumentException("Role does not belong to this organization");
@@ -123,6 +126,9 @@ public class OrgRoleController {
         res.setColor(role.getColor());
         res.setPermissions(role.getPermissions());
         res.setSystemDefault(role.isSystemDefault());
+        if (role.getOrganization() != null) {
+            res.setOrganizationId(role.getOrganization().getId());
+        }
         return res;
     }
 }
