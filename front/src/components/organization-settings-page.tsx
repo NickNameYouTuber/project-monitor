@@ -61,6 +61,7 @@ export function OrganizationSettingsPage() {
   const [ssoUserinfoEndpoint, setSSOUserinfoEndpoint] = useState('');
   const [ssoIssuer, setSSOIssuer] = useState('');
   const [ssoRequireSSO, setSSORequireSSO] = useState(false);
+  const [activeTab, setActiveTab] = useState('general');
 
   useEffect(() => {
     if (orgId) {
@@ -234,6 +235,7 @@ export function OrganizationSettingsPage() {
       setInviteRole('MEMBER');
       setInviteMaxUses('');
       setInviteExpiresAt('');
+      setActiveTab('invites'); // Switch to invites tab
       loadInvites();
     } catch (error) {
       showError('Failed to create invite');
@@ -359,7 +361,7 @@ export function OrganizationSettingsPage() {
       </div>
 
       <div className="flex-1 p-6 overflow-auto">
-        <Tabs defaultValue="general" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
             {canManageSettings && <TabsTrigger value="roles">Roles</TabsTrigger>}
