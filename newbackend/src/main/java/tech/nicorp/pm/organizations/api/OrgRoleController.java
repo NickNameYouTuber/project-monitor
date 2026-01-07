@@ -36,13 +36,14 @@ public class OrgRoleController {
 
     @GetMapping
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "List organization roles")
     public ResponseEntity<?> listRoles(@PathVariable UUID organizationId) {
         try {
-            // DEBUG: Disable access check
-            // User currentUser = userService.getCurrentUser();
-            // if (!memberService.hasAccess(organizationId, currentUser.getId())) {
-            //      return ResponseEntity.status(403).body("Access denied");
-            // }
+            User currentUser = userService.getCurrentUser();
+            if (!memberService.hasAccess(organizationId, currentUser.getId())) {
+                 return ResponseEntity.status(403).body("Access denied");
+            }
             
             List<OrgRoleResponse> roles = roleService.getRoles(organizationId).stream()
                     .map(this::toResponse)
@@ -51,49 +52,37 @@ public class OrgRoleController {
             return ResponseEntity.ok(roles);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Error: " + e.toString() + " at " + e.getStackTrace()[0]);
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Create a new role")
-    public ResponseEntity<?> createRole(
+    public OrgRoleResponse createRole(
             @PathVariable UUID organizationId,
             @Valid @RequestBody CreateOrgRoleRequest request) {
-        try {
-            // DEBUG: Disable permission check
-            // User currentUser = userService.getCurrentUser();
-            // checkPermission(organizationId, currentUser.getId(), tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ROLES);
-    
-            Organization org = organizationService.getOrganization(organizationId);
-            OrgRole role = roleService.createRole(org, request.getName(), request.getColor(), request.getPermissions());
-            return ResponseEntity.ok(toResponse(role));
-        } catch (Exception e) {
-             return ResponseEntity.internalServerError().body("Error: " + e.toString());
-        }
+        
+        User currentUser = userService.getCurrentUser();
+        checkPermission(organizationId, currentUser.getId(), tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ROLES);
+
+        Organization org = organizationService.getOrganization(organizationId);
+        OrgRole role = roleService.createRole(org, request.getName(), request.getColor(), request.getPermissions());
+        return toResponse(role);
     }
 
     // ... (keep other methods similar or simplified)
 
     private OrgRoleResponse toResponse(OrgRole role) {
-        try {
-            OrgRoleResponse res = new OrgRoleResponse();
-            res.setId(role.getId());
-            res.setName(role.getName());
-            res.setColor(role.getColor());
-            res.setPermissions(role.getPermissions());
-            res.setSystemDefault(role.isSystemDefault());
-            
-            // Safe Org Access
-            if (role.getOrganization() != null) {
-                res.setOrganizationId(role.getOrganization().getId());
-            }
-            return res;
-        } catch (Exception e) {
-             OrgRoleResponse err = new OrgRoleResponse();
-             err.setName("ERROR_MAPPING");
-             return err;
+        OrgRoleResponse res = new OrgRoleResponse();
+        res.setId(role.getId());
+        res.setName(role.getName());
+        res.setColor(role.getColor());
+        res.setPermissions(role.getPermissions());
+        res.setSystemDefault(role.isSystemDefault());
+        if (role.getOrganization() != null) {
+            res.setOrganizationId(role.getOrganization().getId());
         }
+        return res;
     }
 }
