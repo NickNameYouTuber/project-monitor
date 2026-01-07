@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, User, UserPlus, Trash2, Key, Link as LinkIcon, Copy, X } from 'lucide-react';
+import { RolesTab } from './organization/roles-tab';
+import { getOrganizationRoles } from '../api/roles';
+import { OrgRole } from '../types/organization';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -36,6 +39,7 @@ export function OrganizationSettingsPage() {
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
   const [newMemberRole, setNewMemberRole] = useState('MEMBER');
+  const [availableRoles, setAvailableRoles] = useState<OrgRole[]>([]);
 
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -79,8 +83,19 @@ export function OrganizationSettingsPage() {
       loadMembers();
       loadInvites();
       loadSSOConfig();
+      loadAvailableRoles();
     }
   }, [orgId, organization]);
+
+  const loadAvailableRoles = async () => {
+    if (!orgId) return;
+    try {
+      const roles = await getOrganizationRoles(orgId);
+      setAvailableRoles(roles);
+    } catch (error) {
+      console.error('Failed to load roles', error);
+    }
+  };
 
   const loadCurrentMember = async () => {
     if (!orgId) return;
@@ -126,13 +141,13 @@ export function OrganizationSettingsPage() {
       for (const user of selectedUsers) {
         await addMember(orgId, { user_id: user.id, role: newMemberRole });
       }
-      toast.success('Member(s) added successfully');
+      showSuccess('Member(s) added successfully');
       setAddMemberDialogOpen(false);
       setSelectedUsers([]);
       setNewMemberRole('MEMBER');
       loadMembers();
     } catch (error) {
-      toast.error('Failed to add member');
+      showError('Failed to add member');
     }
   };
 
@@ -152,16 +167,16 @@ export function OrganizationSettingsPage() {
     if (!orgId) return;
     try {
       await updateMemberRole(orgId, memberId, newRole);
-      toast.success('Role updated successfully');
+      showSuccess('Role updated successfully');
       loadMembers();
     } catch (error) {
-      toast.error('Failed to update role');
+      showError('Failed to update role');
     }
   };
 
   const handleTogglePassword = async (enabled: boolean) => {
     if (!orgId) return;
-    
+
     if (enabled) {
       setChangePasswordDialogOpen(true);
     } else {
@@ -177,22 +192,22 @@ export function OrganizationSettingsPage() {
 
   const handleChangePassword = async () => {
     if (!orgId || !newPassword || newPassword !== confirmPassword) return;
-    
+
     try {
       await apiClient.post(`/organizations/${orgId}/password`, { password: newPassword });
-      toast.success('Password updated successfully');
+      showSuccess('Password updated successfully');
       setChangePasswordDialogOpen(false);
       setNewPassword('');
       setConfirmPassword('');
       loadOrganization();
     } catch (error) {
-      toast.error('Failed to update password');
+      showError('Failed to update password');
     }
   };
 
   const handleSaveSecuritySettings = async () => {
     if (!orgId) return;
-    
+
     try {
       await apiClient.patch(`/organizations/${orgId}`, {
         corporate_domain: corporateDomain || null,
@@ -212,7 +227,7 @@ export function OrganizationSettingsPage() {
       const data = await listInvites(orgId);
       setInvites(data);
     } catch (error) {
-      toast.error('Failed to load invites');
+      showError('Failed to load invites');
     } finally {
       setLoadingInvites(false);
     }
@@ -220,12 +235,12 @@ export function OrganizationSettingsPage() {
 
   const handleCreateInvite = async () => {
     if (!orgId) return;
-    
+
     try {
-      const expiresAtFormatted = inviteExpiresAt 
-        ? new Date(inviteExpiresAt + 'T23:59:59Z').toISOString() 
+      const expiresAtFormatted = inviteExpiresAt
+        ? new Date(inviteExpiresAt + 'T23:59:59Z').toISOString()
         : undefined;
-      
+
       await createInvite(orgId, {
         role: inviteRole,
         max_uses: inviteMaxUses ? parseInt(inviteMaxUses) : undefined,
@@ -245,7 +260,7 @@ export function OrganizationSettingsPage() {
   const handleRevokeInvite = async (inviteId: string) => {
     if (!orgId) return;
     if (!confirm('Are you sure you want to revoke this invitation?')) return;
-    
+
     try {
       await revokeInvite(orgId, inviteId);
       showSuccess('Invitation revoked');
@@ -279,7 +294,7 @@ export function OrganizationSettingsPage() {
 
   const handleSaveSSO = async () => {
     if (!orgId) return;
-    
+
     try {
       const request: SSOConfigurationRequest = {
         provider_type: 'OIDC',
@@ -292,13 +307,13 @@ export function OrganizationSettingsPage() {
         issuer: ssoIssuer,
         require_sso: ssoRequireSSO,
       };
-      
+
       await saveSSOConfig(orgId, request);
-      toast.success('SSO configuration saved successfully');
+      showSuccess('SSO configuration saved successfully');
       setSSOClientSecret('');
       loadSSOConfig();
     } catch (error) {
-      toast.error('Failed to save SSO configuration');
+      showError('Failed to save SSO configuration');
     }
   };
 
@@ -321,8 +336,11 @@ export function OrganizationSettingsPage() {
     );
   }
 
-  const canManageSettings = currentMember && 
-    (currentMember.role === 'OWNER' || currentMember.role === 'ADMIN');
+  // Use permissions for access control if available
+  const hasSettingsPermission = currentMember?.role_details?.permissions?.includes('VIEW_SETTINGS_TAB' as any)
+    || currentMember?.role === 'OWNER' || currentMember?.role === 'ADMIN';
+
+  const canManageSettings = hasSettingsPermission;
 
   if (!canManageSettings) {
     return (
@@ -361,12 +379,13 @@ export function OrganizationSettingsPage() {
         <Tabs defaultValue="general" className="w-full">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
+            {canManageSettings && <TabsTrigger value="roles">Roles</TabsTrigger>}
             {canManageSettings && <TabsTrigger value="members">Members</TabsTrigger>}
             {currentMember?.role === 'OWNER' && <TabsTrigger value="security">Security</TabsTrigger>}
             {currentMember?.role === 'OWNER' && <TabsTrigger value="sso">SSO</TabsTrigger>}
             {canManageSettings && <TabsTrigger value="invites">Invites</TabsTrigger>}
           </TabsList>
-          
+
           <TabsContent value="general" className="mt-6">
             <Card>
               <CardHeader>
@@ -391,7 +410,11 @@ export function OrganizationSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
+          <TabsContent value="roles" className="mt-6">
+            <RolesTab organizationId={orgId!} canManageRoles={canManageSettings!} />
+          </TabsContent>
+
           <TabsContent value="members" className="mt-6">
             <Card>
               <CardHeader>
@@ -427,7 +450,7 @@ export function OrganizationSettingsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <RoleBadge role={member.role} type="project" />
+                          <RoleBadge role={member.role_details || member.role} type="project" />
                           <Select
                             value={member.role}
                             onValueChange={(newRole) => handleUpdateMemberRole(member.id, newRole)}
@@ -436,10 +459,14 @@ export function OrganizationSettingsPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="OWNER">Owner</SelectItem>
-                              <SelectItem value="ADMIN">Admin</SelectItem>
-                              <SelectItem value="MEMBER">Member</SelectItem>
-                              <SelectItem value="GUEST">Guest</SelectItem>
+                              {availableRoles.map(role => (
+                                <SelectItem key={role.id} value={role.name}>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
+                                    {role.name}
+                                  </div>
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <Button
@@ -479,9 +506,14 @@ export function OrganizationSettingsPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
-                        <SelectItem value="MEMBER">Member</SelectItem>
-                        <SelectItem value="GUEST">Guest</SelectItem>
+                        {availableRoles.map(role => (
+                          <SelectItem key={role.id} value={role.name}>
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
+                              {role.name}
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -497,7 +529,7 @@ export function OrganizationSettingsPage() {
               </DialogContent>
             </Dialog>
           </TabsContent>
-          
+
           <TabsContent value="security" className="mt-6">
             <Card>
               <CardHeader>
@@ -517,7 +549,7 @@ export function OrganizationSettingsPage() {
                     onCheckedChange={handleTogglePassword}
                   />
                 </div>
-                
+
                 {organization?.require_password && (
                   <div className="pt-4 border-t">
                     <Button
@@ -601,7 +633,7 @@ export function OrganizationSettingsPage() {
               </DialogContent>
             </Dialog>
           </TabsContent>
-          
+
           <TabsContent value="sso" className="mt-6">
             <Card>
               <CardHeader>
@@ -713,7 +745,7 @@ export function OrganizationSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="invites" className="mt-6">
             <Card>
               <CardHeader>
@@ -759,7 +791,7 @@ export function OrganizationSettingsPage() {
                             <X className="w-4 h-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 mt-3">
                           <Input
                             value={`${window.location.origin}/invite/${invite.token}`}
@@ -777,7 +809,7 @@ export function OrganizationSettingsPage() {
                             <Copy className="w-4 h-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                           {invite.max_uses && (
                             <span>Uses: {invite.current_uses}/{invite.max_uses}</span>

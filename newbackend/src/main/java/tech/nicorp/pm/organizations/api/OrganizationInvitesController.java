@@ -62,15 +62,13 @@ public class OrganizationInvitesController {
             return ResponseEntity.status(401).build();
         }
         
-        OrganizationRole role = memberService.getUserRole(orgId, userId).orElse(null);
+        tech.nicorp.pm.organizations.domain.OrgRole role = memberService.getUserOrgRole(orgId, userId).orElse(null);
         if (role == null || !memberService.canCreateInvites(role)) {
             return ResponseEntity.status(403).build();
         }
         
         try {
-            OrganizationRole inviteRole = request.getRole() != null
-                    ? OrganizationRole.valueOf(request.getRole())
-                    : OrganizationRole.MEMBER;
+            String inviteRole = request.getRole() != null ? request.getRole() : "Member";
             
             OrganizationInvite invite = inviteService.createInvite(
                     orgId,
@@ -122,7 +120,13 @@ public class OrganizationInvitesController {
             response.setId(member.getId());
             response.setOrganizationId(member.getOrganization().getId());
             response.setUserId(member.getUser().getId());
-            response.setRole(member.getRole());
+            
+            if (member.getRole() != null) {
+                response.setRole(member.getRole().getName().toUpperCase());
+            } else if (member.getRoleEnum() != null) {
+                 response.setRole(member.getRoleEnum().name());
+            }
+
             response.setJoinedAt(member.getJoinedAt());
             
             return ResponseEntity.ok(response);
@@ -143,7 +147,7 @@ public class OrganizationInvitesController {
             return ResponseEntity.status(401).build();
         }
         
-        OrganizationRole role = memberService.getUserRole(orgId, userId).orElse(null);
+        tech.nicorp.pm.organizations.domain.OrgRole role = memberService.getUserOrgRole(orgId, userId).orElse(null);
         if (role == null || !memberService.canManageMembers(role)) {
             return ResponseEntity.status(403).build();
         }
@@ -167,7 +171,13 @@ public class OrganizationInvitesController {
         response.setOrganizationId(invite.getOrganization().getId());
         response.setOrganizationName(invite.getOrganization().getName());
         response.setToken(invite.getToken());
-        response.setRole(invite.getRole());
+        
+        if (invite.getRole() != null) {
+             response.setRole(invite.getRole().getName().toUpperCase());
+        } else {
+             response.setRole(invite.getRoleEnum().name());
+        }
+        
         response.setMaxUses(invite.getMaxUses());
         response.setCurrentUses(invite.getCurrentUses());
         response.setExpiresAt(invite.getExpiresAt());

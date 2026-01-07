@@ -21,44 +21,48 @@ public class OrganizationMemberService {
     private final OrganizationMemberRepository memberRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final OrgRoleRepository roleRepository;
 
     public OrganizationMemberService(
             OrganizationMemberRepository memberRepository,
             OrganizationRepository organizationRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            OrgRoleRepository roleRepository) {
         this.memberRepository = memberRepository;
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Transactional
-    public OrganizationMember addMember(UUID orgId, UUID userId, OrganizationRole role, UUID invitedBy) {
+    public OrganizationMember addMember(UUID orgId, UUID userId, String roleName, UUID invitedBy) {
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + orgId));
         
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        // Проверить существующее членство
+        // Check availability
         var existingMember = memberRepository.findByOrganizationIdAndUserId(orgId, userId);
         if (existingMember.isPresent()) {
-            System.out.println("[OrganizationMemberService] User is already a member, returning existing");
             return existingMember.get();
         }
+
+        // Get Role
+        OrgRole orgRole = roleRepository.findByOrganizationIdAndName(orgId, roleName)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName));
 
         OrganizationMember member = new OrganizationMember();
         member.setOrganization(org);
         member.setUser(user);
-        member.setRoleEnum(role);
+        member.setRole(orgRole);
+        member.setRoleEnum(OrganizationRole.MEMBER); // Legacy fallback, though not really used anymore
         
         if (invitedBy != null) {
             userRepository.findById(invitedBy).ifPresent(member::setInvitedBy);
         }
         
-        System.out.println("[OrganizationMemberService] Saving new member: user=" + userId + ", org=" + orgId + ", role=" + role);
-        OrganizationMember saved = memberRepository.save(member);
-        System.out.println("[OrganizationMemberService] Member saved with id: " + saved.getId());
-        return saved;
+        return memberRepository.save(member);
     }
 
     @Transactional(readOnly = true)
@@ -84,10 +88,12 @@ public class OrganizationMemberService {
         OrganizationMember member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found: " + memberId));
         
-        if (member.getRoleEnum() == OrganizationRole.OWNER) {
+        // Prevent removing the last owner
+        // Assuming "Owner" role check by name or permission? Let's check permissions or name "Owner"
+        if ("Owner".equalsIgnoreCase(member.getRole().getName())) {
             long ownerCount = memberRepository.findByOrganizationId(member.getOrganization().getId())
                     .stream()
-                    .filter(m -> m.getRoleEnum() == OrganizationRole.OWNER)
+                    .filter(m -> "Owner".equalsIgnoreCase(m.getRole().getName()))
                     .count();
             
             if (ownerCount <= 1) {
@@ -99,14 +105,18 @@ public class OrganizationMemberService {
     }
 
     @Transactional
-    public OrganizationMember updateRole(UUID memberId, OrganizationRole newRole) {
+    public OrganizationMember updateRole(UUID memberId, UUID roleId) {
         OrganizationMember member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found: " + memberId));
         
-        if (member.getRoleEnum() == OrganizationRole.OWNER && newRole != OrganizationRole.OWNER) {
-            long ownerCount = memberRepository.findByOrganizationId(member.getOrganization().getId())
+        OrgRole newRole = roleRepository.findById(roleId)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleId));
+
+        // Check if downgrading the last owner
+        if ("Owner".equalsIgnoreCase(member.getRole().getName()) && !"Owner".equalsIgnoreCase(newRole.getName())) {
+             long ownerCount = memberRepository.findByOrganizationId(member.getOrganization().getId())
                     .stream()
-                    .filter(m -> m.getRoleEnum() == OrganizationRole.OWNER)
+                    .filter(m -> "Owner".equalsIgnoreCase(m.getRole().getName()))
                     .count();
             
             if (ownerCount <= 1) {
@@ -114,7 +124,7 @@ public class OrganizationMemberService {
             }
         }
         
-        member.setRoleEnum(newRole);
+        member.setRole(newRole);
         return memberRepository.save(member);
     }
 
@@ -123,10 +133,18 @@ public class OrganizationMemberService {
         return memberRepository.existsByOrganizationIdAndUserId(orgId, userId);
     }
 
+    // Legacy method maybe for backward compat API only
     @Transactional(readOnly = true)
     public Optional<OrganizationRole> getUserRole(UUID orgId, UUID userId) {
         return memberRepository.findByOrganizationIdAndUserId(orgId, userId)
                 .map(OrganizationMember::getRoleEnum);
+    }
+    
+    // New method for getting OrgRole
+    @Transactional(readOnly = true)
+    public Optional<OrgRole> getUserOrgRole(UUID orgId, UUID userId) {
+        return memberRepository.findByOrganizationIdAndUserId(orgId, userId)
+                .map(OrganizationMember::getRole);
     }
 
     @Transactional
@@ -158,28 +176,27 @@ public class OrganizationMemberService {
         return BCrypt.checkpw(password, member.getOrgPasswordHash());
     }
 
-    public boolean canManageMembers(OrganizationRole role) {
-        return role == OrganizationRole.OWNER || role == OrganizationRole.ADMIN;
+    public boolean canManageMembers(OrgRole role) {
+        return role.getPermissions().contains(tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_MEMBERS);
     }
 
-    public boolean canCreateProjects(OrganizationRole role) {
-        return role == OrganizationRole.OWNER 
-                || role == OrganizationRole.ADMIN 
-                || role == OrganizationRole.MEMBER;
+    public boolean canCreateProjects(OrgRole role) {
+        return role.getPermissions().contains(tech.nicorp.pm.organizations.domain.OrgPermission.CREATE_PROJECT);
     }
 
-    public boolean canManageSettings(OrganizationRole role) {
-        return role == OrganizationRole.OWNER || role == OrganizationRole.ADMIN;
+    public boolean canManageSettings(OrgRole role) {
+         return role.getPermissions().contains(tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ORG_DETAILS);
     }
 
-    public boolean canDeleteOrganization(OrganizationRole role) {
-        return role == OrganizationRole.OWNER;
+    public boolean canDeleteOrganization(OrgRole role) {
+        // Technically this might be restricted to Owner only, but MANAGE_ORG_DETAILS covers settings.
+        // Let's create a DELETE_ORG permission if needed, but for now reuse or check "Owner" name if we want strictness.
+        // Assuming Owner always has MANAGE_ORG_DETAILS.
+        return role.getName().equalsIgnoreCase("Owner");
     }
 
-    public boolean canCreateInvites(OrganizationRole role) {
-        return role == OrganizationRole.OWNER 
-                || role == OrganizationRole.ADMIN 
-                || role == OrganizationRole.MEMBER;
+    public boolean canCreateInvites(OrgRole role) {
+        return role.getPermissions().contains(tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_MEMBERS);
     }
 }
 

@@ -28,8 +28,12 @@ public class OrganizationMember {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "role", nullable = false, length = 32)
-    private String role;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id") // nullable=true for migration, but logic should enforce it
+    private OrgRole role;
+
+    // Legacy field support check could be done via migration script, 
+    // here we just use the new relation.
 
     @Column(name = "corporate_email", length = 255)
     private String corporateEmail;
@@ -51,15 +55,18 @@ public class OrganizationMember {
     private OffsetDateTime lastActiveAt;
 
     public OrganizationRole getRoleEnum() {
+        if (role == null) return OrganizationRole.GUEST;
         try {
-            return OrganizationRole.valueOf(role);
+            // Try to map custom role name to enum, or fallback
+            return OrganizationRole.valueOf(role.getName().toUpperCase());
         } catch (IllegalArgumentException e) {
-            return OrganizationRole.GUEST;
+            return OrganizationRole.MEMBER; // Fallback for custom roles
         }
     }
 
     public void setRoleEnum(OrganizationRole organizationRole) {
-        this.role = organizationRole.name();
+        // This is now purely for legacy or creation compatibility, 
+        // real assignment should happen via setRole(OrgRole)
     }
 }
 

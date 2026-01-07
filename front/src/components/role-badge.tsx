@@ -1,15 +1,36 @@
 import React from 'react';
-import { Crown, Settings, Code, FileText, Eye, Wrench } from 'lucide-react';
+import { Crown, Settings, Code, FileText, Eye, Wrench, User } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn } from './ui/utils';
 
+import { OrgRole } from '../types/organization';
+
 interface RoleBadgeProps {
-  role: string;
+  role: string | OrgRole;
   type?: 'project' | 'repository';
   variant?: 'default' | 'outline' | 'secondary';
 }
 
 export function RoleBadge({ role, type = 'project', variant = 'outline' }: RoleBadgeProps) {
+  // Handle OrgRole object
+  if (typeof role !== 'string') {
+    return (
+      <Badge
+        variant={variant}
+        className={cn('gap-1 border-current')}
+        style={{
+          color: role.color,
+          borderColor: variant === 'outline' ? role.color : undefined,
+          backgroundColor: variant === 'default' ? role.color : undefined
+        }}
+      >
+        {/* We can use a generic icon or specific one if we map it, for now just text or default icon */}
+        <Settings className="w-3 h-3" />
+        {role.name}
+      </Badge>
+    );
+  }
+
   const getRoleConfig = () => {
     switch (role.toUpperCase()) {
       case 'OWNER':
@@ -24,7 +45,13 @@ export function RoleBadge({ role, type = 'project', variant = 'outline' }: RoleB
         return { icon: FileText, label: 'Reporter', className: 'text-purple-600 border-purple-600' };
       case 'VIEWER':
         return { icon: Eye, label: 'Viewer', className: 'text-gray-600 border-gray-600' };
+      case 'MEMBER':
+        return { icon: User, label: 'Member', className: 'text-blue-500 border-blue-500' };
+      case 'GUEST':
+        return { icon: Eye, label: 'Guest', className: 'text-gray-500 border-gray-500' };
       default:
+        // Try to handle potential custom role names that come as string 
+        // We calculate a hash color or just grey
         return { icon: Eye, label: role, className: 'text-gray-600 border-gray-600' };
     }
   };

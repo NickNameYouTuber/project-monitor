@@ -27,8 +27,9 @@ public class OrganizationInvite {
     @Column(name = "token", nullable = false, unique = true, length = 64)
     private String token;
 
-    @Column(name = "role", nullable = false, length = 32)
-    private String role = "MEMBER";
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
+    private OrgRole role;
 
     @Column(name = "max_uses")
     private Integer maxUses;
@@ -59,16 +60,18 @@ public class OrganizationInvite {
     @JoinColumn(name = "revoked_by")
     private User revokedBy;
 
+    // Legacy Support
     public OrganizationRole getRoleEnum() {
+        if (role == null) return OrganizationRole.MEMBER;
         try {
-            return OrganizationRole.valueOf(role);
+             return OrganizationRole.valueOf(role.getName().toUpperCase());
         } catch (IllegalArgumentException e) {
-            return OrganizationRole.MEMBER;
+             return OrganizationRole.MEMBER;
         }
     }
 
     public void setRoleEnum(OrganizationRole organizationRole) {
-        this.role = organizationRole.name();
+        // This is legacy setter, actual setting should be done via setRole(OrgRole)
     }
 }
 

@@ -16,10 +16,14 @@ public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final RoleService roleService;
 
-    public OrganizationService(OrganizationRepository organizationRepository, UserRepository userRepository) {
+    public OrganizationService(OrganizationRepository organizationRepository, 
+                               UserRepository userRepository,
+                               RoleService roleService) {
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
+        this.roleService = roleService;
     }
 
     @Transactional
@@ -36,7 +40,12 @@ public class OrganizationService {
         org.setSlug(slug);
         org.setOwner(owner);
         
-        return organizationRepository.save(org);
+        org = organizationRepository.save(org);
+        
+        // Create default roles (Owner, Admin, Member, Guest)
+        roleService.createDefaultRoles(org);
+        
+        return org;
     }
 
     @Transactional(readOnly = true)

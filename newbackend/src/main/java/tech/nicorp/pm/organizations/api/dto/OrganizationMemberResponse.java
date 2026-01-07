@@ -20,6 +20,9 @@ public class OrganizationMemberResponse {
     
     private String role;
     
+    @JsonProperty("role_details")
+    private OrgRoleResponse roleDetails;
+    
     @JsonProperty("corporate_email")
     private String corporateEmail;
     

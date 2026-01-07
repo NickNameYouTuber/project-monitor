@@ -22,9 +22,12 @@ import java.util.UUID;
 public class OrganizationMembersController {
 
     private final OrganizationMemberService memberService;
+    private final tech.nicorp.pm.organizations.repo.OrgRoleRepository roleRepository;
 
-    public OrganizationMembersController(OrganizationMemberService memberService) {
+    public OrganizationMembersController(OrganizationMemberService memberService,
+                                         tech.nicorp.pm.organizations.repo.OrgRoleRepository roleRepository) {
         this.memberService = memberService;
+        this.roleRepository = roleRepository;
     }
 
     @GetMapping
@@ -73,16 +76,16 @@ public class OrganizationMembersController {
             return ResponseEntity.status(401).build();
         }
         
-        OrganizationRole currentRole = memberService.getUserRole(orgId, currentUserId).orElse(null);
+        tech.nicorp.pm.organizations.domain.OrgRole currentRole = memberService.getUserOrgRole(orgId, currentUserId).orElse(null);
         if (currentRole == null || !memberService.canManageMembers(currentRole)) {
             return ResponseEntity.status(403).build();
         }
         
         try {
             UUID newUserId = UUID.fromString(body.get("user_id"));
-            OrganizationRole newRole = OrganizationRole.valueOf(body.getOrDefault("role", "MEMBER"));
+            String roleName = body.getOrDefault("role", "Member"); // Default to "Member" if not provided
             
-            OrganizationMember member = memberService.addMember(orgId, newUserId, newRole, currentUserId);
+            OrganizationMember member = memberService.addMember(orgId, newUserId, roleName, currentUserId);
             
             return ResponseEntity
                     .created(URI.create("/api/organizations/" + orgId + "/members/" + member.getId()))
@@ -104,7 +107,7 @@ public class OrganizationMembersController {
             return ResponseEntity.status(401).build();
         }
         
-        OrganizationRole role = memberService.getUserRole(orgId, userId).orElse(null);
+        tech.nicorp.pm.organizations.domain.OrgRole role = memberService.getUserOrgRole(orgId, userId).orElse(null);
         if (role == null || !memberService.canManageMembers(role)) {
             return ResponseEntity.status(403).build();
         }
@@ -113,6 +116,60 @@ public class OrganizationMembersController {
             memberService.removeMember(memberId);
             return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
+             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/{memberId}")
+    @Operation(summary = "Обновить роль участника")
+    public ResponseEntity<OrganizationMemberResponse> updateRole(
+            @PathVariable UUID orgId,
+            @PathVariable UUID memberId,
+            @RequestBody Map<String, String> body,
+            Authentication auth) {
+
+        UUID userId = extractUserId(auth);
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        tech.nicorp.pm.organizations.domain.OrgRole currentRole = memberService.getUserOrgRole(orgId, userId).orElse(null);
+        if (currentRole == null || !memberService.canManageMembers(currentRole)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        String newRoleVal = body.get("role");
+        if (newRoleVal == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            // Retrieve Organization to ensure role belongs to it
+            // Logic to resolve Role:
+            // 1. Try as UUID (Role ID)
+            // 2. Try as Name (System Default or Custom)
+            
+            tech.nicorp.pm.organizations.domain.OrgRole targetRole = null;
+            
+            // Try as UUID
+            try {
+                UUID roleId = UUID.fromString(newRoleVal);
+                targetRole = roleRepository.findById(roleId).orElse(null);
+            } catch (IllegalArgumentException ignored) {}
+
+            // Try as Name if not found
+            if (targetRole == null) {
+                targetRole = roleRepository.findByOrganizationIdAndName(orgId, newRoleVal).orElse(null);
+            }
+
+            if (targetRole == null || !targetRole.getOrganization().getId().equals(orgId)) {
+                return ResponseEntity.badRequest().body(null); // Role not found or invalid
+            }
+
+            OrganizationMember updated = memberService.updateRole(memberId, targetRole.getId());
+            return ResponseEntity.ok(toResponse(updated));
+
+        } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
     }
@@ -131,9 +188,26 @@ public class OrganizationMembersController {
         response.setId(member.getId());
         response.setOrganizationId(member.getOrganization().getId());
         response.setUserId(member.getUser().getId());
-        response.setRole(member.getRole());
+        
+        if (member.getRole() != null) {
+            response.setRole(member.getRole().getName().toUpperCase());
+            
+            tech.nicorp.pm.organizations.api.dto.OrgRoleResponse roleResp = new tech.nicorp.pm.organizations.api.dto.OrgRoleResponse();
+            roleResp.setId(member.getRole().getId());
+            roleResp.setName(member.getRole().getName());
+            roleResp.setColor(member.getRole().getColor());
+            roleResp.setPermissions(member.getRole().getPermissions());
+            roleResp.setSystemDefault(member.getRole().isSystemDefault());
+            roleResp.setOrganizationId(member.getRole().getOrganization().getId());
+            response.setRoleDetails(roleResp);
+            
+        } else if (member.getRoleEnum() != null) {
+             response.setRole(member.getRoleEnum().name());
+        }
+
         response.setCorporateEmail(member.getCorporateEmail());
         response.setCorporateEmailVerified(member.getCorporateEmailVerified());
+        
         response.setJoinedAt(member.getJoinedAt());
         response.setLastActiveAt(member.getLastActiveAt());
         
@@ -148,4 +222,3 @@ public class OrganizationMembersController {
         return response;
     }
 }
-

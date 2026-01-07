@@ -24,24 +24,27 @@ public class OrganizationInviteService {
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
     private final OrganizationMemberService memberService;
+    private final tech.nicorp.pm.organizations.repo.OrgRoleRepository roleRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public OrganizationInviteService(
             OrganizationInviteRepository inviteRepository,
             OrganizationRepository organizationRepository,
             UserRepository userRepository,
-            OrganizationMemberService memberService) {
+            OrganizationMemberService memberService,
+            tech.nicorp.pm.organizations.repo.OrgRoleRepository roleRepository) {
         this.inviteRepository = inviteRepository;
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
         this.memberService = memberService;
+        this.roleRepository = roleRepository;
     }
 
     @Transactional
     public OrganizationInvite createInvite(
             UUID orgId, 
             UUID createdBy, 
-            OrganizationRole role, 
+            String roleName, 
             Integer maxUses, 
             OffsetDateTime expiresAt) {
         
@@ -50,11 +53,15 @@ public class OrganizationInviteService {
         
         User creator = userRepository.findById(createdBy)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + createdBy));
+        
+        tech.nicorp.pm.organizations.domain.OrgRole role = roleRepository.findByOrganizationIdAndName(orgId, roleName)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName));
 
         OrganizationInvite invite = new OrganizationInvite();
         invite.setOrganization(org);
         invite.setToken(generateInviteToken());
-        invite.setRoleEnum(role);
+        invite.setRole(role);
+        invite.setRoleEnum(OrganizationRole.MEMBER); // Legacy fallback
         invite.setMaxUses(maxUses);
         invite.setExpiresAt(expiresAt);
         invite.setCreatedBy(creator);
@@ -93,7 +100,7 @@ public class OrganizationInviteService {
         OrganizationMember member = memberService.addMember(
                 invite.getOrganization().getId(),
                 userId,
-                invite.getRoleEnum(),
+                invite.getRole().getName(),
                 invite.getCreatedBy().getId()
         );
 
