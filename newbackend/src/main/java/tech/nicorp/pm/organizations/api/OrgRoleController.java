@@ -143,15 +143,37 @@ public class OrgRoleController {
     }
 
     private OrgRoleResponse toResponse(OrgRole role) {
-        OrgRoleResponse res = new OrgRoleResponse();
-        res.setId(role.getId());
-        res.setName(role.getName());
-        res.setColor(role.getColor());
-        res.setPermissions(role.getPermissions());
-        res.setSystemDefault(role.isSystemDefault());
-        if (role.getOrganization() != null) {
-            res.setOrganizationId(role.getOrganization().getId());
+        if (role == null) {
+            System.out.println("DEBUG: toResponse called with NULL role");
+            return null;
         }
-        return res;
+        try {
+            // System.out.println("DEBUG: Mapping role " + role.getId());
+            OrgRoleResponse res = new OrgRoleResponse();
+            res.setId(role.getId());
+            res.setName(role.getName());
+            res.setColor(role.getColor());
+            
+            if (role.getPermissions() != null) {
+                // System.out.println("DEBUG: role permissions: " + role.getPermissions().size());
+                res.setPermissions(new java.util.HashSet<>(role.getPermissions()));
+            } else {
+                System.out.println("DEBUG: role permissions is NULL for " + role.getId());
+                res.setPermissions(new java.util.HashSet<>());
+            }
+            
+            res.setSystemDefault(role.isSystemDefault());
+            
+            if (role.getOrganization() != null) {
+                res.setOrganizationId(role.getOrganization().getId());
+            } else {
+                 System.out.println("DEBUG: role organization is NULL for " + role.getId());
+            }
+            return res;
+        } catch (Exception e) {
+             System.out.println("ERROR in toResponse for role " + (role != null ? role.getId() : "null") + ": " + e.getMessage());
+             e.printStackTrace();
+             throw e;
+        }
     }
 }
