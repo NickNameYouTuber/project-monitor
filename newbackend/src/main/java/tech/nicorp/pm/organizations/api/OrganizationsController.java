@@ -126,7 +126,7 @@ public class OrganizationsController {
             
             org = organizationService.updateOrganization(org.getId(), org);
             
-            memberService.addMember(org.getId(), userId, OrganizationRole.OWNER, null);
+            memberService.addMember(org.getId(), userId, OrganizationRole.OWNER.name(), null);
             
             if (Boolean.TRUE.equals(request.getRequirePassword()) && request.getPassword() != null) {
                 organizationService.setOrganizationPassword(org.getId(), request.getPassword());
@@ -197,7 +197,7 @@ public class OrganizationsController {
         
         try {
             UUID userId = UUID.fromString(auth.getName());
-            OrganizationRole role = memberService.getUserRole(id, userId).orElse(null);
+            tech.nicorp.pm.organizations.domain.OrgRole role = memberService.getUserOrgRole(id, userId).orElse(null);
             
             if (role == null || !memberService.canDeleteOrganization(role)) {
                 return ResponseEntity.status(403).build();

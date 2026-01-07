@@ -12,4 +12,5 @@ public class OrgRoleResponse {
     private String color;
     private Set<OrgPermission> permissions;
     private boolean isSystemDefault;
+    private UUID organizationId;
 }

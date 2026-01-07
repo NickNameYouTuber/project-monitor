@@ -288,8 +288,8 @@ public class SSOService {
                 OrganizationRole defaultRole = config.getOrganization().getDefaultProjectRole() != null 
                     ? OrganizationRole.valueOf(config.getOrganization().getDefaultProjectRole())
                     : OrganizationRole.MEMBER;
-                System.out.println("[SSOService] Adding user to organization with role: " + defaultRole);
-                memberService.addMember(orgId, user.getId(), defaultRole, null);
+                System.out.println("[SSOService] Adding user to organization with role: " + defaultRole.name());
+                memberService.addMember(orgId, user.getId(), defaultRole.name(), null);
                 System.out.println("[SSOService] User successfully added to organization");
             } else {
                 System.out.println("[SSOService] User already has access to organization");
