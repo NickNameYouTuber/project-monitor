@@ -40,19 +40,24 @@ public class OrgRoleController {
     @Operation(summary = "List organization roles")
     public ResponseEntity<?> listRoles(@PathVariable UUID organizationId) {
         try {
+            System.out.println("DEBUG: listRoles called for org: " + organizationId);
             User currentUser = userService.getCurrentUser();
             if (!memberService.hasAccess(organizationId, currentUser.getId())) {
+                 System.out.println("DEBUG: Access denied for user: " + currentUser.getId());
                  return ResponseEntity.status(403).body("Access denied");
             }
             
+            System.out.println("DEBUG: Fetching roles...");
             List<OrgRoleResponse> roles = roleService.getRoles(organizationId).stream()
                     .map(this::toResponse)
                     .collect(Collectors.toList());
-                    
+            
+            System.out.println("DEBUG: Roles fetched: " + roles.size());
             return ResponseEntity.ok(roles);
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body(e.getMessage());
+            System.out.println("DEBUG: Error in listRoles: " + e.getMessage());
+            e.printStackTrace(); // Print full stack to stdout/stderr
+            return ResponseEntity.internalServerError().body("Error: " + e.toString());
         }
     }
 

@@ -27,7 +27,7 @@ public class OrgRole {
     @Column(length = 7)
     private String color = "#6366f1"; // Default indigo
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
