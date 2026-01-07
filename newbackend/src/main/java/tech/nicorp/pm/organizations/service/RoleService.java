@@ -20,6 +20,7 @@ public class RoleService {
 
     private final OrgRoleRepository roleRepository;
 
+    @Transactional(readOnly = true)
     public List<OrgRole> getRoles(UUID organizationId) {
         return roleRepository.findAllByOrganizationId(organizationId);
     }
