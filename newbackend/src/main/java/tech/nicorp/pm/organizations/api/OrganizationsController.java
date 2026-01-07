@@ -96,8 +96,9 @@ public class OrganizationsController {
     }
 
     @PostMapping
+    @Transactional
     @Operation(summary = "Создать новую организацию")
-    public ResponseEntity<OrganizationResponse> create(
+    public ResponseEntity<?> create(
             @RequestBody OrganizationCreateRequest request, 
             Authentication auth) {
         
@@ -136,7 +137,10 @@ public class OrganizationsController {
                     .created(URI.create("/api/organizations/" + org.getId()))
                     .body(toResponse(org, userId));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
 
