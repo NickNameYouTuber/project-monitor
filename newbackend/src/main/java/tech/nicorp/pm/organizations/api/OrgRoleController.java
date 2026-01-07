@@ -71,7 +71,53 @@ public class OrgRoleController {
         return toResponse(role);
     }
 
-    // ... (keep other methods similar or simplified)
+    @PutMapping("/{roleId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Update a role")
+    public OrgRoleResponse updateRole(
+            @PathVariable UUID organizationId,
+            @PathVariable UUID roleId,
+            @Valid @RequestBody UpdateOrgRoleRequest request) {
+        
+        User currentUser = userService.getCurrentUser();
+        checkPermission(organizationId, currentUser.getId(), tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ROLES);
+
+        OrgRole role = roleService.getRole(roleId);
+        if (!role.getOrganization().getId().equals(organizationId)) {
+            throw new IllegalArgumentException("Role does not belong to this organization");
+        }
+
+        OrgRole updated = roleService.updateRole(roleId, request.getName(), request.getColor(), request.getPermissions());
+        return toResponse(updated);
+    }
+
+    @DeleteMapping("/{roleId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Delete a role")
+    public ResponseEntity<Void> deleteRole(
+            @PathVariable UUID organizationId,
+            @PathVariable UUID roleId) {
+        
+        User currentUser = userService.getCurrentUser();
+        checkPermission(organizationId, currentUser.getId(), tech.nicorp.pm.organizations.domain.OrgPermission.MANAGE_ROLES);
+
+        OrgRole role = roleService.getRole(roleId);
+        if (!role.getOrganization().getId().equals(organizationId)) {
+            throw new IllegalArgumentException("Role does not belong to this organization");
+        }
+
+        roleService.deleteRole(roleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    private void checkPermission(UUID orgId, UUID userId, tech.nicorp.pm.organizations.domain.OrgPermission permission) {
+        var member = memberService.getMember(orgId, userId)
+                .orElseThrow(() -> new RuntimeException("Not a member of organization"));
+        
+        if (!member.getRole().getPermissions().contains(permission)) {
+            throw new RuntimeException("Missing permission: " + permission);
+        }
+    }
 
     private OrgRoleResponse toResponse(OrgRole role) {
         OrgRoleResponse res = new OrgRoleResponse();
