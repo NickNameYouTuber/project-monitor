@@ -142,16 +142,15 @@ export const PreCallSetup: React.FC<PreCallSetupProps> = ({ onJoin, defaultName 
                                                 </div>
                                                 <div className="text-left">
                                                     <div className="font-semibold">Микрофон</div>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        {microphoneEnabled ? "Включен" : "Выключен"}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <Button
-                                                variant={microphoneEnabled ? "secondary" : "destructive"}
-                                                size="sm"
-                                                onClick={() => setMicrophoneEnabled(!microphoneEnabled)}
-                                                className="min-w-[100px]"
-                                            >
-                                                {microphoneEnabled ? "Включен" : "Выключен"}
-                                            </Button>
+                                            <Switch
+                                                checked={microphoneEnabled}
+                                                onCheckedChange={setMicrophoneEnabled}
+                                            />
                                         </div>
 
                                         <div className="flex items-center justify-between p-3 rounded-lg hover:bg-background transition-colors bg-background/50">

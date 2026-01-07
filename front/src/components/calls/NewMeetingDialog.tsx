@@ -38,10 +38,10 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[800px] h-[600px] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[800px] h-[600px] overflow-hidden flex flex-col p-0">
         <div className="flex h-full">
-          {/* Left Column: General Info */}
-          <div className="w-[60%] p-6 flex flex-col gap-6 border-r bg-background">
+          {/* Left Column: General Info - Changed background to muted/5 for slight distinction but readable */}
+          <div className="w-[60%] p-6 flex flex-col gap-6 border-r h-full overflow-hidden">
             <DialogHeader className="p-0 space-y-1">
               <DialogTitle className="text-xl">Новая встреча</DialogTitle>
               <DialogDescription>
@@ -94,9 +94,8 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
               </div>
             </div>
           </div>
-
           {/* Right Column: Time & Settings */}
-          <div className="w-[40%] bg-muted/10 p-6 flex flex-col gap-6">
+          <div className="w-[40%] bg-muted/5 p-6 flex flex-col gap-6 h-full overflow-y-auto">
             <div className="space-y-1">
               <h3 className="font-semibold text-sm">Время и дата</h3>
               <p className="text-xs text-muted-foreground">Когда состоится встреча?</p>
@@ -132,15 +131,12 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground">Начало</Label>
-                  <div className="relative">
-                    <Clock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="time"
-                      value={newMeeting.time}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMeeting((prev: any) => ({ ...prev, time: e.target.value }))}
-                      className="pl-9 bg-background"
-                    />
-                  </div>
+                  <Input
+                    type="time"
+                    value={newMeeting.time}
+                    onChange={(e) => setNewMeeting((prev: any) => ({ ...prev, time: e.target.value }))}
+                    className="bg-background"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground">Длительность</Label>
@@ -252,7 +248,7 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DialogContent >
+    </Dialog >
   );
 }

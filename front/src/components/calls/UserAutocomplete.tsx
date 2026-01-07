@@ -17,9 +17,9 @@ interface UserAutocompleteProps {
   projectId?: string;
 }
 
-export default function UserAutocomplete({ 
-  selectedUsers, 
-  onUsersChange, 
+export default function UserAutocomplete({
+  selectedUsers,
+  onUsersChange,
   excludeUserIds = [],
   label = 'Участники',
   projectId
@@ -30,11 +30,11 @@ export default function UserAutocomplete({
 
   useEffect(() => {
     if (!open) return;
-    
+
     const loadUsers = async () => {
       setIsLoading(true);
       try {
-        const allUsers = projectId 
+        const allUsers = projectId
           ? await getProjectUsers(projectId)
           : await listUsers(100);
         setUsers(allUsers.filter(u => !excludeUserIds.includes(u.id)));
@@ -44,13 +44,13 @@ export default function UserAutocomplete({
         setIsLoading(false);
       }
     };
-    
+
     loadUsers();
   }, [open, projectId]);
 
   const handleSelect = (user: UserDto) => {
     const isSelected = selectedUsers.some(u => u.id === user.id);
-    
+
     if (isSelected) {
       // Убрать пользователя
       onUsersChange(selectedUsers.filter(u => u.id !== user.id));
@@ -72,7 +72,7 @@ export default function UserAutocomplete({
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">{label}</label>
-      
+
       {/* Список выбранных участников */}
       {selectedUsers.length > 0 && (
         <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
@@ -94,7 +94,7 @@ export default function UserAutocomplete({
       )}
 
       {/* Popover для выбора */}
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -104,8 +104,8 @@ export default function UserAutocomplete({
           >
             <span className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
-              {selectedUsers.length === 0 
-                ? 'Добавить участников...' 
+              {selectedUsers.length === 0
+                ? 'Добавить участников...'
                 : `Выбрано: ${selectedUsers.length}`
               }
             </span>
@@ -126,7 +126,7 @@ export default function UserAutocomplete({
                   <CommandGroup>
                     {users.map((user) => {
                       const isSelected = selectedUsers.some(u => u.id === user.id);
-                      
+
                       return (
                         <CommandItem
                           key={user.id}

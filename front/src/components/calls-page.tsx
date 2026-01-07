@@ -353,24 +353,94 @@ export function CallsPage() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Header - фиксированная высота */}
-      <div className="flex-none bg-background border-b border-border p-6 pb-4">
-        {/* Top Row: Title, View Toggle, Action */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Calls & Meetings</h1>
-            <p className="text-muted-foreground">Schedule and manage your team meetings</p>
-          </div>
+      {/* Header - Compact Single Row */}
+      <div className="flex-none bg-background border-b border-border p-4 flex items-center justify-between gap-4">
+        {/* Left: Title */}
+        <div className="flex items-center gap-4 min-w-0">
+          <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">Calls & Meetings</h1>
+          {/* Vertical Separator */}
+          <div className="h-6 w-px bg-border hidden md:block" />
 
-          {/* Compact View Toggle */}
-          <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border h-10">
+          {/* Search Bar - Integrated */}
+          <div className="w-full max-w-sm hidden md:block">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)}
+              upcomingCount={upcomingMeetings.length}
+              className="h-9"
+            />
+          </div>
+        </div>
+
+        {/* Right: Controls */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Mobile Search Trigger could go here if needed, sticking to desktop first */}
+
+          {/* Calendar Nav Controls (Only in Calendar Tab) */}
+          {activeTab === 'calendar' && (
+            <div className="flex items-center gap-1 mr-2">
+              <div className="flex items-center bg-muted/50 p-0.5 rounded-md border border-border">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                  const newDate = new Date(currentDate);
+                  if (calendarView === 'month') newDate.setMonth(newDate.getMonth() - 1);
+                  else newDate.setDate(newDate.getDate() - 7);
+                  setCurrentDate(newDate);
+                }}>
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-xs font-medium min-w-[100px] text-center px-2">
+                  {calendarView === 'month'
+                    ? currentDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
+                    : (() => {
+                      const start = new Date(currentDate);
+                      const day = start.getDay();
+                      const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+                      start.setDate(diff);
+                      const end = new Date(start);
+                      end.setDate(end.getDate() + 6);
+                      return `${start.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
+                    })()
+                  }
+                </span>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                  const newDate = new Date(currentDate);
+                  if (calendarView === 'month') newDate.setMonth(newDate.getMonth() + 1);
+                  else newDate.setDate(newDate.getDate() + 7);
+                  setCurrentDate(newDate);
+                }}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="flex items-center bg-muted/50 p-0.5 rounded-md border border-border">
+                <Button
+                  variant={calendarView === 'month' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setCalendarView('month')}
+                  className={cn("h-7 px-2 text-xs", calendarView === 'month' && "bg-background shadow-xs")}
+                >
+                  Месяц
+                </Button>
+                <Button
+                  variant={calendarView === 'week' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setCalendarView('week')}
+                  className={cn("h-7 px-2 text-xs", calendarView === 'week' && "bg-background shadow-xs")}
+                >
+                  Неделя
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* View Toggle */}
+          <div className="flex items-center bg-muted/50 p-0.5 rounded-lg border border-border">
             <Button
               variant={activeTab === 'calendar' ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setActiveTab('calendar')}
-              className={cn(
-                "h-8 px-3 text-sm font-medium transition-all",
-                activeTab === 'calendar' ? "bg-background shadow-sm hover:bg-background" : "hover:bg-muted-foreground/10"
-              )}
+              className={cn("h-8 px-3 text-sm", activeTab === 'calendar' && "bg-background shadow-sm")}
             >
               Calendar
             </Button>
@@ -378,116 +448,29 @@ export function CallsPage() {
               variant={activeTab === 'list' ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setActiveTab('list')}
-              className={cn(
-                "h-8 px-3 text-sm font-medium transition-all",
-                activeTab === 'list' ? "bg-background shadow-sm hover:bg-background" : "hover:bg-muted-foreground/10"
-              )}
+              className={cn("h-8 px-3 text-sm", activeTab === 'list' && "bg-background shadow-sm")}
             >
               List
             </Button>
           </div>
 
-          <Button onClick={() => setIsCreateMeetingOpen(true)} className="h-10">
+          {/* Filters (List View Only) */}
+          {activeTab === 'list' && (
+            <MeetingFilters
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              className="h-9"
+            />
+          )}
+
+          <div className="w-px h-6 bg-border mx-1" />
+
+          <Button onClick={() => setIsCreateMeetingOpen(true)} size="sm" className="h-9">
             <Plus className="w-4 h-4 mr-2" />
             New Meeting
           </Button>
         </div>
         <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} />
-      </div>
-
-      {/* Second Row: Search & Contextual Controls */}
-      <div className="flex items-center justify-between gap-4 h-10">
-        <SearchBar
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onToggleUpcoming={() => setIsUpcomingOpen(!isUpcomingOpen)}
-          upcomingCount={upcomingMeetings.length}
-          className="w-full max-w-md h-10"
-        />
-
-        {/* Calendar Controls */}
-        {activeTab === 'calendar' && (
-          <div className="flex items-center gap-4 h-10">
-            <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border h-full">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  const newDate = new Date(currentDate);
-                  if (calendarView === 'month') newDate.setMonth(newDate.getMonth() - 1);
-                  else newDate.setDate(newDate.getDate() - 7);
-                  setCurrentDate(newDate);
-                }}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="text-sm font-medium min-w-[140px] text-center flex items-center justify-center h-full pt-0.5">
-                {calendarView === 'month'
-                  ? currentDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
-                  : (() => {
-                    const start = new Date(currentDate);
-                    const day = start.getDay();
-                    const diff = start.getDate() - day + (day === 0 ? -6 : 1);
-                    start.setDate(diff);
-                    const end = new Date(start);
-                    end.setDate(end.getDate() + 6);
-                    return `${start.getDate()} ${start.toLocaleDateString('ru-RU', { month: 'short' })} - ${end.getDate()} ${end.toLocaleDateString('ru-RU', { month: 'short' })}`;
-                  })()
-                }
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  const newDate = new Date(currentDate);
-                  if (calendarView === 'month') newDate.setMonth(newDate.getMonth() + 1);
-                  else newDate.setDate(newDate.getDate() + 7);
-                  setCurrentDate(newDate);
-                }}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="h-6 w-px bg-border" />
-
-            <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border h-full">
-              <Button
-                variant={calendarView === 'month' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setCalendarView('month')}
-                className={cn(
-                  "h-8 px-3 text-xs font-medium transition-all",
-                  calendarView === 'month' ? "bg-background shadow-sm hover:bg-background" : "hover:bg-muted-foreground/10"
-                )}
-              >
-                Месяц
-              </Button>
-              <Button
-                variant={calendarView === 'week' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setCalendarView('week')}
-                className={cn(
-                  "h-8 px-3 text-xs font-medium transition-all",
-                  calendarView === 'week' ? "bg-background shadow-sm hover:bg-background" : "hover:bg-muted-foreground/10"
-                )}
-              >
-                Неделя
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* List Filters */}
-        {activeTab === 'list' && (
-          <MeetingFilters
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            className="flex-none"
-          />
-        )}
       </div>
 
       {/* Error banner */}
