@@ -16,10 +16,9 @@ import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
 import { RoleBadge } from './role-badge';
 import { useNotifications } from '../hooks/useNotifications';
-import UserAutocomplete from './calls/UserAutocomplete';
-import type { UserDto } from '../api/users';
+// UserAutocomplete removed - members join via invite links only
 import { getOrganization } from '../api/organizations';
-import { listMembers, addMember, removeMember, updateMemberRole, getCurrentMember } from '../api/organization-members';
+import { listMembers, removeMember, updateMemberRole, getCurrentMember } from '../api/organization-members';
 import { listInvites, createInvite, revokeInvite } from '../api/organization-invites';
 import { apiClient } from '../api/client';
 import type { Organization, OrganizationMember, OrganizationInvite } from '../types/organization';
@@ -36,10 +35,8 @@ export function OrganizationSettingsPage() {
 
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
-  const [newMemberRole, setNewMemberRole] = useState('MEMBER');
   const [availableRoles, setAvailableRoles] = useState<OrgRole[]>([]);
+  // Direct add member states removed - use invites only
 
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -135,21 +132,7 @@ export function OrganizationSettingsPage() {
     }
   };
 
-  const handleAddMember = async () => {
-    if (!orgId || selectedUsers.length === 0) return;
-    try {
-      for (const user of selectedUsers) {
-        await addMember(orgId, { user_id: user.id, role: newMemberRole });
-      }
-      showSuccess('Member(s) added successfully');
-      setAddMemberDialogOpen(false);
-      setSelectedUsers([]);
-      setNewMemberRole('MEMBER');
-      loadMembers();
-    } catch (error) {
-      showError('Failed to add member');
-    }
-  };
+  // Direct handleAddMember removed - members join via invite links only
 
   const handleRemoveMember = async (memberId: string) => {
     if (!orgId) return;
@@ -423,9 +406,9 @@ export function OrganizationSettingsPage() {
                     <CardTitle>Members</CardTitle>
                     <CardDescription>Manage organization members and their roles</CardDescription>
                   </div>
-                  <Button onClick={() => setAddMemberDialogOpen(true)}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Add Member
+                  <Button onClick={() => setCreateInviteDialogOpen(true)}>
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Invite via Link
                   </Button>
                 </div>
               </CardHeader>
@@ -485,49 +468,7 @@ export function OrganizationSettingsPage() {
               </CardContent>
             </Card>
 
-            <Dialog open={addMemberDialogOpen} onOpenChange={setAddMemberDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Member</DialogTitle>
-                  <DialogDescription>Add a new member to the organization</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <UserAutocomplete
-                      selectedUsers={selectedUsers}
-                      onUsersChange={setSelectedUsers}
-                      label="Select Users"
-                    />
-                  </div>
-                  <div>
-                    <Label>Role</Label>
-                    <Select value={newMemberRole} onValueChange={setNewMemberRole}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableRoles.map(role => (
-                          <SelectItem key={role.id} value={role.name}>
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
-                              {role.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setAddMemberDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleAddMember} disabled={selectedUsers.length === 0}>
-                      Add Member
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            {/* Direct add member removed - use invites only */}
           </TabsContent>
 
           <TabsContent value="security" className="mt-6">
