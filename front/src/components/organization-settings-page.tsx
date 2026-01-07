@@ -765,58 +765,71 @@ export function OrganizationSettingsPage() {
                 )}
               </CardContent>
             </Card>
-
-            <Dialog open={createInviteDialogOpen} onOpenChange={setCreateInviteDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create Invitation Link</DialogTitle>
-                  <DialogDescription>Generate a new invitation link for this organization</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Role</Label>
-                    <Select value={inviteRole} onValueChange={setInviteRole}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
-                        <SelectItem value="MEMBER">Member</SelectItem>
-                        <SelectItem value="GUEST">Guest</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Maximum Uses (optional)</Label>
-                    <Input
-                      type="number"
-                      value={inviteMaxUses}
-                      onChange={(e) => setInviteMaxUses(e.target.value)}
-                      placeholder="Unlimited"
-                    />
-                  </div>
-                  <div>
-                    <Label>Expiration Date (optional)</Label>
-                    <Input
-                      type="date"
-                      value={inviteExpiresAt}
-                      onChange={(e) => setInviteExpiresAt(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setCreateInviteDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCreateInvite}>
-                      Create Invite
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+      </div >
+
+      <Dialog open={createInviteDialogOpen} onOpenChange={setCreateInviteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Invitation Link</DialogTitle>
+            <DialogDescription>Generate a new invitation link for this organization</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Role</Label>
+              <Select value={inviteRole} onValueChange={setInviteRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableRoles.length > 0 ? (
+                    availableRoles.map(role => (
+                      <SelectItem key={role.id} value={role.name}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
+                          {role.name}
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <>
+                      <SelectItem value="Owner">Owner</SelectItem>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="Member">Member</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Maximum Uses (optional)</Label>
+              <Input
+                type="number"
+                value={inviteMaxUses}
+                onChange={(e) => setInviteMaxUses(e.target.value)}
+                placeholder="Unlimited"
+              />
+            </div>
+            <div>
+              <Label>Expiration Date (optional)</Label>
+              <Input
+                type="date"
+                value={inviteExpiresAt}
+                onChange={(e) => setInviteExpiresAt(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setCreateInviteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateInvite}>
+                Create Invite
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div >
   );
 }
