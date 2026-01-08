@@ -55,7 +55,7 @@ export function OrganizationsPage() {
       handleSSOLogin(org);
       return;
     }
-    
+
     if (org.require_password) {
       setSelectedOrgForPassword(org);
       setPasswordDialogOpen(true);
@@ -72,7 +72,7 @@ export function OrganizationsPage() {
       navigate('/auth');
       return;
     }
-    
+
     try {
       const response = await initiateSSOLogin(org.id);
       window.location.href = response.authorization_url;
@@ -84,7 +84,7 @@ export function OrganizationsPage() {
 
   const handleVerifyPassword = async () => {
     if (!selectedOrgForPassword) return;
-    
+
     setVerifying(true);
     try {
       const response = await fetch(`/api/organizations/${selectedOrgForPassword.id}/verify-password`, {
@@ -95,7 +95,7 @@ export function OrganizationsPage() {
         },
         body: JSON.stringify({ password: orgPassword })
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.token) {
@@ -106,10 +106,10 @@ export function OrganizationsPage() {
           setCurrentOrganization(selectedOrgForPassword);
         }
       } else {
-        toast.error('Incorrect password');
+        showError('Incorrect password');
       }
     } catch (error) {
-      toast.error('Failed to verify password');
+      showError('Failed to verify password');
     } finally {
       setVerifying(false);
     }
@@ -182,15 +182,15 @@ export function OrganizationsPage() {
                 <div className="flex gap-2">
                   {org.sso_enabled ? (
                     <>
-                      <Button 
-                        className="flex-1" 
+                      <Button
+                        className="flex-1"
                         onClick={() => handleSSOLogin(org)}
                       >
                         <Shield className="w-4 h-4 mr-2" />
                         Sign in with SSO
                       </Button>
                       {!org.sso_require_sso && (
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={() => handleSelectOrganization(org)}
                         >
@@ -199,25 +199,14 @@ export function OrganizationsPage() {
                       )}
                     </>
                   ) : (
-                    <Button 
-                      className="flex-1" 
+                    <Button
+                      className="flex-1"
                       onClick={() => handleSelectOrganization(org)}
                     >
                       Open
                     </Button>
                   )}
-                  {(org.current_user_role === 'OWNER' || org.current_user_role === 'ADMIN') && (
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/organizations/${org.id}/settings`);
-                      }}
-                    >
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  )}
+
                 </div>
               </CardContent>
             </Card>
@@ -229,7 +218,7 @@ export function OrganizationsPage() {
             <Plus className="w-4 h-4 mr-2" />
             Create Organization
           </Button>
-          
+
           <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -290,8 +279,8 @@ export function OrganizationsPage() {
                 />
               </div>
               <div className="flex justify-end gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setPasswordDialogOpen(false);
                     setOrgPassword('');

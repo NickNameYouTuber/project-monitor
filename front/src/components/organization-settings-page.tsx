@@ -358,378 +358,438 @@ export function OrganizationSettingsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/organizations')} className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Organizations
-        </Button>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold">{organization.name}</h1>
-            <p className="text-muted-foreground">Organization Settings</p>
+    <div className="h-full flex flex-col bg-background/50">
+      <div className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container max-w-5xl mx-auto py-6 px-4 md:px-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl flex items-center justify-center border border-primary/10 shadow-sm">
+              <Building2 className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{organization.name}</h1>
+              <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                <span className="text-sm">Organization Settings</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-muted font-mono">/{organization.slug}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 p-6 overflow-auto">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-          <TabsList className="bg-background border-b border-border w-full justify-start rounded-none h-auto p-0 space-x-6">
-            <TabsTrigger
-              value="general"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              General
-            </TabsTrigger>
-            {canManageSettings && (
+      <div className="flex-1 overflow-auto">
+        <div className="container max-w-5xl mx-auto py-8 px-4 md:px-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
+            <TabsList className="w-full justify-start h-auto bg-transparent p-0 border-b border-border/50 space-x-2 overflow-x-auto flex-nowrap mb-8">
               <TabsTrigger
-                value="roles"
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
+                value="general"
+                className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-t-lg rounded-b-none h-10 px-4 pb-2 text-muted-foreground hover:text-foreground transition-all"
               >
-                <Shield className="w-4 h-4 mr-2" />
-                Roles
+                <Settings className="w-4 h-4 mr-2" />
+                General
               </TabsTrigger>
-            )}
-            {canManageSettings && (
-              <TabsTrigger
-                value="members"
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Members
-              </TabsTrigger>
-            )}
-            {currentMember?.role === 'OWNER' && (
-              <TabsTrigger
-                value="security"
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
-              >
-                <Key className="w-4 h-4 mr-2" />
-                Security
-              </TabsTrigger>
-            )}
-            {currentMember?.role === 'OWNER' && (
-              <TabsTrigger
-                value="sso"
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
-              >
-                <Fingerprint className="w-4 h-4 mr-2" />
-                SSO
-              </TabsTrigger>
-            )}
-            {canManageSettings && (
-              <TabsTrigger
-                value="invites"
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                Invites
-              </TabsTrigger>
-            )}
-          </TabsList>
+              {canManageSettings && (
+                <TabsTrigger
+                  value="roles"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-t-lg rounded-b-none h-10 px-4 pb-2 text-muted-foreground hover:text-foreground transition-all"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Roles
+                </TabsTrigger>
+              )}
+              {canManageSettings && (
+                <TabsTrigger
+                  value="members"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-t-lg rounded-b-none h-10 px-4 pb-2 text-muted-foreground hover:text-foreground transition-all"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Members
+                </TabsTrigger>
+              )}
+              {currentMember?.role === 'OWNER' && (
+                <TabsTrigger
+                  value="security"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-t-lg rounded-b-none h-10 px-4 pb-2 text-muted-foreground hover:text-foreground transition-all"
+                >
+                  <Key className="w-4 h-4 mr-2" />
+                  Security
+                </TabsTrigger>
+              )}
+              {currentMember?.role === 'OWNER' && (
+                <TabsTrigger
+                  value="sso"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-t-lg rounded-b-none h-10 px-4 pb-2 text-muted-foreground hover:text-foreground transition-all"
+                >
+                  <Fingerprint className="w-4 h-4 mr-2" />
+                  SSO
+                </TabsTrigger>
+              )}
+              {canManageSettings && (
+                <TabsTrigger
+                  value="invites"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-t-lg rounded-b-none h-10 px-4 pb-2 text-muted-foreground hover:text-foreground transition-all"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Invites
+                </TabsTrigger>
+              )}
+            </TabsList>
 
-          <TabsContent value="general" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>General Settings</CardTitle>
-                <CardDescription>Basic information about your organization</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium">Name</p>
-                    <p className="text-sm text-muted-foreground">{organization.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Slug</p>
-                    <p className="text-sm text-muted-foreground">/{organization.slug}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Description</p>
-                    <p className="text-sm text-muted-foreground">{organization.description || 'No description'}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="roles" className="mt-6">
-            <RolesTab organizationId={orgId!} canManageRoles={canManageSettings!} />
-          </TabsContent>
-
-          <TabsContent value="members" className="mt-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Members</CardTitle>
-                    <CardDescription>Manage organization members and their roles</CardDescription>
-                  </div>
-                  <Button onClick={() => setCreateInviteDialogOpen(true)}>
-                    <LinkIcon className="w-4 h-4 mr-2" />
-                    Invite via Link
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {loadingMembers ? (
-                  <div className="flex items-center justify-center py-8">
-                    <LoadingSpinner stages={['Loading members']} />
-                  </div>
-                ) : members.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">No members yet</p>
-                ) : (
-                  <div className="space-y-2">
-                    {members.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="font-medium">{member.user?.display_name || member.user?.username}</p>
-                            <p className="text-xs text-muted-foreground">{member.user?.username}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <RoleBadge role={member.role_details || member.role} type="project" />
-                          <Select
-                            value={member.role}
-                            onValueChange={(newRole) => handleUpdateMemberRole(member.id, newRole)}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableRoles.map(role => (
-                                <SelectItem key={role.id} value={role.name}>
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
-                                    {role.name}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveMember(member.id)}
-                            disabled={member.role === 'OWNER'}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+            <TabsContent value="general" className="mt-6 animate-in fade-in-50 duration-300 slide-in-from-bottom-2">
+              <div className="grid gap-6">
+                <Card className="border-border/50 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Organization Profile</CardTitle>
+                    <CardDescription>View and manage your organization's public information.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Organization Name</Label>
+                        <Input value={organization.name} readOnly className="bg-muted/50" />
+                        <p className="text-xs text-muted-foreground">The display name of your organization.</p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Slug</Label>
+                        <div className="flex items-center">
+                          <span className="bg-muted border border-r-0 rounded-l-md px-3 py-2 text-sm text-muted-foreground">/</span>
+                          <Input value={organization.slug} readOnly className="rounded-l-none bg-muted/50" />
+                        </div>
+                        <p className="text-xs text-muted-foreground">The URL identifier for your organization.</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</Label>
+                      <Input value={organization.description || 'No description provided'} readOnly className="bg-muted/50" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
-            {/* Direct add member removed - use invites only */}
-          </TabsContent>
+            <TabsContent value="roles" className="mt-6 animate-in fade-in-50 duration-300 slide-in-from-bottom-2">
+              <RolesTab organizationId={orgId!} canManageRoles={canManageSettings!} />
+            </TabsContent>
 
-          <TabsContent value="security" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Organization Password</CardTitle>
-                <CardDescription>Require a password to access this organization</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+            <TabsContent value="members" className="mt-6 animate-in fade-in-50 duration-300 slide-in-from-bottom-2">
+              <Card className="border-border/50 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">Require Password</p>
-                    <p className="text-xs text-muted-foreground">
-                      Members will need to enter a password to access this organization
-                    </p>
+                    <CardTitle>Team Members</CardTitle>
+                    <CardDescription>Manage who has access to this organization.</CardDescription>
                   </div>
-                  <Switch
-                    checked={organization?.require_password || false}
-                    onCheckedChange={handleTogglePassword}
-                  />
-                </div>
+                  <Button onClick={() => setCreateInviteDialogOpen(true)} className="shadow-sm">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Invite Member
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {loadingMembers ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                      <LoadingSpinner />
+                      <p className="text-sm text-muted-foreground">Loading member list...</p>
+                    </div>
+                  ) : members.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 border-2 border-dashed rounded-lg bg-muted/20">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                        <Users className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium">No members found</h3>
+                        <p className="text-muted-foreground max-w-sm mx-auto mt-1">Start building your team by inviting new members to the organization.</p>
+                      </div>
+                      <Button variant="outline" onClick={() => setCreateInviteDialogOpen(true)}>
+                        Invite First Member
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border border-border/50 overflow-hidden">
+                      {members.map((member, index) => (
+                        <div
+                          key={member.id}
+                          className={`flex items-center justify-between p-4 bg-card hover:bg-muted/30 transition-colors ${index !== members.length - 1 ? 'border-b border-border/50' : ''}`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">
+                              {(member.user?.display_name || member.user?.username || '?').substring(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{member.user?.display_name || member.user?.username}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs text-muted-foreground">{member.user?.username}</p>
+                                <RoleBadge role={member.role_details || member.role} type="project" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="hidden md:block">
+                              <Select
+                                value={member.role}
+                                onValueChange={(newRole) => handleUpdateMemberRole(member.id, newRole)}
+                                disabled={!canManageSettings || member.role === 'OWNER'}
+                              >
+                                <SelectTrigger className="w-[140px] h-9 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableRoles.map(role => (
+                                    <SelectItem key={role.id} value={role.name}>
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
+                                        {role.name}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleRemoveMember(member.id)}
+                              disabled={!canManageSettings || member.role === 'OWNER'}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-                {organization?.require_password && (
-                  <div className="pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      onClick={() => setChangePasswordDialogOpen(true)}
-                    >
-                      <Key className="w-4 h-4 mr-2" />
-                      Change Password
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              {/* Direct add member removed - use invites only */}
+            </TabsContent>
 
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Corporate Email</CardTitle>
-                <CardDescription>Restrict membership to specific email domains</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Corporate Email Domain</Label>
-                  <Input
-                    value={corporateDomain}
-                    onChange={(e) => setCorporateDomain(e.target.value)}
-                    placeholder="@company.com"
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Require Corporate Email</p>
-                    <p className="text-xs text-muted-foreground">
-                      All members must verify a corporate email
-                    </p>
-                  </div>
-                  <Switch
-                    checked={requireCorporateEmail}
-                    onCheckedChange={setRequireCorporateEmail}
-                  />
-                </div>
-                <Button onClick={handleSaveSecuritySettings}>
-                  Save Security Settings
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Dialog open={changePasswordDialogOpen} onOpenChange={setChangePasswordDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Change Organization Password</DialogTitle>
-                  <DialogDescription>Set a new password for this organization</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>New Password</Label>
-                    <Input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Enter new password"
-                    />
-                  </div>
-                  <div>
-                    <Label>Confirm Password</Label>
-                    <Input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm password"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setChangePasswordDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleChangePassword} disabled={!newPassword || newPassword !== confirmPassword}>
-                      Change Password
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </TabsContent>
-
-          <TabsContent value="sso" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Single Sign-On (SSO)</CardTitle>
-                <CardDescription>Configure OIDC/OAuth 2.0 identity provider for corporate authentication</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loadingSSO ? (
-                  <div className="flex items-center justify-center py-8">
-                    <LoadingSpinner stages={['Loading SSO configuration']} />
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
+            <TabsContent value="security" className="mt-6 animate-in fade-in-50 duration-300 slide-in-from-bottom-2">
+              <div className="grid gap-6">
+                <Card className="border-border/50 shadow-sm">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Key className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle>Organization Password</CardTitle>
+                        <CardDescription>Control access to your organization with a shared password.</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
                       <div className="space-y-1">
-                        <p className="text-sm font-medium">Enable SSO</p>
-                        <p className="text-xs text-muted-foreground">
-                          Allow users to login using corporate identity provider
+                        <p className="font-medium">Require Password</p>
+                        <p className="text-sm text-muted-foreground">
+                          Members will need to enter a password to access this organization.
                         </p>
                       </div>
                       <Switch
-                        checked={ssoEnabled}
-                        onCheckedChange={setSSOEnabled}
+                        checked={organization?.require_password || false}
+                        onCheckedChange={handleTogglePassword}
                       />
                     </div>
 
-                    {ssoEnabled && (
-                      <>
-                        <div className="space-y-4 pt-4 border-t">
-                          <div>
-                            <Label>Client ID</Label>
-                            <Input
-                              value={ssoClientId}
-                              onChange={(e) => setSSOClientId(e.target.value)}
-                              placeholder="Your OAuth 2.0 client ID"
-                            />
+                    {organization?.require_password && (
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="text-sm text-muted-foreground">
+                          Password protection is active.
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => setChangePasswordDialogOpen(true)}
+                          className="gap-2"
+                        >
+                          <Key className="w-4 h-4" />
+                          Change Password
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border/50 shadow-sm">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Building2 className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle>Corporate Access</CardTitle>
+                        <CardDescription>Restrict membership to specific email domains.</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <Label>Corporate Email Domain</Label>
+                        <Input
+                          value={corporateDomain}
+                          onChange={(e) => setCorporateDomain(e.target.value)}
+                          placeholder="@company.com"
+                          className="max-w-md"
+                        />
+                        <p className="text-xs text-muted-foreground">Enter the domain required for member emails (e.g. @nicorp.tech).</p>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                        <div className="space-y-1">
+                          <p className="font-medium">Enforce Corporate Email</p>
+                          <p className="text-sm text-muted-foreground">
+                            Require all members to have an email address from the specified domain.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={requireCorporateEmail}
+                          onCheckedChange={setRequireCorporateEmail}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end pt-4">
+                      <Button onClick={handleSaveSecuritySettings}>
+                        Save Security Settings
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Dialog open={changePasswordDialogOpen} onOpenChange={setChangePasswordDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Change Organization Password</DialogTitle>
+                      <DialogDescription>Set a new password for this organization</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>New Password</Label>
+                        <Input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new password"
+                        />
+                      </div>
+                      <div>
+                        <Label>Confirm Password</Label>
+                        <Input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm password"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setChangePasswordDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleChangePassword} disabled={!newPassword || newPassword !== confirmPassword}>
+                          Change Password
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="sso" className="mt-6 animate-in fade-in-50 duration-300 slide-in-from-bottom-2">
+              <Card className="border-border/50 shadow-sm">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Fingerprint className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle>Single Sign-On (SSO)</CardTitle>
+                      <CardDescription>Configure OIDC/OAuth 2.0 identity provider for corporate authentication.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {loadingSSO ? (
+                    <div className="flex justify-center py-8"><LoadingSpinner /></div>
+                  ) : (
+                    <div className="space-y-8">
+                      <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                        <div className="space-y-1">
+                          <p className="font-medium">Enable SSO Authentication</p>
+                          <p className="text-sm text-muted-foreground">
+                            Allow users to sign in using your corporate identity provider.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={ssoEnabled}
+                          onCheckedChange={setSSOEnabled}
+                        />
+                      </div>
+
+                      {ssoEnabled && (
+                        <div className="grid gap-6 animate-in slide-in-from-top-4 fade-in duration-300">
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <Label>Client ID</Label>
+                              <Input
+                                value={ssoClientId}
+                                onChange={(e) => setSSOClientId(e.target.value)}
+                                placeholder="OAuth 2.0 Client ID"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Client Secret</Label>
+                              <Input
+                                type="password"
+                                value={ssoClientSecret}
+                                onChange={(e) => setSSOClientSecret(e.target.value)}
+                                placeholder={ssoClientSecret ? "••••••••" : "Enter client secret"}
+                              />
+                              <p className="text-xs text-muted-foreground">Leave empty to keep existing secret.</p>
+                            </div>
                           </div>
 
-                          <div>
-                            <Label>Client Secret</Label>
-                            <Input
-                              type="password"
-                              value={ssoClientSecret}
-                              onChange={(e) => setSSOClientSecret(e.target.value)}
-                              placeholder="Leave empty to keep existing secret"
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Secret is encrypted and securely stored
-                            </p>
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <Label>Authorization Endpoint</Label>
+                              <Input
+                                value={ssoAuthEndpoint}
+                                onChange={(e) => setSSOAuthEndpoint(e.target.value)}
+                                placeholder="https://idp.example.com/oauth/authorize"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Token Endpoint</Label>
+                              <Input
+                                value={ssoTokenEndpoint}
+                                onChange={(e) => setSSOTokenEndpoint(e.target.value)}
+                                placeholder="https://idp.example.com/oauth/token"
+                              />
+                            </div>
                           </div>
 
-                          <div>
-                            <Label>Authorization Endpoint</Label>
-                            <Input
-                              value={ssoAuthEndpoint}
-                              onChange={(e) => setSSOAuthEndpoint(e.target.value)}
-                              placeholder="https://your-idp.com/oauth2/authorize"
-                            />
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <Label>User Info Endpoint</Label>
+                              <Input
+                                value={ssoUserinfoEndpoint}
+                                onChange={(e) => setSSOUserinfoEndpoint(e.target.value)}
+                                placeholder="https://idp.example.com/oauth/userinfo"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Issuer URL</Label>
+                              <Input
+                                value={ssoIssuer}
+                                onChange={(e) => setSSOIssuer(e.target.value)}
+                                placeholder="https://idp.example.com"
+                              />
+                            </div>
                           </div>
 
-                          <div>
-                            <Label>Token Endpoint</Label>
-                            <Input
-                              value={ssoTokenEndpoint}
-                              onChange={(e) => setSSOTokenEndpoint(e.target.value)}
-                              placeholder="https://your-idp.com/oauth2/token"
-                            />
-                          </div>
-
-                          <div>
-                            <Label>User Info Endpoint</Label>
-                            <Input
-                              value={ssoUserinfoEndpoint}
-                              onChange={(e) => setSSOUserinfoEndpoint(e.target.value)}
-                              placeholder="https://your-idp.com/oauth2/userinfo"
-                            />
-                          </div>
-
-                          <div>
-                            <Label>Issuer</Label>
-                            <Input
-                              value={ssoIssuer}
-                              onChange={(e) => setSSOIssuer(e.target.value)}
-                              placeholder="https://your-idp.com"
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between pt-4 border-t">
+                          <div className="flex items-center justify-between p-4 border rounded-lg bg-orange-500/10 border-orange-500/20">
                             <div className="space-y-1">
-                              <p className="text-sm font-medium">Require SSO</p>
-                              <p className="text-xs text-muted-foreground">
-                                Disable regular login, force SSO authentication
+                              <p className="font-medium text-orange-700 dark:text-orange-400">Enforce SSO Login</p>
+                              <p className="text-sm text-orange-600/80 dark:text-orange-400/80">
+                                Disable regular email/password login and force all users to use SSO.
                               </p>
                             </div>
                             <Switch
@@ -738,99 +798,105 @@ export function OrganizationSettingsPage() {
                             />
                           </div>
 
-                          <Button onClick={handleSaveSSO} className="w-full">
-                            Save SSO Configuration
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="invites" className="mt-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Invitation Links</CardTitle>
-                    <CardDescription>Create and manage invitation links for your organization</CardDescription>
-                  </div>
-                  <Button onClick={() => setCreateInviteDialogOpen(true)}>
-                    <LinkIcon className="w-4 h-4 mr-2" />
-                    Create Invite
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {loadingInvites ? (
-                  <div className="flex items-center justify-center py-8">
-                    <LoadingSpinner stages={['Loading invites']} />
-                  </div>
-                ) : invites.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">No invitation links yet</p>
-                ) : (
-                  <div className="space-y-3">
-                    {invites.map((invite) => (
-                      <div key={invite.id} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <RoleBadge role={invite.role} type="project" />
-                              {invite.revoked && <Badge variant="destructive">Revoked</Badge>}
-                              {invite.is_valid && !invite.revoked && <Badge variant="secondary">Active</Badge>}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Created {new Date(invite.created_at).toLocaleDateString()}
-                            </p>
+                          <div className="flex justify-end pt-4">
+                            <Button onClick={handleSaveSSO} size="lg">
+                              Save Configuration
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRevokeInvite(invite.id)}
-                            disabled={invite.revoked}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
                         </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                        <div className="flex items-center gap-2 mt-3">
-                          <Input
-                            value={`${window.location.origin}/invite/${invite.token}`}
-                            readOnly
-                            className="text-xs"
-                          />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => {
-                              navigator.clipboard.writeText(`${window.location.origin}/invite/${invite.token}`);
-                              showSuccess('Link copied to clipboard');
-                            }}
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                        </div>
-
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                          {invite.max_uses && (
-                            <span>Uses: {invite.current_uses}/{invite.max_uses}</span>
-                          )}
-                          {invite.expires_at && (
-                            <span>Expires: {new Date(invite.expires_at).toLocaleDateString()}</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+            <TabsContent value="invites" className="mt-6 animate-in fade-in-50 duration-300 slide-in-from-bottom-2">
+              <Card className="border-border/50 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <div className="space-y-1">
+                    <CardTitle>Active Invitations</CardTitle>
+                    <CardDescription>Manage and track outstanding invitations.</CardDescription>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div >
+                  <Button onClick={() => setCreateInviteDialogOpen(true)} className="shadow-sm">
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Create Invite Link
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {loadingInvites ? (
+                    <div className="flex justify-center py-8"><LoadingSpinner /></div>
+                  ) : invites.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 border-2 border-dashed rounded-lg bg-muted/20">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                        <Mail className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium">No active invitations</h3>
+                        <p className="text-muted-foreground max-w-sm mx-auto mt-1">Create an invitation link to share with people you want to join your organization.</p>
+                      </div>
+                      <Button variant="outline" onClick={() => setCreateInviteDialogOpen(true)}>
+                        Create First Invite
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {invites.map((invite) => (
+                        <div key={invite.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted/30 transition-colors gap-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              <RoleBadge role={invite.role} type="project" />
+                              <div className="text-xs text-muted-foreground flex gap-3">
+                                <span>Created: {new Date(invite.created_at).toLocaleDateString()}</span>
+                                {invite.max_uses && <span>Uses: {invite.current_uses}/{invite.max_uses}</span>}
+                                {invite.expires_at && <span>Expires: {new Date(invite.expires_at).toLocaleDateString()}</span>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <code className="text-xs bg-muted px-2 py-1 rounded select-all font-mono">
+                                {`${window.location.origin}/invite/${invite.token}`}
+                              </code>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`${window.location.origin}/invite/${invite.token}`);
+                                  showSuccess('Copied to clipboard');
+                                }}
+                              >
+                                <Copy className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {invite.revoked ? (
+                              <Badge variant="destructive">Revoked</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20">Active</Badge>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleRevokeInvite(invite.id)}
+                              disabled={invite.revoked}
+                            >
+                              <X className="w-4 h-4 mr-2" />
+                              Revoke
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
 
       <Dialog open={createInviteDialogOpen} onOpenChange={setCreateInviteDialogOpen}>
         <DialogContent>
@@ -893,6 +959,6 @@ export function OrganizationSettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   );
 }
