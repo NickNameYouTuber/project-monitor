@@ -13,12 +13,11 @@ export function useChatHistory(organizationId?: string | null, projectId?: strin
   const loadChats = useCallback(async () => {
     setIsLoading(true);
     try {
-      const loadedChats = await listChats(
-        organizationId || undefined,
-        projectId || undefined
-      );
+      // Load ALL chats - no filtering by org/project
+      // Context is stored in each chat and used internally when sending messages
+      const loadedChats = await listChats();
       setChats(loadedChats);
-      
+
       try {
         localStorage.setItem(CHAT_HISTORY_CACHE_KEY, JSON.stringify(loadedChats));
       } catch (e) {
@@ -26,7 +25,7 @@ export function useChatHistory(organizationId?: string | null, projectId?: strin
     } catch (error) {
       console.error('Failed to load chats:', error);
       showError('Не удалось загрузить историю чатов');
-      
+
       try {
         const cached = localStorage.getItem(CHAT_HISTORY_CACHE_KEY);
         if (cached) {
@@ -37,7 +36,7 @@ export function useChatHistory(organizationId?: string | null, projectId?: strin
     } finally {
       setIsLoading(false);
     }
-  }, [organizationId, projectId, showError]);
+  }, [showError]);
 
   const createNewChat = useCallback(async (title?: string): Promise<Chat | null> => {
     try {
@@ -59,7 +58,7 @@ export function useChatHistory(organizationId?: string | null, projectId?: strin
     try {
       await deleteChatApi(chatId);
       setChats((prev) => prev.filter((c) => c.id !== chatId));
-      
+
       try {
         const cached = localStorage.getItem(CHAT_HISTORY_CACHE_KEY);
         if (cached) {
