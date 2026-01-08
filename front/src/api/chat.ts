@@ -5,7 +5,13 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   actions?: Action[];
+  widgets?: Widget[];
   createdAt: string;
+}
+
+export interface Widget {
+  type: 'clarification' | 'entity_preview' | 'action_confirmation';
+  data: any;
 }
 
 export interface Action {
@@ -47,7 +53,7 @@ export async function listChats(organizationId?: string, projectId?: string): Pr
   const params: any = {};
   if (organizationId) params.organizationId = organizationId;
   if (projectId) params.projectId = projectId;
-  
+
   const { data } = await apiClient.get('/chats', { params });
   return Array.isArray(data) ? data : [];
 }

@@ -14,6 +14,7 @@ public class ChatMessageResponse {
     private String role;
     private String content;
     private List<Map<String, Object>> actions;
+    private List<Map<String, Object>> widgets;
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
 }

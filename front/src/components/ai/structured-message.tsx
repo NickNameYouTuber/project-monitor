@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChatMessage, Action } from '../../api/chat';
+import { ChatMessage, Action, Widget } from '../../api/chat';
 import { cn } from '../ui/utils';
 import { ClarificationCard } from './widgets/clarification-card';
 import { EntityPreviewCard } from './widgets/entity-preview-card';
@@ -15,11 +15,10 @@ interface StructuredMessageProps {
 }
 
 export function StructuredMessage({ message, onAction }: StructuredMessageProps) {
-    // 1. Logic/Reasoning Block (if present in the future, e.g. <thought> tags)
-    // For now, we assume content is markdown text.
+    // Get widgets from the message (new format)
+    const widgets = message.widgets || [];
 
-    // 2. Widget Rendering
-    // We check if the message has an associated 'widget' action.
+    // Legacy support: check if the message has widget actions
     const widgetAction = message.actions?.find(a => a.type === 'widget');
     const legacyActions = message.actions?.filter(a => a.notification) || [];
 
@@ -56,10 +55,21 @@ export function StructuredMessage({ message, onAction }: StructuredMessageProps)
                 </div>
             )}
 
-            {/* Widget Content */}
-            {widgetAction && (
+            {/* New Widgets (from widgets array) */}
+            {widgets.length > 0 && (
+                <div className="space-y-2 mt-2">
+                    {widgets.map((widget, index) => (
+                        <div key={index} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            {renderWidgetFromType(widget, onAction)}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Legacy Widget Content (from actions) */}
+            {widgetAction && widgets.length === 0 && (
                 <div className="mt-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    {renderWidget(widgetAction, onAction)}
+                    {renderLegacyWidget(widgetAction, onAction)}
                 </div>
             )}
 
@@ -83,7 +93,40 @@ export function StructuredMessage({ message, onAction }: StructuredMessageProps)
     );
 }
 
-function renderWidget(action: Action, onAction?: (actionId: string, value: any) => void) {
+function renderWidgetFromType(widget: Widget, onAction?: (actionId: string, value: any) => void) {
+    switch (widget.type) {
+        case 'clarification':
+            return (
+                <ClarificationCard
+                    data={widget.data}
+                    onSelect={(value) => onAction?.('clarification_response', {
+                        field: widget.data.field,
+                        value
+                    })}
+                />
+            );
+        case 'entity_preview':
+            return (
+                <EntityPreviewCard data={widget.data} />
+            );
+        case 'action_confirmation':
+            return (
+                <ActionConfirmationCard
+                    data={widget.data}
+                    onConfirm={() => onAction?.('action_confirmation', { confirmed: true })}
+                    onCancel={() => onAction?.('action_confirmation', { confirmed: false })}
+                />
+            );
+        default:
+            return (
+                <div className="p-3 border border-dashed border-yellow-500/50 bg-yellow-500/10 rounded text-xs text-yellow-600">
+                    Unsupported widget type: {widget.type}
+                </div>
+            );
+    }
+}
+
+function renderLegacyWidget(action: Action, onAction?: (actionId: string, value: any) => void) {
     const { widgetType, data } = action.params;
 
     switch (widgetType) {
@@ -114,3 +157,4 @@ function renderWidget(action: Action, onAction?: (actionId: string, value: any) 
             );
     }
 }
+

@@ -34,6 +34,10 @@ public class ChatMessage {
     @Column(name = "actions", columnDefinition = "jsonb")
     private String actions;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "widgets", columnDefinition = "jsonb")
+    private String widgets;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 }

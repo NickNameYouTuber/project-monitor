@@ -109,15 +109,31 @@ public class ChatService {
             aiMessage.setRole("assistant");
             
             String messageText = aiResponseText;
+            List<Map<String, Object>> widgetsFromAI = new ArrayList<>();
             try {
                 Map<String, Object> responseMap = objectMapper.readValue(aiResponseText, new TypeReference<Map<String, Object>>() {});
                 if (responseMap.containsKey("message") && responseMap.get("message") instanceof String) {
                     messageText = (String) responseMap.get("message");
                 }
+                // Parse widgets for clarification
+                if (responseMap.containsKey("widgets") && responseMap.get("widgets") instanceof List) {
+                    widgetsFromAI = (List<Map<String, Object>>) responseMap.get("widgets");
+                    log.debug("Parsed {} widgets from AI response", widgetsFromAI.size());
+                }
             } catch (Exception e) {
                 log.warn("Failed to parse AI response as JSON, using raw text: {}", e.getMessage());
             }
             aiMessage.setContent(messageText);
+
+            // Save widgets if present
+            if (!widgetsFromAI.isEmpty()) {
+                try {
+                    String widgetsJsonStr = objectMapper.writeValueAsString(widgetsFromAI);
+                    aiMessage.setWidgets(widgetsJsonStr);
+                } catch (Exception e) {
+                    log.error("Error serializing widgets to JSON: {}", e.getMessage(), e);
+                }
+            }
 
             List<AIAction> actions = actionExecutor.parseActions(aiResponseText);
             log.debug("Parsed {} actions from AI response", actions.size());
@@ -289,9 +305,7 @@ public class ChatService {
             "     description?: string - Project description\n" +
             "     status?: string - Project status/column (e.g., \"backlog\", \"in-progress\", \"review\", \"completed\"). Default: \"backlog\"\n" +
             "   }\n" +
-            "   Example: {\"type\": \"CREATE_PROJECT\", \"params\": {\"name\": \"Test Project\", \"status\": \"backlog\"}}\n" +
-            "   Example: {\"type\": \"CREATE_PROJECT\", \"params\": {\"name\": \"My Project\", \"description\": \"Description\", \"status\": \"in-progress\"}}\n" +
-            "   Note: Project will be created in the current organization automatically. If user says \"in backlog\" or \"to backlog\", use status: \"backlog\".\n\n" +
+            "   Example: {\"type\": \"CREATE_PROJECT\", \"params\": {\"name\": \"Test Project\", \"status\": \"backlog\"}}\n\n" +
             "3. CREATE_WHITEBOARD_SECTION: Create a section on the whiteboard.\n" +
             "   Params: {\n" +
             "     label: string (required) - Section label\n" +
@@ -305,14 +319,77 @@ public class ChatService {
             "     task_id: string (required) - Task UUID\n" +
             "     element_id: string (required) - Section element UUID\n" +
             "   }\n\n" +
-            "IMPORTANT:\n" +
-            "- Always respond in JSON format: {\"message\": \"your friendly text response\", \"actions\": [{type: \"ACTION_TYPE\", params: {...}}]}\n" +
-            "- Always include a message field with a friendly response to the user\n" +
-            "- When user asks to create a task in a specific column by name (e.g., \"in TEST column\", \"in Backlog\"), use column_name parameter\n" +
-            "- When user asks to create a project \"in backlog\" or \"to backlog\" or \"в backlog\", use status: \"backlog\" in CREATE_PROJECT params\n" +
-            "- When user asks to create a project \"in progress\" or \"to in-progress\", use status: \"in-progress\" in CREATE_PROJECT params\n" +
-            "- Default status for new projects is \"backlog\" if not specified\n" +
-            "- When creating tasks or projects, use the IDs and names from the context above\n");
+            "WIDGETS FOR CLARIFICATION:\n" +
+            "When you need more information from the user to complete an action, use widgets instead of plain text questions.\n\n" +
+            "Widget format:\n" +
+            "{\n" +
+            "  \"message\": \"Brief explanation of what you need\",\n" +
+            "  \"widgets\": [\n" +
+            "    {\n" +
+            "      \"type\": \"clarification\",\n" +
+            "      \"data\": {\n" +
+            "        \"question\": \"The question to ask\",\n" +
+            "        \"field\": \"name_of_field\",\n" +
+            "        \"allowCustomInput\": true/false,\n" +
+            "        \"customInputPlaceholder\": \"Placeholder for custom input (if allowCustomInput=true)\",\n" +
+            "        \"options\": [\n" +
+            "          {\"value\": \"option1\", \"label\": \"Display Label 1\", \"description\": \"Optional description\"},\n" +
+            "          {\"value\": \"option2\", \"label\": \"Display Label 2\"}\n" +
+            "        ]\n" +
+            "      }\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}\n\n" +
+            "EXAMPLES OF USING WIDGETS:\n\n" +
+            "Example 1: User says \"Create a project\" without specifying name:\n" +
+            "{\n" +
+            "  \"message\": \"Отлично! Давайте создадим проект. Как вы хотите его назвать?\",\n" +
+            "  \"widgets\": [\n" +
+            "    {\n" +
+            "      \"type\": \"clarification\",\n" +
+            "      \"data\": {\n" +
+            "        \"question\": \"Введите название проекта\",\n" +
+            "        \"field\": \"project_name\",\n" +
+            "        \"allowCustomInput\": true,\n" +
+            "        \"customInputPlaceholder\": \"Название проекта...\",\n" +
+            "        \"options\": []\n" +
+            "      }\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}\n\n" +
+            "Example 2: User says \"Create a task\" without specifying column:\n" +
+            "{\n" +
+            "  \"message\": \"Создаю задачу. В какую колонку её добавить?\",\n" +
+            "  \"widgets\": [\n" +
+            "    {\n" +
+            "      \"type\": \"clarification\",\n" +
+            "      \"data\": {\n" +
+            "        \"question\": \"Выберите колонку для задачи\",\n" +
+            "        \"field\": \"column\",\n" +
+            "        \"allowCustomInput\": false,\n" +
+            "        \"options\": [\n" +
+            "          {\"value\": \"backlog\", \"label\": \"Backlog\", \"description\": \"Задачи в очереди\"},\n" +
+            "          {\"value\": \"in-progress\", \"label\": \"In Progress\", \"description\": \"В работе\"},\n" +
+            "          {\"value\": \"done\", \"label\": \"Done\", \"description\": \"Завершённые\"}\n" +
+            "        ]\n" +
+            "      }\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}\n\n" +
+            "Example 3: User says \"Create project My App\" - all info provided, execute action:\n" +
+            "{\n" +
+            "  \"message\": \"Создаю проект 'My App'...\",\n" +
+            "  \"actions\": [{\"type\": \"CREATE_PROJECT\", \"params\": {\"name\": \"My App\", \"status\": \"backlog\"}}]\n" +
+            "}\n\n" +
+            "IMPORTANT RULES:\n" +
+            "1. ALWAYS respond in JSON format\n" +
+            "2. When user provides all required info - use \"actions\" to execute\n" +
+            "3. When you need more info - use \"widgets\" with clarification type\n" +
+            "4. For name/title inputs: use allowCustomInput=true with empty options\n" +
+            "5. For status/column selection: use allowCustomInput=false with predefined options\n" +
+            "6. Respond in the same language as the user\n" +
+            "7. When user answers a clarification, combine their answer with previous context to execute the action\n" +
+            "8. Available project statuses: backlog, in-progress, review, completed\n");
         messages.add(systemMsg);
 
         List<ChatMessage> chatMessages = chatMessageRepository.findByChat_IdOrderByCreatedAtAsc(chat.getId());

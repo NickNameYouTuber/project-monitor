@@ -213,6 +213,16 @@ public class ChatController {
         }
         response.setActions(actions);
 
+        // Parse widgets
+        List<Map<String, Object>> widgets = new ArrayList<>();
+        if (message.getWidgets() != null && !message.getWidgets().isEmpty()) {
+            try {
+                widgets = objectMapper.readValue(message.getWidgets(), new TypeReference<List<Map<String, Object>>>() {});
+            } catch (Exception e) {
+            }
+        }
+        response.setWidgets(widgets);
+
         return response;
     }
 
