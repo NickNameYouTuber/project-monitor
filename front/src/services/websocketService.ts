@@ -1,10 +1,13 @@
-export type RealtimeEventType = 
-  | 'project-created' 
-  | 'project-updated' 
+export type RealtimeEventType =
+  | 'project-created'
+  | 'project-updated'
   | 'project-deleted'
   | 'task-created'
   | 'task-updated'
   | 'task-deleted'
+  | 'column-created'
+  | 'column-updated'
+  | 'column-deleted'
   | 'whiteboard-updated';
 
 export interface RealtimeEventHandler {
@@ -14,8 +17,13 @@ export interface RealtimeEventHandler {
   onTaskCreated?: (data: any) => void;
   onTaskUpdated?: (data: any) => void;
   onTaskDeleted?: (data: any) => void;
+  onColumnCreated?: (data: any) => void;
+  onColumnUpdated?: (data: any) => void;
+  onColumnDeleted?: (data: any) => void;
   onWhiteboardUpdated?: (data: any) => void;
 }
+
+
 
 class WebSocketService {
   private realtimeSocket: WebSocket | null = null;
@@ -66,11 +74,11 @@ class WebSocketService {
     params.append('token', token);
     if (organizationId) params.append('organizationId', organizationId);
     if (projectId) params.append('projectId', projectId);
-    
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
     const url = `${protocol}//${host}/ws/realtime?${params.toString()}`;
-    
+
     console.log('📡 Подключение к Realtime WebSocket:', url);
 
     try {
@@ -79,7 +87,7 @@ class WebSocketService {
       this.realtimeSocket.onopen = () => {
         console.log('✅ Realtime WebSocket подключено');
         this.isRealtimeConnecting = false;
-        
+
         if (organizationId || projectId) {
           const subscribeMessage = {
             type: 'subscribe',
@@ -94,9 +102,9 @@ class WebSocketService {
         try {
           const message = JSON.parse(event.data);
           const { type, data } = message;
-          
+
           console.log('🎯 Realtime WebSocket: event received', type, data);
-          
+
           const currentHandlers = this.realtimeHandlers || handlers;
 
           switch (type) {
@@ -137,6 +145,24 @@ class WebSocketService {
               if (currentHandlers.onTaskDeleted) {
                 currentHandlers.onTaskDeleted(data);
                 console.log('✅ onTaskDeleted handler executed');
+              }
+              break;
+            case 'column-created':
+              if (currentHandlers.onColumnCreated) {
+                currentHandlers.onColumnCreated(data);
+                console.log('✅ onColumnCreated handler executed');
+              }
+              break;
+            case 'column-updated':
+              if (currentHandlers.onColumnUpdated) {
+                currentHandlers.onColumnUpdated(data);
+                console.log('✅ onColumnUpdated handler executed');
+              }
+              break;
+            case 'column-deleted':
+              if (currentHandlers.onColumnDeleted) {
+                currentHandlers.onColumnDeleted(data);
+                console.log('✅ onColumnDeleted handler executed');
               }
               break;
             case 'whiteboard-updated':
@@ -227,11 +253,11 @@ class WebSocketService {
 
     const params = new URLSearchParams();
     params.append('token', token);
-    
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
     const url = `${protocol}//${host}/ws/call-notifications?${params.toString()}`;
-    
+
     console.log('📡 Подключение к Call Notification WebSocket:', url);
 
     try {
@@ -246,7 +272,7 @@ class WebSocketService {
         try {
           const message = JSON.parse(event.data);
           const { type, data } = message;
-          
+
           console.log('🔔 Call Notification WebSocket: event received', type, data);
 
           switch (type) {
@@ -336,7 +362,7 @@ class WebSocketService {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
     const url = `${protocol}//${host}/ws/pipeline-logs/${jobId}`;
-    
+
     console.log('📡 Подключение к Pipeline Log WebSocket:', url);
 
     try {
@@ -351,7 +377,7 @@ class WebSocketService {
         try {
           const message = JSON.parse(event.data);
           const { type, data } = message;
-          
+
           console.log('📋 Pipeline Log WebSocket: event received', type, data);
 
           switch (type) {

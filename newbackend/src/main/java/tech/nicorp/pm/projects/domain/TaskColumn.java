@@ -26,6 +26,9 @@ public class TaskColumn {
 
     @Column(name = "order_index", nullable = false)
     private int orderIndex = 0;
+
+    @Column(name = "color")
+    private String color = "#6366f1"; // Default indigo
 }
 
 

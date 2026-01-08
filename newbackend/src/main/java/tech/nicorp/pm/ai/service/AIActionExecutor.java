@@ -287,6 +287,16 @@ public class AIActionExecutor {
 
         Map<String, Object> params = action.getParams();
         String name = (String) params.get("name");
+        
+        // Colors palette
+        String[] colors = {"#ef4444", "#f97316", "#f59e0b", "#84cc16", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#d946ef", "#f43f5e"};
+        String color = params.get("color") != null ? (String) params.get("color") : null;
+        
+        if (color == null) {
+            // Pick color based on name hash
+            int hash = Math.abs(name.hashCode());
+            color = colors[hash % colors.length];
+        }
 
         if (name == null || name.isEmpty()) {
             action.setResult(Map.of("error", "Column name is required"));
@@ -303,9 +313,20 @@ public class AIActionExecutor {
         TaskColumn column = new TaskColumn();
         column.setProject(project);
         column.setName(name);
+        column.setColor(color);
         column.setOrderIndex(maxOrder + 1);
 
         TaskColumn saved = taskColumnRepository.save(column);
+        
+        // Notify realtime
+        Map<String, Object> columnData = new HashMap<>();
+        columnData.put("id", saved.getId());
+        columnData.put("projectId", saved.getProject().getId());
+        columnData.put("name", saved.getName());
+        columnData.put("orderIndex", saved.getOrderIndex());
+        columnData.put("color", saved.getColor());
+        realtimeEventService.sendColumnCreated(projectId, columnData);
+
         action.setResult(Map.of("id", saved.getId().toString(), "name", saved.getName()));
 
         ActionNotification notification = new ActionNotification();

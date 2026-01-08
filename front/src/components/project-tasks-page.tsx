@@ -62,13 +62,13 @@ interface ColumnProps {
   highlightedTaskId?: string | null;
 }
 
-function Column({ 
-  column, 
-  tasks, 
-  onTaskMove, 
-  onTaskClick, 
-  onTaskEdit, 
-  onEditColumn, 
+function Column({
+  column,
+  tasks,
+  onTaskMove,
+  onTaskClick,
+  onTaskEdit,
+  onEditColumn,
   onDeleteColumn,
   onMoveColumn,
   index,
@@ -104,9 +104,8 @@ function Column({
         dragRef(node);
         dropRef(node);
       }}
-      className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${
-        isOver ? 'bg-accent/50' : ''
-      } ${isDragging ? 'opacity-50' : ''}`}
+      className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${isOver ? 'bg-accent/50' : ''
+        } ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3 cursor-move">
@@ -117,7 +116,7 @@ function Column({
             {columnTasks.length}
           </span>
         </div>
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
@@ -129,7 +128,7 @@ function Column({
               <Edit className="w-4 h-4 mr-2" />
               Edit Column
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => onDeleteColumn(column.id)}
               className="text-destructive"
             >
@@ -139,12 +138,12 @@ function Column({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      
+
       <div className="space-y-3">
         {columnTasks.map((task) => (
-          <TaskCard 
-            key={task.id} 
-            task={task} 
+          <TaskCard
+            key={task.id}
+            task={task}
             onClick={() => onTaskClick(task)}
             onEdit={(e) => {
               e.stopPropagation();
@@ -158,15 +157,15 @@ function Column({
   );
 }
 
-export function ProjectTasksPage({ 
-  project, 
-  tasks, 
-  setTasks, 
-  columns, 
-  setColumns, 
+export function ProjectTasksPage({
+  project,
+  tasks,
+  setTasks,
+  columns,
+  setColumns,
   assigneeSuggestions,
   branchSuggestions,
-  onBack 
+  onBack
 }: ProjectTasksPageProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -197,7 +196,7 @@ export function ProjectTasksPage({
 
   useEffect(() => {
     const currentProjectId = project.id;
-    
+
     // Если данные для этого проекта уже загружены, не делаем повторный запрос
     if (loadedProjectRef.current === currentProjectId) {
       console.log(`Data already loaded for project ${currentProjectId}, skipping`);
@@ -206,10 +205,10 @@ export function ProjectTasksPage({
     }
 
     let isCancelled = false;
-    
+
     console.log(`Loading data for project ${currentProjectId}`);
     setIsLoading(true);
-    
+
     (async () => {
       try {
         const { listTaskColumns } = await import('../api/task-columns');
@@ -219,12 +218,12 @@ export function ProjectTasksPage({
           listTasks(currentProjectId),
         ]);
         if (isCancelled) return;
-        
+
         console.log(`Loaded ${cols.length} columns and ${tks.length} tasks for project ${currentProjectId}`);
-        
+
         // load saved colors for columns
         let colorMap: Record<string, string> = {};
-        try { colorMap = JSON.parse(localStorage.getItem('columnColors') || '{}'); } catch {}
+        try { colorMap = JSON.parse(localStorage.getItem('columnColors') || '{}'); } catch { }
         // map columns
         setColumns(cols.map((c) => ({ id: c.id, title: c.name, color: colorMap[c.id] || 'bg-gray-500', order: c.orderIndex })));
         // map tasks
@@ -245,9 +244,9 @@ export function ProjectTasksPage({
             branch: t.repository_info.branch
           } : undefined,
         });
-        
+
         setTasks(tks.map(mapDtoToTask));
-        
+
         // Подписка на события в реальном времени
         websocketService.connectRealtime(undefined, currentProjectId, {
           onTaskCreated: (taskData: any) => {
@@ -264,7 +263,7 @@ export function ProjectTasksPage({
           onTaskUpdated: (taskData: any) => {
             console.log('Realtime: task updated', taskData);
             if (taskData.projectId === currentProjectId) {
-              setTasks(prev => prev.map(t => 
+              setTasks(prev => prev.map(t =>
                 t.id === taskData.id ? mapDtoToTask(taskData) : t
               ));
             }
@@ -275,10 +274,43 @@ export function ProjectTasksPage({
               setTasks(prev => prev.filter(t => t.id !== data.id));
             }
           },
+          onColumnCreated: (columnData: any) => {
+            console.log('Realtime: column created', columnData);
+            if (columnData.projectId === currentProjectId) {
+              setColumns(prev => {
+                if (prev.some(c => c.id === columnData.id)) return prev;
+                return [...prev, {
+                  id: columnData.id,
+                  title: columnData.name,
+                  color: columnData.color || 'bg-gray-500',
+                  order: columnData.orderIndex
+                }];
+              });
+            }
+          },
+          onColumnUpdated: (columnData: any) => {
+            console.log('Realtime: column updated', columnData);
+            if (columnData.projectId === currentProjectId) {
+              setColumns(prev => prev.map(c =>
+                c.id === columnData.id ? {
+                  ...c,
+                  title: columnData.name,
+                  color: columnData.color || c.color,
+                  order: columnData.orderIndex
+                } : c
+              ));
+            }
+          },
+          onColumnDeleted: (data: any) => {
+            console.log('Realtime: column deleted', data);
+            if (data.projectId === currentProjectId) {
+              setColumns(prev => prev.filter(c => c.id !== data.id));
+            }
+          },
         });
-        
+
         loadedProjectRef.current = currentProjectId;
-        
+
         return () => {
           websocketService.disconnectRealtime();
         };
@@ -290,7 +322,7 @@ export function ProjectTasksPage({
         }
       }
     })();
-    return () => { 
+    return () => {
       console.log(`Cleanup for project ${currentProjectId}`);
       isCancelled = true;
       websocketService.disconnectRealtime();
@@ -302,13 +334,13 @@ export function ProjectTasksPage({
     const taskId = params.get('highlightTask');
     if (taskId) {
       setHighlightedTaskId(taskId);
-      
+
       setTimeout(() => {
         const element = document.getElementById(`task-${taskId}`);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        
+
         setTimeout(() => {
           setHighlightedTaskId(null);
         }, 3000);
@@ -317,31 +349,31 @@ export function ProjectTasksPage({
   }, []);
 
   if (isLoading) {
-    return <LoadingSpinner 
+    return <LoadingSpinner
       stages={['Fetch Tasks', 'Parse Columns', 'Sync Data', 'Ready']}
     />;
   }
 
   const projectTasks = tasks.filter(task => task.projectId === project.id);
-  
+
   // Apply filters
   let filteredTasks = projectTasks.filter(task => {
     // Search filter
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      task.description.toLowerCase().includes(searchQuery.toLowerCase());
+
     // Assignee filter
     const matchesAssignee = !filters.assignee || filters.assignee === 'all-assignees' || task.assignee === filters.assignee;
-    
+
     // Priority filter
     const matchesPriority = !filters.priority || filters.priority === 'all-priorities' || task.priority === filters.priority;
-    
+
     // Status filter
     const matchesStatus = !filters.status || filters.status === 'all-statuses' || task.status === filters.status;
-    
+
     // Branch filter
     const matchesBranch = !filters.hasBranch || !!task.repositoryBranch;
-    
+
     return matchesSearch && matchesAssignee && matchesPriority && matchesStatus && matchesBranch;
   });
 
@@ -354,20 +386,20 @@ export function ProjectTasksPage({
     });
   };
 
-  const hasActiveFilters = (filters.assignee && filters.assignee !== 'all-assignees') || 
-                          (filters.priority && filters.priority !== 'all-priorities') || 
-                          (filters.status && filters.status !== 'all-statuses') || 
-                          filters.hasBranch;
+  const hasActiveFilters = (filters.assignee && filters.assignee !== 'all-assignees') ||
+    (filters.priority && filters.priority !== 'all-priorities') ||
+    (filters.status && filters.status !== 'all-statuses') ||
+    filters.hasBranch;
 
   const sortedColumns = [...columns].sort((a, b) => a.order - b.order);
 
   const handleTaskMove = async (taskId: string, newStatus: string) => {
     const originalTasks = tasks;
-    
+
     setTasks(prev => prev.map(task =>
       task.id === taskId ? { ...task, status: newStatus } : task
     ));
-    
+
     try {
       const { moveTask } = await import('../api/tasks');
       await moveTask(project.id, taskId, { column_id: newStatus });
@@ -405,7 +437,7 @@ export function ProjectTasksPage({
         } : undefined,
       };
       setTasks(prev => [...prev, mapped]);
-    } catch {}
+    } catch { }
   };
 
   const handleUpdateTask = (updatedTask: Task) => {
@@ -427,13 +459,13 @@ export function ProjectTasksPage({
     try {
       const { updateTaskColumn } = await import('../api/task-columns');
       await updateTaskColumn(project.id, updatedColumn.id, { name: updatedColumn.title });
-    } catch {}
+    } catch { }
     // persist color locally
     try {
       const map = JSON.parse(localStorage.getItem('columnColors') || '{}');
       map[updatedColumn.id] = updatedColumn.color;
       localStorage.setItem('columnColors', JSON.stringify(map));
-    } catch {}
+    } catch { }
     setEditingColumn(null);
   };
 
@@ -442,7 +474,7 @@ export function ProjectTasksPage({
       alert('Cannot delete the last column');
       return;
     }
-    
+
     // Move tasks from deleted column to first column
     const firstColumnId = columns.find(col => col.id !== columnId)?.id;
     if (firstColumnId) {
@@ -450,7 +482,7 @@ export function ProjectTasksPage({
         task.status === columnId ? { ...task, status: firstColumnId } : task
       ));
     }
-    
+
     setColumns(prev => prev.filter(column => column.id !== columnId));
   };
 
@@ -469,8 +501,8 @@ export function ProjectTasksPage({
         const map = JSON.parse(localStorage.getItem('columnColors') || '{}');
         map[newColumn.id] = newColumn.color;
         localStorage.setItem('columnColors', JSON.stringify(map));
-      } catch {}
-    } catch {}
+      } catch { }
+    } catch { }
     setIsCreateColumnOpen(false);
   };
 
@@ -479,22 +511,22 @@ export function ProjectTasksPage({
     const newColumns = [...sortedColumns];
     newColumns.splice(dragIndex, 1);
     newColumns.splice(hoverIndex, 0, draggedColumn);
-    
+
     // Update order for all columns
     const updatedColumns = newColumns.map((column, index) => ({
       ...column,
       order: index
     }));
-    
+
     setColumns(updatedColumns);
     // Persist reorder
     (async () => {
       try {
         const { reorderTaskColumns } = await import('../api/task-columns');
         await reorderTaskColumns(project.id, updatedColumns.map(c => c.id));
-      } catch {}
+      } catch { }
     })();
-  }; 
+  };
 
   if (!project) {
     return (
@@ -520,8 +552,8 @@ export function ProjectTasksPage({
             <h1>{project.title}</h1>
             <p className="text-muted-foreground">{project.description}</p>
           </div>
-          <Button 
-            variant="default" 
+          <Button
+            variant="default"
             size="sm"
             onClick={async () => {
               const roomId = `project-${project.id}-${Date.now()}`;
@@ -545,10 +577,10 @@ export function ProjectTasksPage({
             Start Call
           </Button>
         </div>
-        
+
         {/* Индикатор активных звонков */}
         <ActiveCallIndicator projectId={project.id} className="mb-4" />
-        
+
         <div className="flex items-center gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -561,8 +593,8 @@ export function ProjectTasksPage({
           </div>
           <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <PopoverTrigger asChild>
-              <Button 
-                variant={hasActiveFilters ? "default" : "outline"} 
+              <Button
+                variant={hasActiveFilters ? "default" : "outline"}
                 size="sm"
               >
                 <Filter className="w-4 h-4 mr-2" />
@@ -585,12 +617,12 @@ export function ProjectTasksPage({
                     </Button>
                   )}
                 </div>
-                
+
                 <div className="space-y-3">
                   <div>
                     <Label>Assignee</Label>
-                    <Select 
-                      value={filters.assignee} 
+                    <Select
+                      value={filters.assignee}
                       onValueChange={(value) => setFilters(prev => ({ ...prev, assignee: value }))}
                     >
                       <SelectTrigger>
@@ -606,11 +638,11 @@ export function ProjectTasksPage({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label>Priority</Label>
-                    <Select 
-                      value={filters.priority} 
+                    <Select
+                      value={filters.priority}
                       onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}
                     >
                       <SelectTrigger>
@@ -624,11 +656,11 @@ export function ProjectTasksPage({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label>Status</Label>
-                    <Select 
-                      value={filters.status} 
+                    <Select
+                      value={filters.status}
                       onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
                     >
                       <SelectTrigger>
@@ -644,7 +676,7 @@ export function ProjectTasksPage({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="has-branch"

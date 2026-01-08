@@ -53,5 +53,20 @@ public class RealtimeEventService {
         log.debug("Sending whiteboard-updated event for project {}", projectId);
         sessionManager.sendToProject(projectId, "whiteboard-updated", whiteboard);
     }
+
+    public void sendColumnCreated(UUID projectId, Map<String, Object> column) {
+        log.debug("Sending column-created event for project {}", projectId);
+        sessionManager.sendToProject(projectId, "column-created", column);
+    }
+
+    public void sendColumnUpdated(UUID projectId, Map<String, Object> column) {
+        log.debug("Sending column-updated event for project {}", projectId);
+        sessionManager.sendToProject(projectId, "column-updated", column);
+    }
+
+    public void sendColumnDeleted(UUID projectId, UUID columnId) {
+        log.debug("Sending column-deleted event for project {}", projectId);
+        sessionManager.sendToProject(projectId, "column-deleted", Map.of("id", columnId.toString(), "projectId", projectId.toString()));
+    }
 }
 
