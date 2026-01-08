@@ -355,7 +355,13 @@ public class ChatService {
             "     status?: string - Project status/column (e.g., \"backlog\", \"in-progress\", \"review\", \"completed\"). Default: \"backlog\"\n" +
             "   }\n" +
             "   Example: {\"type\": \"CREATE_PROJECT\", \"params\": {\"name\": \"Test Project\", \"status\": \"backlog\"}}\n\n" +
-            "3. CREATE_WHITEBOARD_SECTION: Create a section on the whiteboard.\n" +
+            "3. CREATE_COLUMN: Create a new task column (status) in the current project.\n" +
+            "   Params: {\n" +
+            "     name: string (required) - Column name (e.g., \"Backlog\", \"In Progress\", \"Done\")\n" +
+            "     color?: string - Column color in hex format (e.g., \"#6366f1\"). Default: \"#6366f1\"\n" +
+            "   }\n" +
+            "   Example: {\"type\": \"CREATE_COLUMN\", \"params\": {\"name\": \"Backlog\", \"color\": \"#6366f1\"}}\n\n" +
+            "4. CREATE_WHITEBOARD_SECTION: Create a section on the whiteboard.\n" +
             "   Params: {\n" +
             "     label: string (required) - Section label\n" +
             "     x?: number - X position (default: 100)\n" +
@@ -363,7 +369,7 @@ public class ChatService {
             "     width?: number - Width (default: 300)\n" +
             "     height?: number - Height (default: 200)\n" +
             "   }\n\n" +
-            "4. LINK_TASK_TO_SECTION: Link a task to a whiteboard section.\n" +
+            "5. LINK_TASK_TO_SECTION: Link a task to a whiteboard section.\n" +
             "   Params: {\n" +
             "     task_id: string (required) - Task UUID\n" +
             "     element_id: string (required) - Section element UUID\n" +

@@ -94,6 +94,8 @@ public class AIActionExecutor {
                     return executeCreateTask(action, userId, organizationId, projectId);
                 case "CREATE_PROJECT":
                     return executeCreateProject(action, userId, organizationId);
+                case "CREATE_COLUMN":
+                    return executeCreateColumn(action, userId, organizationId, projectId);
                 case "CREATE_WHITEBOARD_SECTION":
                     return executeCreateWhiteboardSection(action, userId, projectId);
                 case "LINK_TASK_TO_SECTION":
@@ -266,6 +268,52 @@ public class AIActionExecutor {
         notification.setMessage("Создал проект '" + saved.getName() + "'");
         notification.setLink("/" + organizationId + "/projects/" + saved.getId());
         notification.setLinkText("Перейти к проекту");
+        action.setNotification(notification);
+
+        return action;
+    }
+
+    private AIAction executeCreateColumn(AIAction action, UUID userId, UUID organizationId, UUID projectId) {
+        if (projectId == null) {
+            action.setResult(Map.of("error", "Project ID is required"));
+            return action;
+        }
+
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project == null) {
+            action.setResult(Map.of("error", "Project not found"));
+            return action;
+        }
+
+        Map<String, Object> params = action.getParams();
+        String name = (String) params.get("name");
+        String color = params.get("color") != null ? (String) params.get("color") : "#6366f1";
+
+        if (name == null || name.isEmpty()) {
+            action.setResult(Map.of("error", "Column name is required"));
+            return action;
+        }
+
+        // Get max order index
+        List<TaskColumn> existingColumns = taskColumnRepository.findByProject_IdOrderByOrderIndexAsc(projectId);
+        int maxOrder = existingColumns.stream()
+            .mapToInt(TaskColumn::getOrderIndex)
+            .max()
+            .orElse(-1);
+
+        TaskColumn column = new TaskColumn();
+        column.setProject(project);
+        column.setName(name);
+        column.setColor(color);
+        column.setOrderIndex(maxOrder + 1);
+
+        TaskColumn saved = taskColumnRepository.save(column);
+        action.setResult(Map.of("id", saved.getId().toString(), "name", saved.getName()));
+
+        ActionNotification notification = new ActionNotification();
+        notification.setMessage("Создал колонку '" + saved.getName() + "'");
+        notification.setLink("/" + organizationId + "/projects/" + projectId + "/tasks");
+        notification.setLinkText("Перейти к задачам");
         action.setNotification(notification);
 
         return action;
