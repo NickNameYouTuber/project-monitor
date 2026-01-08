@@ -385,14 +385,27 @@ public class ChatService {
             "        \"question\": \"The question to ask\",\n" +
             "        \"field\": \"name_of_field\",\n" +
             "        \"allowCustomInput\": true/false,\n" +
-            "        \"customInputPlaceholder\": \"Placeholder for custom input (if allowCustomInput=true)\",\n" +
-            "        \"options\": [\n" +
-            "          {\"value\": \"option1\", \"label\": \"Display Label 1\", \"description\": \"Optional description\"},\n" +
-            "          {\"value\": \"option2\", \"label\": \"Display Label 2\"}\n" +
-            "        ]\n" +
+            "        \"customInputPlaceholder\": \"Placeholder for custom input\",\n" +
+            "        \"options\": [{\"value\": \"v1\", \"label\": \"Label 1\"}],\n" +
+            "        \"fields\": [{\"name\": \"field1\", \"label\": \"Field 1 label\", \"placeholder\": \"Enter...\"}]\n" +
             "      }\n" +
             "    }\n" +
             "  ]\n" +
+            "}\n\n" +
+            "For MULTIPLE INPUTS (e.g. create 3 columns), use 'fields' array:\n" +
+            "{\n" +
+            "  \"message\": \"Введите названия для 3 колонок\",\n" +
+            "  \"widgets\": [{\n" +
+            "    \"type\": \"clarification\",\n" +
+            "    \"data\": {\n" +
+            "      \"question\": \"Названия колонок\",\n" +
+            "      \"fields\": [\n" +
+            "        {\"name\": \"col1\", \"label\": \"Колонка 1\", \"placeholder\": \"Название...\"},\n" +
+            "        {\"name\": \"col2\", \"label\": \"Колонка 2\", \"placeholder\": \"Название...\"},\n" +
+            "        {\"name\": \"col3\", \"label\": \"Колонка 3\", \"placeholder\": \"Название...\"}\n" +
+            "      ]\n" +
+            "    }\n" +
+            "  }]\n" +
             "}\n\n" +
             "EXAMPLES OF USING WIDGETS:\n\n" +
             "Example 1: User says \"Create a project\" without specifying name:\n" +
