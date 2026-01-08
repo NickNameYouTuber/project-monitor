@@ -110,8 +110,17 @@ public class ChatService {
             
             String messageText = aiResponseText;
             List<Map<String, Object>> widgetsFromAI = new ArrayList<>();
+            
+            // Try to extract JSON from the response (AI might prefix it with text)
+            String jsonToParse = aiResponseText;
+            int jsonStart = aiResponseText.indexOf("{");
+            int jsonEnd = aiResponseText.lastIndexOf("}");
+            if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart) {
+                jsonToParse = aiResponseText.substring(jsonStart, jsonEnd + 1);
+            }
+            
             try {
-                Map<String, Object> responseMap = objectMapper.readValue(aiResponseText, new TypeReference<Map<String, Object>>() {});
+                Map<String, Object> responseMap = objectMapper.readValue(jsonToParse, new TypeReference<Map<String, Object>>() {});
                 if (responseMap.containsKey("message") && responseMap.get("message") instanceof String) {
                     messageText = (String) responseMap.get("message");
                 }
