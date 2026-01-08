@@ -3,7 +3,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { Plus, MessageSquare, Trash2, Sparkles, X } from 'lucide-react';
 import { cn } from './ui/utils';
-import { SheetTitle } from './ui/sheet';
+
 import type { Chat } from '../api/chat';
 
 interface ChatListProps {
@@ -31,7 +31,7 @@ export function ChatList({
           <div className="p-2 rounded-lg bg-primary/10 text-primary">
             <Sparkles className="w-5 h-5" />
           </div>
-          <SheetTitle className="text-foreground text-lg font-semibold">AI Assistant</SheetTitle>
+          <h2 className="text-foreground text-lg font-semibold">AI Assistant</h2>
         </div>
         {onClose && (
           <Button
