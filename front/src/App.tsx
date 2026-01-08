@@ -71,6 +71,12 @@ export interface Task {
   };
 }
 
+// Redirect from project root to tasks
+function ProjectRedirectToTasks() {
+  const { orgId, projectId } = useParams();
+  return <Navigate to={`/${orgId}/projects/${projectId}/tasks`} replace />;
+}
+
 function ProjectRouteWrapperComponent({
   projects,
   tasks,
@@ -492,6 +498,11 @@ function AppContent() {
                         />
                       </OrganizationGuard>
                     } />
+                    {/* Redirect project root to tasks */}
+                    <Route
+                      path="/:orgId/projects/:projectId"
+                      element={<ProjectRedirectToTasks />}
+                    />
                     <Route
                       path="/:orgId/projects/:projectId/:section"
                       element={
