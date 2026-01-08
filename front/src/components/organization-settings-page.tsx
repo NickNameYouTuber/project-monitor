@@ -377,9 +377,9 @@ export function OrganizationSettingsPage() {
       </div>
 
       <div className="flex-1 overflow-auto">
-        <div className="container max-w-5xl mx-auto py-8 px-4 md:px-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
-            <TabsList className="w-full justify-start h-auto bg-transparent p-0 border-b border-border/50 space-x-2 overflow-x-auto flex-nowrap mb-8">
+        <div className="container max-w-5xl mx-auto py-4 px-4 md:px-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-4">
+            <TabsList className="w-full justify-start h-auto bg-transparent p-0 border-b border-border/50 space-x-2 overflow-x-auto flex-nowrap mb-6">
               <TabsTrigger
                 value="general"
                 className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary rounded-t-lg rounded-b-none h-10 px-4 pb-2 text-muted-foreground hover:text-foreground transition-all"
@@ -514,12 +514,10 @@ export function OrganizationSettingsPage() {
                             </div>
                             <div>
                               <p className="font-medium text-sm">{member.user?.display_name || member.user?.username}</p>
-                              <div className="flex items-center gap-2">
-                                <p className="text-xs text-muted-foreground">{member.user?.username}</p>
-                                <RoleBadge role={member.role_details || member.role} type="project" />
-                              </div>
+                              <p className="text-xs text-muted-foreground">{member.user?.username}</p>
                             </div>
                           </div>
+
                           <div className="flex items-center gap-3">
                             <div className="hidden md:block">
                               <Select
@@ -852,8 +850,8 @@ export function OrganizationSettingsPage() {
                                 {invite.expires_at && <span>Expires: {new Date(invite.expires_at).toLocaleDateString()}</span>}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <code className="text-xs bg-muted px-2 py-1 rounded select-all font-mono">
+                            <div className="flex items-center gap-2 min-w-0 max-w-[200px] md:max-w-md">
+                              <code className="text-xs bg-muted px-2 py-1 rounded select-all font-mono truncate w-full">
                                 {`${window.location.origin}/invite/${invite.token}`}
                               </code>
                               <Button
@@ -959,6 +957,6 @@ export function OrganizationSettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 }
