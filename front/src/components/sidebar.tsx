@@ -52,6 +52,7 @@ const projectNavigation = [
   { id: 'whiteboard' as Page, label: 'Whiteboard', icon: PaintBucket },
   { id: 'repositories' as Page, label: 'Git', icon: GitBranch },
   { id: 'account-organization' as Page, label: 'Account Organization', icon: Shield },
+  { id: 'project-settings' as Page, label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId, simplified = false }: SidebarProps) {
