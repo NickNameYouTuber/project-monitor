@@ -467,7 +467,9 @@ public class ChatService {
             "      {\"type\": \"CREATE_COLUMN\", \"params\": {\"name\": \"Done\"}}\n" +
             "    ]}\n" +
             "12. If user asks to create N items but doesn't provide names, ask for ALL names at once using widget with allowCustomInput=true\n" +
-            "    Then when they provide names (comma-separated or one by one), execute ALL actions at once\n\n" +
+            "    Then when they provide names (comma-separated or one by one), execute ALL actions at once\n" +
+            "13. CRITICAL: If user provides multiple names separated by comma (e.g. \"A, B, C\"), DO NOT create one item named \"A, B, C\"!\n" +
+            "    Instead, create 3 SEPARATE actions, one for each name!\n\n" +
             "WRONG (never do this):\n" +
             "{\"message\": \"Choose status:\\n- Backlog\\n- In Progress\"}\n\n" +
             "CORRECT:\n" +
