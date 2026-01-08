@@ -850,14 +850,14 @@ export function OrganizationSettingsPage() {
                                 {invite.expires_at && <span>Expires: {new Date(invite.expires_at).toLocaleDateString()}</span>}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 min-w-0 max-w-[200px] md:max-w-md">
-                              <code className="text-xs bg-muted px-2 py-1 rounded select-all font-mono truncate w-full">
+                            <div className="flex items-center gap-2 w-full max-w-[240px] md:max-w-md">
+                              <code className="text-xs bg-muted px-2 py-1 rounded select-all font-mono truncate flex-1 min-w-0 block">
                                 {`${window.location.origin}/invite/${invite.token}`}
                               </code>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6"
+                                className="h-6 w-6 shrink-0"
                                 onClick={() => {
                                   navigator.clipboard.writeText(`${window.location.origin}/invite/${invite.token}`);
                                   showSuccess('Copied to clipboard');
