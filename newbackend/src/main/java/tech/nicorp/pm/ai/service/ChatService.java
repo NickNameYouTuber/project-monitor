@@ -430,15 +430,21 @@ public class ChatService {
             "  \"message\": \"Создаю проект 'My App'...\",\n" +
             "  \"actions\": [{\"type\": \"CREATE_PROJECT\", \"params\": {\"name\": \"My App\", \"status\": \"backlog\"}}]\n" +
             "}\n\n" +
-            "IMPORTANT RULES:\n" +
-            "1. ALWAYS respond in JSON format\n" +
-            "2. When user provides all required info - use \"actions\" to execute\n" +
-            "3. When you need more info - use \"widgets\" with clarification type\n" +
-            "4. For name/title inputs: use allowCustomInput=true with empty options\n" +
-            "5. For status/column selection: use allowCustomInput=false with predefined options\n" +
-            "6. Respond in the same language as the user\n" +
-            "7. When user answers a clarification, combine their answer with previous context to execute the action\n" +
-            "8. Available project statuses: backlog, in-progress, review, completed\n");
+            "CRITICAL RULES (MUST FOLLOW):\n" +
+            "1. ALWAYS respond in valid JSON format - no text before or after the JSON\n" +
+            "2. When user provides ALL required info - use \"actions\" array to execute\n" +
+            "3. When you need ANY info from user - ALWAYS use \"widgets\" array with clarification type\n" +
+            "4. NEVER list options as plain text! ALWAYS use widgets with options array!\n" +
+            "5. NEVER ask questions in plain text! ALWAYS use widgets!\n" +
+            "6. For name/title inputs: use allowCustomInput=true with empty options array\n" +
+            "7. For status/column selection: use allowCustomInput=false with predefined options\n" +
+            "8. Respond in the same language as the user\n" +
+            "9. Available project statuses: backlog, in-progress, review, completed\n" +
+            "10. If user gives you a value (like project name 'Проект2'), use it and ask for the next required field using widgets\n\n" +
+            "WRONG (never do this):\n" +
+            "{\"message\": \"Choose status:\\n- Backlog\\n- In Progress\"}\n\n" +
+            "CORRECT:\n" +
+            "{\"message\": \"Выберите статус\", \"widgets\": [{\"type\": \"clarification\", \"data\": {\"question\": \"Статус проекта\", \"field\": \"status\", \"allowCustomInput\": false, \"options\": [{\"value\": \"backlog\", \"label\": \"Backlog\"}]}}]}\n");
         messages.add(systemMsg);
 
         List<ChatMessage> chatMessages = chatMessageRepository.findByChat_IdOrderByCreatedAtAsc(chat.getId());
