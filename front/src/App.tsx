@@ -32,6 +32,7 @@ import { useRouteState } from './hooks/useRouteState';
 import { getAccessToken, setAccessToken } from './api/client';
 import { useCurrentProject } from './hooks/useAppContext';
 import { listProjectMembers } from './api/project-members';
+import { getProject } from './api/projects';
 import { useMainAccount } from './hooks/useAccountContext';
 
 export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'account' | 'account-organization' | 'project-settings' | 'merge-request' | 'organizations' | 'settings';
@@ -100,8 +101,42 @@ function ProjectRouteWrapperComponent({
   const navigate = useNavigate();
   const { currentProject, setCurrentProject, currentOrganization } = useAppContext();
   const [fetchedProject, setFetchedProject] = React.useState<Project | null>(null);
+  const [isLoadingProject, setIsLoadingProject] = React.useState(false);
   const p = projects.find(pr => pr.id === params.projectId) || fetchedProject || currentProject || null;
   const repoId = (params as any).repoId as string | undefined;
+
+  // Fetch project from API if not found locally
+  React.useEffect(() => {
+    const projectId = params.projectId;
+    if (!projectId) return;
+
+    // Already have the project
+    if (projects.find(pr => pr.id === projectId) || (fetchedProject && fetchedProject.id === projectId)) {
+      return;
+    }
+
+    // Fetch from API
+    setIsLoadingProject(true);
+    getProject(projectId)
+      .then((projectData) => {
+        const project: Project = {
+          id: projectData.id,
+          title: projectData.name,
+          description: projectData.description || '',
+          status: projectData.status,
+          createdAt: projectData.createdAt ? new Date(projectData.createdAt) : new Date(),
+          color: projectData.color || '#6366f1'
+        };
+        setFetchedProject(project);
+        setCurrentProject(project);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch project:', err);
+      })
+      .finally(() => {
+        setIsLoadingProject(false);
+      });
+  }, [params.projectId, projects, fetchedProject, setCurrentProject]);
 
   React.useEffect(() => {
     if (p) {
