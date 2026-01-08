@@ -182,6 +182,21 @@ public class ChatService {
             chatMessageRepository.save(aiMessage);
             log.debug("AI message saved: {}", aiMessage.getId());
 
+            // Generate chat title after first user message
+            List<ChatMessage> allMessages = chatMessageRepository.findByChat_IdOrderByCreatedAtAsc(chatId);
+            long userMessageCount = allMessages.stream().filter(m -> "user".equals(m.getRole())).count();
+            if (userMessageCount == 1 && (chat.getTitle() == null || chat.getTitle().equals("New Chat") || chat.getTitle().equals("Новый чат"))) {
+                try {
+                    String generatedTitle = generateChatTitle(userMessage);
+                    if (generatedTitle != null && !generatedTitle.isEmpty()) {
+                        chat.setTitle(generatedTitle);
+                        log.debug("Generated chat title: {}", generatedTitle);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to generate chat title: {}", e.getMessage());
+                }
+            }
+
             chat.setUpdatedAt(OffsetDateTime.now());
             chatRepository.save(chat);
 
@@ -190,6 +205,31 @@ public class ChatService {
             log.error("Error in sendMessage for chat {}: {}", chatId, e.getMessage(), e);
             throw e;
         }
+    }
+
+    private String generateChatTitle(String userMessage) {
+        List<Map<String, String>> messages = new ArrayList<>();
+        
+        Map<String, String> systemMsg = new HashMap<>();
+        systemMsg.put("role", "system");
+        systemMsg.put("content", "You are a helpful assistant. Generate a very short title (2-5 words, max 30 characters) for a chat based on the user's first message. Respond ONLY with the title, nothing else. Use the same language as the user's message.");
+        messages.add(systemMsg);
+        
+        Map<String, String> userMsg = new HashMap<>();
+        userMsg.put("role", "user");
+        userMsg.put("content", "Generate a short title for this chat. User's first message: \"" + userMessage + "\"");
+        messages.add(userMsg);
+        
+        String response = gptunnelService.chatCompletion(messages);
+        if (response != null) {
+            // Clean up the response - remove quotes, trim
+            response = response.trim().replaceAll("^\"|\"$", "").replaceAll("^'|'$", "");
+            // Limit length
+            if (response.length() > 40) {
+                response = response.substring(0, 37) + "...";
+            }
+        }
+        return response;
     }
 
     private String buildContext(UUID userId, UUID organizationId, UUID projectId) {
