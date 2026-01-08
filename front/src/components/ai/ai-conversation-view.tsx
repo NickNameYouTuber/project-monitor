@@ -72,37 +72,36 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
                             <p>No messages yet. Start the conversation!</p>
                         </div>
                     )}
-                    {messages.map((msg) => (
-                        <ChatMessage
-                            key={msg.id}
-                            message={msg}
-                            onAction={async (actionType, payload) => {
-                                console.log('Action triggered:', actionType, payload);
+                    {messages
+                        .filter(msg => !msg.isWidgetResponse) // Hide widget response messages
+                        .map((msg) => (
+                            <ChatMessage
+                                key={msg.id}
+                                message={msg}
+                                onAction={async (actionType, payload) => {
+                                    console.log('Action triggered:', actionType, payload);
 
-                                if (actionType === 'clarification_response') {
-                                    // Handle widget clarification response
-                                    // payload: { field: string, value: string }
-                                    // Send the value as a user message
-                                    await sendMessage(payload.value);
-                                } else if (actionType === 'action_confirmation') {
-                                    // Handle action confirmation
-                                    if (payload.confirmed && payload.clientAction) {
-                                        executeClientAction(payload.clientAction, navigate);
-                                    }
-                                    await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled");
-                                } else if (actionType === 'widget') { // Legacy support
-                                    if (payload.selectedValue) {
-                                        await sendMessage(payload.selectedValue);
-                                    } else if (payload.confirmed !== undefined) {
+                                    if (actionType === 'clarification_response') {
+                                        // Handle widget clarification response - pass true to hide this message
+                                        await sendMessage(payload.value, true);
+                                    } else if (actionType === 'action_confirmation') {
                                         if (payload.confirmed && payload.clientAction) {
                                             executeClientAction(payload.clientAction, navigate);
                                         }
-                                        await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled");
+                                        await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
+                                    } else if (actionType === 'widget') { // Legacy support
+                                        if (payload.selectedValue) {
+                                            await sendMessage(payload.selectedValue, true);
+                                        } else if (payload.confirmed !== undefined) {
+                                            if (payload.confirmed && payload.clientAction) {
+                                                executeClientAction(payload.clientAction, navigate);
+                                            }
+                                            await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
+                                        }
                                     }
-                                }
-                            }}
-                        />
-                    ))}
+                                }}
+                            />
+                        ))}
                     {isLoading && (
                         <div className="flex items-center gap-2 py-2 pl-11 animate-in fade-in duration-300">
                             <div className="flex gap-1">

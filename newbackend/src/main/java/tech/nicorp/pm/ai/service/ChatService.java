@@ -144,7 +144,7 @@ public class ChatService {
                 }
             }
 
-            List<AIAction> actions = actionExecutor.parseActions(aiResponseText);
+            List<AIAction> actions = actionExecutor.parseActions(jsonToParse);
             log.debug("Parsed {} actions from AI response", actions.size());
             
             List<AIAction> executedActions = new ArrayList<>();

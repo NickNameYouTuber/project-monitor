@@ -18,13 +18,14 @@ export function useAIAssistant(chatId: string | null) {
     }
   }, [showError]);
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, isWidgetResponse = false) => {
     if (!chatId || !text.trim() || isLoading) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: text.trim(),
+      isWidgetResponse, // Mark as widget response so UI can hide it
       createdAt: new Date().toISOString(),
     };
 

@@ -6,6 +6,7 @@ export interface ChatMessage {
   content: string;
   actions?: Action[];
   widgets?: Widget[];
+  isWidgetResponse?: boolean; // If true, this message should be hidden in UI
   createdAt: string;
 }
 
