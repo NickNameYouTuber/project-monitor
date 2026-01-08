@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  CheckSquare, 
-  PaintBucket, 
-  GitBranch, 
+import {
+  CheckSquare,
+  PaintBucket,
+  GitBranch,
   Folder,
   Video,
   User as UserIcon,
   LogOut,
   Shield,
-  Building2
+  Building2,
+  Settings
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
@@ -41,7 +42,9 @@ const organizationsNavigation = [
 const organizationNavigation = [
   { id: 'projects' as Page, label: 'Projects', icon: Folder },
   { id: 'calls' as Page, label: 'Calls', icon: Video },
+  { id: 'calls' as Page, label: 'Calls', icon: Video },
   { id: 'account-organization' as Page, label: 'Account Organization', icon: Shield },
+  { id: 'settings' as Page, label: 'Settings', icon: Settings },
 ];
 
 const projectNavigation = [
@@ -60,7 +63,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
   const { clearAccounts } = useAccountContext();
   const routeState = useRouteState();
   const { isOrganizationsPage, isInOrganization, isInProject } = routeState;
-  
+
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const { chats, createNewChat } = useChatHistory(
@@ -132,7 +135,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
             } else {
               navigation = organizationsNavigation;
             }
-            
+
             return navigation.map((item) => {
               const Icon = item.icon;
               return (
@@ -156,13 +159,13 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
 
       <div className="p-4 border-t border-border space-y-2">
         {isOrganizationsPage ? (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium">{(userName || ' ').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{userName}</p>
-            <p className="text-xs text-muted-foreground truncate">{mainEmail}</p>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+              <span className="text-sm font-medium">{(userName || ' ').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{userName}</p>
+              <p className="text-xs text-muted-foreground truncate">{mainEmail}</p>
             </div>
           </div>
         ) : (
@@ -180,13 +183,13 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
             )}
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium">{(userName || ' ').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</span>
+                <span className="text-sm font-medium">{(userName || ' ').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className={cn("text-sm font-medium truncate", ssoEmail && ssoEmail !== mainEmail && "text-xs text-muted-foreground")}>{userName}</p>
                 <p className={cn("text-xs truncate", ssoEmail && ssoEmail !== mainEmail ? "text-xs text-muted-foreground" : "text-muted-foreground")}>{mainEmail}</p>
-          </div>
-        </div>
+              </div>
+            </div>
           </>
         )}
         <AIAssistantButton
@@ -195,9 +198,9 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           }}
           hasUnreadMessages={false}
         />
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="w-full justify-start gap-2"
           onClick={() => {
             // Очистить все данные
@@ -217,7 +220,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           Logout
         </Button>
       </div>
-      
+
       <AIAssistantSheet
         open={isAIAssistantOpen}
         onOpenChange={setIsAIAssistantOpen}

@@ -1,6 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, User, UserPlus, Trash2, Key, Link as LinkIcon, Copy, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  Building2,
+  User,
+  UserPlus,
+  Trash2,
+  Key,
+  Link as LinkIcon,
+  Copy,
+  X,
+  Settings,
+  Users,
+  Shield,
+  Fingerprint,
+  Mail
+} from 'lucide-react';
 import { RolesTab } from './organization/roles-tab';
 import { getOrganizationRoles } from '../api/roles';
 import { OrgRole } from '../types/organization';
@@ -361,14 +376,60 @@ export function OrganizationSettingsPage() {
       </div>
 
       <div className="flex-1 p-6 overflow-auto">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList>
-            <TabsTrigger value="general">General</TabsTrigger>
-            {canManageSettings && <TabsTrigger value="roles">Roles</TabsTrigger>}
-            {canManageSettings && <TabsTrigger value="members">Members</TabsTrigger>}
-            {currentMember?.role === 'OWNER' && <TabsTrigger value="security">Security</TabsTrigger>}
-            {currentMember?.role === 'OWNER' && <TabsTrigger value="sso">SSO</TabsTrigger>}
-            {canManageSettings && <TabsTrigger value="invites">Invites</TabsTrigger>}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+          <TabsList className="bg-background border-b border-border w-full justify-start rounded-none h-auto p-0 space-x-6">
+            <TabsTrigger
+              value="general"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              General
+            </TabsTrigger>
+            {canManageSettings && (
+              <TabsTrigger
+                value="roles"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Roles
+              </TabsTrigger>
+            )}
+            {canManageSettings && (
+              <TabsTrigger
+                value="members"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Members
+              </TabsTrigger>
+            )}
+            {currentMember?.role === 'OWNER' && (
+              <TabsTrigger
+                value="security"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
+              >
+                <Key className="w-4 h-4 mr-2" />
+                Security
+              </TabsTrigger>
+            )}
+            {currentMember?.role === 'OWNER' && (
+              <TabsTrigger
+                value="sso"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
+              >
+                <Fingerprint className="w-4 h-4 mr-2" />
+                SSO
+              </TabsTrigger>
+            )}
+            {canManageSettings && (
+              <TabsTrigger
+                value="invites"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-10 px-0 pb-2"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Invites
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="general" className="mt-6">

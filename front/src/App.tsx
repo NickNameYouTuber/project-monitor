@@ -34,7 +34,7 @@ import { useCurrentProject } from './hooks/useAppContext';
 import { listProjectMembers } from './api/project-members';
 import { useMainAccount } from './hooks/useAccountContext';
 
-export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'account' | 'account-organization' | 'project-settings' | 'merge-request' | 'organizations';
+export type Page = 'projects' | 'tasks' | 'whiteboard' | 'repositories' | 'repository' | 'calls' | 'account' | 'account-organization' | 'project-settings' | 'merge-request' | 'organizations' | 'settings';
 
 export interface Column {
   id: string;
@@ -313,6 +313,15 @@ function AppContent() {
       return;
     }
 
+    if (page === 'settings') {
+      if (organizationId) {
+        navigate(`/${organizationId}/settings`);
+      } else {
+        navigate('/organizations');
+      }
+      return;
+    }
+
     navigate(`/${page}`);
   };
 
@@ -426,6 +435,8 @@ function AppContent() {
       setCurrentPage('repository');
     } else if (path.match(/\/projects\/[^/]+\/settings$/)) {
       setCurrentPage('project-settings');
+    } else if (path.match(/\/settings$/) && !path.match(/\/projects\/[^/]+\/settings$/)) {
+      setCurrentPage('settings');
     } else if (path.match(/\/[^/]+\/projects$/) || path.match(/\/projects$/)) {
       setCurrentPage('projects');
     }
@@ -470,7 +481,15 @@ function AppContent() {
                       <Route path="/" element={<Navigate to="/organizations" replace />} />
                       <Route path="/organizations" element={<OrganizationsPage />} />
                       <Route path="/organizations/create" element={<CreateOrganizationPage />} />
+                      <Route path="/organizations" element={<OrganizationsPage />} />
+                      <Route path="/organizations/create" element={<CreateOrganizationPage />} />
+                      {/* Old route redirect or keep for backward compat for now, ideally redirect */}
                       <Route path="/organizations/:orgId/settings" element={<OrganizationSettingsPage />} />
+                      <Route path="/:orgId/settings" element={
+                        <OrganizationGuard>
+                          <OrganizationSettingsPage />
+                        </OrganizationGuard>
+                      } />
                       <Route path="/invite/:token" element={<InvitePage />} />
                       <Route path="/sso/callback" element={<SSOCallbackPage />} />
                       <Route path="/sso/niid/callback" element={<SSOCallbackPage />} />
