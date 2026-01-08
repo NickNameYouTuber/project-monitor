@@ -42,7 +42,6 @@ const organizationsNavigation = [
 const organizationNavigation = [
   { id: 'projects' as Page, label: 'Projects', icon: Folder },
   { id: 'calls' as Page, label: 'Calls', icon: Video },
-  { id: 'calls' as Page, label: 'Calls', icon: Video },
   { id: 'account-organization' as Page, label: 'Account Organization', icon: Shield },
   { id: 'settings' as Page, label: 'Settings', icon: Settings },
 ];

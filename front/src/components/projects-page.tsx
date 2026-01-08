@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { LoadingSpinner } from './loading-spinner';
 import type { Project, Column } from '../App';
 import { useCurrentOrganization, useAppContext } from '../hooks/useAppContext';
+import { useMainAccount } from '../hooks/useAccountContext';
 import { websocketService } from '../services/websocketService';
 
 interface ProjectsPageProps {
@@ -35,13 +36,13 @@ interface ColumnProps {
   index: number;
 }
 
-function Column({ 
-  column, 
-  projects, 
-  onProjectMove, 
-  onProjectSelect, 
-  onProjectEdit, 
-  onEditColumn, 
+function Column({
+  column,
+  projects,
+  onProjectMove,
+  onProjectSelect,
+  onProjectEdit,
+  onEditColumn,
   onDeleteColumn,
   onMoveColumn,
   index
@@ -76,9 +77,8 @@ function Column({
         dragRef(node);
         dropRef(node);
       }}
-      className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${
-        isOver ? 'bg-accent/50' : ''
-      } ${isDragging ? 'opacity-50' : ''}`}
+      className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${isOver ? 'bg-accent/50' : ''
+        } ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3 cursor-move">
@@ -89,7 +89,7 @@ function Column({
             {columnProjects.length}
           </span>
         </div>
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
@@ -101,7 +101,7 @@ function Column({
               <Edit className="w-4 h-4 mr-2" />
               Edit Column
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => onDeleteColumn(column.id)}
               className="text-destructive"
             >
@@ -111,12 +111,12 @@ function Column({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      
+
       <div className="space-y-3">
         {columnProjects.map((project) => (
-          <ProjectCard 
-            key={project.id} 
-            project={project} 
+          <ProjectCard
+            key={project.id}
+            project={project}
             onClick={() => onProjectSelect(project)}
             onEdit={(e) => {
               e.stopPropagation();
@@ -138,6 +138,12 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
   const [isLoading, setIsLoading] = useState(true);
   const { organizationId } = useCurrentOrganization();
   const { isLoading: orgLoading } = useAppContext();
+  const { account } = useMainAccount();
+  const accountRef = React.useRef(account);
+
+  useEffect(() => {
+    accountRef.current = account;
+  }, [account]);
 
   const mapDtoToProject = (d: any): Project => ({
     id: d.id,
@@ -157,7 +163,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
     if (orgLoading) {
       return;
     }
-    
+
     (async () => {
       try {
         setIsLoading(true);
@@ -185,7 +191,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
               await updateProject(p.id, { color: local[p.id] });
             });
           await Promise.all(updates);
-        } catch {}
+        } catch { }
       } catch (error) {
         console.error('ProjectsPage: Failed to load projects:', error);
         setProjects([]);
@@ -202,31 +208,53 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
     }
 
     console.log('🔌 ProjectsPage: Setting up realtime subscription for organization:', organizationId);
-    
+
     const handlers = {
       onProjectCreated: (projectData: any) => {
         console.log('🎉 ProjectsPage: onProjectCreated called with data:', projectData);
-        
+
         setProjects(prev => {
           console.log('📋 Previous projects count:', prev.length);
           console.log('📋 Previous projects IDs:', prev.map(p => p.id));
           console.log('📋 New project ID:', projectData.id);
-          
+
           if (prev.some(p => p.id === projectData.id)) {
             console.log('⚠️ Project already exists, skipping:', projectData.id);
             return prev;
           }
-          
+
+          // Strict filtering: Only add if I am the owner (creator).
+          // If another user created it, I shouldn't see it until I am added (which would need a separate event or refresh).
+          // We access account ID from localStorage or context if available, but here we can try to guess or just skip if not owner.
+          // Since we typically can't access 'account' inside this callback easily without refactoring, 
+          // we will rely on the fact that if we created it, we should see it.
+          // However, we need to know OUR id.
+          // Let's assume we receive it or can access it.
+
+          // Use a simple check: if we can't verify ownership or membership, do not add it blindly.
+          // Yet, creating a project triggers this event. If we don't add it, the creator won't see it immediately?
+          // The creator logic in handleCreateProject ALSO adds it?
+          // No, handleCreateProject says: "// Проект будет добавлен через WebSocket событие project-created"
+
+          // So we MUST add it if WE created it.
+          // We can check if `projectData.ownerId` matches our ID.
+          // We need to bring in `useMainAccount` hook result into the effect scope.
+
+          if (projectData.ownerId && accountRef.current?.id && projectData.ownerId !== accountRef.current.id) {
+            console.log('🙈 Project created by someone else, skipping auto-add (wait for invite)', projectData.id);
+            return prev;
+          }
+
           const newProject = mapDtoToProject(projectData);
           console.log('✅ Adding new project to list:', newProject);
-          
+
           // Сохранить цвет локально
           try {
             const map = JSON.parse(localStorage.getItem('projectColors') || '{}');
             map[newProject.id] = newProject.color;
             localStorage.setItem('projectColors', JSON.stringify(map));
-          } catch {}
-          
+          } catch { }
+
           const updated = [...prev, newProject];
           console.log('📊 Updated projects count:', updated.length);
           console.log('📋 Updated projects IDs:', updated.map(p => p.id));
@@ -236,7 +264,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
       onProjectUpdated: (projectData: any) => {
         console.log('🔄 ProjectsPage: onProjectUpdated called with data:', projectData);
         setProjects(prev => {
-          const updated = prev.map(p => 
+          const updated = prev.map(p =>
             p.id === projectData.id ? mapDtoToProject(projectData) : p
           );
           console.log('✅ Project updated in list');
@@ -252,7 +280,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
         });
       },
     };
-    
+
     console.log('🔗 Connecting to realtime WebSocket with handlers:', Object.keys(handlers));
     websocketService.connectRealtime(organizationId, undefined, handlers);
 
@@ -270,7 +298,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
   const sortedColumns = [...columns].sort((a, b) => a.order - b.order);
 
   if (isLoading) {
-    return <LoadingSpinner 
+    return <LoadingSpinner
       stages={['Fetch Projects', 'Parse Data', 'Migrate Colors', 'Ready']}
     />;
   }
@@ -283,7 +311,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
       try {
         const { updateProjectStatus } = await import('../api/projects');
         await updateProjectStatus(projectId, newStatus);
-      } catch {}
+      } catch { }
     })();
   };
 
@@ -293,7 +321,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
         console.error('ProjectsPage: No organization selected, cannot create project');
         return;
       }
-      
+
       console.log('ProjectsPage: Creating project with organizationId:', organizationId);
       const { createProject } = await import('../api/projects');
       const created = await createProject({
@@ -310,7 +338,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
         const map = JSON.parse(localStorage.getItem('projectColors') || '{}');
         map[created.id] = created.color || projectData.color;
         localStorage.setItem('projectColors', JSON.stringify(map));
-      } catch {}
+      } catch { }
     } catch (error) {
       console.error('ProjectsPage: Failed to create project:', error);
     }
@@ -330,14 +358,14 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
           status: updatedProject.status,
           color: updatedProject.color,
         });
-      } catch {}
+      } catch { }
     })();
     // sync local color
     try {
       const map = JSON.parse(localStorage.getItem('projectColors') || '{}');
       map[updatedProject.id] = updatedProject.color;
       localStorage.setItem('projectColors', JSON.stringify(map));
-    } catch {}
+    } catch { }
   };
 
   const handleEditColumn = (column: Column) => {
@@ -356,7 +384,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
       alert('Cannot delete the last column');
       return;
     }
-    
+
     // Move projects from deleted column to first column
     const firstColumnId = columns.find(col => col.id !== columnId)?.id;
     if (firstColumnId) {
@@ -364,7 +392,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
         project.status === columnId ? { ...project, status: firstColumnId } : project
       ));
     }
-    
+
     setColumns(prev => prev.filter(column => column.id !== columnId));
   };
 
@@ -383,13 +411,13 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
     const newColumns = [...sortedColumns];
     newColumns.splice(dragIndex, 1);
     newColumns.splice(hoverIndex, 0, draggedColumn);
-    
+
     // Update order for all columns
     const updatedColumns = newColumns.map((column, index) => ({
       ...column,
       order: index
     }));
-    
+
     setColumns(updatedColumns);
   };
 
@@ -429,7 +457,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
             </Button>
           </div>
         </div>
-        
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
