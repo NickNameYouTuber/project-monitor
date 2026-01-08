@@ -79,12 +79,21 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
                             onAction={async (actionType, payload) => {
                                 console.log('Action triggered:', actionType, payload);
 
-                                if (actionType === 'widget') {
+                                if (actionType === 'clarification_response') {
+                                    // Handle widget clarification response
+                                    // payload: { field: string, value: string }
+                                    // Send the value as a user message
+                                    await sendMessage(payload.value);
+                                } else if (actionType === 'action_confirmation') {
+                                    // Handle action confirmation
+                                    if (payload.confirmed && payload.clientAction) {
+                                        executeClientAction(payload.clientAction, navigate);
+                                    }
+                                    await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled");
+                                } else if (actionType === 'widget') { // Legacy support
                                     if (payload.selectedValue) {
-                                        // Clarification response
                                         await sendMessage(payload.selectedValue);
                                     } else if (payload.confirmed !== undefined) {
-                                        // Action confirmation
                                         if (payload.confirmed && payload.clientAction) {
                                             executeClientAction(payload.clientAction, navigate);
                                         }
@@ -95,14 +104,18 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
                         />
                     ))}
                     {isLoading && (
-                        <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <div className="flex items-start gap-3 animate-in fade-in duration-300">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
                                 <Bot className="w-5 h-5 text-primary" />
                             </div>
-                            <div className="bg-muted/50 rounded-lg rounded-tl-none p-3 border border-border">
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                    Thinking...
+                            <div className="bg-muted rounded-lg rounded-tl-none p-4 border border-border shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex gap-1">
+                                        <span className="w-2 h-2 rounded-full bg-primary/60 animate-[bounce_1s_infinite_100ms]"></span>
+                                        <span className="w-2 h-2 rounded-full bg-primary/60 animate-[bounce_1s_infinite_200ms]"></span>
+                                        <span className="w-2 h-2 rounded-full bg-primary/60 animate-[bounce_1s_infinite_300ms]"></span>
+                                    </div>
+                                    <span className="text-sm font-medium text-muted-foreground">AI печатает...</span>
                                 </div>
                             </div>
                         </div>

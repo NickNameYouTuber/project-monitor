@@ -130,6 +130,7 @@ export function AISidebar() {
                                 onCreateChat={handleCreateChat}
                                 onDeleteChat={deleteChat}
                                 onClose={() => setIsOpen(false)}
+                                hideHeader={true}
                             />
                         </div>
                     )}

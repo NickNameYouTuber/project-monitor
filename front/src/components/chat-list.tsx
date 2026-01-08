@@ -13,6 +13,7 @@ interface ChatListProps {
   onCreateChat: () => void;
   onDeleteChat: (chatId: string) => void;
   onClose?: () => void;
+  hideHeader?: boolean;
 }
 
 export function ChatList({
@@ -22,29 +23,32 @@ export function ChatList({
   onCreateChat,
   onDeleteChat,
   onClose,
+  hideHeader
 }: ChatListProps) {
   return (
     <div className="flex flex-col h-full w-full bg-background">
       {/* Шапка */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-background flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <Sparkles className="w-5 h-5" />
+      {!hideHeader && (
+        <div className="flex items-center justify-between p-4 border-b border-border bg-background flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <h2 className="text-foreground text-lg font-semibold">AI Assistant</h2>
           </div>
-          <h2 className="text-foreground text-lg font-semibold">AI Assistant</h2>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Закрыть"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          )}
         </div>
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="Закрыть"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        )}
-      </div>
+      )}
 
       {/* Кнопка создания нового чата */}
       <div className="p-4 border-b border-border bg-background flex-shrink-0">
