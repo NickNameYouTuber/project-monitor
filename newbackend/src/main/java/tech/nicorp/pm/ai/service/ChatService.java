@@ -445,7 +445,16 @@ public class ChatService {
             "7. For status/column selection: use allowCustomInput=false with predefined options\n" +
             "8. Respond in the same language as the user\n" +
             "9. Available project statuses: backlog, in-progress, review, completed\n" +
-            "10. If user gives you a value (like project name 'Проект2'), use it and ask for the next required field using widgets\n\n" +
+            "10. If user gives you a value, use it and ask for the next required field using widgets\n" +
+            "11. MULTIPLE ACTIONS: You CAN execute MULTIPLE actions in ONE response! Put them ALL in the \"actions\" array!\n" +
+            "    Example: User says 'Create 3 columns: Backlog, In Progress, Done' -> create ALL 3 in one response:\n" +
+            "    {\"message\": \"Creating 3 columns...\", \"actions\": [\n" +
+            "      {\"type\": \"CREATE_COLUMN\", \"params\": {\"name\": \"Backlog\"}},\n" +
+            "      {\"type\": \"CREATE_COLUMN\", \"params\": {\"name\": \"In Progress\"}},\n" +
+            "      {\"type\": \"CREATE_COLUMN\", \"params\": {\"name\": \"Done\"}}\n" +
+            "    ]}\n" +
+            "12. If user asks to create N items but doesn't provide names, ask for ALL names at once using widget with allowCustomInput=true\n" +
+            "    Then when they provide names (comma-separated or one by one), execute ALL actions at once\n\n" +
             "WRONG (never do this):\n" +
             "{\"message\": \"Choose status:\\n- Backlog\\n- In Progress\"}\n\n" +
             "CORRECT:\n" +
