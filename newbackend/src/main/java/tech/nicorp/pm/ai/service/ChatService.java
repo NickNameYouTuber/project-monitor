@@ -358,9 +358,8 @@ public class ChatService {
             "3. CREATE_COLUMN: Create a new task column (status) in the current project.\n" +
             "   Params: {\n" +
             "     name: string (required) - Column name (e.g., \"Backlog\", \"In Progress\", \"Done\")\n" +
-            "     color?: string - Column color in hex format (e.g., \"#6366f1\"). Default: \"#6366f1\"\n" +
             "   }\n" +
-            "   Example: {\"type\": \"CREATE_COLUMN\", \"params\": {\"name\": \"Backlog\", \"color\": \"#6366f1\"}}\n\n" +
+            "   Example: {\"type\": \"CREATE_COLUMN\", \"params\": {\"name\": \"Backlog\"}}\n\n" +
             "4. CREATE_WHITEBOARD_SECTION: Create a section on the whiteboard.\n" +
             "   Params: {\n" +
             "     label: string (required) - Section label\n" +

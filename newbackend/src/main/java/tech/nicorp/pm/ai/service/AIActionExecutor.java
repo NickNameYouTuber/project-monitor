@@ -287,7 +287,6 @@ public class AIActionExecutor {
 
         Map<String, Object> params = action.getParams();
         String name = (String) params.get("name");
-        String color = params.get("color") != null ? (String) params.get("color") : "#6366f1";
 
         if (name == null || name.isEmpty()) {
             action.setResult(Map.of("error", "Column name is required"));
@@ -304,7 +303,6 @@ public class AIActionExecutor {
         TaskColumn column = new TaskColumn();
         column.setProject(project);
         column.setName(name);
-        column.setColor(color);
         column.setOrderIndex(maxOrder + 1);
 
         TaskColumn saved = taskColumnRepository.save(column);
