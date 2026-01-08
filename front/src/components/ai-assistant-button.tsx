@@ -1,27 +1,38 @@
 import React from 'react';
-import { Button } from './ui/button';
 import { Sparkles } from 'lucide-react';
+import { Button } from './ui/button';
+import { useAISidebar } from '../contexts/AISidebarContext';
 import { cn } from './ui/utils';
 
 interface AIAssistantButtonProps {
-  onClick: () => void;
+  className?: string;
+  variant?: "default" | "ghost" | "outline" | "secondary";
   hasUnreadMessages?: boolean;
 }
 
-export function AIAssistantButton({ onClick, hasUnreadMessages = false }: AIAssistantButtonProps) {
+export function AIAssistantButton({ className, variant = "outline", hasUnreadMessages }: AIAssistantButtonProps) {
+  const { toggleSidebar, isOpen } = useAISidebar();
+
   return (
     <Button
-      variant="outline"
+      variant={isOpen ? "secondary" : variant}
       size="sm"
-      className="w-full justify-start gap-2 relative"
-      onClick={onClick}
+      className={cn(
+        "w-full justify-start gap-2 relative transition-all duration-300",
+        isOpen && "bg-primary/10 text-primary hover:bg-primary/20",
+        className
+      )}
+      onClick={toggleSidebar}
     >
-      <Sparkles className="w-4 h-4" />
+      <div className={cn(
+        "bg-primary text-primary-foreground p-0.5 rounded-sm transition-transform duration-500",
+        isOpen && "rotate-180"
+      )}>
+        <Sparkles className="w-3.5 h-3.5" />
+      </div>
       <span>AI Assistant</span>
       {hasUnreadMessages && (
-        <span className={cn(
-          "absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"
-        )} />
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
       )}
     </Button>
   );

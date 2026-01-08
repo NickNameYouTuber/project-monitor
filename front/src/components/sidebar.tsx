@@ -64,13 +64,6 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
   const routeState = useRouteState();
   const { isOrganizationsPage, isInOrganization, isInProject } = routeState;
 
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const { chats, createNewChat } = useChatHistory(
-    currentOrganization?.id || null,
-    currentProject?.id || null
-  );
-
   const userName = mainAccount?.displayName || mainAccount?.username || '';
   const mainEmail = mainAccount?.username || '';
   const ssoEmail = ssoAccount?.sso_email || null;
@@ -192,12 +185,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
             </div>
           </>
         )}
-        <AIAssistantButton
-          onClick={() => {
-            setIsAIAssistantOpen(true);
-          }}
-          hasUnreadMessages={false}
-        />
+        <AIAssistantButton hasUnreadMessages={false} />
         <Button
           variant="outline"
           size="sm"
@@ -220,17 +208,6 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           Logout
         </Button>
       </div>
-
-      <AIAssistantSheet
-        open={isAIAssistantOpen}
-        onOpenChange={setIsAIAssistantOpen}
-        chatId={currentChatId}
-        organizationId={currentOrganization?.id || null}
-        projectId={currentProject?.id || null}
-        onChatCreated={(chat: Chat) => {
-          setCurrentChatId(chat.id);
-        }}
-      />
     </div>
   );
 }

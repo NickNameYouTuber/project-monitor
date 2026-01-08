@@ -19,7 +19,8 @@ interface OrganizationGuardProps {
 export function OrganizationGuard({ children }: OrganizationGuardProps) {
   const params = useParams<{ orgId: string }>();
   const orgId = params.orgId;
-  
+  const { showError } = useNotifications();
+
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [verified, setVerified] = useState(false);
@@ -36,11 +37,11 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
 
   const checkOrganization = async (currentOrgId: string) => {
     const orgVerified = sessionStorage.getItem(`org_verified_${currentOrgId}`);
-    
+
     console.log('[OrganizationGuard] Checking organization:', currentOrgId);
     console.log('[OrganizationGuard] Verified flag:', orgVerified);
     console.log('[OrganizationGuard] Current token:', getAccessToken()?.substring(0, 20) + '...');
-    
+
     if (!currentOrgId) {
       window.location.href = '/organizations';
       return;
@@ -57,12 +58,12 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
       console.log('[OrganizationGuard] Fetching organization info...');
       const org = await getOrganization(currentOrgId);
       setOrganization(org);
-      
+
       if (org.sso_enabled && org.sso_require_sso) {
         handleSSOLogin(org);
         return;
       }
-      
+
       if (org.require_password) {
         setShowPasswordDialog(true);
         setLoading(false);
@@ -88,7 +89,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
 
   const handleVerifyPassword = async () => {
     if (!organization) return;
-    
+
     setVerifying(true);
     try {
       const response = await fetch(`/api/organizations/${organization.id}/verify-password`, {
@@ -99,7 +100,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
         },
         body: JSON.stringify({ password })
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.token) {
@@ -126,7 +127,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
   if (!verified) {
     return (
       <>
-        <Dialog open={showPasswordDialog} onOpenChange={() => {}}>
+        <Dialog open={showPasswordDialog} onOpenChange={() => { }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Organization Password Required</DialogTitle>
@@ -157,7 +158,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
             </div>
           </DialogContent>
         </Dialog>
-        
+
         <div className="h-screen flex items-center justify-center bg-background">
           <div className="text-center">
             <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />

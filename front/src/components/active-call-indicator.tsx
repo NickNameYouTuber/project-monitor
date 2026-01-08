@@ -12,7 +12,7 @@ interface ActiveCall {
   description?: string;
   project_id?: string;
   task_id?: string;
-  created_at: string;
+  created_at?: string;
   participants?: number;
 }
 
@@ -29,29 +29,40 @@ export function ActiveCallIndicator({ projectId, taskId, className = '' }: Activ
 
   useEffect(() => {
     let isCancelled = false;
-    
+
     const fetchActiveCalls = async () => {
       try {
         const { listCalls } = await import('../api/calls');
         const calls = await listCalls();
-        
+
         if (isCancelled) return;
-        
+
         // Фильтруем звонки по проекту или задаче
         const filtered = calls.filter(call => {
           if (taskId && call.task_id === taskId) return true;
           if (projectId && call.project_id === projectId && !call.task_id) return true;
           return false;
         });
-        
+
         // Проверяем, какие звонки активны (созданы в последние 4 часа)
         const fourHoursAgo = Date.now() - 4 * 60 * 60 * 1000;
         const active = filtered.filter(call => {
           const createdAt = new Date(call.created_at).getTime();
           return createdAt > fourHoursAgo;
         });
-        
-        setActiveCalls(active);
+
+        const activeCallsData: ActiveCall[] = active.map(call => ({
+          id: call.id,
+          room_id: call.room_id,
+          title: call.title,
+          description: call.description,
+          project_id: call.project_id,
+          task_id: call.task_id,
+          created_at: call.created_at,
+          participants: Array.isArray(call.participants) ? call.participants.length : 0
+        }));
+
+        setActiveCalls(activeCallsData);
       } catch (error) {
         console.error('Ошибка загрузки активных звонков:', error);
       } finally {
@@ -62,10 +73,10 @@ export function ActiveCallIndicator({ projectId, taskId, className = '' }: Activ
     };
 
     fetchActiveCalls();
-    
+
     // Обновляем каждые 30 секунд
     const interval = setInterval(fetchActiveCalls, 30000);
-    
+
     return () => {
       isCancelled = true;
       clearInterval(interval);
@@ -79,7 +90,7 @@ export function ActiveCallIndicator({ projectId, taskId, className = '' }: Activ
   return (
     <div className={`space-y-2 ${className}`}>
       {activeCalls.map(call => (
-        <div 
+        <div
           key={call.id}
           className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
         >
@@ -90,7 +101,7 @@ export function ActiveCallIndicator({ projectId, taskId, className = '' }: Activ
               <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
             </span>
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
               {call.title}
@@ -99,15 +110,15 @@ export function ActiveCallIndicator({ projectId, taskId, className = '' }: Activ
               Активный звонок
             </p>
           </div>
-          
+
           {call.participants !== undefined && call.participants > 0 && (
             <Badge variant="secondary" className="flex items-center gap-1">
               <Users className="w-3 h-3" />
               {call.participants}
             </Badge>
           )}
-          
-          <Button 
+
+          <Button
             size="sm"
             variant="default"
             className="bg-green-600 hover:bg-green-700"

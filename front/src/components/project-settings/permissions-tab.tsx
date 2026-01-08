@@ -1,59 +1,51 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Check, X } from 'lucide-react';
 
 export function PermissionsTab() {
-    const permissionsMatrix = [
-        { action: 'View Project', owner: true, admin: true, developer: true, viewer: true },
-        { action: 'Edit Project Settings', owner: true, admin: true, developer: false, viewer: false },
-        { action: 'Manage Members', owner: true, admin: true, developer: false, viewer: false },
-        { action: 'Delete Project', owner: true, admin: false, developer: false, viewer: false },
-        { action: 'Create Tasks', owner: true, admin: true, developer: true, viewer: false },
-        { action: 'Edit Tasks', owner: true, admin: true, developer: true, viewer: false },
-        { action: 'Delete Tasks', owner: true, admin: true, developer: true, viewer: false },
-        { action: 'Comment on Tasks', owner: true, admin: true, developer: true, viewer: true },
-        { action: 'Manage Repositories', owner: true, admin: true, developer: true, viewer: false },
+    const roles = ['Owner', 'Admin', 'Developer', 'Viewer'];
+    const permissions = [
+        { name: 'View Project', values: [true, true, true, true] },
+        { name: 'Edit Code', values: [true, true, true, false] },
+        { name: 'Manage Tasks', values: [true, true, true, false] },
+        { name: 'Manage Members', values: [true, true, false, false] },
+        { name: 'Delete Project', values: [true, false, false, false] },
     ];
 
     return (
-        <Card className="border-border/50 shadow-sm">
+        <Card>
             <CardHeader>
                 <CardTitle>Role Permissions</CardTitle>
-                <CardDescription>Overview of access levels and capabilities for each project role.</CardDescription>
+                <CardDescription>Overview of what each role can do in this project.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="rounded-md border border-border/50 overflow-hidden">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="bg-muted/50 border-b border-border/50">
-                                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Permission</th>
-                                <th className="text-center py-3 px-4 font-medium text-muted-foreground">Owner</th>
-                                <th className="text-center py-3 px-4 font-medium text-muted-foreground">Admin</th>
-                                <th className="text-center py-3 px-4 font-medium text-muted-foreground">Developer</th>
-                                <th className="text-center py-3 px-4 font-medium text-muted-foreground">Viewer</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {permissionsMatrix.map((perm, idx) => (
-                                <tr key={idx} className="border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
-                                    <td className="py-3 px-4 font-medium">{perm.action}</td>
-                                    <td className="text-center py-3 px-4">
-                                        {perm.owner ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />}
-                                    </td>
-                                    <td className="text-center py-3 px-4">
-                                        {perm.admin ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />}
-                                    </td>
-                                    <td className="text-center py-3 px-4">
-                                        {perm.developer ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />}
-                                    </td>
-                                    <td className="text-center py-3 px-4">
-                                        {perm.viewer ? <Check className="w-4 h-4 text-emerald-500 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />}
-                                    </td>
-                                </tr>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[200px]">Permission</TableHead>
+                            {roles.map(role => (
+                                <TableHead key={role} className="text-center">{role}</TableHead>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {permissions.map((perm) => (
+                            <TableRow key={perm.name}>
+                                <TableCell className="font-medium">{perm.name}</TableCell>
+                                {perm.values.map((hasPerm, i) => (
+                                    <TableCell key={i} className="text-center">
+                                        {hasPerm ? (
+                                            <Check className="w-4 h-4 text-green-500 mx-auto" />
+                                        ) : (
+                                            <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />
+                                        )}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </CardContent>
         </Card>
     );

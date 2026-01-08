@@ -6,6 +6,7 @@ import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ArrowLeft, Save, GitBranch, FileCode, Edit, Eye, Image as ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { getFileContent } from '../api/repository-content';
 import { updateFile } from '../api/repositories';
 import { useNotifications } from '../hooks/useNotifications';
@@ -59,7 +60,7 @@ export function FileEditorPage() {
   // Загрузить список веток
   useEffect(() => {
     if (!repoId) return;
-    
+
     const loadBranches = async () => {
       try {
         const { data } = await apiClient.get<string[]>(`/repositories/${repoId}/refs/branches`);
@@ -68,13 +69,13 @@ export function FileEditorPage() {
         console.error('Failed to load branches:', error);
       }
     };
-    
+
     loadBranches();
   }, [repoId]);
 
   useEffect(() => {
     if (!repoId || !filePath) return;
-    
+
     const loadFile = async () => {
       try {
         setIsLoading(true);
@@ -82,14 +83,14 @@ export function FileEditorPage() {
         setOriginalContent('');
         setImageUrl('');
         setIsEditing(false);
-        
+
         // Для бинарных изображений (кроме SVG) загрузить как blob
         if (isBinaryImage(filePath)) {
           const token = localStorage.getItem('access_token');
           const response = await fetch(`/api/repositories/${repoId}/file?ref=${branch}&path=${encodeURIComponent(filePath)}`, {
             headers: token ? { 'Authorization': `Bearer ${token}` } : {}
           });
-          
+
           if (response.ok) {
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
@@ -97,11 +98,11 @@ export function FileEditorPage() {
           } else {
             toast.error('Ошибка при загрузке изображения');
           }
-          
+
           setIsLoading(false);
           return;
         }
-        
+
         const fileContent = await getFileContent(repoId, branch, filePath);
         setContent(fileContent);
         setOriginalContent(fileContent);
@@ -114,7 +115,7 @@ export function FileEditorPage() {
     };
 
     loadFile();
-    
+
     // Cleanup: освободить blob URL при размонтировании
     return () => {
       if (imageUrl) {
@@ -125,7 +126,7 @@ export function FileEditorPage() {
 
   const handleSave = async () => {
     if (!repoId || !filePath) return;
-    
+
     setIsSaving(true);
     try {
       await updateFile(repoId, branch, filePath, content, commitMessage);
@@ -210,142 +211,142 @@ export function FileEditorPage() {
           </div>
         ) : (
           <>
-        <div className="border-b border-border px-4 py-3 flex-shrink-0">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <FileCode className="w-5 h-5 flex-shrink-0" />
-                <h1 className="text-sm sm:text-base font-semibold truncate">{filePath.split('/').pop()}</h1>
+            <div className="border-b border-border px-4 py-3 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <FileCode className="w-5 h-5 flex-shrink-0" />
+                    <h1 className="text-sm sm:text-base font-semibold truncate">{filePath.split('/').pop()}</h1>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!isBinaryImage(filePath) && (
+                    !isEditing ? (
+                      <Button size="sm" onClick={() => setIsEditing(true)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Редактировать
+                      </Button>
+                    ) : (
+                      <>
+                        <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                          Отмена
+                        </Button>
+                        <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                          <Save className="w-4 h-4 mr-2" />
+                          {isSaving ? 'Сохранение...' : 'Сохранить'}
+                        </Button>
+                      </>
+                    )
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {!isBinaryImage(filePath) && (
-                !isEditing ? (
-                  <Button size="sm" onClick={() => setIsEditing(true)}>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Редактировать
-                  </Button>
-                ) : (
-                  <>
-                    <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                      Отмена
-                    </Button>
-                    <Button size="sm" onClick={handleSave} disabled={isSaving}>
-                      <Save className="w-4 h-4 mr-2" />
-                      {isSaving ? 'Сохранение...' : 'Сохранить'}
-                    </Button>
-                  </>
-                )
-              )}
-            </div>
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-hidden">
-          {isBinaryImage(filePath) ? (
-            // Бинарные изображения (PNG, JPG и т.д.) - только просмотр
-            <div className="flex items-center justify-center h-full p-6 bg-muted/20">
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt={filePath}
-                  className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-                />
+            <div className="flex-1 overflow-hidden">
+              {isBinaryImage(filePath) ? (
+                // Бинарные изображения (PNG, JPG и т.д.) - только просмотр
+                <div className="flex items-center justify-center h-full p-6 bg-muted/20">
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={filePath}
+                      className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                    />
+                  ) : (
+                    <div className="text-muted-foreground">Загрузка изображения...</div>
+                  )}
+                </div>
               ) : (
-                <div className="text-muted-foreground">Загрузка изображения...</div>
-              )}
-            </div>
-          ) : (
-            // Текстовые файлы, SVG, Markdown
-            <div className="h-full flex flex-col">
-              {/* Табы для Markdown или SVG */}
-              {(isMarkdown || isSvg) && (
-                <div className="border-b border-border px-4 py-2">
-                  <Tabs 
-                    value={isMarkdown ? markdownMode : svgMode} 
-                    onValueChange={(v) => {
-                      if (isMarkdown) setMarkdownMode(v as 'code' | 'preview');
-                      if (isSvg) setSvgMode(v as 'code' | 'preview');
-                    }}
-                  >
-                    <TabsList className="grid w-48 grid-cols-2">
-                      <TabsTrigger value="code">Код</TabsTrigger>
-                      <TabsTrigger value="preview">Preview</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                // Текстовые файлы, SVG, Markdown
+                <div className="h-full flex flex-col">
+                  {/* Табы для Markdown или SVG */}
+                  {(isMarkdown || isSvg) && (
+                    <div className="border-b border-border px-4 py-2">
+                      <Tabs
+                        value={isMarkdown ? markdownMode : svgMode}
+                        onValueChange={(v) => {
+                          if (isMarkdown) setMarkdownMode(v as 'code' | 'preview');
+                          if (isSvg) setSvgMode(v as 'code' | 'preview');
+                        }}
+                      >
+                        <TabsList className="grid w-48 grid-cols-2">
+                          <TabsTrigger value="code">Код</TabsTrigger>
+                          <TabsTrigger value="preview">Preview</TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    </div>
+                  )}
+
+                  <div className="flex-1 overflow-auto p-4">
+                    {isMarkdown && markdownMode === 'preview' ? (
+                      // Markdown preview
+                      <div className="prose dark:prose-invert max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : isSvg && svgMode === 'preview' ? (
+                      // SVG preview
+                      <div className="flex items-center justify-center h-full bg-muted/20">
+                        <div
+                          dangerouslySetInnerHTML={{ __html: content }}
+                          className="max-w-full max-h-full"
+                        />
+                      </div>
+                    ) : isEditing ? (
+                      // Режим редактирования с подсветкой синтаксиса
+                      <div className="h-full flex flex-col gap-3">
+                        <div className="flex-1 overflow-auto border rounded-lg">
+                          <Editor
+                            value={content}
+                            onValueChange={setContent}
+                            highlight={(code) => highlight(code, getPrismLanguage(filePath), getLanguage(filePath))}
+                            padding={16}
+                            style={{
+                              fontFamily: '"Fira Code", "Fira Mono", monospace',
+                              fontSize: 14,
+                              minHeight: '100%',
+                              backgroundColor: '#1e1e1e',
+                              color: '#d4d4d4',
+                            }}
+                            textareaClassName="focus:outline-none"
+                            placeholder="Начните вводить код..."
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Commit message</Label>
+                          <Input
+                            value={commitMessage}
+                            onChange={(e) => setCommitMessage(e.target.value)}
+                            placeholder="Update file"
+                            className="mt-2"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      // Режим просмотра с подсветкой синтаксиса
+                      <SyntaxHighlighter
+                        language={getLanguage(filePath)}
+                        style={vscDarkPlus}
+                        customStyle={{
+                          margin: 0,
+                          borderRadius: '0.5rem',
+                          fontSize: '0.875rem',
+                          padding: '1rem',
+                        }}
+                        showLineNumbers
+                      >
+                        {content}
+                      </SyntaxHighlighter>
+                    )}
+                  </div>
                 </div>
               )}
-
-              <div className="flex-1 overflow-auto p-4">
-                {isMarkdown && markdownMode === 'preview' ? (
-                  // Markdown preview
-                  <div className="prose dark:prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {content}
-                    </ReactMarkdown>
-                  </div>
-                ) : isSvg && svgMode === 'preview' ? (
-                  // SVG preview
-                  <div className="flex items-center justify-center h-full bg-muted/20">
-                    <div 
-                      dangerouslySetInnerHTML={{ __html: content }} 
-                      className="max-w-full max-h-full"
-                    />
-                  </div>
-                ) : isEditing ? (
-                  // Режим редактирования с подсветкой синтаксиса
-                  <div className="h-full flex flex-col gap-3">
-                    <div className="flex-1 overflow-auto border rounded-lg">
-                      <Editor
-                        value={content}
-                        onValueChange={setContent}
-                        highlight={(code) => highlight(code, getPrismLanguage(filePath), getLanguage(filePath))}
-                        padding={16}
-                        style={{
-                          fontFamily: '"Fira Code", "Fira Mono", monospace',
-                          fontSize: 14,
-                          minHeight: '100%',
-                          backgroundColor: '#1e1e1e',
-                          color: '#d4d4d4',
-                        }}
-                        textareaClassName="focus:outline-none"
-                        placeholder="Начните вводить код..."
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Commit message</Label>
-                      <Input
-                        value={commitMessage}
-                        onChange={(e) => setCommitMessage(e.target.value)}
-                        placeholder="Update file"
-                        className="mt-2"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  // Режим просмотра с подсветкой синтаксиса
-                  <SyntaxHighlighter
-                    language={getLanguage(filePath)}
-                    style={vscDarkPlus}
-                    customStyle={{
-                      margin: 0,
-                      borderRadius: '0.5rem',
-                      fontSize: '0.875rem',
-                      padding: '1rem',
-                    }}
-                    showLineNumbers
-                  >
-                    {content}
-                  </SyntaxHighlighter>
-                )}
-              </div>
             </div>
-          )}
-        </div>
-        </>
+          </>
         )}
       </div>
     </div>

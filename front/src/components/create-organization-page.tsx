@@ -10,6 +10,7 @@ import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
 import { createOrganization } from '../api/organizations';
 import { useNotifications } from '../hooks/useNotifications';
+import { toast } from 'sonner';
 
 export function CreateOrganizationPage() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export function CreateOrganizationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast.error('Organization name is required');
       return;
@@ -46,7 +47,7 @@ export function CreateOrganizationPage() {
         corporate_domain: formData.corporateDomain || undefined,
         require_corporate_email: formData.requireCorporateEmail,
       });
-      
+
       showSuccess(`Organization "${org.name}" created successfully`);
       localStorage.setItem('currentOrgId', org.id);
       navigate(`/${org.id}/projects`);
