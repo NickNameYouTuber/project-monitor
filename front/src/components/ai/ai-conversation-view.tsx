@@ -104,20 +104,13 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
                         />
                     ))}
                     {isLoading && (
-                        <div className="flex items-start gap-3 animate-in fade-in duration-300">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                                <Bot className="w-5 h-5 text-primary" />
+                        <div className="flex items-center gap-2 py-2 pl-11 animate-in fade-in duration-300">
+                            <div className="flex gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[bounce_1s_infinite_0ms]"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[bounce_1s_infinite_150ms]"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[bounce_1s_infinite_300ms]"></span>
                             </div>
-                            <div className="bg-muted rounded-lg rounded-tl-none p-4 border border-border shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex gap-1">
-                                        <span className="w-2 h-2 rounded-full bg-primary/60 animate-[bounce_1s_infinite_100ms]"></span>
-                                        <span className="w-2 h-2 rounded-full bg-primary/60 animate-[bounce_1s_infinite_200ms]"></span>
-                                        <span className="w-2 h-2 rounded-full bg-primary/60 animate-[bounce_1s_infinite_300ms]"></span>
-                                    </div>
-                                    <span className="text-sm font-medium text-muted-foreground">AI печатает...</span>
-                                </div>
-                            </div>
+                            <span className="text-sm text-muted-foreground">AI печатает</span>
                         </div>
                     )}
                 </div>
