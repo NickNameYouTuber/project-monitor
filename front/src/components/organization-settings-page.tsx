@@ -521,7 +521,7 @@ export function OrganizationSettingsPage() {
                           <div className="flex items-center gap-3">
                             <div className="hidden md:block">
                               <Select
-                                value={member.role}
+                                value={availableRoles.find(r => r.name.toUpperCase() === (typeof member.role === 'string' ? member.role : member.role.name).toUpperCase())?.name || (typeof member.role === 'string' ? member.role : member.role.name)}
                                 onValueChange={(newRole) => handleUpdateMemberRole(member.id, newRole)}
                                 disabled={!canManageSettings || member.role === 'OWNER'}
                               >
