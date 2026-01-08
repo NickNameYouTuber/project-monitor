@@ -90,7 +90,7 @@ export default function UserAutocomplete({
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">{label}</label>
+      {label && <label className="text-sm font-medium">{label}</label>}
 
       {/* Список выбранных участников */}
       {selectedUsers.length > 0 && (
@@ -121,11 +121,11 @@ export default function UserAutocomplete({
             aria-expanded={open}
             className="w-full justify-between"
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 text-muted-foreground">
               <UserPlus className="h-4 w-4" />
               {selectedUsers.length === 0
-                ? 'Добавить участников...'
-                : `Выбрано: ${selectedUsers.length}`
+                ? 'Select users...'
+                : `${selectedUsers.length} user(s) selected`
               }
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

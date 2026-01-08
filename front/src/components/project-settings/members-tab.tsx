@@ -214,11 +214,10 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Select Users</Label>
               <UserAutocomplete
                 selectedUsers={selectedUsers}
                 onUsersChange={setSelectedUsers}
-                label="Search by name or email..."
+                label=""
                 projectId={projectId}
               // Note: UserAutocomplete needs to be organization-aware to strictly show org members
               // Assuming it fetches efficiently or we might need to filter. 

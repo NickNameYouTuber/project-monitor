@@ -122,7 +122,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
         </div>
       )}
 
-      <nav className="flex-1 px-4 pb-4">
+      <nav className="flex-1 px-4 pb-4 overflow-y-auto">
         <div className="space-y-2">
           {(() => {
             let navigation;
