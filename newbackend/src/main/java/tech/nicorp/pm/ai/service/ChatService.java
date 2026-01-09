@@ -75,7 +75,7 @@ public class ChatService {
     }
 
     @Transactional
-    public ChatMessage sendMessage(UUID chatId, String userMessage, UUID userId, UUID organizationId, UUID projectId) {
+    public ChatMessage sendMessage(UUID chatId, String userMessage, boolean isWidgetResponse, UUID userId, UUID organizationId, UUID projectId) {
         log.info("Sending message to chat {} from user {}", chatId, userId);
         
         Chat chat = chatRepository.findById(chatId).orElse(null);
@@ -94,6 +94,8 @@ public class ChatService {
             userMsg.setChat(chat);
             userMsg.setRole("user");
             userMsg.setContent(userMessage);
+            userMsg.setWidgetResponse(isWidgetResponse); // Correct method according to Lombok or set it manually if lombok fails
+
             chatMessageRepository.save(userMsg);
             log.debug("User message saved: {}", userMsg.getId());
 

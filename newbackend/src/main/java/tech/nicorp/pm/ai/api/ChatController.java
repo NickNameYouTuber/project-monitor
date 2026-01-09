@@ -133,9 +133,8 @@ public class ChatController {
         }
 
         try {
-            UUID orgId = chat.getOrganizationId() != null ? chat.getOrganizationId() : null;
             UUID projId = chat.getProjectId() != null ? chat.getProjectId() : null;
-            ChatMessage aiMessage = chatService.sendMessage(id, request.getMessage(), userId, orgId, projId);
+            ChatMessage aiMessage = chatService.sendMessage(id, request.getMessage(), request.isWidgetResponse(), userId, orgId, projId);
 
             SendMessageResponse response = new SendMessageResponse();
             response.setMessage(toMessageResponse(aiMessage));
@@ -221,7 +220,9 @@ public class ChatController {
             } catch (Exception e) {
             }
         }
+        }
         response.setWidgets(widgets);
+        response.setWidgetResponse(message.isWidgetResponse());
 
         return response;
     }

@@ -40,4 +40,7 @@ public class ChatMessage {
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @Column(name = "is_widget_response")
+    private boolean isWidgetResponse = false;
 }

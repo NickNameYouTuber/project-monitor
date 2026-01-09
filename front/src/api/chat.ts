@@ -37,6 +37,7 @@ export interface Chat {
 
 export interface SendMessageRequest {
   message: string;
+  isWidgetResponse?: boolean;
 }
 
 export interface SendMessageResponse {
@@ -69,8 +70,8 @@ export async function createChat(request: ChatCreateRequest): Promise<Chat> {
   return data;
 }
 
-export async function sendMessage(chatId: string, message: string): Promise<SendMessageResponse> {
-  const { data } = await apiClient.post(`/chats/${chatId}/messages`, { message });
+export async function sendMessage(chatId: string, message: string, isWidgetResponse?: boolean): Promise<SendMessageResponse> {
+  const { data } = await apiClient.post(`/chats/${chatId}/messages`, { message, isWidgetResponse });
   return data;
 }
 

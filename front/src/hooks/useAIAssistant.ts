@@ -33,7 +33,7 @@ export function useAIAssistant(chatId: string | null) {
     setIsLoading(true);
 
     try {
-      const response = await sendChatMessage(chatId, text.trim());
+      const response = await sendChatMessage(chatId, text.trim(), isWidgetResponse);
       setMessages((prev) => [...prev, response.message]);
       return response;
     } catch (error) {
