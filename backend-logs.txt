@@ -1,0 +1,59 @@
+﻿
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.2)
+
+2026-01-09T12:38:10.544Z  INFO 10 --- [project-monitor-java] [           main] t.nicorp.pm.ProjectMonitorApplication    : Starting ProjectMonitorApplication using Java 21.0.9 with PID 10 (/app/app.jar started by root in /app)
+2026-01-09T12:38:10.548Z  INFO 10 --- [project-monitor-java] [           main] t.nicorp.pm.ProjectMonitorApplication    : No active profile set, falling back to 1 default profile: "default"
+2026-01-09T12:38:12.289Z  INFO 10 --- [project-monitor-java] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-01-09T12:38:12.430Z  INFO 10 --- [project-monitor-java] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 131 ms. Found 35 JPA repository interfaces.
+2026-01-09T12:38:13.476Z  INFO 10 --- [project-monitor-java] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 7671 (http)
+2026-01-09T12:38:13.494Z  INFO 10 --- [project-monitor-java] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-01-09T12:38:13.494Z  INFO 10 --- [project-monitor-java] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.26]
+2026-01-09T12:38:13.529Z  INFO 10 --- [project-monitor-java] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-01-09T12:38:13.530Z  INFO 10 --- [project-monitor-java] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2890 ms
+2026-01-09T12:38:14.031Z  INFO 10 --- [project-monitor-java] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-01-09T12:38:14.431Z  INFO 10 --- [project-monitor-java] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@39c5a105
+2026-01-09T12:38:14.435Z  INFO 10 --- [project-monitor-java] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-01-09T12:38:14.498Z  INFO 10 --- [project-monitor-java] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://db:5432/nit (PostgreSQL 15.15)
+2026-01-09T12:38:14.667Z  INFO 10 --- [project-monitor-java] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 46 migrations (execution time 00:00.102s)
+2026-01-09T12:38:14.691Z  INFO 10 --- [project-monitor-java] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 41
+2026-01-09T12:38:14.722Z  INFO 10 --- [project-monitor-java] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "42 - create rbac tables"
+2026-01-09T12:38:14.813Z  INFO 10 --- [project-monitor-java] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "43 - loosen role constraints"
+2026-01-09T12:38:14.830Z  INFO 10 --- [project-monitor-java] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "44 - chat message widgets"
+2026-01-09T12:38:14.845Z  INFO 10 --- [project-monitor-java] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "45 - add color to task columns"
+2026-01-09T12:38:14.870Z  INFO 10 --- [project-monitor-java] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "46 - add is widget response"
+2026-01-09T12:38:14.891Z  INFO 10 --- [project-monitor-java] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 5 migrations to schema "public", now at version v46 (execution time 00:00.093s)
+2026-01-09T12:38:15.036Z  INFO 10 --- [project-monitor-java] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-01-09T12:38:15.116Z  INFO 10 --- [project-monitor-java] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2026-01-09T12:38:15.187Z  INFO 10 --- [project-monitor-java] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-01-09T12:38:15.502Z  INFO 10 --- [project-monitor-java] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-01-09T12:38:17.696Z  INFO 10 --- [project-monitor-java] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-01-09T12:38:17.766Z  INFO 10 --- [project-monitor-java] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-01-09T12:38:18.605Z  INFO 10 --- [project-monitor-java] [           main] t.nicorp.pm.ai.service.GPTunnelService   : GPTunnelService initialized with baseUrl: https://gptunnel.com/v1, model: gpt-4o
+2026-01-09T12:38:18.788Z  INFO 10 --- [project-monitor-java] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-01-09T12:38:20.508Z  WARN 10 --- [project-monitor-java] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 32fcf371-c6b6-4626-ade7-1a87a674cb58
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-01-09T12:38:20.533Z  INFO 10 --- [project-monitor-java] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-01-09T12:38:21.085Z  INFO 10 --- [project-monitor-java] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-01-09T12:38:21.243Z DEBUG 10 --- [project-monitor-java] [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+2026-01-09T12:38:21.538Z DEBUG 10 --- [project-monitor-java] [           main] o.s.s.c.ThreadPoolTaskScheduler          : Initializing ExecutorService 'taskScheduler'
+2026-01-09T12:38:21.777Z  INFO 10 --- [project-monitor-java] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 7671 (http) with context path '/'
+2026-01-09T12:38:21.795Z  INFO 10 --- [project-monitor-java] [           main] t.nicorp.pm.ProjectMonitorApplication    : Started ProjectMonitorApplication in 12.006 seconds (process running for 13.11)
+2026-01-09T12:38:21.803Z  INFO 10 --- [project-monitor-java] [   scheduling-1] t.n.pm.calls.service.CallStatusManager   : ЁЯФД ╨Ч╨░╨┐╤Г╤Б╨║ ╨░╨▓╤В╨╛╨╝╨░╤В╨╕╤З╨╡╤Б╨║╨╛╨│╨╛ ╨╛╨▒╨╜╨╛╨▓╨╗╨╡╨╜╨╕╤П ╤Б╤В╨░╤В╤Г╤Б╨╛╨▓ ╨╖╨▓╨╛╨╜╨║╨╛╨▓
+2026-01-09T12:38:21.803Z  INFO 10 --- [project-monitor-java] [   scheduling-1] t.n.pm.calls.service.CallStatusManager   : ЁЯФН ╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨╜╨░╨┐╨╛╨╝╨╕╨╜╨░╨╜╨╕╨╣: 2026-01-09T12:42:21.803802467Z - 2026-01-09T12:44:21.803802467Z
+2026-01-09T12:38:21.952Z  INFO 10 --- [project-monitor-java] [   scheduling-1] t.n.pm.calls.service.CallStatusManager   : ЁЯУЛ ╨Э╨░╨╣╨┤╨╡╨╜╨╛ ╨╖╨░╨┐╨╗╨░╨╜╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╤Е ╨╖╨▓╨╛╨╜╨║╨╛╨▓ ╨┤╨╗╤П ╨╜╨░╨┐╨╛╨╝╨╕╨╜╨░╨╜╨╕╤П: 0
+2026-01-09T12:38:21.953Z  INFO 10 --- [project-monitor-java] [   scheduling-1] t.n.pm.calls.service.CallStatusManager   : ЁЯФН ╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨╖╨▓╨╛╨╜╨║╨╛╨▓ ╨┤╨╗╤П ╨░╨║╤В╨╕╨▓╨░╤Ж╨╕╨╕ ╨┤╨╛: 2026-01-09T12:38:21.953164763Z
+2026-01-09T12:38:21.960Z  INFO 10 --- [project-monitor-java] [   scheduling-1] t.n.pm.calls.service.CallStatusManager   : ЁЯУЛ ╨Э╨░╨╣╨┤╨╡╨╜╨╛ ╨╖╨▓╨╛╨╜╨║╨╛╨▓ ╨┤╨╗╤П ╨░╨║╤В╨╕╨▓╨░╤Ж╨╕╨╕: 0
+2026-01-09T12:38:24.180Z  INFO 10 --- [project-monitor-java] [nio-7671-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-01-09T12:38:24.180Z  INFO 10 --- [project-monitor-java] [nio-7671-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-01-09T12:38:24.183Z  INFO 10 --- [project-monitor-java] [nio-7671-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms

@@ -62,9 +62,9 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
     }
 
     return (
-        <div className="flex flex-col h-full bg-background">
+        <div className="flex flex-col h-full overflow-hidden bg-background">
             {/* Messages */}
-            <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+            <ScrollArea className="flex-1 min-h-0 p-4" ref={scrollAreaRef}>
                 <div className="space-y-6 pb-4">
                     {messages.length === 0 && (
                         <div className="text-center py-10 opacity-50">
