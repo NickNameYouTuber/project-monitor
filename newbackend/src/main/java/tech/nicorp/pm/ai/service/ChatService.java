@@ -347,7 +347,7 @@ public class ChatService {
             "     column_id?: string - Column UUID (use if you know the exact ID)\n" +
             "   }\n" +
             "   Example: {\"type\": \"CREATE_TASK\", \"params\": {\"title\": \"Test task\", \"column_name\": \"TEST\"}}\n" +
-            "   Note: Use column_name when user specifies column by name. If neither column_name nor column_id is provided, the first column will be used.\n\n" +
+            "   Note: Use column_name when user specifies column by name. If column is NOT provided, YOU MUST ASK user to select a column using a WIDGET with 'options' populated from 'Task Columns in current project'. DO NOT use plain text to ask!\n\n" +
             "2. CREATE_PROJECT: Create a new project in the current organization.\n" +
             "   Params: {\n" +
             "     name: string (required) - Project name\n" +

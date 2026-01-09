@@ -331,10 +331,15 @@ public class AIActionExecutor {
             realtimeEventService.sendColumnCreated(projectId, columnData);
         }
 
-        action.setResult(Map.of("message", "Created columns: " + String.join(", ", createdNames)));
-
+        String msg;
+        if (createdNames.size() == 1) {
+            msg = "Создана колонка '" + createdNames.get(0) + "'";
+        } else {
+            msg = "Создано колонок: " + createdNames.size() + " (" + String.join(", ", createdNames) + ")";
+        }
+        
         ActionNotification notification = new ActionNotification();
-        notification.setMessage("Создано колонок: " + createdNames.size());
+        notification.setMessage(msg);
         notification.setLink("/" + organizationId + "/projects/" + projectId + "/tasks");
         notification.setLinkText("Перейти к задачам");
         action.setNotification(notification);
