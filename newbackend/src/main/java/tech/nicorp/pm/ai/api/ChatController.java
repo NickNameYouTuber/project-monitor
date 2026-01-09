@@ -133,6 +133,7 @@ public class ChatController {
         }
 
         try {
+            UUID orgId = chat.getOrganizationId() != null ? chat.getOrganizationId() : null;
             UUID projId = chat.getProjectId() != null ? chat.getProjectId() : null;
             ChatMessage aiMessage = chatService.sendMessage(id, request.getMessage(), request.isWidgetResponse(), userId, orgId, projId);
 
@@ -219,7 +220,6 @@ public class ChatController {
                 widgets = objectMapper.readValue(message.getWidgets(), new TypeReference<List<Map<String, Object>>>() {});
             } catch (Exception e) {
             }
-        }
         }
         response.setWidgets(widgets);
         response.setWidgetResponse(message.isWidgetResponse());
