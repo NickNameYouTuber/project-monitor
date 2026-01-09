@@ -11,10 +11,11 @@ import { ActionCard } from '../action-card';
 
 interface StructuredMessageProps {
     message: ChatMessage;
+    isAnswered?: boolean;
     onAction?: (actionId: string, value: any) => void;
 }
 
-export function StructuredMessage({ message, onAction }: StructuredMessageProps) {
+export function StructuredMessage({ message, isAnswered, onAction }: StructuredMessageProps) {
     // Get widgets from the message (new format)
     const widgets = message.widgets || [];
 
@@ -60,7 +61,7 @@ export function StructuredMessage({ message, onAction }: StructuredMessageProps)
                 <div className="space-y-2 mt-2">
                     {widgets.map((widget, index) => (
                         <div key={index} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            {renderWidgetFromType(widget, onAction)}
+                            {renderWidgetFromType(widget, onAction, isAnswered)}
                         </div>
                     ))}
                 </div>
@@ -69,7 +70,7 @@ export function StructuredMessage({ message, onAction }: StructuredMessageProps)
             {/* Legacy Widget Content (from actions) */}
             {widgetAction && widgets.length === 0 && (
                 <div className="mt-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    {renderLegacyWidget(widgetAction, onAction)}
+                    {renderLegacyWidget(widgetAction, onAction, isAnswered)}
                 </div>
             )}
 
@@ -93,12 +94,13 @@ export function StructuredMessage({ message, onAction }: StructuredMessageProps)
     );
 }
 
-function renderWidgetFromType(widget: Widget, onAction?: (actionId: string, value: any) => void) {
+function renderWidgetFromType(widget: Widget, onAction?: (actionId: string, value: any) => void, isAnswered?: boolean) {
     switch (widget.type) {
         case 'clarification':
             return (
                 <ClarificationCard
                     data={widget.data}
+                    isAnswered={isAnswered}
                     onSelect={(value) => onAction?.('clarification_response', {
                         field: widget.data.field,
                         value
@@ -126,7 +128,7 @@ function renderWidgetFromType(widget: Widget, onAction?: (actionId: string, valu
     }
 }
 
-function renderLegacyWidget(action: Action, onAction?: (actionId: string, value: any) => void) {
+function renderLegacyWidget(action: Action, onAction?: (actionId: string, value: any) => void, isAnswered?: boolean) {
     const { widgetType, data } = action.params;
 
     switch (widgetType) {
@@ -134,6 +136,7 @@ function renderLegacyWidget(action: Action, onAction?: (actionId: string, value:
             return (
                 <ClarificationCard
                     data={data}
+                    isAnswered={isAnswered}
                     onSelect={(value) => onAction?.(action.type, { ...data, selectedValue: value })}
                 />
             );

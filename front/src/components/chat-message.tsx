@@ -7,7 +7,13 @@ interface ChatMessageProps {
   message: ChatMessageType;
 }
 
-export function ChatMessage({ message, onAction }: { message: ChatMessageType, onAction?: (actionId: string, value: any) => void }) {
+interface ChatMessageProps {
+  message: ChatMessageType;
+  onAction?: (actionId: string, value: any) => void;
+  isAnswered?: boolean;
+}
+
+export function ChatMessage({ message, onAction, isAnswered }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -47,7 +53,7 @@ export function ChatMessage({ message, onAction }: { message: ChatMessageType, o
           </div>
         ) : (
           <div className="pl-2 pr-4">
-            <StructuredMessage message={message} onAction={onAction} />
+            <StructuredMessage message={message} onAction={onAction} isAnswered={isAnswered} />
           </div>
         )}
       </div>

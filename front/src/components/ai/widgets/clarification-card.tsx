@@ -25,14 +25,15 @@ export interface ClarificationData {
 
 interface ClarificationCardProps {
     data: ClarificationData;
+    isAnswered?: boolean;
     onSelect: (value: string | string[]) => void;
 }
 
-export function ClarificationCard({ data, onSelect }: ClarificationCardProps) {
+export function ClarificationCard({ data, onSelect, isAnswered = false }: ClarificationCardProps) {
     const [selected, setSelected] = useState<string | null>(null);
     const [customValue, setCustomValue] = useState('');
     const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-    const [submitted, setSubmitted] = useState(false);
+    const [submitted, setSubmitted] = useState(isAnswered);
 
     const handleSelect = (value: string) => {
         if (submitted) return;

@@ -74,34 +74,42 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
                     )}
                     {messages
                         .filter(msg => !msg.isWidgetResponse) // Hide widget response messages
-                        .map((msg) => (
-                            <ChatMessage
-                                key={msg.id}
-                                message={msg}
-                                onAction={async (actionType, payload) => {
-                                    console.log('Action triggered:', actionType, payload);
+                        .map((msg) => {
+                            // Check if this message has been answered by looking at the next message in the original array
+                            const originalIndex = messages.findIndex(m => m.id === msg.id);
+                            const nextMsg = messages[originalIndex + 1];
+                            const isAnswered = nextMsg?.isWidgetResponse || false;
 
-                                    if (actionType === 'clarification_response') {
-                                        // Handle widget clarification response - pass true to hide this message
-                                        await sendMessage(payload.value, true);
-                                    } else if (actionType === 'action_confirmation') {
-                                        if (payload.confirmed && payload.clientAction) {
-                                            executeClientAction(payload.clientAction, navigate);
-                                        }
-                                        await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
-                                    } else if (actionType === 'widget') { // Legacy support
-                                        if (payload.selectedValue) {
-                                            await sendMessage(payload.selectedValue, true);
-                                        } else if (payload.confirmed !== undefined) {
+                            return (
+                                <ChatMessage
+                                    key={msg.id}
+                                    message={msg}
+                                    isAnswered={isAnswered}
+                                    onAction={async (actionType, payload) => {
+                                        console.log('Action triggered:', actionType, payload);
+
+                                        if (actionType === 'clarification_response') {
+                                            // Handle widget clarification response - pass true to hide this message
+                                            await sendMessage(payload.value, true);
+                                        } else if (actionType === 'action_confirmation') {
                                             if (payload.confirmed && payload.clientAction) {
                                                 executeClientAction(payload.clientAction, navigate);
                                             }
                                             await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
+                                        } else if (actionType === 'widget') { // Legacy support
+                                            if (payload.selectedValue) {
+                                                await sendMessage(payload.selectedValue, true);
+                                            } else if (payload.confirmed !== undefined) {
+                                                if (payload.confirmed && payload.clientAction) {
+                                                    executeClientAction(payload.clientAction, navigate);
+                                                }
+                                                await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
+                                            }
                                         }
-                                    }
-                                }}
-                            />
-                        ))}
+                                    }}
+                                />
+                            );
+                        })}
                     {isLoading && (
                         <div className="flex items-center gap-2 py-2 pl-11 animate-in fade-in duration-300">
                             <div className="flex gap-1">

@@ -11,7 +11,7 @@ import { useActiveContext } from '../../hooks/useActiveContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 export function AISidebar() {
-    const { width, setWidth, setIsOpen, view, setView } = useAISidebar();
+    const { width, setWidth, setIsOpen, view, setView, currentChatId, setCurrentChatId } = useAISidebar();
     const { currentOrganization, currentProject } = useAppContext();
     const activeContext = useActiveContext();
     const { chats, loadChats, createNewChat, deleteChat } = useChatHistory(
@@ -19,7 +19,6 @@ export function AISidebar() {
         currentProject?.id || null
     );
 
-    const [currentChatId, setCurrentChatId] = useState<string | null>(null);
     const [isResizing, setIsResizing] = useState(false);
 
     // Load chats on mount
