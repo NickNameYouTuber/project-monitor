@@ -185,7 +185,7 @@ public class AIActionExecutor {
         taskData.put("description", saved.getDescription());
         taskData.put("columnId", saved.getColumn().getId());
         taskData.put("projectId", saved.getProject().getId());
-        taskData.put("priority", saved.getPriority() != null ? saved.getPriority() : "medium");
+        taskData.put("priority", "medium");
         taskData.put("orderIndex", saved.getOrderIndex());
         taskData.put("createdAt", saved.getCreatedAt());
         
