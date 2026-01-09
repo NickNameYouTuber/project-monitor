@@ -39,6 +39,11 @@ public class RealtimeEventService {
         sessionManager.sendToProject(projectId, "task-created", task);
     }
 
+    public void sendTaskCreated(UUID projectId, Map<String, Object> task) {
+        log.debug("Sending task-created event (map) for project {}", projectId);
+        sessionManager.sendToProject(projectId, "task-created", task);
+    }
+
     public void sendTaskUpdated(UUID projectId, TaskResponse task) {
         log.debug("Sending task-updated event for project {}", projectId);
         sessionManager.sendToProject(projectId, "task-updated", task);

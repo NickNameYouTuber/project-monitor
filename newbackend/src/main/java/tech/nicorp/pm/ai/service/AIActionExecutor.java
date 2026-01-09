@@ -177,6 +177,20 @@ public class AIActionExecutor {
         }
 
         Task saved = taskRepository.save(task);
+        
+        // Notify realtime
+        Map<String, Object> taskData = new HashMap<>();
+        taskData.put("id", saved.getId());
+        taskData.put("title", saved.getTitle());
+        taskData.put("description", saved.getDescription());
+        taskData.put("columnId", saved.getColumn().getId());
+        taskData.put("projectId", saved.getProject().getId());
+        taskData.put("priority", saved.getPriority() != null ? saved.getPriority() : "medium");
+        taskData.put("orderIndex", saved.getOrderIndex());
+        taskData.put("createdAt", saved.getCreatedAt());
+        
+        realtimeEventService.sendTaskCreated(projectId, taskData);
+
         action.setResult(Map.of("id", saved.getId().toString(), "title", saved.getTitle()));
 
         ActionNotification notification = new ActionNotification();
