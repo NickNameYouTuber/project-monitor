@@ -288,49 +288,53 @@ public class AIActionExecutor {
         Map<String, Object> params = action.getParams();
         String name = (String) params.get("name");
         
-        // Colors palette
-        String[] colors = {"#ef4444", "#f97316", "#f59e0b", "#84cc16", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#d946ef", "#f43f5e"};
-        String color = params.get("color") != null ? (String) params.get("color") : null;
+        // Support multiple columns split by comma
+        String[] columnNames = name.contains(",") ? name.split(",") : new String[]{name};
+        List<String> createdNames = new ArrayList<>();
         
-        if (color == null) {
-            // Pick color based on name hash
-            int hash = Math.abs(name.hashCode());
-            color = colors[hash % colors.length];
-        }
-
-        if (name == null || name.isEmpty()) {
-            action.setResult(Map.of("error", "Column name is required"));
-            return action;
-        }
-
-        // Get max order index
+        // Get initial max order
         List<TaskColumn> existingColumns = taskColumnRepository.findByProject_IdOrderByOrderIndexAsc(projectId);
-        int maxOrder = existingColumns.stream()
+        int currentOrder = existingColumns.stream()
             .mapToInt(TaskColumn::getOrderIndex)
             .max()
-            .orElse(-1);
+            .orElse(-1) + 1;
 
-        TaskColumn column = new TaskColumn();
-        column.setProject(project);
-        column.setName(name);
-        column.setColor(color);
-        column.setOrderIndex(maxOrder + 1);
+        for (String colNameRaw : columnNames) {
+            String colName = colNameRaw.trim();
+            if (colName.isEmpty()) continue;
 
-        TaskColumn saved = taskColumnRepository.save(column);
-        
-        // Notify realtime
-        Map<String, Object> columnData = new HashMap<>();
-        columnData.put("id", saved.getId());
-        columnData.put("projectId", saved.getProject().getId());
-        columnData.put("name", saved.getName());
-        columnData.put("orderIndex", saved.getOrderIndex());
-        columnData.put("color", saved.getColor());
-        realtimeEventService.sendColumnCreated(projectId, columnData);
+            // Colors palette
+            String[] colors = {"#ef4444", "#f97316", "#f59e0b", "#84cc16", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#d946ef", "#f43f5e"};
+            String colColor = params.get("color") != null ? (String) params.get("color") : null;
+            
+            if (colColor == null) {
+                int hash = Math.abs(colName.hashCode());
+                colColor = colors[hash % colors.length];
+            }
 
-        action.setResult(Map.of("id", saved.getId().toString(), "name", saved.getName()));
+            TaskColumn column = new TaskColumn();
+            column.setProject(project);
+            column.setName(colName);
+            column.setColor(colColor);
+            column.setOrderIndex(currentOrder++);
+
+            TaskColumn saved = taskColumnRepository.save(column);
+            createdNames.add(saved.getName());
+            
+            // Notify realtime
+            Map<String, Object> columnData = new HashMap<>();
+            columnData.put("id", saved.getId());
+            columnData.put("projectId", saved.getProject().getId());
+            columnData.put("name", saved.getName());
+            columnData.put("orderIndex", saved.getOrderIndex());
+            columnData.put("color", saved.getColor());
+            realtimeEventService.sendColumnCreated(projectId, columnData);
+        }
+
+        action.setResult(Map.of("message", "Created columns: " + String.join(", ", createdNames)));
 
         ActionNotification notification = new ActionNotification();
-        notification.setMessage("Создал колонку '" + saved.getName() + "'");
+        notification.setMessage("Создано колонок: " + createdNames.size());
         notification.setLink("/" + organizationId + "/projects/" + projectId + "/tasks");
         notification.setLinkText("Перейти к задачам");
         action.setNotification(notification);
