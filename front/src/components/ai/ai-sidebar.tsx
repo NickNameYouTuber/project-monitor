@@ -26,6 +26,13 @@ export function AISidebar() {
         loadChats();
     }, [loadChats]);
 
+    // If we have a saved chat ID, switch to chat view when sidebar opens
+    useEffect(() => {
+        if (currentChatId) {
+            setView('chat');
+        }
+    }, []); // Only on mount
+
     // Handle resizing
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
