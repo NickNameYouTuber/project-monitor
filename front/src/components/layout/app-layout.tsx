@@ -21,7 +21,6 @@ export function AppLayout({ children, currentPage, onNavigate }: AppLayoutProps)
     const navigate = useNavigate();
 
     return (
-    return (
         <div className="relative flex h-screen overflow-hidden bg-background">
             {/* Left Navigation Sidebar */}
             <Sidebar
