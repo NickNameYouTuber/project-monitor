@@ -21,7 +21,8 @@ export function AppLayout({ children, currentPage, onNavigate }: AppLayoutProps)
     const navigate = useNavigate();
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background">
+    return (
+        <div className="relative flex h-screen overflow-hidden bg-background">
             {/* Left Navigation Sidebar */}
             <Sidebar
                 currentPage={currentPage}
@@ -41,8 +42,8 @@ export function AppLayout({ children, currentPage, onNavigate }: AppLayoutProps)
             {/* Right AI Sidebar */}
             <div
                 className={cn(
-                    "border-l border-border bg-card flex flex-col transition-all duration-300 ease-in-out shadow-xl z-20",
-                    isOpen ? "translate-x-0" : "translate-x-full absolute right-0 h-full"
+                    "bg-card flex flex-col transition-all duration-300 ease-in-out z-20",
+                    isOpen ? "translate-x-0 border-l border-border shadow-xl" : "translate-x-full absolute right-0 h-full border-l-0 shadow-none"
                 )}
                 style={{
                     width: isOpen ? width : 0,
