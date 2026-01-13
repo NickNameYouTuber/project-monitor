@@ -1,36 +1,10 @@
-import React, { useState } from 'react';
-import { GitBranch, Shield } from 'lucide-react';
-import { Button } from './ui/button';
+import React from 'react';
+import { GitBranch } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { NIIDClient } from '@niid/sdk';
+import { LoginButton } from '@niid/sdk/react';
+import '@niid/sdk/styles';
 
-// Configure NIID Client
-const niid = new NIIDClient({
-  clientId: import.meta.env.VITE_NIID_CLIENT_ID || 'r0n86C5hVO6J04nDJwe_0A',
-  ssoUrl: import.meta.env.VITE_NIID_SSO_URL || 'https://auth.id.nicorp.tech',
-  apiUrl: import.meta.env.VITE_NIID_API_URL || 'https://api.id.nicorp.tech',
-  redirectUri: window.location.origin + '/sso/niid/callback'
-});
-
-interface AuthPageProps {
-  onLogin: () => void;
-}
-
-export function AuthPage({ onLogin }: AuthPageProps) {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleLogin = async () => {
-    setIsLoading(true);
-    try {
-      console.log('Starting login with config:', niid);
-      // Method is directly on instance, not under .auth
-      niid.login();
-    } catch (e) {
-      console.error('Login failed', e);
-      setIsLoading(false);
-    }
-  };
-
+export function AuthPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -51,16 +25,23 @@ export function AuthPage({ onLogin }: AuthPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button
-              className="w-full h-12 text-base"
-              onClick={handleLogin}
-              disabled={isLoading}
+            <LoginButton
+              clientId={import.meta.env.VITE_NIID_CLIENT_ID || 'r0n86C5hVO6J04nDJwe_0A'}
+              ssoUrl={import.meta.env.VITE_NIID_SSO_URL || 'https://auth.id.nicorp.tech'}
+              apiUrl={import.meta.env.VITE_NIID_API_URL || 'https://api.id.nicorp.tech'}
+              redirectUri={window.location.origin + '/sso/niid/callback'}
+              variant="brand"
+              className="w-full"
+              onSuccess={(user) => {
+                console.log('Login success:', user);
+                window.location.href = '/';
+              }}
+              onError={(error) => {
+                console.error('Login failed:', error);
+              }}
             >
-              <Shield className="w-5 h-5 mr-2" />
-              {isLoading ? 'Redirecting...' : 'Continue with NIID'}
-            </Button>
-
-
+              Continue with NIID
+            </LoginButton>
           </CardContent>
         </Card>
       </div>

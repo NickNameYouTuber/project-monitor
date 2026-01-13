@@ -492,7 +492,7 @@ function AppContent() {
             <Route path="/sso/niid/callback" element={<SSOCallbackPage />} />
             <Route path="*" element={
               !isAuthenticated ? (
-                <AuthPage onLogin={() => setIsAuthenticated(true)} />
+                <AuthPage />
               ) : (
                 <AppLayout currentPage={currentPage} onNavigate={handleNavigate}>
                   <Routes>
