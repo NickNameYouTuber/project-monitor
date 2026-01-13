@@ -26,7 +26,7 @@ export function AuthPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <LoginButton
-              clientId={import.meta.env.VITE_NIID_CLIENT_ID || 'r0n86C5hVO6J04nDJwe_0A'}
+              clientId={import.meta.env.VITE_NIID_CLIENT_ID || 'WNG_42Met8abLocsiRQQ3Q'}
               ssoUrl={import.meta.env.VITE_NIID_SSO_URL || 'https://auth.id.nicorp.tech'}
               apiUrl={import.meta.env.VITE_NIID_API_URL || 'https://api.id.nicorp.tech'}
               redirectUri={window.location.origin + '/sso/niid/callback'}
