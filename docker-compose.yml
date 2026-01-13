@@ -33,7 +33,7 @@ services:
       - LLM_MODEL=gpt-4o
       - NIID_BASE_URL=${NIID_BASE_URL:-https://api.id.nicorp.tech}
       - NIID_CLIENT_ID=${NIID_CLIENT_ID:-WNG_42Met8abLocsiRQQ3Q}
-      - NIID_CLIENT_SECRET=${NIID_CLIENT_SECRET:-GdtZHuGg5eGvcqU-1OlGsPB3woH3ItMOdAWSCi600_c}
+      - NIID_CLIENT_SECRET=${NIID_CLIENT_SECRET:-ESjskej5xBepULvYHPKpyF8q-FVf-uoNrEk2xJ3v8Ek}
       - LIVEKIT_API_URL=http://livekit:7880
       - LIVEKIT_API_KEY=devkey
       - LIVEKIT_API_SECRET=secret_must_be_at_least_32_chars_long_for_security_reasons
