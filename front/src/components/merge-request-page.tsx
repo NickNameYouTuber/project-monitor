@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { ArrowLeft, GitBranch, Eye, MessageSquare, Check, X, Plus, Send, GitMerge, User, Calendar } from 'lucide-react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback } from './ui/avatar';
-import { Textarea } from './ui/textarea';
-import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
+import {
+  Button, Badge, Card, CardContent, CardHeader, CardTitle,
+  Tabs, TabsContent, TabsList, TabsTrigger, Avatar, AvatarFallback,
+  Textarea, ScrollArea, Separator
+} from '@nicorp/nui';
 
 interface MergeRequestPageProps {
   branch: string;
@@ -109,7 +106,7 @@ export function MergeRequestPage({ branch, onBack }: MergeRequestPageProps) {
       const currentLines = selectedLines.lines;
       const minLine = Math.min(...currentLines.map(l => l.lineNumber));
       const maxLine = Math.max(...currentLines.map(l => l.lineNumber));
-      
+
       if (lineNumber < minLine || lineNumber > maxLine) {
         // Find all lines in range
         const fileChanges = mockFileChanges.find(f => f.path === file);
@@ -128,9 +125,9 @@ export function MergeRequestPage({ branch, onBack }: MergeRequestPageProps) {
       }
     } else {
       // Start new selection
-      setSelectedLines({ 
-        file, 
-        lines: [{ lineNumber, content, type }] 
+      setSelectedLines({
+        file,
+        lines: [{ lineNumber, content, type }]
       });
     }
   };
@@ -259,7 +256,7 @@ This merge request implements drag and drop functionality for the kanban boards 
                   <CardTitle>Description</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div 
+                  <div
                     className="prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: renderMarkdown(description) }}
                   />
@@ -301,7 +298,7 @@ This merge request implements drag and drop functionality for the kanban boards 
                               {comment.timestamp.toLocaleString()}
                             </span>
                           </div>
-                          
+
                           {/* Code snippet styled like Changes tab */}
                           {comment.changes && (
                             <div className="ml-8 mb-2 bg-muted/30 rounded-lg overflow-hidden">
@@ -314,23 +311,21 @@ This merge request implements drag and drop functionality for the kanban boards 
                                 const fileChange = mockFileChanges.find(f => f.path === comment.changes!.file);
                                 const originalLine = fileChange?.changes.find(c => c.lineNumber === lineNumber);
                                 const lineType = originalLine?.type || 'context';
-                                
+
                                 return (
-                                  <div key={index} className={`flex items-center text-sm font-mono ${
-                                    lineType === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
-                                    lineType === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
-                                    ''
-                                  }`}>
+                                  <div key={index} className={`flex items-center text-sm font-mono ${lineType === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
+                                      lineType === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
+                                        ''
+                                    }`}>
                                     <div className="w-12 text-center text-muted-foreground border-r border-border py-1">
                                       {lineNumber}
                                     </div>
-                                    <div className={`w-6 text-center ${
-                                      lineType === 'addition' ? 'text-green-600' :
-                                      lineType === 'deletion' ? 'text-red-600' :
-                                      ''
-                                    }`}>
-                                      {lineType === 'addition' ? '+' : 
-                                       lineType === 'deletion' ? '-' : ''}
+                                    <div className={`w-6 text-center ${lineType === 'addition' ? 'text-green-600' :
+                                        lineType === 'deletion' ? 'text-red-600' :
+                                          ''
+                                      }`}>
+                                      {lineType === 'addition' ? '+' :
+                                        lineType === 'deletion' ? '-' : ''}
                                     </div>
                                     <div className="flex-1 px-4 py-1">
                                       {codeLine}
@@ -340,11 +335,11 @@ This merge request implements drag and drop functionality for the kanban boards 
                               })}
                             </div>
                           )}
-                          
+
                           <p className="text-sm bg-muted p-3 rounded-lg ml-8">
                             {comment.content}
                           </p>
-                          
+
                           {/* Reply input for code comments */}
                           <div className="ml-8">
                             {replyingTo === comment.id ? (
@@ -356,9 +351,9 @@ This merge request implements drag and drop functionality for the kanban boards 
                                   className="min-h-[60px]"
                                 />
                                 <div className="flex justify-end gap-2">
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => setReplyingTo(null)}
                                   >
                                     Cancel
@@ -369,15 +364,15 @@ This merge request implements drag and drop functionality for the kanban boards 
                                 </div>
                               </div>
                             ) : (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setReplyingTo(comment.id)}
                               >
                                 Reply
                               </Button>
                             )}
-                            
+
                             {/* Show replies */}
                             <div className="mt-2 space-y-2">
                               {getCommentReplies(comment.id).map(reply => (
@@ -417,7 +412,7 @@ This merge request implements drag and drop functionality for the kanban boards 
                           <p className="text-sm bg-muted p-3 rounded-lg ml-8">
                             {comment.content}
                           </p>
-                          
+
                           {/* Reply input for regular comments */}
                           <div className="ml-8">
                             {replyingTo === comment.id ? (
@@ -429,9 +424,9 @@ This merge request implements drag and drop functionality for the kanban boards 
                                   className="min-h-[60px]"
                                 />
                                 <div className="flex justify-end gap-2">
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => setReplyingTo(null)}
                                   >
                                     Cancel
@@ -442,15 +437,15 @@ This merge request implements drag and drop functionality for the kanban boards 
                                 </div>
                               </div>
                             ) : (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setReplyingTo(comment.id)}
                               >
                                 Reply
                               </Button>
                             )}
-                            
+
                             {/* Show replies */}
                             <div className="mt-2 space-y-2">
                               {getCommentReplies(comment.id).map(reply => (
@@ -517,21 +512,19 @@ This merge request implements drag and drop functionality for the kanban boards 
                             {selectedLines.file}
                           </div>
                           {selectedLines.lines.map((line, index) => (
-                            <div key={index} className={`flex items-center text-sm font-mono ${
-                              line.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
-                              line.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
-                              ''
-                            }`}>
+                            <div key={index} className={`flex items-center text-sm font-mono ${line.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
+                                line.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
+                                  ''
+                              }`}>
                               <div className="w-12 text-center text-muted-foreground border-r border-border py-1">
                                 {line.lineNumber}
                               </div>
-                              <div className={`w-6 text-center ${
-                                line.type === 'addition' ? 'text-green-600' :
-                                line.type === 'deletion' ? 'text-red-600' :
-                                ''
-                              }`}>
-                                {line.type === 'addition' ? '+' : 
-                                 line.type === 'deletion' ? '-' : ''}
+                              <div className={`w-6 text-center ${line.type === 'addition' ? 'text-green-600' :
+                                  line.type === 'deletion' ? 'text-red-600' :
+                                    ''
+                                }`}>
+                                {line.type === 'addition' ? '+' :
+                                  line.type === 'deletion' ? '-' : ''}
                               </div>
                               <div className="flex-1 px-4 py-1">
                                 {line.content}
@@ -546,9 +539,9 @@ This merge request implements drag and drop functionality for the kanban boards 
                           className="min-h-[60px]"
                         />
                         <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => setSelectedLines(null)}
                           >
                             Cancel
@@ -639,8 +632,8 @@ This merge request implements drag and drop functionality for the kanban boards 
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Comment
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       onClick={() => setSelectedLines(null)}
                       variant="ghost"
                     >
@@ -655,21 +648,19 @@ This merge request implements drag and drop functionality for the kanban boards 
                         {selectedLines.file}
                       </div>
                       {selectedLines.lines.map((line, index) => (
-                        <div key={index} className={`flex items-center text-sm font-mono ${
-                          line.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
-                          line.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
-                          ''
-                        }`}>
+                        <div key={index} className={`flex items-center text-sm font-mono ${line.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
+                            line.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
+                              ''
+                          }`}>
                           <div className="w-12 text-center text-muted-foreground border-r border-border py-1">
                             {line.lineNumber}
                           </div>
-                          <div className={`w-6 text-center ${
-                            line.type === 'addition' ? 'text-green-600' :
-                            line.type === 'deletion' ? 'text-red-600' :
-                            ''
-                          }`}>
-                            {line.type === 'addition' ? '+' : 
-                             line.type === 'deletion' ? '-' : ''}
+                          <div className={`w-6 text-center ${line.type === 'addition' ? 'text-green-600' :
+                              line.type === 'deletion' ? 'text-red-600' :
+                                ''
+                            }`}>
+                            {line.type === 'addition' ? '+' :
+                              line.type === 'deletion' ? '-' : ''}
                           </div>
                           <div className="flex-1 px-4 py-1">
                             {line.content}
@@ -704,32 +695,29 @@ This merge request implements drag and drop functionality for the kanban boards 
                   <CardContent className="p-0">
                     <div className="bg-muted/30">
                       {file.changes.map((change, changeIndex) => (
-                        <div 
+                        <div
                           key={changeIndex}
-                          className={`flex items-center text-sm font-mono cursor-pointer hover:bg-muted/70 transition-colors select-none ${
-                            change.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
-                            change.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
-                            ''
-                          } ${
-                            selectedLines && 
-                            selectedLines.file === file.path && 
-                            selectedLines.lines.some(l => l.lineNumber === change.lineNumber) 
-                              ? 'bg-blue-100 dark:bg-blue-900/40 border-l-4 border-blue-500' 
+                          className={`flex items-center text-sm font-mono cursor-pointer hover:bg-muted/70 transition-colors select-none ${change.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
+                              change.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
+                                ''
+                            } ${selectedLines &&
+                              selectedLines.file === file.path &&
+                              selectedLines.lines.some(l => l.lineNumber === change.lineNumber)
+                              ? 'bg-blue-100 dark:bg-blue-900/40 border-l-4 border-blue-500'
                               : ''
-                          }`}
+                            }`}
                           onClick={(e) => handleLineSelection(file.path, change.lineNumber, change.content, change.type, e)}
                           title={`Click to select line ${change.lineNumber}. Hold Shift to extend selection.`}
                         >
                           <div className="w-12 text-center text-muted-foreground border-r border-border py-1">
                             {change.lineNumber}
                           </div>
-                          <div className={`w-6 text-center ${
-                            change.type === 'addition' ? 'text-green-600' :
-                            change.type === 'deletion' ? 'text-red-600' :
-                            ''
-                          }`}>
-                            {change.type === 'addition' ? '+' : 
-                             change.type === 'deletion' ? '-' : ''}
+                          <div className={`w-6 text-center ${change.type === 'addition' ? 'text-green-600' :
+                              change.type === 'deletion' ? 'text-red-600' :
+                                ''
+                            }`}>
+                            {change.type === 'addition' ? '+' :
+                              change.type === 'deletion' ? '-' : ''}
                           </div>
                           <div className="flex-1 px-4 py-1">
                             {change.content}

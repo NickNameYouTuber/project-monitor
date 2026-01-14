@@ -1,8 +1,7 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button, cn } from '@nicorp/nui';
 import { useAISidebar } from '../contexts/AISidebarContext';
-import { cn } from './ui/utils';
 
 interface AIAssistantButtonProps {
   className?: string;

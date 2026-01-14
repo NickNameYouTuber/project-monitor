@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Send, X } from 'lucide-react';
-import { cn } from '@/components/ui/utils';
+import { cn } from '@nicorp/nui';
 
 interface ChatMessage {
     id: string;

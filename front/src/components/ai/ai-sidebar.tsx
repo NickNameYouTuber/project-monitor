@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAISidebar } from '../../contexts/AISidebarContext';
 import { GripVertical, X, Sparkles, MessageSquare, History, Settings2, MoreHorizontal } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
+import { Button, Separator, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@nicorp/nui';
 import { AIConversationView } from './ai-conversation-view';
 import { ChatList } from '../chat-list';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import { useAppContext } from '../../contexts/AppContext';
 import { useActiveContext } from '../../hooks/useActiveContext';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 export function AISidebar() {
     const { width, setWidth, setIsOpen, view, setView, currentChatId, setCurrentChatId } = useAISidebar();

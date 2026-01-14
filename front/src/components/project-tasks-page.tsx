@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useDrop, useDrag } from 'react-dnd';
 import { ArrowLeft, Plus, Search, Filter, Settings, Edit, Trash2, GripVertical, X, Video } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
+import {
+  Button, Input, Badge, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  Popover, PopoverContent, PopoverTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Label, Switch
+} from '@nicorp/nui';
 import { TaskCard } from './task-card';
 import { TaskDetailSidebar } from './task-detail-sidebar';
 import { CreateTaskDialog } from './create-task-dialog';
 import { EditTaskDialog } from './edit-task-dialog';
 import { EditColumnDialog } from './edit-column-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Label } from './ui/label';
-import { Switch } from './ui/switch';
 import { LoadingSpinner } from './loading-spinner';
 import { useNavigate } from 'react-router-dom';
 import { ActiveCallIndicator } from './active-call-indicator';

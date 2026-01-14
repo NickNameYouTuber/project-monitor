@@ -1,8 +1,7 @@
 // Компонент для отображения активных звонков в проекте/задаче
 import React, { useEffect, useState } from 'react';
 import { Video, Users, Phone } from 'lucide-react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
+import { Button, Badge } from '@nicorp/nui';
 import { useNavigate } from 'react-router-dom';
 
 interface ActiveCall {

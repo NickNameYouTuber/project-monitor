@@ -22,7 +22,7 @@ import { OrganizationGuard } from './components/organization-guard';
 import { CallsPage } from './components/calls-page';
 import { AuthPage } from './components/auth-page';
 import CallPage from './features/call/pages/CallPage';
-import { Toaster } from './components/ui/sonner';
+import { Toaster } from '@nicorp/nui';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import { AccountProvider } from './contexts/AccountContext';

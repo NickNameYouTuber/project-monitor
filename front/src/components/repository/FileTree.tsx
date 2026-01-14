@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Folder, File, ChevronRight, ChevronDown, GitBranch } from 'lucide-react';
 import { listFiles, type FileEntry } from '../../api/repository-content';
-import { ScrollArea } from '../ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nicorp/nui';
 
 interface FileNode {
   name: string;
@@ -33,7 +32,7 @@ export function FileTree({ repoId, branch, currentFile, onFileSelect, onBranchCh
       const allFiles = await loadAllFilesRecursively('');
       const treeStructure = buildTree(allFiles);
       setTree(treeStructure);
-    } catch {}
+    } catch { }
   };
 
   const loadAllFilesRecursively = async (path: string): Promise<FileEntry[]> => {
@@ -127,9 +126,8 @@ export function FileTree({ repoId, branch, currentFile, onFileSelect, onBranchCh
     return (
       <div>
         <div
-          className={`flex items-center gap-1 py-1 px-2 hover:bg-accent rounded cursor-pointer ${
-            isSelected ? 'bg-accent' : ''
-          }`}
+          className={`flex items-center gap-1 py-1 px-2 hover:bg-accent rounded cursor-pointer ${isSelected ? 'bg-accent' : ''
+            }`}
           style={{ paddingLeft: `${level * 12 + 8}px` }}
           onClick={() => {
             if (node.type === 'folder') {
@@ -173,7 +171,7 @@ export function FileTree({ repoId, branch, currentFile, onFileSelect, onBranchCh
         {/* Заголовок с выбором ветки */}
         <div className="mb-3 space-y-2">
           <div className="text-sm font-medium">Files</div>
-          
+
           {/* Селектор ветки */}
           {branches && branches.length > 0 && onBranchChange && (
             <Select value={branch} onValueChange={onBranchChange}>

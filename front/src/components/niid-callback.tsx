@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@nicorp/nui';
 import { Loader2 } from 'lucide-react';
 import { apiClient, setAccessToken } from '../api/client';
 import { NIIDClient } from '@niid/sdk/react'; // Use React import for potential hooks if needed, or core class

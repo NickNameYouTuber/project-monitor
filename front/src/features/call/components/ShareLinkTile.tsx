@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserPlus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nicorp/nui';
 import { InviteParticipantsDialog } from '@/components/calls/InviteParticipantsDialog';
 
 interface ShareLinkTileProps {

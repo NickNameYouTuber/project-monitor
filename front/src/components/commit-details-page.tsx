@@ -1,9 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { ScrollArea } from './ui/scroll-area';
+import { Button, Card, CardContent, CardHeader, CardTitle, Badge, ScrollArea } from '@nicorp/nui';
 import { ArrowLeft, Plus, Minus, Edit, File as FileIcon, GitCommit } from 'lucide-react';
 import { getCommitDiffDetails, type CommitDiff, type FileDiff } from '../api/repository-content';
 import { useNotifications } from '../hooks/useNotifications';
@@ -31,14 +28,14 @@ interface DiffLine {
 
 function parsePatch(patch: string): ParsedDiff {
   const lines = patch.split('\n');
-  
+
   // Проверить на бинарный файл
   if (lines.some(l => l.includes('Binary files differ'))) {
     return { chunks: [], isBinary: true };
   }
-  
+
   // Убрать техническую информацию
-  const filteredLines = lines.filter(line => 
+  const filteredLines = lines.filter(line =>
     !line.startsWith('diff --git') &&
     !line.startsWith('index ') &&
     !line.startsWith('---') &&
@@ -47,23 +44,23 @@ function parsePatch(patch: string): ParsedDiff {
     !line.startsWith('new file mode') &&
     line.trim() !== ''
   );
-  
+
   // Парсить chunks (начинаются с @@)
   const chunks: DiffChunk[] = [];
   let currentChunk: DiffChunk | null = null;
   let oldLineNo = 0;
   let newLineNo = 0;
-  
+
   for (const line of filteredLines) {
     if (line.startsWith('@@')) {
       // Парсить @@ -1,19 +1,20 @@
       const match = line.match(/@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@/);
       if (match) {
         if (currentChunk) chunks.push(currentChunk);
-        
+
         oldLineNo = parseInt(match[1]);
         newLineNo = parseInt(match[3]);
-        
+
         currentChunk = {
           oldStart: oldLineNo,
           oldLines: match[2] ? parseInt(match[2]) : 1,
@@ -95,28 +92,28 @@ function parsePatch(patch: string): ParsedDiff {
       }
     }
   }
-  
+
   if (currentChunk) chunks.push(currentChunk);
-  
+
   return { chunks, isBinary: false };
 }
 
 function DiffView({ file }: { file: FileDiff }) {
   const parsed = parsePatch(file.patch);
-  
+
   if (parsed.isBinary) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground italic p-3 bg-muted/30 rounded">
         <FileIcon className="w-4 h-4" />
         Бинарный файл {
           file.changeType === 'ADD' ? 'добавлен' :
-          file.changeType === 'DELETE' ? 'удалён' :
-          'изменён'
+            file.changeType === 'DELETE' ? 'удалён' :
+              'изменён'
         }
       </div>
     );
   }
-  
+
   if (file.changeType === 'DELETE') {
     const lineCount = file.oldContent.split('\n').length;
     return (
@@ -125,7 +122,7 @@ function DiffView({ file }: { file: FileDiff }) {
       </div>
     );
   }
-  
+
   if (file.changeType === 'ADD') {
     const lineCount = file.newContent.split('\n').filter(l => l.trim()).length;
     return (
@@ -154,7 +151,7 @@ function DiffView({ file }: { file: FileDiff }) {
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-2">
       {parsed.chunks.map((chunk, idx) => (
@@ -163,11 +160,10 @@ function DiffView({ file }: { file: FileDiff }) {
             {chunk.lines.map((line, lineIdx) => (
               <div
                 key={lineIdx}
-                className={`flex items-start gap-3 px-4 py-1 ${
-                  line.type === 'add' ? 'bg-green-500/10' :
+                className={`flex items-start gap-3 px-4 py-1 ${line.type === 'add' ? 'bg-green-500/10' :
                   line.type === 'delete' ? 'bg-red-500/10' :
-                  ''
-                }`}
+                    ''
+                  }`}
               >
                 {/* Номера строк */}
                 <div className="flex gap-2 text-muted-foreground select-none min-w-[80px] text-xs">
@@ -178,18 +174,17 @@ function DiffView({ file }: { file: FileDiff }) {
                     {line.newLineNo || ''}
                   </span>
                 </div>
-                
+
                 {/* Индикатор */}
-                <span className={`w-4 flex-shrink-0 ${
-                  line.type === 'add' ? 'text-green-500' :
+                <span className={`w-4 flex-shrink-0 ${line.type === 'add' ? 'text-green-500' :
                   line.type === 'delete' ? 'text-red-500' :
-                  'text-muted-foreground'
-                }`}>
+                    'text-muted-foreground'
+                  }`}>
                   {line.type === 'add' ? '+' :
-                   line.type === 'delete' ? '-' :
-                   ' '}
+                    line.type === 'delete' ? '-' :
+                      ' '}
                 </span>
-                
+
                 {/* Содержимое строки */}
                 <code className="flex-1 whitespace-pre overflow-x-auto">
                   {line.content}
@@ -205,7 +200,7 @@ function DiffView({ file }: { file: FileDiff }) {
 
 function FileGroup({ type, files }: { type: 'added' | 'modified' | 'deleted'; files: FileDiff[] }) {
   if (files.length === 0) return null;
-  
+
   const config = {
     added: {
       title: 'Добавленные файлы',
@@ -223,7 +218,7 @@ function FileGroup({ type, files }: { type: 'added' | 'modified' | 'deleted'; fi
       color: 'border-red-500/20 bg-red-500/5'
     }
   }[type];
-  
+
   return (
     <Card className={config.color}>
       <CardHeader>
@@ -257,7 +252,7 @@ export function CommitDetailsPage() {
 
   useEffect(() => {
     if (!repoId || !commitSha) return;
-    
+
     const loadDiff = async () => {
       setIsLoading(true);
       try {
@@ -269,13 +264,13 @@ export function CommitDetailsPage() {
         setIsLoading(false);
       }
     };
-    
+
     loadDiff();
   }, [repoId, commitSha]);
 
   const groupedFiles = useMemo(() => {
     if (!diff) return { added: [], modified: [], deleted: [], renamed: [] };
-    
+
     return {
       added: diff.files.filter(f => f.changeType === 'ADD'),
       modified: diff.files.filter(f => f.changeType === 'MODIFY'),
@@ -302,7 +297,7 @@ export function CommitDetailsPage() {
       const count = groupedFiles.renamed.length;
       parts.push(`${count} ${count === 1 ? 'файл переименован' : 'файлов переименовано'}`);
     }
-    
+
     return parts.join(', ') || 'Нет изменений';
   }, [groupedFiles]);
 
@@ -327,7 +322,7 @@ export function CommitDetailsPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Назад к репозиторию
           </Button>
-          
+
           <div className="flex items-start gap-3">
             <GitCommit className="w-6 h-6 text-primary mt-1" />
             <div className="flex-1">
@@ -349,7 +344,7 @@ export function CommitDetailsPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Контент */}
       <div className="flex-1 overflow-auto">
         <div className="p-6">
@@ -366,12 +361,12 @@ export function CommitDetailsPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             {/* Группы файлов */}
             <FileGroup type="modified" files={groupedFiles.modified} />
             <FileGroup type="added" files={groupedFiles.added} />
             <FileGroup type="deleted" files={groupedFiles.deleted} />
-            
+
             {groupedFiles.renamed.length > 0 && (
               <Card className="border-blue-500/20 bg-blue-500/5">
                 <CardHeader>
@@ -393,7 +388,7 @@ export function CommitDetailsPage() {
                 </CardContent>
               </Card>
             )}
-            
+
             {diff.files.length === 0 && (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">

@@ -1,10 +1,9 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
 import { Calendar, User, GitBranch, AlertCircle, MoreVertical } from 'lucide-react';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { cn } from './ui/utils';
+import {
+  Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, cn
+} from '@nicorp/nui';
 import type { Task } from '../App';
 
 interface TaskCardProps {
@@ -50,9 +49,9 @@ export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) 
         {onEdit && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-6 w-6 p-0"
                 onClick={onEdit}
               >
@@ -73,12 +72,12 @@ export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) 
           </DropdownMenu>
         )}
       </div>
-      
+
       <h4 className="font-medium mb-2">{task.title}</h4>
       <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
         {task.description}
       </p>
-      
+
       <div className="space-y-2">
         {task.assignee && (
           <div className="flex items-center text-xs text-muted-foreground">
@@ -86,7 +85,7 @@ export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) 
             {task.assignee}
           </div>
         )}
-        
+
         {task.repositoryBranch && (
           <div className="flex items-center text-xs text-muted-foreground">
             <GitBranch className="w-3 h-3 mr-1" />
@@ -95,7 +94,7 @@ export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) 
             </code>
           </div>
         )}
-        
+
         <div className="flex items-center text-xs text-muted-foreground">
           <Calendar className="w-3 h-3 mr-1" />
           {task.createdAt.toLocaleDateString()}

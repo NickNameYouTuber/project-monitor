@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { X, Calendar, User, GitBranch, AlertCircle, MessageSquare, Plus, Send, GitCommit, Video, Folder, ExternalLink } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { Avatar, AvatarFallback } from './ui/avatar';
-import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Button, Badge, Input, Textarea, Avatar, AvatarFallback, ScrollArea, Separator
+} from '@nicorp/nui';
 import { useNavigate } from 'react-router-dom';
 import { ActiveCallIndicator } from './active-call-indicator';
 import type { Task } from '../App';
@@ -53,7 +49,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
         const { getTaskBranches } = await import('../api/task-repository');
         const bs = await getTaskBranches(task.id);
         setBranches(bs.map(b => ({ name: b.branch_name, createdAt: new Date(b.created_at) })));
-      } catch {}
+      } catch { }
     })();
   }, [isOpen, task.id]);
 
@@ -80,7 +76,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
       };
       setComments(prev => [...prev, c]);
       setNewComment('');
-    } catch {}
+    } catch { }
   };
 
   if (!isOpen) return null;
@@ -103,8 +99,8 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
             <div>
               <h3 className="font-medium text-lg">{task.title}</h3>
               <p className="text-muted-foreground mt-1">{task.description}</p>
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 size="sm"
                 className="mt-3 w-full"
                 onClick={async () => {
@@ -130,7 +126,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
                 <Video className="w-4 h-4 mr-2" />
                 Start Call
               </Button>
-              
+
               {/* Индикатор активных звонков для задачи */}
               <div className="mt-3">
                 <ActiveCallIndicator taskId={task.id} />
@@ -287,7 +283,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
                       const { getTaskBranches } = await import('../api/task-repository');
                       const bs = await getTaskBranches(task.id);
                       setBranches(bs.map(b => ({ name: b.branch_name, createdAt: new Date(b.created_at) })));
-                    } catch {}
+                    } catch { }
                   }}>Attach</Button>
                 </div>
               </div>

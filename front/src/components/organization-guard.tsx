@@ -5,10 +5,7 @@ import { getOrganization } from '../api/organizations';
 import { initiateSSOLogin } from '../api/sso';
 import type { Organization } from '../types/organization';
 import { LoadingSpinner } from './loading-spinner';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input, Label, Button } from '@nicorp/nui';
 import { useNotifications } from '../hooks/useNotifications';
 import { setAccessToken, getAccessToken } from '../api/client';
 

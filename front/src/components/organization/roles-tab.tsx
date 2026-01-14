@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
+import {
+    Card, CardContent, CardDescription, CardHeader, CardTitle, Button,
+    Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
+    Input, Label
+} from '@nicorp/nui';
 import { Plus, Trash2, Pencil, Shield } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
 import { PermissionsMatrix } from './permissions-matrix';
 import { getOrganizationRoles, createOrganizationRole, updateOrganizationRole, deleteOrganizationRole } from '../../api/roles';
 import { OrgRole, OrgPermission } from '../../types/organization';

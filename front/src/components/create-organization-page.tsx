@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Switch } from './ui/switch';
-import { Separator } from './ui/separator';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
+  Button, Input, Label, Textarea, Switch, Separator
+} from '@nicorp/nui';
 import { createOrganization } from '../api/organizations';
 import { useNotifications } from '../hooks/useNotifications';
 import { toast } from 'sonner';

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, UserPlus, Users, Loader2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Avatar, AvatarFallback } from '../ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Label } from '../ui/label';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle, Button,
+  Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label
+} from '@nicorp/nui';
 import { RoleBadge } from '../role-badge';
 import { useNotifications } from '../../hooks/useNotifications';
 import UserAutocomplete from '../calls/UserAutocomplete';

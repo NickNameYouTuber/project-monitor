@@ -19,16 +19,14 @@ import {
 import { RolesTab } from './organization/roles-tab';
 import { getOrganizationRoles } from '../api/roles';
 import { OrgRole } from '../types/organization';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
+  Button, Tabs, TabsContent, TabsList, TabsTrigger,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Label, Input, Switch, Badge
+} from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Label } from './ui/label';
-import { Input } from './ui/input';
-import { Switch } from './ui/switch';
-import { Badge } from './ui/badge';
 import { RoleBadge } from './role-badge';
 import { useNotifications } from '../hooks/useNotifications';
 // UserAutocomplete removed - members join via invite links only

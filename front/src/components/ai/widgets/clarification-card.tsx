@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
+import { Button, Input, cn } from '@nicorp/nui';
 import { MessageCircleQuestion, Send, Check, ChevronRight } from 'lucide-react';
-import { cn } from '../../ui/utils';
 
 export interface ClarificationData {
     question: string;

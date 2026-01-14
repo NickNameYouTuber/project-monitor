@@ -1,6 +1,5 @@
 import React from 'react';
-import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
-import { cn } from '../ui/utils';
+import { ToggleGroup, ToggleGroupItem, cn } from '@nicorp/nui';
 
 export interface MeetingFiltersProps {
   statusFilter: 'all' | 'scheduled' | 'active' | 'completed' | 'cancelled';

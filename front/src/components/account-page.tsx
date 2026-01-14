@@ -1,26 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  User, 
-  Bell, 
-  Shield, 
-  Palette, 
-  Globe, 
+import {
+  User,
+  Bell,
+  Shield,
+  Palette,
+  Globe,
   Users,
   Key,
   Database,
   Download,
   Upload
 } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Switch } from './ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Textarea } from './ui/textarea';
-import { Avatar, AvatarFallback } from './ui/avatar';
-import { Separator } from './ui/separator';
+import {
+  Button,
+  Input,
+  Label,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Switch,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
+  Avatar,
+  AvatarFallback,
+  Separator,
+} from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { useMainAccount, useAccountContext } from '../hooks/useAccountContext';
 
@@ -64,7 +78,7 @@ export function AccountPage() {
         const { listTokens } = await import('../api/tokens');
         const ts = await listTokens();
         setTokens(ts.map(t => ({ id: t.id, name: t.name, created_at: t.created_at })));
-      } catch {}
+      } catch { }
       finally {
         setIsLoading(false);
       }
@@ -80,7 +94,7 @@ export function AccountPage() {
   };
 
   if (isLoading || !mainAccount) {
-    return <LoadingSpinner 
+    return <LoadingSpinner
       stages={['Auth User', 'Load Profile', 'Fetch Tokens', 'Ready']}
     />;
   }
@@ -129,7 +143,7 @@ export function AccountPage() {
                     <Button variant="ghost" size="sm">Remove</Button>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
@@ -149,7 +163,7 @@ export function AccountPage() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="bio">Bio</Label>
                   <Textarea
@@ -159,7 +173,7 @@ export function AccountPage() {
                     rows={3}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Timezone</Label>
                   <Select value={profile.timezone} onValueChange={(value) => handleProfileUpdate('timezone', value)}>
@@ -176,11 +190,11 @@ export function AccountPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <Button onClick={async () => {
                   try {
                     await updateMainAccount({ displayName: profile.name, username: profile.email });
-                  } catch {}
+                  } catch { }
                 }}>Save Changes</Button>
               </CardContent>
             </Card>
@@ -209,7 +223,7 @@ export function AccountPage() {
                       onCheckedChange={(checked) => handleNotificationToggle('emailNotifications', checked)}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-medium">Push Notifications</h4>
@@ -220,9 +234,9 @@ export function AccountPage() {
                       onCheckedChange={(checked) => handleNotificationToggle('pushNotifications', checked)}
                     />
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-medium">Project Updates</h4>
@@ -233,7 +247,7 @@ export function AccountPage() {
                       onCheckedChange={(checked) => handleNotificationToggle('projectUpdates', checked)}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-medium">Task Assignments</h4>
@@ -244,7 +258,7 @@ export function AccountPage() {
                       onCheckedChange={(checked) => handleNotificationToggle('taskAssignments', checked)}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-medium">Comments</h4>
@@ -285,7 +299,7 @@ export function AccountPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Language</Label>
                   <Select value={language} onValueChange={setLanguage}>
@@ -352,9 +366,9 @@ export function AccountPage() {
                       <Button size="sm">Update Password</Button>
                     </div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div>
                     <h4 className="font-medium mb-2">Two-Factor Authentication</h4>
                     <p className="text-sm text-muted-foreground mb-4">
@@ -396,7 +410,7 @@ export function AccountPage() {
                       const { listTokens } = await import('../api/tokens');
                       const ts = await listTokens();
                       setTokens(ts.map(t => ({ id: t.id, name: t.name, created_at: t.created_at })));
-                    } catch {}
+                    } catch { }
                   }}>Create</Button>
                 </div>
 
@@ -414,7 +428,7 @@ export function AccountPage() {
                             const { revokeToken } = await import('../api/tokens');
                             await revokeToken(t.id);
                             setTokens(tokens.filter(x => x.id !== t.id));
-                          } catch {}
+                          } catch { }
                         }}>Revoke</Button>
                       </div>
                     ))}
@@ -447,7 +461,7 @@ export function AccountPage() {
                       Sync repositories and branches with GitHub.
                     </p>
                   </div>
-                  
+
                   <div className="p-4 border border-border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">Slack</h4>
@@ -457,7 +471,7 @@ export function AccountPage() {
                       Get notifications and updates in Slack.
                     </p>
                   </div>
-                  
+
                   <div className="p-4 border border-border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">Figma</h4>
@@ -467,7 +481,7 @@ export function AccountPage() {
                       Import designs and sync with Figma files.
                     </p>
                   </div>
-                  
+
                   <div className="p-4 border border-border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">Jira</h4>
@@ -478,9 +492,9 @@ export function AccountPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div>
                   <h4 className="font-medium mb-4">Data Management</h4>
                   <div className="flex gap-2">

@@ -1,8 +1,6 @@
 import React from 'react';
-import { ScrollArea } from './ui/scroll-area';
-import { Button } from './ui/button';
+import { ScrollArea, Button, cn } from '@nicorp/nui';
 import { Plus, MessageSquare, Trash2, Sparkles, X } from 'lucide-react';
-import { cn } from './ui/utils';
 
 import type { Chat } from '../api/chat';
 

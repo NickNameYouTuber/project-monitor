@@ -1,6 +1,5 @@
 import React from 'react';
-import { Button } from '../ui/button';
-import { ScrollArea } from '../ui/scroll-area';
+import { Button, ScrollArea } from '@nicorp/nui';
 import { Clock, Video, X } from 'lucide-react';
 
 export default function UpcomingPanel({ open, onClose, items, onStart }: {

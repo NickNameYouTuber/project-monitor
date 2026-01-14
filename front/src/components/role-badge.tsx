@@ -1,7 +1,6 @@
 import React from 'react';
 import { Crown, Settings, Code, FileText, Eye, Wrench, User } from 'lucide-react';
-import { Badge } from './ui/badge';
-import { cn } from './ui/utils';
+import { Badge, cn } from '@nicorp/nui';
 
 import { OrgRole } from '../types/organization';
 

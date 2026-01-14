@@ -1,6 +1,6 @@
 import React from 'react';
 import { Hand } from 'lucide-react';
-import { cn } from '@/components/ui/utils';
+import { cn } from '@nicorp/nui';
 
 interface VideoTileBorderProps {
     isSpeaking: boolean;

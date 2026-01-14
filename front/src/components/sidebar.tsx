@@ -11,8 +11,7 @@ import {
   Building2,
   Settings
 } from 'lucide-react';
-import { Button } from './ui/button';
-import { cn } from './ui/utils';
+import { Button, cn } from '@nicorp/nui';
 import type { Page, Project } from '../App';
 import { NotificationBell } from './NotificationBell';
 import { setAccessToken } from '../api/client';

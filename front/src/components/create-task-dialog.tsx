@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Calendar } from './ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import {
+  Button, Input, Label, Textarea, Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription,
+  DialogHeader, DialogTitle, Calendar, Popover, PopoverContent, PopoverTrigger
+} from '@nicorp/nui';
 import { CalendarIcon } from 'lucide-react';
 import { AutocompleteInput } from './autocomplete-input';
 import type { Task } from '../App';
@@ -23,9 +20,9 @@ interface CreateTaskDialogProps {
   projectId?: string;
 }
 
-export function CreateTaskDialog({ 
-  open, 
-  onOpenChange, 
+export function CreateTaskDialog({
+  open,
+  onOpenChange,
   onCreateTask,
   availableStatuses,
   assigneeSuggestions,
@@ -133,7 +130,7 @@ export function CreateTaskDialog({
             Add a new task to the current project.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Task Title</Label>
@@ -145,7 +142,7 @@ export function CreateTaskDialog({
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -156,7 +153,7 @@ export function CreateTaskDialog({
               rows={3}
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Status</Label>
@@ -173,7 +170,7 @@ export function CreateTaskDialog({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Priority</Label>
               <Select value={priority} onValueChange={(value: Task['priority']) => setPriority(value)}>
@@ -188,7 +185,7 @@ export function CreateTaskDialog({
               </Select>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="assignee">Assignee</Label>
             <AutocompleteInput
@@ -198,7 +195,7 @@ export function CreateTaskDialog({
               placeholder="Enter assignee name"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label>Due Date</Label>
             <Popover>
@@ -221,7 +218,7 @@ export function CreateTaskDialog({
               </PopoverContent>
             </Popover>
           </div>
-          
+
           <div className="space-y-2">
             <Label>Repository</Label>
             <Select value={selectedRepository} onValueChange={setSelectedRepository}>
@@ -245,8 +242,8 @@ export function CreateTaskDialog({
                 {loadingBranches ? (
                   <div className="text-sm text-muted-foreground">Loading branches...</div>
                 ) : (
-                  <Select 
-                    value={createNewBranch ? 'new' : selectedBranch} 
+                  <Select
+                    value={createNewBranch ? 'new' : selectedBranch}
                     onValueChange={(val) => {
                       if (val === 'new') {
                         setCreateNewBranch(true);
@@ -303,7 +300,7 @@ export function CreateTaskDialog({
               )}
             </>
           )}
-          
+
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

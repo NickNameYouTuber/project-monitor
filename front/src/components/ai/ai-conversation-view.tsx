@@ -1,10 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAIAssistant } from '../../hooks/useAIAssistant';
-import { ScrollArea } from '../ui/scroll-area';
-import { Textarea } from '../ui/textarea';
-import { Button } from '../ui/button';
+import { ScrollArea, Textarea, Button, cn } from '@nicorp/nui';
 import { Send, Loader2, ArrowLeft, Bot, User } from 'lucide-react';
-import { cn } from '../ui/utils';
 import { ChatMessage } from '../chat-message';
 import { useNavigate } from 'react-router-dom';
 import { executeClientAction } from '../../lib/client-actions';

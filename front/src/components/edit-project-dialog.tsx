@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { Separator } from './ui/separator';
+import {
+  Button, Input, Label, Textarea, Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription,
+  DialogHeader, DialogTitle, DialogFooter, Separator
+} from '@nicorp/nui';
 import { ExternalLink, Trash2 } from 'lucide-react';
 import type { Project } from '../App';
 
@@ -22,13 +20,13 @@ const colors = [
   '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
 ];
 
-export function EditProjectDialog({ 
-  project, 
-  open, 
-  onOpenChange, 
-  onUpdateProject, 
+export function EditProjectDialog({
+  project,
+  open,
+  onOpenChange,
+  onUpdateProject,
   onNavigateToTasks,
-  availableStatuses 
+  availableStatuses
 }: EditProjectDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -73,7 +71,7 @@ export function EditProjectDialog({
             Update project details and settings.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Project Title</Label>
@@ -85,7 +83,7 @@ export function EditProjectDialog({
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -96,7 +94,7 @@ export function EditProjectDialog({
               rows={3}
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label>Status</Label>
             <Select value={status} onValueChange={setStatus}>
@@ -112,7 +110,7 @@ export function EditProjectDialog({
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
             <Label>Color</Label>
             <div className="flex gap-2">
@@ -120,9 +118,8 @@ export function EditProjectDialog({
                 <button
                   key={colorOption}
                   type="button"
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    color === colorOption ? 'border-foreground' : 'border-transparent'
-                  }`}
+                  className={`w-8 h-8 rounded-full border-2 ${color === colorOption ? 'border-foreground' : 'border-transparent'
+                    }`}
                   style={{ backgroundColor: colorOption }}
                   onClick={() => setColor(colorOption)}
                 />
@@ -134,9 +131,9 @@ export function EditProjectDialog({
 
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>Created: {project.createdAt.toLocaleDateString()}</span>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               size="sm"
               onClick={onNavigateToTasks}
             >
@@ -144,11 +141,11 @@ export function EditProjectDialog({
               View Tasks
             </Button>
           </div>
-          
+
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button 
-              type="button" 
-              variant="destructive" 
+            <Button
+              type="button"
+              variant="destructive"
               size="sm"
               onClick={handleDelete}
               className="sm:mr-auto"

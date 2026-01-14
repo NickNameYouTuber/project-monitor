@@ -1,20 +1,15 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Calendar } from '../ui/calendar';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
+  Button, Calendar, Input, Label, Textarea, Separator, Switch, cn,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Popover, PopoverContent, PopoverTrigger
+} from '@nicorp/nui';
 import { Clock, Calendar as CalendarIcon, Users, AlignLeft } from 'lucide-react';
 import MeetingColorPicker from './MeetingColorPicker';
 import UserAutocomplete from './UserAutocomplete';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { cn } from '../ui/utils';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Separator } from '../ui/separator';
-import { Switch } from '../ui/switch';
 
 interface NewMeetingDialogProps {
   open: boolean;

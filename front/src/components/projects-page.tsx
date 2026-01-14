@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useDrop, useDrag } from 'react-dnd';
 import { Plus, Search, Filter, Settings, Edit, Trash2, GripVertical, MoreVertical } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
+import {
+  Button, Input, Badge, Dialog, DialogContent, DialogDescription,
+  DialogHeader, DialogTitle, DialogTrigger, DropdownMenu,
+  DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
+} from '@nicorp/nui';
 import { ProjectCard } from './project-card';
 import { CreateProjectDialog } from './create-project-dialog';
 import { EditProjectDialog } from './edit-project-dialog';
 import { EditColumnDialog } from './edit-column-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { LoadingSpinner } from './loading-spinner';
 import type { Project, Column } from '../App';
 import { useCurrentOrganization, useAppContext } from '../hooks/useAppContext';

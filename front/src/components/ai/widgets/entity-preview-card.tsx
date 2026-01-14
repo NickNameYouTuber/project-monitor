@@ -1,7 +1,6 @@
 import React from 'react';
-import { Card, CardContent } from '../../ui/card';
+import { Card, CardContent, Badge } from '@nicorp/nui';
 import { CheckCircle2, ArrowUpRight, FileText, CheckSquare, Folder } from 'lucide-react';
-import { Badge } from '../../ui/badge';
 
 export interface EntityPreviewData {
     type: 'task' | 'project' | 'file';

@@ -1,10 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Video, VideoOff, ArrowLeft } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import { Card, CardContent } from '../../../components/ui/card';
-import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
-import { Switch } from '../../../components/ui/switch';
-import { cn } from '../../../components/ui/utils';
+import { Button, Card, CardContent, Avatar, AvatarFallback, Switch, cn } from '@nicorp/nui';
 
 interface PreCallSetupProps {
     onJoin: (settings: { cameraEnabled: boolean; microphoneEnabled: boolean; name: string }) => void;

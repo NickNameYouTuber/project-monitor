@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { Calendar } from './ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import {
+  Button, Input, Label, Textarea, Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription,
+  DialogHeader, DialogTitle, DialogFooter, Calendar, Popover, PopoverContent,
+  PopoverTrigger, Separator
+} from '@nicorp/nui';
 import { CalendarIcon, Trash2 } from 'lucide-react';
-import { Separator } from './ui/separator';
 import { AutocompleteInput } from './autocomplete-input';
 import type { Task } from '../App';
 
@@ -22,10 +19,10 @@ interface EditTaskDialogProps {
   branchSuggestions: string[];
 }
 
-export function EditTaskDialog({ 
-  task, 
-  open, 
-  onOpenChange, 
+export function EditTaskDialog({
+  task,
+  open,
+  onOpenChange,
   onUpdateTask,
   availableStatuses,
   assigneeSuggestions,
@@ -67,7 +64,7 @@ export function EditTaskDialog({
         description: updated.description || '',
         status: updated.columnId,
       });
-    } catch {}
+    } catch { }
   };
 
   const handleDelete = async () => {
@@ -76,7 +73,7 @@ export function EditTaskDialog({
       const { deleteTask } = await import('../api/tasks');
       await deleteTask(task.projectId, task.id);
       onOpenChange(false);
-    } catch {}
+    } catch { }
   };
 
   const formatDate = (date: Date) => {
@@ -97,7 +94,7 @@ export function EditTaskDialog({
             Update task details and settings.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Task Title</Label>
@@ -109,7 +106,7 @@ export function EditTaskDialog({
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -120,7 +117,7 @@ export function EditTaskDialog({
               rows={3}
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Status</Label>
@@ -137,7 +134,7 @@ export function EditTaskDialog({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Priority</Label>
               <Select value={priority} onValueChange={(value: Task['priority']) => setPriority(value)}>
@@ -152,7 +149,7 @@ export function EditTaskDialog({
               </Select>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="assignee">Assignee</Label>
             <AutocompleteInput
@@ -162,7 +159,7 @@ export function EditTaskDialog({
               placeholder="Enter assignee name"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label>Due Date</Label>
             <Popover>
@@ -185,7 +182,7 @@ export function EditTaskDialog({
               </PopoverContent>
             </Popover>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="branch">Repository Branch</Label>
             <AutocompleteInput
@@ -201,11 +198,11 @@ export function EditTaskDialog({
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>Created: {task.createdAt.toLocaleDateString()}</span>
           </div>
-          
+
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button 
-              type="button" 
-              variant="destructive" 
+            <Button
+              type="button"
+              variant="destructive"
               size="sm"
               onClick={handleDelete}
               className="sm:mr-auto"

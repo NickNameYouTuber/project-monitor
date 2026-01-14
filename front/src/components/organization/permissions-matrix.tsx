@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Checkbox, Label, Card, CardContent, CardHeader, CardTitle, CardDescription } from '@nicorp/nui';
 import { OrgPermission } from '../../types/organization';
 import { getGroupedPermissions } from '../../api/roles';
 import { LoadingSpinner } from '../loading-spinner';

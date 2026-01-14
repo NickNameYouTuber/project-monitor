@@ -1,11 +1,9 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Button } from '../ui/button';
-import { Textarea } from '../ui/textarea';
-import { Badge } from '../ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import {
+    Card, CardContent, CardDescription, CardHeader, CardTitle,
+    Input, Label, Button, Textarea, Badge,
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from '@nicorp/nui';
 import { Project } from '../../App';
 
 interface GeneralTabProps {

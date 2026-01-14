@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Settings, Users, Shield, AlertTriangle, Folder, ChevronRight, LayoutGrid } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger, Card, CardContent, CardHeader, CardTitle } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { useProjectPermissions } from '../hooks/useProjectPermissions';
 import { RoleBadge } from './role-badge';

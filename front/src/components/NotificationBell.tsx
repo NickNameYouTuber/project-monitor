@@ -1,9 +1,6 @@
 import React from 'react';
 import { Bell, Check, X, Phone, ListTodo } from 'lucide-react';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { ScrollArea } from './ui/scroll-area';
+import { Badge, Button, Popover, PopoverContent, PopoverTrigger, ScrollArea } from '@nicorp/nui';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
@@ -16,7 +13,7 @@ export const NotificationBell: React.FC = () => {
 
   const handleNotificationClick = (notification: typeof notifications[0]) => {
     markAsRead(notification.id);
-    
+
     if (notification.actionUrl) {
       navigate(notification.actionUrl);
       setOpen(false);
@@ -38,8 +35,8 @@ export const NotificationBell: React.FC = () => {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
+            <Badge
+              variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -51,9 +48,9 @@ export const NotificationBell: React.FC = () => {
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold">Уведомления</h3>
           {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={markAllAsRead}
               className="h-7 text-xs"
             >
@@ -86,7 +83,7 @@ export const NotificationBell: React.FC = () => {
                     <div className="mt-0.5">
                       {getNotificationIcon(notification.type)}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <h4 className={`text-sm font-medium ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
@@ -104,17 +101,17 @@ export const NotificationBell: React.FC = () => {
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
-                      
+
                       <p className="text-xs text-muted-foreground line-clamp-2">
                         {notification.message}
                       </p>
-                      
+
                       <p className="text-[10px] text-muted-foreground mt-2">
                         {formatDistanceToNow(notification.timestamp, { addSuffix: true, locale: ru })}
                       </p>
                     </div>
                   </div>
-                  
+
                   {!notification.read && (
                     <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-blue-500" />
                   )}

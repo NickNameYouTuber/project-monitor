@@ -6,7 +6,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import { useRouteState } from '../../hooks/useRouteState';
 import { useNavigate } from 'react-router-dom';
 import type { Page } from '../../App';
-import { cn } from '../ui/utils';
+import { cn } from '@nicorp/nui';
 
 interface AppLayoutProps {
     children: ReactNode;

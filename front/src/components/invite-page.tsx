@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Building2, XCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { useNotifications } from '../hooks/useNotifications';
 import { getInviteInfo, acceptInvite } from '../api/organization-invites';
@@ -97,13 +96,13 @@ export function InvitePage() {
               You've been invited to join <span className="font-medium text-foreground">{invite.organization_name}</span> as a <span className="font-medium text-foreground">{invite.role}</span>.
             </p>
           </div>
-          
+
           {invite.expires_at && (
             <p className="text-xs text-muted-foreground">
               This invitation expires on {new Date(invite.expires_at).toLocaleDateString()}
             </p>
           )}
-          
+
           <div className="flex gap-2 pt-4">
             <Button variant="outline" onClick={() => navigate('/organizations')} className="flex-1">
               Decline

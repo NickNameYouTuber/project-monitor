@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Plus, Link as LinkIcon, Settings, Users, FolderKanban, Shield } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
+  Button, Badge, Dialog, DialogContent, DialogDescription,
+  DialogHeader, DialogTitle, DialogTrigger, Input, Label
+} from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { RoleBadge } from './role-badge';
 import { listOrganizations } from '../api/organizations';

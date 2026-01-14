@@ -1,10 +1,9 @@
 import React, { useMemo, useRef } from 'react';
-import { Button } from '../ui/button';
 import { Video, Calendar, Clock, MoreVertical, Copy, Trash2, Mic, Users, ArrowRight } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../ui/dropdown-menu';
-import { cn } from '../ui/utils';
-import { Badge } from '../ui/badge';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import {
+  Button, Badge, Avatar, AvatarFallback, cn,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator
+} from '@nicorp/nui';
 
 interface MeetingsListProps {
   items: {

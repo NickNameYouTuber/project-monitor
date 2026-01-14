@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } from '@nicorp/nui';
 import { AlertTriangle } from 'lucide-react';
 
 interface AdvancedTabProps {

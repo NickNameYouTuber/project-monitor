@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
+import {
+  Card, CardContent, CardHeader, CardTitle, Button, Input,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Tabs, TabsContent, TabsList, TabsTrigger, Label, Textarea,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from '@nicorp/nui';
 import { GitBranch, Plus } from 'lucide-react';
 import { LoadingSpinner } from './loading-spinner';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import type { Project } from '../App';
 import { listRepositories, createRepository, cloneRepository, type RepositoryDto } from '../api/repositories';
 import { useNotifications } from '../hooks/useNotifications';
@@ -45,7 +43,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
       setIsLoading(true);
       const repos = await listRepositories({ project_id: project.id });
       setRepositories(repos);
-    } catch {}
+    } catch { }
     finally {
       setIsLoading(false);
     }
@@ -86,7 +84,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
       }
       setIsDialogOpen(false);
       loadRepositories();
-      
+
       setIsDialogOpen(false);
       setNewRepo({
         name: '',
@@ -99,10 +97,10 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
       await loadRepositories();
     } catch (error: any) {
       console.error('Ошибка при создании репозитория:', error);
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          error.message || 
-                          'Ошибка при создании репозитория';
+      const errorMessage = error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Ошибка при создании репозитория';
       showError('Ошибка', errorMessage);
     } finally {
       setIsCreating(false);
@@ -110,7 +108,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
   };
 
   if (isLoading) {
-    return <LoadingSpinner 
+    return <LoadingSpinner
       stages={['Connect Git', 'Fetch Repos', 'Index Data', 'Ready']}
     />;
   }
@@ -144,13 +142,13 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                     Создайте новый пустой репозиторий или клонируйте существующий
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <Tabs value={createType} onValueChange={(v) => setCreateType(v as 'empty' | 'clone')}>
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="empty">Создать пустой</TabsTrigger>
                     <TabsTrigger value="clone">Клонировать из URL</TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="empty" className="space-y-4">
                     <div>
                       <Label htmlFor="name">Название</Label>
@@ -161,7 +159,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         placeholder="my-repository"
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="description">Описание</Label>
                       <Textarea
@@ -172,7 +170,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         rows={3}
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="branch">Default Branch</Label>
@@ -183,7 +181,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                           placeholder="master"
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor="visibility">Видимость</Label>
                         <Select value={newRepo.visibility} onValueChange={(v) => setNewRepo(prev => ({ ...prev, visibility: v }))}>
@@ -198,7 +196,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                       </div>
                     </div>
                   </TabsContent>
-                  
+
                   <TabsContent value="clone" className="space-y-4">
                     <div>
                       <Label htmlFor="url">URL репозитория</Label>
@@ -209,7 +207,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         placeholder="https://github.com/user/repo.git"
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="clone-name">Название</Label>
                       <Input
@@ -219,7 +217,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         placeholder="my-repository"
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="clone-description">Описание</Label>
                       <Textarea
@@ -230,7 +228,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         rows={3}
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="auth-token">Токен авторизации (опционально)</Label>
                       <Input
@@ -243,7 +241,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                     </div>
                   </TabsContent>
                 </Tabs>
-                
+
                 <div className="flex justify-end gap-2 mt-4">
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isCreating}>
                     Отмена
@@ -271,14 +269,14 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                 {repositories
                   .filter(r => !search || r.name.toLowerCase().includes(search.toLowerCase()))
                   .map(repo => (
-                  <div key={repo.id} className="flex items-center justify-between p-2 hover:bg-accent rounded">
-                    <div className="flex items-center gap-2">
-                      <GitBranch className="w-4 h-4" />
-                      <span>{repo.name}</span>
+                    <div key={repo.id} className="flex items-center justify-between p-2 hover:bg-accent rounded">
+                      <div className="flex items-center gap-2">
+                        <GitBranch className="w-4 h-4" />
+                        <span>{repo.name}</span>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => onOpenRepository(repo.id)}>Open</Button>
                     </div>
-                     <Button size="sm" variant="outline" onClick={() => onOpenRepository(repo.id)}>Open</Button>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </CardContent>

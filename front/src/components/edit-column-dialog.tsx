@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import {
+  Button, Input, Label, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle
+} from '@nicorp/nui';
 import type { Column } from '../App';
 
 interface EditColumnDialogProps {
@@ -68,7 +67,7 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
               {column ? 'Update column details.' : 'Create a new column for your board.'}
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Column Title</Label>
@@ -80,7 +79,7 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Color</Label>
               <div className="grid grid-cols-4 gap-2">
@@ -88,9 +87,8 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
                   <button
                     key={colorOption.value}
                     type="button"
-                    className={`p-3 rounded-lg border-2 flex items-center justify-center ${
-                      color === colorOption.value ? 'border-foreground' : 'border-transparent'
-                    }`}
+                    className={`p-3 rounded-lg border-2 flex items-center justify-center ${color === colorOption.value ? 'border-foreground' : 'border-transparent'
+                      }`}
                     onClick={() => setColor(colorOption.value)}
                   >
                     <div className={`w-6 h-6 rounded-full ${colorOption.value}`} />
@@ -98,7 +96,7 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
                 ))}
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange?.(false) || onCancel()}>
                 Cancel
@@ -124,7 +122,7 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
           required
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label>Color</Label>
         <div className="grid grid-cols-4 gap-2">
@@ -132,9 +130,8 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
             <button
               key={colorOption.value}
               type="button"
-              className={`p-3 rounded-lg border-2 flex items-center justify-center ${
-                color === colorOption.value ? 'border-foreground' : 'border-transparent'
-              }`}
+              className={`p-3 rounded-lg border-2 flex items-center justify-center ${color === colorOption.value ? 'border-foreground' : 'border-transparent'
+                }`}
               onClick={() => setColor(colorOption.value)}
             >
               <div className={`w-6 h-6 rounded-full ${colorOption.value}`} />
@@ -142,7 +139,7 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
           ))}
         </div>
       </div>
-      
+
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel

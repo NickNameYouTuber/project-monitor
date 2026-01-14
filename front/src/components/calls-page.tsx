@@ -5,8 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { Button } from './ui/button';
-import { cn } from './ui/utils';
+import { Button, cn } from '@nicorp/nui';
 import NewMeetingDialog from './calls/NewMeetingDialog';
 import UpcomingOverlay from './calls/UpcomingOverlay';
 import CallPage from '../features/call/pages/CallPage';

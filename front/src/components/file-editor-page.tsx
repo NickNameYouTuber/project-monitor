@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { Label } from './ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Button, Input, Textarea, Label, Tabs, TabsContent, TabsList, TabsTrigger } from '@nicorp/nui';
 import { ArrowLeft, Save, GitBranch, FileCode, Edit, Eye, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { getFileContent } from '../api/repository-content';

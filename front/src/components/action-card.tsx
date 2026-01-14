@@ -1,6 +1,5 @@
 import React from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
+import { Button, Card, CardContent } from '@nicorp/nui';
 import { ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

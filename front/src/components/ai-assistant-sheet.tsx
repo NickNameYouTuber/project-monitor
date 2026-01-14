@@ -4,14 +4,14 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from './ui/sheet';
-import { ScrollArea } from './ui/scroll-area';
-import { Textarea } from './ui/textarea';
-import { Button } from './ui/button';
+  ScrollArea,
+  Textarea,
+  Button,
+  cn,
+} from '@nicorp/nui';
 import { ChatMessage } from './chat-message';
 import { ChatList } from './chat-list';
 import { Send, Loader2, ArrowLeft, X, Sparkles } from 'lucide-react';
-import { cn } from './ui/utils';
 import type { Chat } from '../api/chat';
 import { useAIAssistant } from '../hooks/useAIAssistant';
 import { useChatHistory } from '../hooks/useChatHistory';
@@ -40,7 +40,7 @@ export function AIAssistantSheet({
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { showError } = useNotifications();
-  
+
   const { chats, loadChats, createNewChat, deleteChat } = useChatHistory(organizationId || null, projectId || null);
   const { messages, isLoading, loadChat, sendMessage, setMessages } = useAIAssistant(currentChatId);
 

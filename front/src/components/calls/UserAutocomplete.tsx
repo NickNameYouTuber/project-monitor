@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+  Popover, PopoverContent, PopoverTrigger, Button, Badge, Avatar, AvatarFallback, cn
+} from '@nicorp/nui';
 import { Check, ChevronsUpDown, X, UserPlus } from 'lucide-react';
-import { cn } from '../ui/utils';
 import { UserDto } from '../../api/users';
 import { getProjectUsers } from '../../api/project-users';
 import { listMembers } from '../../api/organization-members';

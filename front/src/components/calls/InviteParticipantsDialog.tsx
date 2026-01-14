@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import {
+    Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
+    Button, Badge, Avatar, AvatarFallback
+} from '@nicorp/nui';
 import UserAutocomplete from './UserAutocomplete';
 import { UserDto } from '../../api/users';
 import { apiClient } from '../../api/client';

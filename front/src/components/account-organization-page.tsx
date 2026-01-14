@@ -1,8 +1,6 @@
 import React from 'react';
 import { Shield, User, Mail, Calendar, Link as LinkIcon } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Separator } from './ui/separator';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Separator } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { useMainAccount, useSSOAccount } from '../hooks/useAccountContext';
 import { useCurrentOrganization } from '../hooks/useAppContext';
@@ -55,7 +53,7 @@ export function AccountOrganizationPage() {
                     </div>
                     <p className="text-lg font-medium">{ssoEmail}</p>
                   </div>
-                  
+
                   {ssoAccount && (
                     <>
                       <Separator />
@@ -66,7 +64,7 @@ export function AccountOrganizationPage() {
                         </div>
                         <p className="text-sm font-mono">{ssoAccount.sso_provider_id}</p>
                       </div>
-                      
+
                       <Separator />
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -111,7 +109,7 @@ export function AccountOrganizationPage() {
                     </div>
                     <p className="text-lg font-medium">{mainEmail}</p>
                   </div>
-                  
+
                   {mainAccount?.displayName && (
                     <>
                       <Separator />
@@ -146,7 +144,7 @@ export function AccountOrganizationPage() {
                   </div>
                   <p className="text-lg font-medium">{mainEmail}</p>
                 </div>
-                
+
                 {mainAccount?.displayName && (
                   <>
                     <Separator />
@@ -159,7 +157,7 @@ export function AccountOrganizationPage() {
                     </div>
                   </>
                 )}
-                
+
                 <Separator />
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground">

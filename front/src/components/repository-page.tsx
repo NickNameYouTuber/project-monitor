@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  GitBranch, 
-  Folder, 
-  File, 
-  Plus, 
-  Search, 
+import {
+  GitBranch,
+  Folder,
+  File,
+  Plus,
+  Search,
   Settings,
   GitMerge,
   MessageSquare,
@@ -23,19 +23,13 @@ import {
   Calendar,
   User
 } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback } from './ui/avatar';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Switch } from './ui/switch';
-import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
+import {
+  Button, Input, Card, CardContent, CardHeader, CardTitle, Badge,
+  Tabs, TabsContent, TabsList, TabsTrigger, Avatar, AvatarFallback,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Label, Textarea, Switch, ScrollArea, Separator
+} from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { MergeRequestPage } from './merge-request-page';
 import type { Project, Task } from '../App';
@@ -106,7 +100,7 @@ function FileTreeItem({ node, level = 0 }: { node: FileNode; level?: number }) {
 
   return (
     <div>
-      <div 
+      <div
         className={`flex items-center gap-2 py-1 px-2 hover:bg-accent rounded cursor-pointer`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
         onClick={() => node.type === 'folder' && setIsExpanded(!isExpanded)}
@@ -129,7 +123,7 @@ function FileTreeItem({ node, level = 0 }: { node: FileNode; level?: number }) {
           </span>
         )}
       </div>
-      
+
       {node.type === 'folder' && isExpanded && node.children && (
         <div>
           {node.children.map((child) => (
@@ -259,7 +253,7 @@ function RepositorySettings() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Select 
+          <Select
             value={settings.visibility}
             onValueChange={(value) => setSettings(prev => ({ ...prev, visibility: value }))}
           >
@@ -302,7 +296,7 @@ function RepositorySettings() {
               onCheckedChange={(checked) => setSettings(prev => ({ ...prev, protectMain: checked }))}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <Label>Require pull request reviews</Label>
@@ -334,7 +328,7 @@ function RepositorySettings() {
               onCheckedChange={(checked) => setSettings(prev => ({ ...prev, allowMergeRequests: checked }))}
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <Label>Auto-delete merged branches</Label>
@@ -392,25 +386,25 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingMR, setViewingMR] = useState<string | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
-  
+
   const repoPermissions = useRepositoryPermissions(selectedRepoId || undefined);
-  
+
   const [members, setMembers] = useState<RepositoryMemberDto[]>([]);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<UserDto[]>([]);
   const [newMemberRole, setNewMemberRole] = useState('DEVELOPER');
-  
+
   const [linkedTasks, setLinkedTasks] = useState<Task[]>([]);
-  
+
   const [isNewFileOpen, setIsNewFileOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
-  
+
   const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
   const [newBranchName, setNewBranchName] = useState('');
   const [newBranchFrom, setNewBranchFrom] = useState('');
 
   const { showSuccess, showError } = useNotifications();
-  
+
   const [repoSettings, setRepoSettings] = useState({
     name: '',
     description: '',
@@ -448,7 +442,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
     try {
       const m = await listMembers(selectedRepoId);
       setMembers(m);
-    } catch {}
+    } catch { }
   };
 
   const handleAddMember = async () => {
@@ -484,17 +478,17 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
   const handleCreateFile = async () => {
     if (!selectedRepoId || !selectedBranch || !newFileName.trim()) return;
-    
-    const fullPath = currentPath 
-      ? `${currentPath}/${newFileName}` 
+
+    const fullPath = currentPath
+      ? `${currentPath}/${newFileName}`
       : newFileName;
-    
+
     try {
       await updateFile(selectedRepoId, selectedBranch, fullPath, '', `Create ${newFileName}`);
       showSuccess('Файл создан');
       setIsNewFileOpen(false);
       setNewFileName('');
-      
+
       const fs = await listFiles(selectedRepoId, selectedBranch, currentPath || undefined);
       setEntries(fs);
     } catch {
@@ -544,7 +538,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   useEffect(() => {
     (async () => {
       if (!initialRepoId || projects.length === 0) return;
-      
+
       try {
         setIsLoading(true);
         // Try to find which project contains this repository
@@ -565,7 +559,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
         if (repos.length > 0) {
           setSelectedRepoId(repos[0].id);
         }
-      } catch {}
+      } catch { }
       finally {
         setIsLoading(false);
       }
@@ -625,9 +619,9 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
       }
     }
   }, [selectedRepoId, repositories]);
-  
+
   const selectedRepo = repositories.find(r => r.id === selectedRepoId);
-  
+
   // Вычислить активный таб из URL
   const activeTab = useMemo(() => {
     const path = location.pathname;
@@ -649,20 +643,20 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
   useEffect(() => {
     console.log('[LINKED TASKS DEBUG] Effect triggered. activeTab:', activeTab, 'selectedRepoId:', selectedRepoId);
-    
+
     if (!selectedRepoId) {
       console.log('[LINKED TASKS DEBUG] No selectedRepoId, skipping');
       setLinkedTasks([]);
       return;
     }
-    
+
     if (activeTab !== 'tasks') {
       console.log('[LINKED TASKS DEBUG] Not on tasks tab, skipping. Current tab:', activeTab);
       return;
     }
-    
+
     console.log('[LINKED TASKS DEBUG] ✅ Loading linked tasks for repository:', selectedRepoId);
-    
+
     (async () => {
       try {
         const response = await apiClient.get(`/repositories/${selectedRepoId}/tasks`);
@@ -701,16 +695,16 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   };
 
   if (isLoading) {
-    return <LoadingSpinner 
+    return <LoadingSpinner
       stages={['Locate Project', 'Connect Repo', 'Fetch Content', 'Ready']}
     />;
   }
 
   if (viewingMR) {
     return (
-      <MergeRequestPage 
-        branch={viewingMR} 
-        onBack={() => setViewingMR(null)} 
+      <MergeRequestPage
+        branch={viewingMR}
+        onBack={() => setViewingMR(null)}
       />
     );
   }
@@ -757,494 +751,494 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
             </CardContent>
           </Card>
         ) : (
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full">
-          <TabsList>
-            <TabsTrigger value="files">Files</TabsTrigger>
-            <TabsTrigger value="commits">Commits</TabsTrigger>
-            <TabsTrigger value="branches">Branches</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
-            <TabsTrigger value="merge-requests">Merge Requests</TabsTrigger>
-            <TabsTrigger value="tasks">Linked Tasks</TabsTrigger>
-            {repoPermissions.canManageSettings && (
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="files" className="space-y-4">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {branches.map(branch => (
-                      <SelectItem key={branch} value={branch}>
-                        <div className="flex items-center gap-2">
-                          <GitBranch className="w-4 h-4" />
-                          {branch}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search files..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              {repoPermissions.canEditFiles && (
-                <Dialog open={isNewFileOpen} onOpenChange={setIsNewFileOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      New File
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Создать новый файл</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Имя файла</Label>
-                      <Input
-                        value={newFileName}
-                        onChange={(e) => setNewFileName(e.target.value)}
-                        placeholder="index.js"
-                      />
-                      {currentPath && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Будет создан в: {currentPath}/
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsNewFileOpen(false)}>
-                        Отмена
-                      </Button>
-                      <Button onClick={handleCreateFile} disabled={!newFileName.trim()}>
-                        Создать
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full">
+            <TabsList>
+              <TabsTrigger value="files">Files</TabsTrigger>
+              <TabsTrigger value="commits">Commits</TabsTrigger>
+              <TabsTrigger value="branches">Branches</TabsTrigger>
+              <TabsTrigger value="members">Members</TabsTrigger>
+              <TabsTrigger value="merge-requests">Merge Requests</TabsTrigger>
+              <TabsTrigger value="tasks">Linked Tasks</TabsTrigger>
+              {repoPermissions.canManageSettings && (
+                <TabsTrigger value="settings">Settings</TabsTrigger>
               )}
-            </div>
+            </TabsList>
 
-            <Card>
-              <CardContent className="p-0">
-                <ScrollArea className="h-96">
-                  <div className="p-4">
-                    <div className="text-xs text-muted-foreground px-2 mb-2">
-                      <button 
-                        onClick={() => setCurrentPath('')}
-                        className="hover:underline hover:text-foreground transition-colors"
-                      >
-                        root
-                      </button>
-                      {currentPath && currentPath.split('/').filter(Boolean).map((seg, idx, arr) => (
-                        <span key={idx}>
-                          {' / '}
-                          <button 
-                            onClick={() => setCurrentPath(arr.slice(0, idx + 1).join('/'))}
-                            className="hover:underline hover:text-foreground transition-colors"
-                          >
-                            {seg}
-                          </button>
-                        </span>
+            <TabsContent value="files" className="space-y-4">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches.map(branch => (
+                        <SelectItem key={branch} value={branch}>
+                          <div className="flex items-center gap-2">
+                            <GitBranch className="w-4 h-4" />
+                            {branch}
+                          </div>
+                        </SelectItem>
                       ))}
-                    </div>
-                    {entries
-                      .filter(e => !searchQuery || e.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map((e, i) => (
-                        <div key={`${e.path}-${i}`} className={`flex items-center gap-2 py-1 px-2 hover:bg-accent rounded cursor-pointer`}
-                             onClick={() => {
-                               if (e.type === 'tree') {
-                                 setCurrentPath((currentPath ? currentPath + '/' : '') + e.name);
-                               } else {
-                                 handleEditFile(e.path);
-                               }
-                             }}>
-                          {e.type === 'tree' ? (
-                            <Folder className="w-4 h-4 text-blue-500" />
-                          ) : (
-                            <File className={`w-4 h-4 ${getFileIcon(e.name)}`} />
-                          )}
-                          <span className="flex-1">{e.name || 'Unnamed'}</span>
-                          {e.type === 'blob' && (
-                            <>
-                              {e.name && e.name.includes('.') && (
-                                <span className="text-xs text-muted-foreground mr-2">
-                                  .{e.name.split('.').pop()}
-                                </span>
-                              )}
-                              {e.size && (
-                                <span className="text-xs text-muted-foreground">{e.size} B</span>
-                              )}
-                            </>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search files..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {repoPermissions.canEditFiles && (
+                  <Dialog open={isNewFileOpen} onOpenChange={setIsNewFileOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        New File
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Создать новый файл</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Имя файла</Label>
+                          <Input
+                            value={newFileName}
+                            onChange={(e) => setNewFileName(e.target.value)}
+                            placeholder="index.js"
+                          />
+                          {currentPath && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Будет создан в: {currentPath}/
+                            </p>
                           )}
                         </div>
-                      ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="commits" className="space-y-4">
-            <div className="space-y-3">
-              {commits.map((commit: any, idx) => (
-                <Card 
-                  key={commit.id || commit.sha || idx}
-                  className="cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => {
-                    if (organizationId && selectedProject) {
-                      navigate(`/${organizationId}/projects/${selectedProject.id}/repository/${selectedRepoId}/commit/${commit.sha || commit.id}`);
-                    }
-                  }}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="text-xs">
-                          {(commit.author || commit.authorName || 'U')[0].toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="font-medium">{commit.message || commit.fullMessage || 'Commit'}</p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>{commit.author || commit.authorName || ''}</span>
-                          <span>{commit.date ? new Date(commit.date).toLocaleString() : ''}</span>
-                          <code className="px-2 py-1 bg-muted rounded text-xs">
-                            {(commit.id || commit.sha || '').toString().substring(0, 7)}
-                          </code>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setIsNewFileOpen(false)}>
+                            Отмена
+                          </Button>
+                          <Button onClick={handleCreateFile} disabled={!newFileName.trim()}>
+                            Создать
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {commits.length === 0 && (
-                <div className="text-sm text-muted-foreground">No commits.</div>
-              )}
-            </div>
-          </TabsContent>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
 
-          <TabsContent value="branches" className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">Ветки</h3>
-              {repoPermissions.canCreateBranch && (
-                <Dialog open={isCreateBranchOpen} onOpenChange={setIsCreateBranchOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Создать ветку
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Создать новую ветку</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Название ветки</Label>
-                      <Input
-                        value={newBranchName}
-                        onChange={(e) => setNewBranchName(e.target.value)}
-                        placeholder="feature/my-feature"
-                      />
-                    </div>
-                    <div>
-                      <Label>Создать из</Label>
-                      <Select value={newBranchFrom} onValueChange={setNewBranchFrom}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={selectedBranch} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {branches.map(b => (
-                            <SelectItem key={b} value={b}>{b}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsCreateBranchOpen(false)}>Отмена</Button>
-                      <Button onClick={handleCreateBranch}>Создать</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              )}
-            </div>
-            <div className="space-y-2">
-              {branches.map(branch => (
-                <Card key={branch}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <GitBranch className="w-4 h-4" />
-                        <span className="font-medium">{branch}</span>
-                        {branch === selectedBranch && (
-                          <Badge variant="secondary">Current</Badge>
-                        )}
+              <Card>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-96">
+                    <div className="p-4">
+                      <div className="text-xs text-muted-foreground px-2 mb-2">
+                        <button
+                          onClick={() => setCurrentPath('')}
+                          className="hover:underline hover:text-foreground transition-colors"
+                        >
+                          root
+                        </button>
+                        {currentPath && currentPath.split('/').filter(Boolean).map((seg, idx, arr) => (
+                          <span key={idx}>
+                            {' / '}
+                            <button
+                              onClick={() => setCurrentPath(arr.slice(0, idx + 1).join('/'))}
+                              className="hover:underline hover:text-foreground transition-colors"
+                            >
+                              {seg}
+                            </button>
+                          </span>
+                        ))}
                       </div>
-                      {branch !== selectedBranch && repoPermissions.canDeleteBranch && (
-                        <Button size="sm" variant="ghost" onClick={() => handleDeleteBranch(branch)}>
-                          Удалить
-                        </Button>
-                      )}
+                      {entries
+                        .filter(e => !searchQuery || e.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map((e, i) => (
+                          <div key={`${e.path}-${i}`} className={`flex items-center gap-2 py-1 px-2 hover:bg-accent rounded cursor-pointer`}
+                            onClick={() => {
+                              if (e.type === 'tree') {
+                                setCurrentPath((currentPath ? currentPath + '/' : '') + e.name);
+                              } else {
+                                handleEditFile(e.path);
+                              }
+                            }}>
+                            {e.type === 'tree' ? (
+                              <Folder className="w-4 h-4 text-blue-500" />
+                            ) : (
+                              <File className={`w-4 h-4 ${getFileIcon(e.name)}`} />
+                            )}
+                            <span className="flex-1">{e.name || 'Unnamed'}</span>
+                            {e.type === 'blob' && (
+                              <>
+                                {e.name && e.name.includes('.') && (
+                                  <span className="text-xs text-muted-foreground mr-2">
+                                    .{e.name.split('.').pop()}
+                                  </span>
+                                )}
+                                {e.size && (
+                                  <span className="text-xs text-muted-foreground">{e.size} B</span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ))}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabsContent value="members" className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">Участники</h3>
-              {repoPermissions.canManageMembers && (
-                <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Добавить участника
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Добавить участника</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <UserAutocomplete
-                        selectedUsers={selectedUsers}
-                        onUsersChange={setSelectedUsers}
-                        label="Выберите пользователей"
-                        projectId={selectedProject?.id}
-                      />
-                    </div>
-                    <div>
-                      <Label>Роль</Label>
-                      <Select value={newMemberRole} onValueChange={setNewMemberRole}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="OWNER">Owner</SelectItem>
-                          <SelectItem value="MAINTAINER">Maintainer</SelectItem>
-                          <SelectItem value="DEVELOPER">Developer</SelectItem>
-                          <SelectItem value="REPORTER">Reporter</SelectItem>
-                          <SelectItem value="VIEWER">Viewer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>Отмена</Button>
-                      <Button onClick={handleAddMember} disabled={selectedUsers.length === 0}>Добавить</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              )}
-            </div>
-            <div className="space-y-2">
-              {members.length === 0 ? (
-                <Card>
-                  <CardContent className="p-4 text-center text-muted-foreground">
-                    Нет участников
-                  </CardContent>
-                </Card>
-              ) : (
-                members.map(member => (
-                  <Card key={member.id}>
+            <TabsContent value="commits" className="space-y-4">
+              <div className="space-y-3">
+                {commits.map((commit: any, idx) => (
+                  <Card
+                    key={commit.id || commit.sha || idx}
+                    className="cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => {
+                      if (organizationId && selectedProject) {
+                        navigate(`/${organizationId}/projects/${selectedProject.id}/repository/${selectedRepoId}/commit/${commit.sha || commit.id}`);
+                      }
+                    }}
+                  >
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-8 h-8">
-                            <AvatarFallback>
-                              {(member.user?.username || 'U').substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{member.user?.username || member.user_id}</div>
-                            <RoleBadge role={member.role} type="repository" variant="secondary" />
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className="text-xs">
+                            {(commit.author || commit.authorName || 'U')[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium">{commit.message || commit.fullMessage || 'Commit'}</p>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>{commit.author || commit.authorName || ''}</span>
+                            <span>{commit.date ? new Date(commit.date).toLocaleString() : ''}</span>
+                            <code className="px-2 py-1 bg-muted rounded text-xs">
+                              {(commit.id || commit.sha || '').toString().substring(0, 7)}
+                            </code>
                           </div>
                         </div>
-                        {repoPermissions.canManageMembers && (
-                          <Button size="sm" variant="ghost" onClick={() => handleRemoveMember(member.id)}>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {commits.length === 0 && (
+                  <div className="text-sm text-muted-foreground">No commits.</div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="branches" className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium">Ветки</h3>
+                {repoPermissions.canCreateBranch && (
+                  <Dialog open={isCreateBranchOpen} onOpenChange={setIsCreateBranchOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Создать ветку
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Создать новую ветку</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Название ветки</Label>
+                          <Input
+                            value={newBranchName}
+                            onChange={(e) => setNewBranchName(e.target.value)}
+                            placeholder="feature/my-feature"
+                          />
+                        </div>
+                        <div>
+                          <Label>Создать из</Label>
+                          <Select value={newBranchFrom} onValueChange={setNewBranchFrom}>
+                            <SelectTrigger>
+                              <SelectValue placeholder={selectedBranch} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {branches.map(b => (
+                                <SelectItem key={b} value={b}>{b}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setIsCreateBranchOpen(false)}>Отмена</Button>
+                          <Button onClick={handleCreateBranch}>Создать</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
+              <div className="space-y-2">
+                {branches.map(branch => (
+                  <Card key={branch}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <GitBranch className="w-4 h-4" />
+                          <span className="font-medium">{branch}</span>
+                          {branch === selectedBranch && (
+                            <Badge variant="secondary">Current</Badge>
+                          )}
+                        </div>
+                        {branch !== selectedBranch && repoPermissions.canDeleteBranch && (
+                          <Button size="sm" variant="ghost" onClick={() => handleDeleteBranch(branch)}>
                             Удалить
                           </Button>
                         )}
                       </div>
                     </CardContent>
                   </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
+                ))}
+              </div>
+            </TabsContent>
 
-          <TabsContent value="merge-requests" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Merge Requests</h3>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                New Merge Request
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              {[].map((mr) => (
-                <MergeRequestCard key={mr.id} mr={mr} onViewMR={setViewingMR} />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="tasks" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Linked Tasks</h3>
-              <Badge variant="secondary">{linkedTasks.length} tasks</Badge>
-            </div>
-            
-            <div className="space-y-3">
-              {linkedTasks.map((task) => (
-                <Card 
-                  key={task.id}
-                  className="cursor-pointer hover:bg-accent transition-colors"
-                  onClick={() => handleTaskClick(task)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline">{task.priority}</Badge>
-                      <div className="flex-1">
-                        <p className="font-medium">{task.title}</p>
-                        <p className="text-sm text-muted-foreground">{task.description}</p>
-                      </div>
-                      {task.repositoryInfo && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <GitBranch className="w-4 h-4" />
-                          <code className="px-2 py-1 bg-muted rounded text-xs">
-                            {task.repositoryInfo.branch}
-                          </code>
+            <TabsContent value="members" className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium">Участники</h3>
+                {repoPermissions.canManageMembers && (
+                  <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Добавить участника
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Добавить участника</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <UserAutocomplete
+                            selectedUsers={selectedUsers}
+                            onUsersChange={setSelectedUsers}
+                            label="Выберите пользователей"
+                            projectId={selectedProject?.id}
+                          />
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              
-              {linkedTasks.length === 0 && (
-                <div className="text-center py-8">
-                  <Code className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-medium mb-2">No linked tasks</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tasks with repository branches will appear here.
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
+                        <div>
+                          <Label>Роль</Label>
+                          <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="OWNER">Owner</SelectItem>
+                              <SelectItem value="MAINTAINER">Maintainer</SelectItem>
+                              <SelectItem value="DEVELOPER">Developer</SelectItem>
+                              <SelectItem value="REPORTER">Reporter</SelectItem>
+                              <SelectItem value="VIEWER">Viewer</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>Отмена</Button>
+                          <Button onClick={handleAddMember} disabled={selectedUsers.length === 0}>Добавить</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
+              <div className="space-y-2">
+                {members.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-4 text-center text-muted-foreground">
+                      Нет участников
+                    </CardContent>
+                  </Card>
+                ) : (
+                  members.map(member => (
+                    <Card key={member.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarFallback>
+                                {(member.user?.username || 'U').substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{member.user?.username || member.user_id}</div>
+                              <RoleBadge role={member.role} type="repository" variant="secondary" />
+                            </div>
+                          </div>
+                          {repoPermissions.canManageMembers && (
+                            <Button size="sm" variant="ghost" onClick={() => handleRemoveMember(member.id)}>
+                              Удалить
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </TabsContent>
 
-          <TabsContent value="settings" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Настройки репозитория</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Название</Label>
-                  <Input
-                    value={repoSettings.name}
-                    onChange={(e) => setRepoSettings(prev => ({ ...prev, name: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>Описание</Label>
-                  <Textarea
-                    value={repoSettings.description}
-                    onChange={(e) => setRepoSettings(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+            <TabsContent value="merge-requests" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Merge Requests</h3>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Merge Request
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {[].map((mr) => (
+                  <MergeRequestCard key={mr.id} mr={mr} onViewMR={setViewingMR} />
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="tasks" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Linked Tasks</h3>
+                <Badge variant="secondary">{linkedTasks.length} tasks</Badge>
+              </div>
+
+              <div className="space-y-3">
+                {linkedTasks.map((task) => (
+                  <Card
+                    key={task.id}
+                    className="cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleTaskClick(task)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline">{task.priority}</Badge>
+                        <div className="flex-1">
+                          <p className="font-medium">{task.title}</p>
+                          <p className="text-sm text-muted-foreground">{task.description}</p>
+                        </div>
+                        {task.repositoryInfo && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <GitBranch className="w-4 h-4" />
+                            <code className="px-2 py-1 bg-muted rounded text-xs">
+                              {task.repositoryInfo.branch}
+                            </code>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {linkedTasks.length === 0 && (
+                  <div className="text-center py-8">
+                    <Code className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-medium mb-2">No linked tasks</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Tasks with repository branches will appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Настройки репозитория</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div>
-                    <Label>Default Branch</Label>
+                    <Label>Название</Label>
                     <Input
-                      value={repoSettings.default_branch}
-                      onChange={(e) => setRepoSettings(prev => ({ ...prev, default_branch: e.target.value }))}
+                      value={repoSettings.name}
+                      onChange={(e) => setRepoSettings(prev => ({ ...prev, name: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <Label>Видимость</Label>
-                    <Select value={repoSettings.visibility} onValueChange={(v) => setRepoSettings(prev => ({ ...prev, visibility: v }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="private">Private</SelectItem>
-                        <SelectItem value="public">Public</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveSettings}>Сохранить изменения</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Code className="w-5 h-5" />
-                  Клонирование репозитория
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Clone URL</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input 
-                      value={`https://nit.nicorp.tech/git/${selectedRepoId}.git`} 
-                      readOnly 
-                      className="font-mono text-sm"
+                    <Label>Описание</Label>
+                    <Textarea
+                      value={repoSettings.description}
+                      onChange={(e) => setRepoSettings(prev => ({ ...prev, description: e.target.value }))}
+                      rows={3}
                     />
-                    <Button 
-                      size="icon"
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(`git clone https://nit.nicorp.tech/git/${selectedRepoId}.git`);
-                        showSuccess('Команда скопирована');
-                      }}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Используйте эту команду для клонирования репозитория локально
-                  </p>
-                </div>
-                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                  <p className="text-sm font-medium">Git команды:</p>
-                  <code className="text-xs block bg-background p-2 rounded">
-                    git clone https://nit.nicorp.tech/git/{selectedRepoId}.git
-                  </code>
-                  <code className="text-xs block bg-background p-2 rounded mt-1">
-                    git remote add origin https://nit.nicorp.tech/git/{selectedRepoId}.git
-                  </code>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Default Branch</Label>
+                      <Input
+                        value={repoSettings.default_branch}
+                        onChange={(e) => setRepoSettings(prev => ({ ...prev, default_branch: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Видимость</Label>
+                      <Select value={repoSettings.visibility} onValueChange={(v) => setRepoSettings(prev => ({ ...prev, visibility: v }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="private">Private</SelectItem>
+                          <SelectItem value="public">Public</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={handleSaveSettings}>Сохранить изменения</Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Code className="w-5 h-5" />
+                    Клонирование репозитория
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Clone URL</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        value={`https://nit.nicorp.tech/git/${selectedRepoId}.git`}
+                        readOnly
+                        className="font-mono text-sm"
+                      />
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`git clone https://nit.nicorp.tech/git/${selectedRepoId}.git`);
+                          showSuccess('Команда скопирована');
+                        }}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Используйте эту команду для клонирования репозитория локально
+                    </p>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                    <p className="text-sm font-medium">Git команды:</p>
+                    <code className="text-xs block bg-background p-2 rounded">
+                      git clone https://nit.nicorp.tech/git/{selectedRepoId}.git
+                    </code>
+                    <code className="text-xs block bg-background p-2 rounded mt-1">
+                      git remote add origin https://nit.nicorp.tech/git/{selectedRepoId}.git
+                    </code>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </div>

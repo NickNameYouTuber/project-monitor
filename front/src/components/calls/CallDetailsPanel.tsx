@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { CallResponse, CallParticipant, getCallParticipants } from '../../api/calls';
 import { X, Video, Calendar, Clock, Users, Tag, Copy, Check } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Button, Avatar, AvatarFallback } from '@nicorp/nui';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Avatar, AvatarFallback } from '../ui/avatar';
 
 interface CallDetailsPanelProps {
   call: CallResponse | null;
@@ -20,7 +19,7 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
 
   useEffect(() => {
     if (!call || !open) return;
-    
+
     const loadParticipants = async () => {
       setLoadingParticipants(true);
       try {
@@ -36,7 +35,7 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
         setLoadingParticipants(false);
       }
     };
-    
+
     loadParticipants();
   }, [call?.id, open]);
 
@@ -103,17 +102,15 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
     <>
       {/* Overlay */}
       <div
-        className={`fixed inset-0 bg-black/20 transition-opacity z-40 ${
-          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 bg-black/20 transition-opacity z-40 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={onClose}
       />
 
       {/* Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-96 bg-background border-l border-border shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col ${
-          open ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed top-0 right-0 h-full w-96 bg-background border-l border-border shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col ${open ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../../ui/card';
-import { Button } from '../../ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, Button, cn } from '@nicorp/nui';
 import { AlertTriangle, Check, X } from 'lucide-react';
-import { cn } from '../../ui/utils';
 
 import { ClientAction } from '../../../lib/client-actions';
 

@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input } from './ui/input';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from './ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import {
+  Input, Command, CommandEmpty, CommandGroup, CommandItem,
+  Popover, PopoverContent, PopoverTrigger, cn
+} from '@nicorp/nui';
 import { Check, ChevronDown } from 'lucide-react';
-import { cn } from './ui/utils';
 
 interface AutocompleteInputProps {
   value: string;
@@ -91,11 +91,11 @@ export function AutocompleteInput({
                   onSelect={() => handleSelectSuggestion(suggestion)}
                   className="cursor-pointer"
                 >
-                  <Check 
+                  <Check
                     className={cn(
                       "mr-2 h-4 w-4",
                       value === suggestion ? "opacity-100" : "opacity-0"
-                    )} 
+                    )}
                   />
                   {suggestion}
                 </CommandItem>
