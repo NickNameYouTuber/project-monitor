@@ -1,14 +1,15 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } from '@nicorp/nui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button, Box, Flex, VStack, Heading, Text } from '@nicorp/nui';
 import { AlertTriangle } from 'lucide-react';
 
 interface AdvancedTabProps {
     project: any;
+    permissions?: any;
 }
 
 export function AdvancedTab({ project }: AdvancedTabProps) {
     return (
-        <div className="space-y-6">
+        <VStack className="space-y-6">
             <Card className="border-destructive/50 bg-destructive/5">
                 <CardHeader>
                     <CardTitle className="text-destructive flex items-center gap-2">
@@ -20,17 +21,17 @@ export function AdvancedTab({ project }: AdvancedTabProps) {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-background/50">
-                        <div>
-                            <h4 className="font-medium text-foreground">Delete Project</h4>
-                            <p className="text-sm text-muted-foreground">
+                    <Flex className="items-center justify-between p-4 border border-destructive/20 rounded-lg bg-background/50">
+                        <Box>
+                            <Heading level={4} className="font-medium text-foreground">Delete Project</Heading>
+                            <Text size="sm" variant="muted">
                                 Permanently remove this project and all its data.
-                            </p>
-                        </div>
+                            </Text>
+                        </Box>
                         <Button variant="destructive">Delete Project</Button>
-                    </div>
+                    </Flex>
                 </CardContent>
             </Card>
-        </div>
+        </VStack>
     );
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Building2, XCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } from '@nicorp/nui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button, Box, Flex, Text } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { useNotifications } from '../hooks/useNotifications';
 import { getInviteInfo, acceptInvite } from '../api/organization-invites';
@@ -57,63 +57,63 @@ export function InvitePage() {
 
   if (error || !invite) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <Flex className="h-full items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
-            <div className="flex items-center gap-3">
+            <Flex className="items-center gap-3">
               <XCircle className="w-8 h-8 text-destructive" />
               <CardTitle>Invalid Invitation</CardTitle>
-            </div>
+            </Flex>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{error || 'This invitation link is invalid or has expired.'}</p>
+            <Text className="text-muted-foreground">{error || 'This invitation link is invalid or has expired.'}</Text>
             <Button className="mt-4" onClick={() => navigate('/organizations')}>
               Back to Organizations
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </Flex>
     );
   }
 
   return (
-    <div className="h-full flex items-center justify-center">
+    <Flex className="h-full items-center justify-center">
       <Card className="max-w-md">
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+          <Flex className="items-center gap-3">
+            <Flex className="w-12 h-12 bg-primary/10 rounded-lg items-center justify-center">
               <Building2 className="w-6 h-6 text-primary" />
-            </div>
-            <div>
+            </Flex>
+            <Box>
               <CardTitle>Join Organization</CardTitle>
               <CardDescription>{invite.organization_name}</CardDescription>
-            </div>
-          </div>
+            </Box>
+          </Flex>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <p className="text-sm text-muted-foreground">
-              You've been invited to join <span className="font-medium text-foreground">{invite.organization_name}</span> as a <span className="font-medium text-foreground">{invite.role}</span>.
-            </p>
-          </div>
+          <Box>
+            <Text className="text-sm text-muted-foreground">
+              You've been invited to join <Text as="span" className="font-medium text-foreground">{invite.organization_name}</Text> as a <Text as="span" className="font-medium text-foreground">{invite.role}</Text>.
+            </Text>
+          </Box>
 
           {invite.expires_at && (
-            <p className="text-xs text-muted-foreground">
+            <Text className="text-xs text-muted-foreground">
               This invitation expires on {new Date(invite.expires_at).toLocaleDateString()}
-            </p>
+            </Text>
           )}
 
-          <div className="flex gap-2 pt-4">
+          <Flex className="gap-2 pt-4">
             <Button variant="outline" onClick={() => navigate('/organizations')} className="flex-1">
               Decline
             </Button>
             <Button onClick={handleAccept} disabled={accepting} className="flex-1">
               {accepting ? 'Joining...' : 'Accept Invitation'}
             </Button>
-          </div>
+          </Flex>
         </CardContent>
       </Card>
-    </div>
+    </Flex>
   );
 }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Input, Textarea, Label, Tabs, TabsContent, TabsList, TabsTrigger } from '@nicorp/nui';
+import { Button, Input, Textarea, Label, Tabs, TabsContent, TabsList, TabsTrigger, Box, Flex, VStack, Heading, Text } from '@nicorp/nui';
 import { ArrowLeft, Save, GitBranch, FileCode, Edit, Eye, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { getFileContent } from '../api/repository-content';
@@ -188,8 +188,8 @@ export function FileEditorPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      <div className="w-64 border-r border-border flex-shrink-0 hidden md:block">
+    <Flex className="h-screen bg-background">
+      <Box className="w-64 border-r border-border flex-shrink-0 hidden md:block">
         <FileTree
           repoId={repoId || ''}
           branch={branch}
@@ -198,27 +198,27 @@ export function FileEditorPage() {
           onBranchChange={handleBranchChange}
           branches={branches}
         />
-      </div>
+      </Box>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <Flex className="flex-1 flex-col min-w-0">
         {isLoading ? (
-          <div className="flex-1 flex items-center justify-center">
+          <Flex className="flex-1 items-center justify-center">
             <LoadingSpinner stages={['Loading File', 'Parse Content', 'Ready']} />
-          </div>
+          </Flex>
         ) : (
           <>
-            <div className="border-b border-border px-4 py-3 flex-shrink-0">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-2">
+            <Box className="border-b border-border px-4 py-3 flex-shrink-0">
+              <Flex className="flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <Flex className="items-center gap-2">
                   <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
                     <ArrowLeft className="w-4 h-4" />
                   </Button>
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <Flex className="items-center gap-2 min-w-0 flex-1">
                     <FileCode className="w-5 h-5 flex-shrink-0" />
-                    <h1 className="text-sm sm:text-base font-semibold truncate">{filePath.split('/').pop()}</h1>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
+                    <Heading level={1} className="text-sm sm:text-base font-semibold truncate">{filePath.split('/').pop()}</Heading>
+                  </Flex>
+                </Flex>
+                <Flex className="items-center gap-2">
                   {!isBinaryImage(filePath) && (
                     !isEditing ? (
                       <Button size="sm" onClick={() => setIsEditing(true)}>
@@ -237,14 +237,14 @@ export function FileEditorPage() {
                       </>
                     )
                   )}
-                </div>
-              </div>
-            </div>
+                </Flex>
+              </Flex>
+            </Box>
 
-            <div className="flex-1 overflow-hidden">
+            <Box className="flex-1 overflow-hidden">
               {isBinaryImage(filePath) ? (
                 // Бинарные изображения (PNG, JPG и т.д.) - только просмотр
-                <div className="flex items-center justify-center h-full p-6 bg-muted/20">
+                <Flex className="items-center justify-center h-full p-6 bg-muted/20">
                   {imageUrl ? (
                     <img
                       src={imageUrl}
@@ -252,15 +252,15 @@ export function FileEditorPage() {
                       className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
                     />
                   ) : (
-                    <div className="text-muted-foreground">Загрузка изображения...</div>
+                    <Text className="text-muted-foreground">Загрузка изображения...</Text>
                   )}
-                </div>
+                </Flex>
               ) : (
                 // Текстовые файлы, SVG, Markdown
-                <div className="h-full flex flex-col">
+                <Flex className="h-full flex-col">
                   {/* Табы для Markdown или SVG */}
                   {(isMarkdown || isSvg) && (
-                    <div className="border-b border-border px-4 py-2">
+                    <Box className="border-b border-border px-4 py-2">
                       <Tabs
                         value={isMarkdown ? markdownMode : svgMode}
                         onValueChange={(v) => {
@@ -273,29 +273,29 @@ export function FileEditorPage() {
                           <TabsTrigger value="preview">Preview</TabsTrigger>
                         </TabsList>
                       </Tabs>
-                    </div>
+                    </Box>
                   )}
 
-                  <div className="flex-1 overflow-auto p-4">
+                  <Box className="flex-1 overflow-auto p-4">
                     {isMarkdown && markdownMode === 'preview' ? (
                       // Markdown preview
-                      <div className="prose dark:prose-invert max-w-none">
+                      <Box className="prose dark:prose-invert max-w-none">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {content}
                         </ReactMarkdown>
-                      </div>
+                      </Box>
                     ) : isSvg && svgMode === 'preview' ? (
                       // SVG preview
-                      <div className="flex items-center justify-center h-full bg-muted/20">
+                      <Flex className="items-center justify-center h-full bg-muted/20">
                         <div
                           dangerouslySetInnerHTML={{ __html: content }}
                           className="max-w-full max-h-full"
                         />
-                      </div>
+                      </Flex>
                     ) : isEditing ? (
                       // Режим редактирования с подсветкой синтаксиса
-                      <div className="h-full flex flex-col gap-3">
-                        <div className="flex-1 overflow-auto border rounded-lg">
+                      <Flex className="h-full flex-col gap-3">
+                        <Box className="flex-1 overflow-auto border rounded-lg">
                           <Editor
                             value={content}
                             onValueChange={setContent}
@@ -311,17 +311,16 @@ export function FileEditorPage() {
                             textareaClassName="focus:outline-none"
                             placeholder="Начните вводить код..."
                           />
-                        </div>
-                        <div>
+                        </Box>
+                        <VStack className="space-y-2">
                           <Label className="text-sm font-medium">Commit message</Label>
                           <Input
                             value={commitMessage}
                             onChange={(e) => setCommitMessage(e.target.value)}
                             placeholder="Update file"
-                            className="mt-2"
                           />
-                        </div>
-                      </div>
+                        </VStack>
+                      </Flex>
                     ) : (
                       // Режим просмотра с подсветкой синтаксиса
                       <SyntaxHighlighter
@@ -338,14 +337,14 @@ export function FileEditorPage() {
                         {content}
                       </SyntaxHighlighter>
                     )}
-                  </div>
-                </div>
+                  </Box>
+                </Flex>
               )}
-            </div>
+            </Box>
           </>
         )}
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   );
 }
 

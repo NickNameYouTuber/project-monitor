@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { CallResponse } from '../../api/calls';
 import { Users, Target, Play } from 'lucide-react';
+import { Box, Flex, Heading, Text, Badge, Button } from '@nicorp/nui';
 
 interface CallCardProps {
   call: CallResponse;
@@ -15,18 +16,18 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
   const getActualStatus = (): string => {
     const now = new Date();
     const apiStatus = call.status?.toUpperCase();
-    
+
     // Если API говорит COMPLETED/CANCELLED - верим ему
     if (apiStatus === 'COMPLETED' || apiStatus === 'CANCELLED') {
       return apiStatus;
     }
-    
+
     const timeStr = call.scheduled_time || call.start_at;
     if (!timeStr) return apiStatus || 'SCHEDULED';
-    
+
     const startTime = new Date(timeStr);
     const endTime = new Date(startTime.getTime() + (call.duration_minutes || 30) * 60000);
-    
+
     // Если API говорит ACTIVE, проверяем что время корректное
     if (apiStatus === 'ACTIVE') {
       if (startTime <= now && now < endTime) {
@@ -37,7 +38,7 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
       }
       return 'SCHEDULED';
     }
-    
+
     // Если SCHEDULED, проверяем время
     if (apiStatus === 'SCHEDULED') {
       if (startTime <= now && now < endTime) {
@@ -47,12 +48,12 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
         return 'COMPLETED';
       }
     }
-    
+
     return apiStatus || 'SCHEDULED';
   };
 
   const actualStatus = getActualStatus();
-  
+
   const shouldAnimate = actualStatus === 'ACTIVE' && !animatedCallsRef.has(call.id);
   if (shouldAnimate) {
     animatedCallsRef.add(call.id);
@@ -98,11 +99,11 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
     if (!call.scheduled_time) return '';
     const start = formatTime(call.scheduled_time);
     if (!call.duration_minutes) return start;
-    
+
     const startDate = new Date(call.scheduled_time);
     const endDate = new Date(startDate.getTime() + call.duration_minutes * 60000);
     const end = formatTime(endDate.toISOString());
-    
+
     return `${start} - ${end}`;
   };
 
@@ -110,7 +111,7 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
     // Для компактного режима показываем только время начала и длительность
     const startTime = formatTime(call.scheduled_time || call.start_at);
     const duration = formatDuration(call.duration_minutes);
-    
+
     return (
       <div
         onClick={onClick}
@@ -133,7 +134,7 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
   }
 
   return (
-    <div
+    <Box
       onClick={onClick}
       className={`
         rounded-lg border-2 p-3 cursor-pointer
@@ -141,31 +142,31 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
         ${getStatusColor(actualStatus)}
       `}
     >
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
+      <Flex className="items-start justify-between mb-2">
+        <Flex className="items-center gap-2">
           {getStatusIcon(actualStatus)}
-          <h3 className="font-medium text-sm">{call.title || 'Без названия'}</h3>
-        </div>
-      </div>
+          <Heading level={4} className="font-medium text-sm">{call.title || 'Без названия'}</Heading>
+        </Flex>
+      </Flex>
 
-      <div className="space-y-1 text-xs text-muted-foreground">
-        <div>{getTimeRange()}</div>
+      <Box className="space-y-1 text-xs text-muted-foreground">
+        <Box>{getTimeRange()}</Box>
         {call.duration_minutes && (
-          <div className="flex items-center gap-1">
-            <span>⏱</span>
-            <span>{formatDuration(call.duration_minutes)}</span>
-          </div>
+          <Flex className="items-center gap-1">
+            <Text as="span">⏱</Text>
+            <Text as="span">{formatDuration(call.duration_minutes)}</Text>
+          </Flex>
         )}
         {call.task_id && (
-          <div className="flex items-center gap-1">
+          <Flex className="items-center gap-1">
             <Target className="w-3 h-3" />
-            <span>Задача</span>
-          </div>
+            <Text as="span">Задача</Text>
+          </Flex>
         )}
-      </div>
+      </Box>
 
       {actualStatus === 'ACTIVE' && (
-        <button
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             window.open(`/call/${call.room_id}`, '_blank');
@@ -174,9 +175,9 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
         >
           <Play className="w-3 h-3" />
           Присоединиться
-        </button>
+        </Button>
       )}
-    </div>
+    </Box>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     Card, CardContent, CardDescription, CardHeader, CardTitle, Button,
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
-    Input, Label
+    Input, Label, Box, Flex, Grid, VStack, Text, Badge
 } from '@nicorp/nui';
 import { Plus, Trash2, Pencil, Shield } from 'lucide-react';
 import { PermissionsMatrix } from './permissions-matrix';
@@ -104,37 +104,37 @@ export function RolesTab({ organizationId, canManageRoles }: RolesTabProps) {
     if (loading) return <LoadingSpinner stages={['Loading roles...']} />;
 
     return (
-        <div className="space-y-6">
+        <VStack className="space-y-6">
             <Card>
                 <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div>
+                    <Flex className="justify-between items-center">
+                        <Box>
                             <CardTitle>Organization Roles</CardTitle>
                             <CardDescription>Define roles and permissions for your members</CardDescription>
-                        </div>
+                        </Box>
                         {canManageRoles && (
                             <Button onClick={handleCreateClick}>
                                 <Plus className="w-4 h-4 mr-2" />
                                 Create Role
                             </Button>
                         )}
-                    </div>
+                    </Flex>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-4">
+                    <VStack className="space-y-4">
                         {roles.map(role => (
-                            <div key={role.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                                <div className="flex items-center gap-4">
+                            <Flex key={role.id} className="items-center justify-between p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                                <Flex className="items-center gap-4">
                                     <RoleBadge role={role} />
-                                    <div className="text-sm text-muted-foreground">
+                                    <Text className="text-sm text-muted-foreground">
                                         {role.permissions.length} permissions
-                                    </div>
+                                    </Text>
                                     {role.systemDefault && (
-                                        <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-muted-foreground">System Default</span>
+                                        <Badge variant="secondary" className="text-xs">System Default</Badge>
                                     )}
-                                </div>
+                                </Flex>
                                 {canManageRoles && (
-                                    <div className="flex items-center gap-2">
+                                    <Flex className="items-center gap-2">
                                         <Button variant="ghost" size="sm" onClick={() => handleEditClick(role)}>
                                             <Pencil className="w-4 h-4 mr-2" />
                                             Edit
@@ -144,11 +144,11 @@ export function RolesTab({ organizationId, canManageRoles }: RolesTabProps) {
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>
                                         )}
-                                    </div>
+                                    </Flex>
                                 )}
-                            </div>
+                            </Flex>
                         ))}
-                    </div>
+                    </VStack>
                 </CardContent>
             </Card>
 
@@ -159,9 +159,9 @@ export function RolesTab({ organizationId, canManageRoles }: RolesTabProps) {
                         <DialogDescription>Configure role details and permissions</DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-6 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                    <VStack className="space-y-6 py-4">
+                        <Grid className="grid-cols-2 gap-4">
+                            <VStack className="space-y-2">
                                 <Label>Role Name</Label>
                                 <Input
                                     value={roleName}
@@ -169,11 +169,11 @@ export function RolesTab({ organizationId, canManageRoles }: RolesTabProps) {
                                     placeholder="e.g. Project Manager"
                                     disabled={editingRole?.systemDefault}
                                 />
-                                {editingRole?.systemDefault && <p className="text-xs text-muted-foreground">System default role names cannot be changed</p>}
-                            </div>
-                            <div className="space-y-2">
+                                {editingRole?.systemDefault && <Text className="text-xs text-muted-foreground">System default role names cannot be changed</Text>}
+                            </VStack>
+                            <VStack className="space-y-2">
                                 <Label>Color</Label>
-                                <div className="flex gap-2">
+                                <Flex className="gap-2">
                                     <Input
                                         type="color"
                                         value={roleColor}
@@ -185,19 +185,19 @@ export function RolesTab({ organizationId, canManageRoles }: RolesTabProps) {
                                         onChange={e => setRoleColor(e.target.value)}
                                         placeholder="#000000"
                                     />
-                                </div>
-                            </div>
-                        </div>
+                                </Flex>
+                            </VStack>
+                        </Grid>
 
-                        <div className="space-y-2">
+                        <VStack className="space-y-2">
                             <Label>Permissions</Label>
                             <PermissionsMatrix
                                 selectedPermissions={rolePermissions}
                                 onChange={setRolePermissions}
                                 readOnly={!canManageRoles}
                             />
-                        </div>
-                    </div>
+                        </VStack>
+                    </VStack>
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
@@ -207,6 +207,6 @@ export function RolesTab({ organizationId, canManageRoles }: RolesTabProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </VStack>
     );
 }

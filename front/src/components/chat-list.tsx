@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollArea, Button, cn } from '@nicorp/nui';
+import { ScrollArea, Button, cn, Box, Flex, Heading, Text } from '@nicorp/nui';
 import { Plus, MessageSquare, Trash2, Sparkles, X } from 'lucide-react';
 
 import type { Chat } from '../api/chat';
@@ -24,16 +24,16 @@ export function ChatList({
   hideHeader
 }: ChatListProps) {
   return (
-    <div className="flex flex-col h-full w-full bg-background">
+    <Flex className="flex-col h-full w-full bg-background">
       {/* Шапка */}
       {!hideHeader && (
-        <div className="flex items-center justify-between p-4 border-b border-border bg-background flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+        <Flex className="items-center justify-between p-4 border-b border-border bg-background flex-shrink-0">
+          <Flex className="items-center gap-2">
+            <Box className="p-2 rounded-lg bg-primary/10 text-primary">
               <Sparkles className="w-5 h-5" />
-            </div>
-            <h2 className="text-foreground text-lg font-semibold">AI Assistant</h2>
-          </div>
+            </Box>
+            <Heading level={5} className="text-foreground text-lg font-semibold">AI Assistant</Heading>
+          </Flex>
           {onClose && (
             <Button
               variant="ghost"
@@ -45,11 +45,11 @@ export function ChatList({
               <X className="w-5 h-5" />
             </Button>
           )}
-        </div>
+        </Flex>
       )}
 
       {/* Кнопка создания нового чата */}
-      <div className="p-4 border-b border-border bg-background flex-shrink-0">
+      <Box className="p-4 border-b border-border bg-background flex-shrink-0">
         <Button
           onClick={onCreateChat}
           size="sm"
@@ -59,13 +59,13 @@ export function ChatList({
           <Plus className="w-4 h-4" />
           Новый чат
         </Button>
-      </div>
+      </Box>
 
       {/* Список чатов */}
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1">
+        <Box className="p-2 space-y-1">
           {chats.map((chat) => (
-            <div
+            <Box
               key={chat.id}
               className={cn(
                 "group relative flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors bg-card border border-border hover:bg-muted",
@@ -73,22 +73,22 @@ export function ChatList({
               )}
               onClick={() => onSelectChat(chat.id)}
             >
-              <div className="flex-shrink-0 p-2 rounded-lg bg-primary/10 text-primary">
+              <Box className="flex-shrink-0 p-2 rounded-lg bg-primary/10 text-primary">
                 <MessageSquare className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate text-foreground">{chat.title || 'Без названия'}</p>
+              </Box>
+              <Box className="flex-1 min-w-0">
+                <Text className="text-sm font-medium truncate text-foreground">{chat.title || 'Без названия'}</Text>
                 {chat.updatedAt && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <Text className="text-xs text-muted-foreground mt-1">
                     {new Date(chat.updatedAt).toLocaleDateString('ru-RU', {
                       day: 'numeric',
                       month: 'short',
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
-                  </p>
+                  </Text>
                 )}
-              </div>
+              </Box>
               <Button
                 size="icon"
                 variant="ghost"
@@ -101,17 +101,17 @@ export function ChatList({
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
-            </div>
+            </Box>
           ))}
           {chats.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div className="p-4 rounded-full bg-muted mb-4">
+            <Flex className="flex-col items-center justify-center py-16 px-4 text-center">
+              <Box className="p-4 rounded-full bg-muted mb-4">
                 <MessageSquare className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <p className="text-sm font-medium text-foreground mb-2">Нет чатов</p>
-              <p className="text-xs text-muted-foreground mb-4">
+              </Box>
+              <Text className="text-sm font-medium text-foreground mb-2">Нет чатов</Text>
+              <Text className="text-xs text-muted-foreground mb-4">
                 Создайте новый чат, чтобы начать общение с AI ассистентом
-              </p>
+              </Text>
               <Button
                 onClick={onCreateChat}
                 size="sm"
@@ -121,11 +121,11 @@ export function ChatList({
                 <Plus className="w-4 h-4" />
                 Создать чат
               </Button>
-            </div>
+            </Flex>
           )}
-        </div>
+        </Box>
       </ScrollArea>
-    </div>
+    </Flex>
   );
 }
 

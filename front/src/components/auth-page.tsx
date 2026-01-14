@@ -1,21 +1,21 @@
 import React from 'react';
 import { GitBranch } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@nicorp/nui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Box, Flex, Heading, Text } from '@nicorp/nui';
 import { LoginButton } from '@niid/sdk/react';
 import '@niid/sdk/styles';
 
 export function AuthPage() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <Flex className="min-h-screen bg-background items-center justify-center p-4">
+      <Box className="w-full max-w-md">
         {/* Logo/Brand */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+        <Box className="text-center mb-8">
+          <Flex className="w-16 h-16 bg-primary rounded-xl items-center justify-center mx-auto mb-4">
             <GitBranch className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold">NIGIt</h1>
-          <p className="text-muted-foreground">Project management made simple</p>
-        </div>
+          </Flex>
+          <Heading level={1} className="text-2xl font-bold">NIGIt</Heading>
+          <Text variant="muted">Project management made simple</Text>
+        </Box>
 
         <Card>
           <CardHeader>
@@ -44,7 +44,7 @@ export function AuthPage() {
             </LoginButton>
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }

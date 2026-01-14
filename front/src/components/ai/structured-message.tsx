@@ -1,13 +1,13 @@
 import React from 'react';
 import { ChatMessage, Action, Widget } from '../../api/chat';
-import { cn } from '../ui/utils';
+import { ActionCard } from '../action-card';
+import { Box, VStack, Box as Code } from '@nicorp/nui';
 import { ClarificationCard } from './widgets/clarification-card';
 import { EntityPreviewCard } from './widgets/entity-preview-card';
 import { ActionConfirmationCard } from './widgets/action-confirmation-card';
 import { Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ActionCard } from '../action-card';
 
 interface StructuredMessageProps {
     message: ChatMessage;
@@ -24,10 +24,10 @@ export function StructuredMessage({ message, isAnswered, onAction }: StructuredM
     const legacyActions = message.actions?.filter(a => a.notification) || [];
 
     return (
-        <div className="space-y-3 w-full">
+        <VStack className="space-y-3 w-full">
             {/* Text Content with Markdown */}
             {message.content && (
-                <div className="prose dark:prose-invert prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground">
+                <Box className="prose dark:prose-invert prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground">
                     <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
@@ -53,30 +53,30 @@ export function StructuredMessage({ message, isAnswered, onAction }: StructuredM
                     >
                         {message.content}
                     </ReactMarkdown>
-                </div>
+                </Box>
             )}
 
             {/* New Widgets (from widgets array) */}
             {widgets.length > 0 && (
-                <div className="space-y-2 mt-2">
+                <VStack className="space-y-2 mt-2">
                     {widgets.map((widget, index) => (
-                        <div key={index} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <Box key={index} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                             {renderWidgetFromType(widget, onAction, isAnswered)}
-                        </div>
+                        </Box>
                     ))}
-                </div>
+                </VStack>
             )}
 
             {/* Legacy Widget Content (from actions) */}
             {widgetAction && widgets.length === 0 && (
-                <div className="mt-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <Box className="mt-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
                     {renderLegacyWidget(widgetAction, onAction, isAnswered)}
-                </div>
+                </Box>
             )}
 
             {/* Legacy Actions (Notifications) */}
             {legacyActions.length > 0 && (
-                <div className="space-y-2 mt-2">
+                <VStack className="space-y-2 mt-2">
                     {legacyActions.map((action, index) => (
                         action.notification && (
                             <ActionCard
@@ -88,9 +88,9 @@ export function StructuredMessage({ message, isAnswered, onAction }: StructuredM
                             />
                         )
                     ))}
-                </div>
+                </VStack>
             )}
-        </div>
+        </VStack>
     );
 }
 
@@ -121,9 +121,9 @@ function renderWidgetFromType(widget: Widget, onAction?: (actionId: string, valu
             );
         default:
             return (
-                <div className="p-3 border border-dashed border-yellow-500/50 bg-yellow-500/10 rounded text-xs text-yellow-600">
+                <Box className="p-3 border border-dashed border-yellow-500/50 bg-yellow-500/10 rounded text-xs text-yellow-600">
                     Unsupported widget type: {widget.type}
-                </div>
+                </Box>
             );
     }
 }
@@ -154,9 +154,9 @@ function renderLegacyWidget(action: Action, onAction?: (actionId: string, value:
             );
         default:
             return (
-                <div className="p-3 border border-dashed border-yellow-500/50 bg-yellow-500/10 rounded text-xs text-yellow-600">
+                <Box className="p-3 border border-dashed border-yellow-500/50 bg-yellow-500/10 rounded text-xs text-yellow-600">
                     Unsupported widget type: {widgetType}
-                </div>
+                </Box>
             );
     }
 }

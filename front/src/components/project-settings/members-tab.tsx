@@ -3,7 +3,8 @@ import { Plus, Trash2, UserPlus, Users, Loader2 } from 'lucide-react';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle, Button,
   Avatar, AvatarFallback, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label,
+  Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { RoleBadge } from '../role-badge';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -104,10 +105,10 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
   return (
     <Card className="border-border/50 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <div className="space-y-1">
+        <VStack className="space-y-1">
           <CardTitle>Team Members</CardTitle>
           <CardDescription>Manage who has access to this project.</CardDescription>
-        </div>
+        </VStack>
         {permissions.canManageMembers && (
           <Button onClick={() => setIsAddMemberOpen(true)} className="shadow-sm">
             <UserPlus className="w-4 h-4 mr-2" />
@@ -117,51 +118,51 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+          <Flex className="flex-col items-center justify-center py-12 text-center space-y-4">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading member list...</p>
-          </div>
+            <Text size="sm" variant="muted">Loading member list...</Text>
+          </Flex>
         ) : members.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 border-2 border-dashed rounded-lg bg-muted/20">
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+          <Flex className="flex-col items-center justify-center py-12 text-center space-y-4 border-2 border-dashed rounded-lg bg-muted/20">
+            <Flex className="w-12 h-12 rounded-full bg-muted items-center justify-center">
               <Users className="w-6 h-6 text-muted-foreground" />
-            </div>
-            <div>
-              <h3 className="text-lg font-medium">No members found</h3>
-              <p className="text-muted-foreground max-w-sm mx-auto mt-1">Start by adding members from your organization to this project.</p>
-            </div>
+            </Flex>
+            <Box>
+              <Heading level={3} className="text-lg font-medium">No members found</Heading>
+              <Text variant="muted" className="max-w-sm mx-auto mt-1">Start by adding members from your organization to this project.</Text>
+            </Box>
             {permissions.canManageMembers && (
               <Button variant="outline" onClick={() => setIsAddMemberOpen(true)}>
                 Add First Member
               </Button>
             )}
-          </div>
+          </Flex>
         ) : (
-          <div className="rounded-md border border-border/50 overflow-hidden">
+          <Box className="rounded-md border border-border/50 overflow-hidden">
             {members.map((member, index) => (
-              <div
+              <Flex
                 key={member.id}
-                className={`flex items-center justify-between p-4 bg-card hover:bg-muted/30 transition-colors ${index !== members.length - 1 ? 'border-b border-border/50' : ''}`}
+                className={`items-center justify-between p-4 bg-card hover:bg-muted/30 transition-colors ${index !== members.length - 1 ? 'border-b border-border/50' : ''}`}
               >
-                <div className="flex items-center gap-4">
+                <Flex className="items-center gap-4">
                   <Avatar className="w-10 h-10 border border-border/50">
                     <AvatarFallback className="bg-primary/10 text-primary font-medium">
                       {(member.user?.username || 'U').substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="font-medium text-sm">{member.user?.display_name || member.user?.username || 'Unknown User'}</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">{member.user?.username || member.user_id}</p>
+                  <Box>
+                    <Text weight="medium" size="sm">{member.user?.display_name || member.user?.username || 'Unknown User'}</Text>
+                    <Flex className="items-center gap-2">
+                      <Text size="xs" variant="muted">{member.user?.username || member.user_id}</Text>
                       {!permissions.canManageMembers && <RoleBadge role={member.role} type="project" />}
-                    </div>
-                  </div>
-                </div>
+                    </Flex>
+                  </Box>
+                </Flex>
 
-                <div className="flex items-center gap-3">
+                <Flex className="items-center gap-3">
                   {permissions.canManageMembers && (
                     <>
-                      <div className="hidden md:block">
+                      <Box className="hidden md:block">
                         <Select
                           value={member.role}
                           onValueChange={(newRole) => handleUpdateRole(member, newRole)}
@@ -173,15 +174,15 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
                           <SelectContent>
                             {availableRoles.map(role => (
                               <SelectItem key={role.value} value={role.value}>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
+                                <Flex className="items-center gap-2">
+                                  <Box className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
                                   {role.label}
-                                </div>
+                                </Flex>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
+                      </Box>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -196,10 +197,10 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
                       </Button>
                     </>
                   )}
-                </div>
-              </div>
+                </Flex>
+              </Flex>
             ))}
-          </div>
+          </Box>
         )}
       </CardContent>
 
@@ -211,8 +212,8 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
               Select users from your organization to add to this project.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
+          <VStack className="space-y-4">
+            <VStack className="space-y-2">
               <UserAutocomplete
                 selectedUsers={selectedUsers}
                 onUsersChange={setSelectedUsers}
@@ -222,8 +223,8 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
               // Assuming it fetches efficiently or we might need to filter. 
               // Usually it searches ALL users? No, it should be org scoped.
               />
-            </div>
-            <div className="space-y-2">
+            </VStack>
+            <VStack className="space-y-2">
               <Label>Role</Label>
               <Select value={newMemberRole} onValueChange={setNewMemberRole}>
                 <SelectTrigger>
@@ -232,16 +233,16 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
                 <SelectContent>
                   {availableRoles.map(role => (
                     <SelectItem key={role.value} value={role.value}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
+                      <Flex className="items-center gap-2">
+                        <Box className="w-2 h-2 rounded-full" style={{ backgroundColor: role.color }} />
                         {role.label}
-                      </div>
+                      </Flex>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
+            </VStack>
+            <Flex className="justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>
                 Cancel
               </Button>
@@ -249,8 +250,8 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
                 {processingId === 'add' ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
                 Add Members
               </Button>
-            </div>
-          </div>
+            </Flex>
+          </VStack>
         </DialogContent>
       </Dialog>
     </Card>

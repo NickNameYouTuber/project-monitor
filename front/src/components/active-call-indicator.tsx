@@ -1,7 +1,7 @@
 // Компонент для отображения активных звонков в проекте/задаче
 import React, { useEffect, useState } from 'react';
 import { Video, Users, Phone } from 'lucide-react';
-import { Button, Badge } from '@nicorp/nui';
+import { Button, Badge, Box, Flex, Text, VStack } from '@nicorp/nui';
 import { useNavigate } from 'react-router-dom';
 
 interface ActiveCall {
@@ -87,28 +87,28 @@ export function ActiveCallIndicator({ projectId, taskId, className = '' }: Activ
   }
 
   return (
-    <div className={`space-y-2 ${className}`}>
+    <VStack className={`space-y-2 ${className}`}>
       {activeCalls.map(call => (
-        <div
+        <Flex
           key={call.id}
-          className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
+          className="items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
         >
-          <div className="relative">
+          <Box className="relative">
             <Video className="w-5 h-5 text-green-500" />
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-            </span>
-          </div>
+            <Box as="span" className="absolute -top-1 -right-1 flex h-3 w-3">
+              <Box as="span" className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></Box>
+              <Box as="span" className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></Box>
+            </Box>
+          </Box>
 
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
+          <Box className="flex-1 min-w-0">
+            <Text className="text-sm font-medium text-foreground truncate">
               {call.title}
-            </p>
-            <p className="text-xs text-muted-foreground">
+            </Text>
+            <Text className="text-xs text-muted-foreground">
               Активный звонок
-            </p>
-          </div>
+            </Text>
+          </Box>
 
           {call.participants !== undefined && call.participants > 0 && (
             <Badge variant="secondary" className="flex items-center gap-1">
@@ -126,8 +126,8 @@ export function ActiveCallIndicator({ projectId, taskId, className = '' }: Activ
             <Phone className="w-4 h-4 mr-1" />
             Join
           </Button>
-        </div>
+        </Flex>
       ))}
-    </div>
+    </VStack>
   );
 }

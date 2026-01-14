@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box } from '@nicorp/nui';
 
 interface Props {
   children: React.ReactNode;
@@ -11,9 +12,9 @@ interface Props {
  */
 const CalendarContainer: React.FC<Props> = ({ children }) => {
   return (
-    <div className="absolute inset-0 flex flex-col overflow-hidden">
+    <Box className="absolute inset-0 flex flex-col overflow-hidden">
       {children}
-    </div>
+    </Box>
   );
 };
 

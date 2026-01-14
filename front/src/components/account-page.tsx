@@ -34,6 +34,12 @@ import {
   Avatar,
   AvatarFallback,
   Separator,
+  Box,
+  Flex,
+  VStack,
+  Grid,
+  Heading,
+  Text,
 } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { useMainAccount, useAccountContext } from '../hooks/useAccountContext';
@@ -100,15 +106,15 @@ export function AccountPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
-        <div>
-          <h1>Account</h1>
-          <p className="text-muted-foreground">Manage your personal settings and preferences</p>
-        </div>
-      </div>
+    <Flex className="h-full flex-col">
+      <Box className="border-b border-border p-6">
+        <Box>
+          <Heading level={1}>Account</Heading>
+          <Text variant="muted">Manage your personal settings and preferences</Text>
+        </Box>
+      </Box>
 
-      <div className="flex-1 p-6 overflow-auto">
+      <Box className="flex-1 p-6 overflow-auto">
         <Tabs defaultValue="profile" className="h-full">
           <TabsList className="mb-6">
             <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -132,28 +138,28 @@ export function AccountPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
+                <Flex className="items-center gap-4">
                   <Avatar className="w-20 h-20">
                     <AvatarFallback className="text-xl">
                       {profile.name.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="space-y-2">
+                  <VStack className="space-y-2">
                     <Button variant="outline" size="sm">Change Avatar</Button>
                     <Button variant="ghost" size="sm">Remove</Button>
-                  </div>
-                </div>
+                  </VStack>
+                </Flex>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <Grid className="grid-cols-2 gap-4">
+                  <VStack className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input
                       id="name"
                       value={profile.name}
                       onChange={(e) => handleProfileUpdate('name', e.target.value)}
                     />
-                  </div>
-                  <div className="space-y-2">
+                  </VStack>
+                  <VStack className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
@@ -161,10 +167,10 @@ export function AccountPage() {
                       value={profile.email}
                       onChange={(e) => handleProfileUpdate('email', e.target.value)}
                     />
-                  </div>
-                </div>
+                  </VStack>
+                </Grid>
 
-                <div className="space-y-2">
+                <VStack className="space-y-2">
                   <Label htmlFor="bio">Bio</Label>
                   <Textarea
                     id="bio"
@@ -172,9 +178,9 @@ export function AccountPage() {
                     onChange={(e) => handleProfileUpdate('bio', e.target.value)}
                     rows={3}
                   />
-                </div>
+                </VStack>
 
-                <div className="space-y-2">
+                <VStack className="space-y-2">
                   <Label>Timezone</Label>
                   <Select value={profile.timezone} onValueChange={(value) => handleProfileUpdate('timezone', value)}>
                     <SelectTrigger>
@@ -189,7 +195,7 @@ export function AccountPage() {
                       <SelectItem value="UTC+1">Central European Time (UTC+1)</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </VStack>
 
                 <Button onClick={async () => {
                   try {
@@ -212,64 +218,64 @@ export function AccountPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Email Notifications</h4>
-                      <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-                    </div>
+                <VStack className="space-y-4">
+                  <Flex className="items-center justify-between">
+                    <Box>
+                      <Heading level={4} className="font-medium">Email Notifications</Heading>
+                      <Text size="sm" variant="muted">Receive notifications via email</Text>
+                    </Box>
                     <Switch
                       checked={notifications.emailNotifications}
                       onCheckedChange={(checked) => handleNotificationToggle('emailNotifications', checked)}
                     />
-                  </div>
+                  </Flex>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Push Notifications</h4>
-                      <p className="text-sm text-muted-foreground">Receive push notifications in your browser</p>
-                    </div>
+                  <Flex className="items-center justify-between">
+                    <Box>
+                      <Heading level={4} className="font-medium">Push Notifications</Heading>
+                      <Text size="sm" variant="muted">Receive push notifications in your browser</Text>
+                    </Box>
                     <Switch
                       checked={notifications.pushNotifications}
                       onCheckedChange={(checked) => handleNotificationToggle('pushNotifications', checked)}
                     />
-                  </div>
+                  </Flex>
 
                   <Separator />
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Project Updates</h4>
-                      <p className="text-sm text-muted-foreground">Notifications about project status changes</p>
-                    </div>
+                  <Flex className="items-center justify-between">
+                    <Box>
+                      <Heading level={4} className="font-medium">Project Updates</Heading>
+                      <Text size="sm" variant="muted">Notifications about project status changes</Text>
+                    </Box>
                     <Switch
                       checked={notifications.projectUpdates}
                       onCheckedChange={(checked) => handleNotificationToggle('projectUpdates', checked)}
                     />
-                  </div>
+                  </Flex>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Task Assignments</h4>
-                      <p className="text-sm text-muted-foreground">When you're assigned to a task</p>
-                    </div>
+                  <Flex className="items-center justify-between">
+                    <Box>
+                      <Heading level={4} className="font-medium">Task Assignments</Heading>
+                      <Text size="sm" variant="muted">When you're assigned to a task</Text>
+                    </Box>
                     <Switch
                       checked={notifications.taskAssignments}
                       onCheckedChange={(checked) => handleNotificationToggle('taskAssignments', checked)}
                     />
-                  </div>
+                  </Flex>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Comments</h4>
-                      <p className="text-sm text-muted-foreground">When someone comments on your tasks</p>
-                    </div>
+                  <Flex className="items-center justify-between">
+                    <Box>
+                      <Heading level={4} className="font-medium">Comments</Heading>
+                      <Text size="sm" variant="muted">When someone comments on your tasks</Text>
+                    </Box>
                     <Switch
                       checked={notifications.comments}
                       onCheckedChange={(checked) => handleNotificationToggle('comments', checked)}
                     />
-                  </div>
-                </div>
+                  </Flex>
+                </VStack>
               </CardContent>
             </Card>
           </TabsContent>
@@ -286,7 +292,7 @@ export function AccountPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
+                <VStack className="space-y-2">
                   <Label>Theme</Label>
                   <Select value={theme} onValueChange={setTheme}>
                     <SelectTrigger>
@@ -298,9 +304,9 @@ export function AccountPage() {
                       <SelectItem value="system">System</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </VStack>
 
-                <div className="space-y-2">
+                <VStack className="space-y-2">
                   <Label>Language</Label>
                   <Select value={language} onValueChange={setLanguage}>
                     <SelectTrigger>
@@ -313,7 +319,7 @@ export function AccountPage() {
                       <SelectItem value="de">German</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </VStack>
               </CardContent>
             </Card>
           </TabsContent>
@@ -330,16 +336,16 @@ export function AccountPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
+                <Flex className="items-center justify-center py-12">
+                  <Box className="text-center">
                     <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="font-medium mb-2">Team Features</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <Heading level={3} className="font-medium mb-2">Team Features</Heading>
+                    <Text size="sm" variant="muted" className="mb-4">
                       Invite team members and collaborate on projects together.
-                    </p>
+                    </Text>
                     <Button>Invite Team Members</Button>
-                  </div>
-                </div>
+                  </Box>
+                </Flex>
               </CardContent>
             </Card>
           </TabsContent>
@@ -356,30 +362,30 @@ export function AccountPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Change Password</h4>
-                    <div className="space-y-2">
+                <VStack className="space-y-4">
+                  <Box>
+                    <Heading level={4} className="font-medium mb-2">Change Password</Heading>
+                    <VStack className="space-y-2">
                       <Input type="password" placeholder="Current password" />
                       <Input type="password" placeholder="New password" />
                       <Input type="password" placeholder="Confirm new password" />
                       <Button size="sm">Update Password</Button>
-                    </div>
-                  </div>
+                    </VStack>
+                  </Box>
 
                   <Separator />
 
-                  <div>
-                    <h4 className="font-medium mb-2">Two-Factor Authentication</h4>
-                    <p className="text-sm text-muted-foreground mb-4">
+                  <Box>
+                    <Heading level={4} className="font-medium mb-2">Two-Factor Authentication</Heading>
+                    <Text size="sm" variant="muted" className="mb-4">
                       Add an extra layer of security to your account.
-                    </p>
+                    </Text>
                     <Button variant="outline" size="sm">
                       <Key className="w-4 h-4 mr-2" />
                       Enable 2FA
                     </Button>
-                  </div>
-                </div>
+                  </Box>
+                </VStack>
               </CardContent>
             </Card>
           </TabsContent>
@@ -396,11 +402,11 @@ export function AccountPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-2 items-end">
-                  <div className="flex-1 space-y-2">
+                <Flex className="gap-2 items-end">
+                  <VStack className="flex-1 space-y-2">
                     <Label>Token Name</Label>
                     <Input value={newTokenName} onChange={(e) => setNewTokenName(e.target.value)} />
-                  </div>
+                  </VStack>
                   <Button onClick={async () => {
                     try {
                       const { createToken } = await import('../api/tokens');
@@ -412,17 +418,17 @@ export function AccountPage() {
                       setTokens(ts.map(t => ({ id: t.id, name: t.name, created_at: t.created_at })));
                     } catch { }
                   }}>Create</Button>
-                </div>
+                </Flex>
 
-                <div className="space-y-2">
+                <VStack className="space-y-2">
                   <Label>Existing Tokens</Label>
-                  <div className="space-y-2">
+                  <VStack className="space-y-2">
                     {tokens.map(t => (
-                      <div key={t.id} className="flex items-center justify-between border border-border rounded-lg p-3">
-                        <div>
-                          <div className="font-medium">{t.name}</div>
-                          <div className="text-xs text-muted-foreground">Created: {new Date(t.created_at).toLocaleString()}</div>
-                        </div>
+                      <Flex key={t.id} className="items-center justify-between border border-border rounded-lg p-3">
+                        <Box>
+                          <Text weight="medium">{t.name}</Text>
+                          <Text size="xs" variant="muted">Created: {new Date(t.created_at).toLocaleString()}</Text>
+                        </Box>
                         <Button variant="outline" size="sm" onClick={async () => {
                           try {
                             const { revokeToken } = await import('../api/tokens');
@@ -430,11 +436,11 @@ export function AccountPage() {
                             setTokens(tokens.filter(x => x.id !== t.id));
                           } catch { }
                         }}>Revoke</Button>
-                      </div>
+                      </Flex>
                     ))}
-                    {tokens.length === 0 && <div className="text-sm text-muted-foreground">No tokens yet.</div>}
-                  </div>
-                </div>
+                    {tokens.length === 0 && <Text size="sm" variant="muted">No tokens yet.</Text>}
+                  </VStack>
+                </VStack>
               </CardContent>
             </Card>
           </TabsContent>
@@ -451,53 +457,53 @@ export function AccountPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 border border-border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">GitHub</h4>
+                <Grid className="grid-cols-1 md:grid-cols-2 gap-4">
+                  <Box className="p-4 border border-border rounded-lg">
+                    <Flex className="items-center justify-between mb-2">
+                      <Heading level={4} className="font-medium">GitHub</Heading>
                       <Button variant="outline" size="sm">Connect</Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
+                    </Flex>
+                    <Text size="sm" variant="muted">
                       Sync repositories and branches with GitHub.
-                    </p>
-                  </div>
+                    </Text>
+                  </Box>
 
-                  <div className="p-4 border border-border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">Slack</h4>
+                  <Box className="p-4 border border-border rounded-lg">
+                    <Flex className="items-center justify-between mb-2">
+                      <Heading level={4} className="font-medium">Slack</Heading>
                       <Button variant="outline" size="sm">Connect</Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
+                    </Flex>
+                    <Text size="sm" variant="muted">
                       Get notifications and updates in Slack.
-                    </p>
-                  </div>
+                    </Text>
+                  </Box>
 
-                  <div className="p-4 border border-border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">Figma</h4>
+                  <Box className="p-4 border border-border rounded-lg">
+                    <Flex className="items-center justify-between mb-2">
+                      <Heading level={4} className="font-medium">Figma</Heading>
                       <Button variant="outline" size="sm">Connect</Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
+                    </Flex>
+                    <Text size="sm" variant="muted">
                       Import designs and sync with Figma files.
-                    </p>
-                  </div>
+                    </Text>
+                  </Box>
 
-                  <div className="p-4 border border-border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">Jira</h4>
+                  <Box className="p-4 border border-border rounded-lg">
+                    <Flex className="items-center justify-between mb-2">
+                      <Heading level={4} className="font-medium">Jira</Heading>
                       <Button variant="outline" size="sm">Connect</Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
+                    </Flex>
+                    <Text size="sm" variant="muted">
                       Import issues and sync project data.
-                    </p>
-                  </div>
-                </div>
+                    </Text>
+                  </Box>
+                </Grid>
 
                 <Separator />
 
-                <div>
-                  <h4 className="font-medium mb-4">Data Management</h4>
-                  <div className="flex gap-2">
+                <Box>
+                  <Heading level={4} className="font-medium mb-4">Data Management</Heading>
+                  <Flex className="gap-2">
                     <Button variant="outline" size="sm">
                       <Download className="w-4 h-4 mr-2" />
                       Export Data
@@ -506,13 +512,13 @@ export function AccountPage() {
                       <Upload className="w-4 h-4 mr-2" />
                       Import Data
                     </Button>
-                  </div>
-                </div>
+                  </Flex>
+                </Box>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }

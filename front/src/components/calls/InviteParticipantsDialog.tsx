@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
-    Button, Badge, Avatar, AvatarFallback
+    Button, Badge, Avatar, AvatarFallback, Box, Flex, Heading, Text, VStack
 } from '@nicorp/nui';
 import UserAutocomplete from './UserAutocomplete';
 import { UserDto } from '../../api/users';
@@ -76,7 +76,7 @@ export const InviteParticipantsDialog: React.FC<InviteParticipantsDialogProps> =
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-4 space-y-4">
+                <VStack className="py-4 space-y-4">
                     <UserAutocomplete
                         selectedUsers={selectedUsers}
                         onUsersChange={setSelectedUsers}
@@ -85,21 +85,21 @@ export const InviteParticipantsDialog: React.FC<InviteParticipantsDialogProps> =
                     />
 
                     {existingParticipants.length > 0 && (
-                        <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-muted-foreground">Уже приглашены</h4>
-                            <div className="flex flex-wrap gap-2 max-h-[100px] overflow-y-auto">
+                        <Box className="space-y-2">
+                            <Heading level={4} className="text-sm font-medium text-muted-foreground">Уже приглашены</Heading>
+                            <Flex className="flex-wrap gap-2 max-h-[100px] overflow-y-auto">
                                 {existingParticipants.map(p => (
                                     <Badge key={p.id} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-2 opacity-70">
                                         <Avatar className="h-4 w-4">
                                             <AvatarFallback className="text-[9px]">{p.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                                         </Avatar>
-                                        <span className="text-xs">{p.user.displayName || p.user.username}</span>
+                                        <Text as="span" className="text-xs">{p.user.displayName || p.user.username}</Text>
                                     </Badge>
                                 ))}
-                            </div>
-                        </div>
+                            </Flex>
+                        </Box>
                     )}
-                </div>
+                </VStack>
 
                 <DialogFooter className="flex justify-end gap-2">
                     <Button variant="secondary" onClick={onClose}>

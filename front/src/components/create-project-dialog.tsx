@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   Button, Input, Label, Textarea, Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription,
-  DialogHeader, DialogTitle
+  DialogHeader, DialogTitle,
+  Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import type { Project } from '../App';
 
@@ -52,8 +53,8 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject, avail
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <Box as="form" onSubmit={handleSubmit} className="space-y-4">
+          <Box className="space-y-2">
             <Label htmlFor="title">Project Title</Label>
             <Input
               id="title"
@@ -62,9 +63,9 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject, avail
               placeholder="Enter project title"
               required
             />
-          </div>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
@@ -73,9 +74,9 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject, avail
               placeholder="Enter project description"
               rows={3}
             />
-          </div>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label>Status</Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger>
@@ -89,11 +90,11 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject, avail
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label>Color</Label>
-            <div className="flex gap-2">
+            <Flex className="gap-2">
               {colors.map((colorOption) => (
                 <button
                   key={colorOption}
@@ -104,16 +105,16 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject, avail
                   onClick={() => setColor(colorOption)}
                 />
               ))}
-            </div>
-          </div>
+            </Flex>
+          </Box>
 
-          <div className="flex justify-end gap-2 pt-4">
+          <Flex className="justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit">Create Project</Button>
-          </div>
-        </form>
+          </Flex>
+        </Box>
       </DialogContent>
     </Dialog>
   );

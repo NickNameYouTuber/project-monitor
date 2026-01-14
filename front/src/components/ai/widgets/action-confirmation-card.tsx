@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, Button, cn } from '@nicorp/nui';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, Button, cn, Box, Flex, Text } from '@nicorp/nui';
 import { AlertTriangle, Check, X } from 'lucide-react';
 
 import { ClientAction } from '../../../lib/client-actions';
@@ -29,10 +29,10 @@ export function ActionConfirmationCard({ data, onConfirm, onCancel }: ActionConf
 
     if (isConfirmed) {
         return (
-            <div className="flex items-center gap-2 p-3 bg-muted/50 rounded border border-border/50 text-sm text-muted-foreground animate-in fade-in">
+            <Flex className="items-center gap-2 p-3 bg-muted/50 rounded border border-border/50 text-sm text-muted-foreground animate-in fade-in">
                 <Check className="w-4 h-4 text-green-500" />
-                <span>Action confirmed.</span>
-            </div>
+                <Text as="span">Action confirmed.</Text>
+            </Flex>
         );
     }
 
@@ -43,13 +43,13 @@ export function ActionConfirmationCard({ data, onConfirm, onCancel }: ActionConf
         )}>
             <div className={cn("h-1", data.isDangerous ? "bg-destructive/50" : "bg-primary/50")} />
             <CardHeader className="pb-2 pt-4 px-4">
-                <div className="flex items-center gap-2">
+                <Flex className="items-center gap-2">
                     {data.isDangerous && <AlertTriangle className="w-4 h-4 text-destructive" />}
                     <CardTitle className="text-sm font-semibold text-foreground">{data.title}</CardTitle>
-                </div>
+                </Flex>
             </CardHeader>
             <CardContent className="px-4 pb-3">
-                <p className="text-sm text-foreground/80 leading-relaxed">{data.description}</p>
+                <Text className="text-sm text-foreground/80 leading-relaxed">{data.description}</Text>
             </CardContent>
             <CardFooter className="px-4 pb-4 pt-0 gap-2 flex justify-end">
                 <Button

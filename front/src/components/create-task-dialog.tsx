@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Button, Input, Label, Textarea, Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription,
-  DialogHeader, DialogTitle, Calendar, Popover, PopoverContent, PopoverTrigger
+  DialogHeader, DialogTitle, Calendar, Popover, PopoverContent, PopoverTrigger,
+  Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { CalendarIcon } from 'lucide-react';
 import { AutocompleteInput } from './autocomplete-input';
@@ -131,8 +132,8 @@ export function CreateTaskDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <Box as="form" onSubmit={handleSubmit} className="space-y-4">
+          <Box className="space-y-2">
             <Label htmlFor="title">Task Title</Label>
             <Input
               id="title"
@@ -141,9 +142,9 @@ export function CreateTaskDialog({
               placeholder="Enter task title"
               required
             />
-          </div>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
@@ -152,10 +153,10 @@ export function CreateTaskDialog({
               placeholder="Enter task description"
               rows={3}
             />
-          </div>
+          </Box>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <Box className="grid grid-cols-2 gap-4">
+            <Box className="space-y-2">
               <Label>Status</Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger>
@@ -169,9 +170,9 @@ export function CreateTaskDialog({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </Box>
 
-            <div className="space-y-2">
+            <Box className="space-y-2">
               <Label>Priority</Label>
               <Select value={priority} onValueChange={(value: Task['priority']) => setPriority(value)}>
                 <SelectTrigger>
@@ -183,10 +184,10 @@ export function CreateTaskDialog({
                   <SelectItem value="high">High</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label htmlFor="assignee">Assignee</Label>
             <AutocompleteInput
               value={assignee}
@@ -194,9 +195,9 @@ export function CreateTaskDialog({
               suggestions={assigneeSuggestions}
               placeholder="Enter assignee name"
             />
-          </div>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label>Due Date</Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -217,9 +218,9 @@ export function CreateTaskDialog({
                 />
               </PopoverContent>
             </Popover>
-          </div>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label>Repository</Label>
             <Select value={selectedRepository} onValueChange={setSelectedRepository}>
               <SelectTrigger>
@@ -233,14 +234,14 @@ export function CreateTaskDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </Box>
 
           {selectedRepository && (
             <>
-              <div className="space-y-2">
+              <Box className="space-y-2">
                 <Label>Branch</Label>
                 {loadingBranches ? (
-                  <div className="text-sm text-muted-foreground">Loading branches...</div>
+                  <Text className="text-sm text-muted-foreground">Loading branches...</Text>
                 ) : (
                   <Select
                     value={createNewBranch ? 'new' : selectedBranch}
@@ -267,11 +268,11 @@ export function CreateTaskDialog({
                     </SelectContent>
                   </Select>
                 )}
-              </div>
+              </Box>
 
               {createNewBranch && (
                 <>
-                  <div className="space-y-2">
+                  <Box className="space-y-2">
                     <Label htmlFor="newBranchName">New Branch Name</Label>
                     <Input
                       id="newBranchName"
@@ -279,9 +280,9 @@ export function CreateTaskDialog({
                       onChange={(e) => setNewBranchName(e.target.value)}
                       placeholder="e.g., feature/task-implementation"
                     />
-                  </div>
+                  </Box>
 
-                  <div className="space-y-2">
+                  <Box className="space-y-2">
                     <Label>Base Branch</Label>
                     <Select value={baseBranch} onValueChange={setBaseBranch}>
                       <SelectTrigger>
@@ -295,19 +296,19 @@ export function CreateTaskDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                  </Box>
                 </>
               )}
             </>
           )}
 
-          <div className="flex justify-end gap-2 pt-4">
+          <Flex className="justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit">Create Task</Button>
-          </div>
-        </form>
+          </Flex>
+        </Box>
       </DialogContent>
     </Dialog>
   );

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge, ScrollArea } from '@nicorp/nui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Badge, ScrollArea, Box, Flex, VStack, Heading, Text } from '@nicorp/nui';
 import { ArrowLeft, Plus, Minus, Edit, File as FileIcon, GitCommit } from 'lucide-react';
 import { getCommitDiffDetails, type CommitDiff, type FileDiff } from '../api/repository-content';
 import { useNotifications } from '../hooks/useNotifications';
@@ -103,98 +103,100 @@ function DiffView({ file }: { file: FileDiff }) {
 
   if (parsed.isBinary) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground italic p-3 bg-muted/30 rounded">
+      <Flex className="items-center gap-2 text-sm text-muted-foreground italic p-3 bg-muted/30 rounded">
         <FileIcon className="w-4 h-4" />
-        Бинарный файл {
-          file.changeType === 'ADD' ? 'добавлен' :
-            file.changeType === 'DELETE' ? 'удалён' :
-              'изменён'
-        }
-      </div>
+        <Text as="span">
+          Бинарный файл {
+            file.changeType === 'ADD' ? 'добавлен' :
+              file.changeType === 'DELETE' ? 'удалён' :
+                'изменён'
+          }
+        </Text>
+      </Flex>
     );
   }
 
   if (file.changeType === 'DELETE') {
     const lineCount = file.oldContent.split('\n').length;
     return (
-      <div className="text-sm text-muted-foreground p-3 bg-red-500/5 rounded border border-red-500/20">
-        {lineCount} {lineCount === 1 ? 'строка удалена' : lineCount < 5 ? 'строки удалено' : 'строк удалено'}
-      </div>
+      <Box className="text-sm text-muted-foreground p-3 bg-red-500/5 rounded border border-red-500/20">
+        <Text as="span">{lineCount} {lineCount === 1 ? 'строка удалена' : lineCount < 5 ? 'строки удалено' : 'строк удалено'}</Text>
+      </Box>
     );
   }
 
   if (file.changeType === 'ADD') {
     const lineCount = file.newContent.split('\n').filter(l => l.trim()).length;
     return (
-      <div className="space-y-2">
-        <div className="text-sm text-muted-foreground p-3 bg-green-500/5 rounded border border-green-500/20">
-          {lineCount} {lineCount === 1 ? 'строка добавлена' : lineCount < 5 ? 'строки добавлено' : 'строк добавлено'}
-        </div>
+      <VStack className="space-y-2">
+        <Box className="text-sm text-muted-foreground p-3 bg-green-500/5 rounded border border-green-500/20">
+          <Text as="span">{lineCount} {lineCount === 1 ? 'строка добавлена' : lineCount < 5 ? 'строки добавлено' : 'строк добавлено'}</Text>
+        </Box>
         {parsed.chunks.map((chunk, idx) => (
-          <div key={idx} className="border rounded-lg overflow-hidden bg-background">
-            <div className="font-mono text-xs">
+          <Box key={idx} className="border rounded-lg overflow-hidden bg-background">
+            <Box className="font-mono text-xs">
               {chunk.lines.map((line, lineIdx) => (
-                <div
+                <Flex
                   key={lineIdx}
-                  className="flex items-start gap-3 px-4 py-0.5 bg-green-500/10"
+                  className="items-start gap-3 px-4 py-0.5 bg-green-500/10"
                 >
-                  <div className="flex gap-2 text-muted-foreground select-none min-w-[60px]">
-                    <span className="w-8 text-right">{line.newLineNo || ''}</span>
-                  </div>
-                  <span className="text-green-500 w-4 flex-shrink-0">+</span>
-                  <code className="flex-1 whitespace-pre overflow-x-auto">{line.content}</code>
-                </div>
+                  <Flex className="gap-2 text-muted-foreground select-none min-w-[60px]">
+                    <Text as="span" className="w-8 text-right">{line.newLineNo || ''}</Text>
+                  </Flex>
+                  <Text as="span" className="text-green-500 w-4 flex-shrink-0">+</Text>
+                  <Box as="code" className="flex-1 whitespace-pre overflow-x-auto">{line.content}</Box>
+                </Flex>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
         ))}
-      </div>
+      </VStack>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <VStack className="space-y-2">
       {parsed.chunks.map((chunk, idx) => (
-        <div key={idx} className="border rounded-lg overflow-hidden bg-background">
-          <div className="font-mono text-xs">
+        <Box key={idx} className="border rounded-lg overflow-hidden bg-background">
+          <Box className="font-mono text-xs">
             {chunk.lines.map((line, lineIdx) => (
-              <div
+              <Flex
                 key={lineIdx}
-                className={`flex items-start gap-3 px-4 py-1 ${line.type === 'add' ? 'bg-green-500/10' :
+                className={`items-start gap-3 px-4 py-1 ${line.type === 'add' ? 'bg-green-500/10' :
                   line.type === 'delete' ? 'bg-red-500/10' :
                     ''
                   }`}
               >
                 {/* Номера строк */}
-                <div className="flex gap-2 text-muted-foreground select-none min-w-[80px] text-xs">
-                  <span className="w-8 text-right">
+                <Flex className="gap-2 text-muted-foreground select-none min-w-[80px] text-xs">
+                  <Text as="span" className="w-8 text-right">
                     {line.oldLineNo || ''}
-                  </span>
-                  <span className="w-8 text-right">
+                  </Text>
+                  <Text as="span" className="w-8 text-right">
                     {line.newLineNo || ''}
-                  </span>
-                </div>
+                  </Text>
+                </Flex>
 
                 {/* Индикатор */}
-                <span className={`w-4 flex-shrink-0 ${line.type === 'add' ? 'text-green-500' :
+                <Text as="span" className={`w-4 flex-shrink-0 ${line.type === 'add' ? 'text-green-500' :
                   line.type === 'delete' ? 'text-red-500' :
                     'text-muted-foreground'
                   }`}>
                   {line.type === 'add' ? '+' :
                     line.type === 'delete' ? '-' :
                       ' '}
-                </span>
+                </Text>
 
                 {/* Содержимое строки */}
-                <code className="flex-1 whitespace-pre overflow-x-auto">
+                <Box as="code" className="flex-1 whitespace-pre overflow-x-auto">
                   {line.content}
-                </code>
-              </div>
+                </Box>
+              </Flex>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
       ))}
-    </div>
+    </VStack>
   );
 }
 
@@ -230,13 +232,13 @@ function FileGroup({ type, files }: { type: 'added' | 'modified' | 'deleted'; fi
       </CardHeader>
       <CardContent className="space-y-6">
         {files.map((file, idx) => (
-          <div key={idx} className="space-y-2">
-            <div className="font-medium text-sm flex items-center gap-2">
+          <VStack key={idx} className="space-y-2">
+            <Flex className="font-medium text-sm items-center gap-2">
               <FileIcon className="w-4 h-4" />
-              {file.changeType === 'DELETE' ? file.oldPath : (file.newPath || file.oldPath)}
-            </div>
+              <Text as="span">{file.changeType === 'DELETE' ? file.oldPath : (file.newPath || file.oldPath)}</Text>
+            </Flex>
             <DiffView file={file} />
-          </div>
+          </VStack>
         ))}
       </CardContent>
     </Card>
@@ -307,58 +309,58 @@ export function CommitDetailsPage() {
 
   if (!diff) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Коммит не найден</div>
-      </div>
+      <Flex className="h-screen items-center justify-center">
+        <Text className="text-muted-foreground">Коммит не найден</Text>
+      </Flex>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <Flex className="h-screen flex-col bg-background">
       {/* Хедер */}
-      <div className="border-b px-6 py-4 bg-muted/30">
-        <div className="max-w-7xl mx-auto space-y-3">
+      <Box className="border-b px-6 py-4 bg-muted/30">
+        <VStack className="max-w-7xl mx-auto space-y-3">
           <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Назад к репозиторию
           </Button>
 
-          <div className="flex items-start gap-3">
+          <Flex className="items-start gap-3">
             <GitCommit className="w-6 h-6 text-primary mt-1" />
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold">
+            <Box className="flex-1">
+              <Flex className="items-center gap-3 mb-2">
+                <Heading level={1} className="text-2xl font-bold">
                   Commit {commitSha?.substring(0, 7)}
-                </h1>
-                <code className="px-3 py-1 bg-muted rounded text-xs font-mono">
+                </Heading>
+                <Box as="code" className="px-3 py-1 bg-muted rounded text-xs font-mono">
                   {commitSha}
-                </code>
-              </div>
-              <p className="text-lg mb-2">{diff.commit.message}</p>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>{diff.commit.author}</span>
-                <span>•</span>
-                <span>{new Date(diff.commit.date).toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                </Box>
+              </Flex>
+              <Text className="text-lg mb-2">{diff.commit.message}</Text>
+              <Flex className="items-center gap-4 text-sm text-muted-foreground">
+                <Text as="span">{diff.commit.author}</Text>
+                <Text as="span">•</Text>
+                <Text as="span">{new Date(diff.commit.date).toLocaleString()}</Text>
+              </Flex>
+            </Box>
+          </Flex>
+        </VStack>
+      </Box>
 
       {/* Контент */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
+      <Box className="flex-1 overflow-auto">
+        <Box className="p-6">
+          <VStack className="max-w-7xl mx-auto space-y-6">
             {/* Сводка изменений */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Сводка изменений</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">📊</span>
-                  <span className="text-sm">{summary}</span>
-                </div>
+                <Flex className="items-center gap-2">
+                  <Text as="span" className="text-2xl">📊</Text>
+                  <Text as="span" className="text-sm">{summary}</Text>
+                </Flex>
               </CardContent>
             </Card>
 
@@ -378,12 +380,12 @@ export function CommitDetailsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {groupedFiles.renamed.map((file, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm">
+                    <Flex key={idx} className="items-center gap-2 text-sm">
                       <FileIcon className="w-4 h-4" />
-                      <span>{file.oldPath}</span>
+                      <Text as="span">{file.oldPath}</Text>
                       <ArrowLeft className="w-4 h-4 rotate-180" />
-                      <span className="font-medium">{file.newPath}</span>
-                    </div>
+                      <Text as="span" className="font-medium">{file.newPath}</Text>
+                    </Flex>
                   ))}
                 </CardContent>
               </Card>
@@ -396,10 +398,10 @@ export function CommitDetailsPage() {
                 </CardContent>
               </Card>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+          </VStack>
+        </Box>
+      </Box>
+    </Flex>
   );
 }
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Project } from '../App';
+import { Box, Flex, Heading, Text } from '@nicorp/nui';
 import WhiteboardPageComponent from './whiteboard/WhiteboardPage';
 
 interface WhiteboardPageProps {
@@ -8,17 +9,17 @@ interface WhiteboardPageProps {
 
 export function WhiteboardPage({ project }: WhiteboardPageProps) {
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6 flex-shrink-0">
-        <div>
-          <h1 className="text-2xl font-semibold">Whiteboard</h1>
-          <p className="text-muted-foreground">Collaborative drawing and diagramming</p>
-        </div>
-      </div>
+    <Flex className="h-full flex-col">
+      <Box className="border-b border-border p-6 flex-shrink-0">
+        <Box>
+          <Heading level={1} className="text-2xl font-semibold">Whiteboard</Heading>
+          <Text className="text-muted-foreground">Collaborative drawing and diagramming</Text>
+        </Box>
+      </Box>
 
-      <div className="flex-1 relative overflow-hidden min-h-0">
+      <Box className="flex-1 relative overflow-hidden min-h-0">
         <WhiteboardPageComponent projectId={project?.id || null} />
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }

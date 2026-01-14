@@ -3,7 +3,8 @@ import {
   Card, CardContent, CardHeader, CardTitle, Button, Input,
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
   Tabs, TabsContent, TabsList, TabsTrigger, Label, Textarea,
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { GitBranch, Plus } from 'lucide-react';
 import { LoadingSpinner } from './loading-spinner';
@@ -114,14 +115,14 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1>Repositories</h1>
-            <p className="text-muted-foreground">Select a repository to view details</p>
-          </div>
-          <div className="flex items-center gap-3">
+    <Flex className="h-full flex-col">
+      <Box className="border-b border-border p-6">
+        <Flex className="items-center justify-between mb-4">
+          <Box>
+            <Heading level={1}>Repositories</Heading>
+            <Text className="text-muted-foreground">Select a repository to view details</Text>
+          </Box>
+          <Flex className="items-center gap-3">
             <Input
               placeholder="Search repositories..."
               value={search}
@@ -150,7 +151,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                   </TabsList>
 
                   <TabsContent value="empty" className="space-y-4">
-                    <div>
+                    <Box>
                       <Label htmlFor="name">Название</Label>
                       <Input
                         id="name"
@@ -158,9 +159,9 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         onChange={(e) => setNewRepo(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="my-repository"
                       />
-                    </div>
+                    </Box>
 
-                    <div>
+                    <Box>
                       <Label htmlFor="description">Описание</Label>
                       <Textarea
                         id="description"
@@ -169,10 +170,10 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         placeholder="Описание репозитория"
                         rows={3}
                       />
-                    </div>
+                    </Box>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
+                    <Box className="grid grid-cols-2 gap-4">
+                      <Box>
                         <Label htmlFor="branch">Default Branch</Label>
                         <Input
                           id="branch"
@@ -180,9 +181,9 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                           onChange={(e) => setNewRepo(prev => ({ ...prev, default_branch: e.target.value }))}
                           placeholder="master"
                         />
-                      </div>
+                      </Box>
 
-                      <div>
+                      <Box>
                         <Label htmlFor="visibility">Видимость</Label>
                         <Select value={newRepo.visibility} onValueChange={(v) => setNewRepo(prev => ({ ...prev, visibility: v }))}>
                           <SelectTrigger>
@@ -193,12 +194,12 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                             <SelectItem value="public">Public</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
-                    </div>
+                      </Box>
+                    </Box>
                   </TabsContent>
 
                   <TabsContent value="clone" className="space-y-4">
-                    <div>
+                    <Box>
                       <Label htmlFor="url">URL репозитория</Label>
                       <Input
                         id="url"
@@ -206,9 +207,9 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         onChange={(e) => setNewRepo(prev => ({ ...prev, url: e.target.value }))}
                         placeholder="https://github.com/user/repo.git"
                       />
-                    </div>
+                    </Box>
 
-                    <div>
+                    <Box>
                       <Label htmlFor="clone-name">Название</Label>
                       <Input
                         id="clone-name"
@@ -216,9 +217,9 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         onChange={(e) => setNewRepo(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="my-repository"
                       />
-                    </div>
+                    </Box>
 
-                    <div>
+                    <Box>
                       <Label htmlFor="clone-description">Описание</Label>
                       <Textarea
                         id="clone-description"
@@ -227,9 +228,9 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         placeholder="Описание репозитория"
                         rows={3}
                       />
-                    </div>
+                    </Box>
 
-                    <div>
+                    <Box>
                       <Label htmlFor="auth-token">Токен авторизации (опционально)</Label>
                       <Input
                         id="auth-token"
@@ -238,51 +239,51 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                         onChange={(e) => setNewRepo(prev => ({ ...prev, auth_token: e.target.value }))}
                         placeholder="ghp_..."
                       />
-                    </div>
+                    </Box>
                   </TabsContent>
                 </Tabs>
 
-                <div className="flex justify-end gap-2 mt-4">
+                <Flex className="justify-end gap-2 mt-4">
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isCreating}>
                     Отмена
                   </Button>
                   <Button onClick={handleCreateRepository} disabled={isCreating}>
                     {isCreating ? 'Создание...' : (createType === 'empty' ? 'Создать' : 'Клонировать')}
                   </Button>
-                </div>
+                </Flex>
               </DialogContent>
             </Dialog>
-          </div>
-        </div>
-      </div>
+          </Flex>
+        </Flex>
+      </Box>
 
-      <div className="flex-1 p-6 overflow-auto">
+      <Box className="flex-1 p-6 overflow-auto">
         <Card>
           <CardHeader>
             <CardTitle>Repositories</CardTitle>
           </CardHeader>
           <CardContent>
             {repositories.filter(r => !search || r.name.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
-              <div className="text-sm text-muted-foreground">No repositories.</div>
+              <Text className="text-sm text-muted-foreground">No repositories.</Text>
             ) : (
-              <div className="space-y-2">
+              <VStack className="space-y-2">
                 {repositories
                   .filter(r => !search || r.name.toLowerCase().includes(search.toLowerCase()))
                   .map(repo => (
-                    <div key={repo.id} className="flex items-center justify-between p-2 hover:bg-accent rounded">
-                      <div className="flex items-center gap-2">
+                    <Flex key={repo.id} className="items-center justify-between p-2 hover:bg-accent rounded">
+                      <Flex className="items-center gap-2">
                         <GitBranch className="w-4 h-4" />
-                        <span>{repo.name}</span>
-                      </div>
+                        <Text as="span">{repo.name}</Text>
+                      </Flex>
                       <Button size="sm" variant="outline" onClick={() => onOpenRepository(repo.id)}>Open</Button>
-                    </div>
+                    </Flex>
                   ))}
-              </div>
+              </VStack>
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }
 

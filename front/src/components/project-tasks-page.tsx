@@ -5,7 +5,7 @@ import {
   Button, Input, Badge, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   Popover, PopoverContent, PopoverTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-  Label, Switch
+  Label, Switch, Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { TaskCard } from './task-card';
 import { TaskDetailSidebar } from './task-detail-sidebar';
@@ -96,7 +96,7 @@ function Column({
   const columnTasks = tasks.filter(task => task.status === column.id);
 
   return (
-    <div
+    <Box
       ref={(node) => {
         dragRef(node);
         dropRef(node);
@@ -104,15 +104,15 @@ function Column({
       className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${isOver ? 'bg-accent/50' : ''
         } ${isDragging ? 'opacity-50' : ''}`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3 cursor-move">
+      <Flex className="items-center justify-between mb-4">
+        <Flex className="items-center gap-3 cursor-move">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
-          <div className={`w-3 h-3 rounded-full ${column.color}`} />
-          <h3 className="font-medium">{column.title}</h3>
-          <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
+          <Box className={`w-3 h-3 rounded-full ${column.color}`} />
+          <Heading level={3} className="font-medium">{column.title}</Heading>
+          <Text as="span" size="sm" variant="muted" className="bg-muted px-2 py-1 rounded-full">
             {columnTasks.length}
-          </span>
-        </div>
+          </Text>
+        </Flex>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -134,9 +134,9 @@ function Column({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </Flex>
 
-      <div className="space-y-3">
+      <VStack className="space-y-3">
         {columnTasks.map((task) => (
           <TaskCard
             key={task.id}
@@ -149,8 +149,8 @@ function Column({
             highlighted={task.id === highlightedTaskId}
           />
         ))}
-      </div>
-    </div>
+      </VStack>
+    </Box>
   );
 }
 
@@ -527,28 +527,28 @@ export function ProjectTasksPage({
 
   if (!project) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <Flex className="h-full items-center justify-center">
         <LoadingSpinner stages={['Loading project...']} />
-      </div>
+      </Flex>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
-        <div className="flex items-center gap-4 mb-4">
+    <Flex className="h-full flex-col">
+      <Box className="border-b border-border p-6">
+        <Flex className="items-center gap-4 mb-4">
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Projects
           </Button>
-          <div
+          <Box
             className="w-3 h-3 rounded-full"
             style={{ backgroundColor: project.color }}
           />
-          <div className="flex-1">
-            <h1>{project.title}</h1>
-            <p className="text-muted-foreground">{project.description}</p>
-          </div>
+          <Box className="flex-1">
+            <Heading level={1}>{project.title}</Heading>
+            <Text variant="muted">{project.description}</Text>
+          </Box>
           <Button
             variant="default"
             size="sm"
@@ -573,13 +573,13 @@ export function ProjectTasksPage({
             <Video className="w-4 h-4 mr-2" />
             Start Call
           </Button>
-        </div>
+        </Flex>
 
         {/* Индикатор активных звонков */}
         <ActiveCallIndicator projectId={project.id} className="mb-4" />
 
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1">
+        <Flex className="items-center gap-4">
+          <Box className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search tasks..."
@@ -587,7 +587,7 @@ export function ProjectTasksPage({
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
-          </div>
+          </Box>
           <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -711,9 +711,9 @@ export function ProjectTasksPage({
             <Plus className="w-4 h-4 mr-2" />
             New Task
           </Button>
-        </div>
+        </Flex>
 
-        <div className="flex items-center gap-4 mt-4">
+        <Flex className="items-center gap-4 mt-4">
           <Badge variant="secondary">
             Total Tasks: {projectTasks.length}
           </Badge>
@@ -723,11 +723,11 @@ export function ProjectTasksPage({
           <Badge variant="secondary">
             In Progress: {projectTasks.filter(t => t.status === 'in-progress').length}
           </Badge>
-        </div>
-      </div>
+        </Flex>
+      </Box>
 
-      <div className="flex-1 p-6 overflow-auto">
-        <div className="flex gap-6 items-stretch">
+      <Box className="flex-1 p-6 overflow-auto">
+        <Flex className="gap-6 items-stretch">
           {sortedColumns.map((column, index) => (
             <Column
               key={column.id}
@@ -743,8 +743,8 @@ export function ProjectTasksPage({
               highlightedTaskId={highlightedTaskId}
             />
           ))}
-        </div>
-      </div>
+        </Flex>
+      </Box>
 
       <CreateTaskDialog
         open={isCreateDialogOpen}
@@ -786,6 +786,6 @@ export function ProjectTasksPage({
           projectId={project?.id}
         />
       )}
-    </div>
+    </Flex>
   );
 }

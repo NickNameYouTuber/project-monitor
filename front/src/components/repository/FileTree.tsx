@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Folder, File, ChevronRight, ChevronDown, GitBranch } from 'lucide-react';
 import { listFiles, type FileEntry } from '../../api/repository-content';
-import { ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nicorp/nui';
+import { ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Box, Flex, VStack, Text } from '@nicorp/nui';
 
 interface FileNode {
   name: string;
@@ -124,9 +124,9 @@ export function FileTree({ repoId, branch, currentFile, onFileSelect, onBranchCh
     const isSelected = currentFile === node.path;
 
     return (
-      <div>
-        <div
-          className={`flex items-center gap-1 py-1 px-2 hover:bg-accent rounded cursor-pointer ${isSelected ? 'bg-accent' : ''
+      <Box>
+        <Flex
+          className={`items-center gap-1 py-1 px-2 hover:bg-accent rounded cursor-pointer ${isSelected ? 'bg-accent' : ''
             }`}
           style={{ paddingLeft: `${level * 12 + 8}px` }}
           onClick={() => {
@@ -148,38 +148,38 @@ export function FileTree({ repoId, branch, currentFile, onFileSelect, onBranchCh
             </>
           ) : (
             <>
-              <div className="w-3" />
+              <Box className="w-3" />
               <File className={`w-4 h-4 flex-shrink-0 ${getFileIcon(node.name)}`} />
             </>
           )}
-          <span className="text-sm truncate">{node.name}</span>
-        </div>
+          <Text as="span" className="text-sm truncate">{node.name}</Text>
+        </Flex>
         {node.type === 'folder' && isExpanded && node.children && (
-          <div>
+          <Box>
             {node.children.map(child => (
               <TreeNode key={child.path} node={child} level={level + 1} />
             ))}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     );
   };
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-3">
+      <Box className="p-3">
         {/* Заголовок с выбором ветки */}
-        <div className="mb-3 space-y-2">
-          <div className="text-sm font-medium">Files</div>
+        <VStack className="mb-3 space-y-2">
+          <Text className="text-sm font-medium">Files</Text>
 
           {/* Селектор ветки */}
           {branches && branches.length > 0 && onBranchChange && (
             <Select value={branch} onValueChange={onBranchChange}>
               <SelectTrigger className="h-8 text-xs">
-                <div className="flex items-center gap-1.5">
+                <Flex className="items-center gap-1.5">
                   <GitBranch className="w-3 h-3" />
                   <SelectValue placeholder="Select branch" />
-                </div>
+                </Flex>
               </SelectTrigger>
               <SelectContent>
                 {branches.map(b => (
@@ -190,13 +190,13 @@ export function FileTree({ repoId, branch, currentFile, onFileSelect, onBranchCh
               </SelectContent>
             </Select>
           )}
-        </div>
+        </VStack>
 
         {/* Дерево файлов */}
         {tree.map(node => (
           <TreeNode key={node.path} node={node} level={0} />
         ))}
-      </div>
+      </Box>
     </ScrollArea>
   );
 }

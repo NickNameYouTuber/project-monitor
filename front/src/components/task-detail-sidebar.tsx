@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { X, Calendar, User, GitBranch, AlertCircle, MessageSquare, Plus, Send, GitCommit, Video, Folder, ExternalLink } from 'lucide-react';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-  Button, Badge, Input, Textarea, Avatar, AvatarFallback, ScrollArea, Separator
+  Button, Badge, Input, Textarea, Avatar, AvatarFallback, ScrollArea, Separator,
+  Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { useNavigate } from 'react-router-dom';
 import { ActiveCallIndicator } from './active-call-indicator';
@@ -82,23 +83,23 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 bottom-0 w-96 bg-card border-l border-border z-50 flex flex-col">
+    <Flex className="fixed right-0 top-0 bottom-0 w-96 bg-card border-l border-border z-50 flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
-        <h2 className="font-medium">Task Details</h2>
+      <Flex className="items-center justify-between p-4 border-b border-border flex-shrink-0">
+        <Heading level={2} className="font-medium text-base">Task Details</Heading>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="w-4 h-4" />
         </Button>
-      </div>
+      </Flex>
 
       {/* Content with proper scrolling */}
-      <div className="flex-1 overflow-hidden">
+      <Box className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
-          <div className="p-4 space-y-6">
+          <VStack className="p-4 space-y-6">
             {/* Task Title */}
-            <div>
-              <h3 className="font-medium text-lg">{task.title}</h3>
-              <p className="text-muted-foreground mt-1">{task.description}</p>
+            <Box>
+              <Heading level={3} className="font-medium text-lg">{task.title}</Heading>
+              <Text className="text-muted-foreground mt-1">{task.description}</Text>
               <Button
                 variant="default"
                 size="sm"
@@ -128,151 +129,151 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
               </Button>
 
               {/* Индикатор активных звонков для задачи */}
-              <div className="mt-3">
+              <Box className="mt-3">
                 <ActiveCallIndicator taskId={task.id} />
-              </div>
-            </div>
+              </Box>
+            </Box>
 
             {/* Task Meta */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
+            <VStack className="space-y-3">
+              <Flex className="items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Priority:</span>
+                <Text as="span" className="text-sm text-muted-foreground">Priority:</Text>
                 <Badge className={getPriorityColor(task.priority)}>
                   {task.priority}
                 </Badge>
-              </div>
+              </Flex>
 
               {task.assignee && (
-                <div className="flex items-center gap-2">
+                <Flex className="items-center gap-2">
                   <User className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Assignee:</span>
-                  <div className="flex items-center gap-2">
+                  <Text as="span" className="text-sm text-muted-foreground">Assignee:</Text>
+                  <Flex className="items-center gap-2">
                     <Avatar className="w-6 h-6">
                       <AvatarFallback className="text-xs">
                         {task.assignee.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{task.assignee}</span>
-                  </div>
-                </div>
+                    <Text as="span" className="text-sm">{task.assignee}</Text>
+                  </Flex>
+                </Flex>
               )}
 
-              <div className="flex items-center gap-2">
+              <Flex className="items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Created:</span>
-                <span className="text-sm">{task.createdAt.toLocaleDateString()}</span>
-              </div>
+                <Text as="span" className="text-sm text-muted-foreground">Created:</Text>
+                <Text as="span" className="text-sm">{task.createdAt.toLocaleDateString()}</Text>
+              </Flex>
 
               {task.dueDate && (
-                <div className="flex items-center gap-2">
+                <Flex className="items-center gap-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Due:</span>
-                  <span className="text-sm">{task.dueDate.toLocaleDateString()}</span>
-                </div>
+                  <Text as="span" className="text-sm text-muted-foreground">Due:</Text>
+                  <Text as="span" className="text-sm">{task.dueDate.toLocaleDateString()}</Text>
+                </Flex>
               )}
 
               {task.repositoryInfo && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
+                <VStack className="space-y-2">
+                  <Flex className="items-center gap-2">
                     <Folder className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Repository:</span>
-                    <span className="text-sm font-medium">{task.repositoryInfo.repositoryName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
+                    <Text as="span" className="text-sm text-muted-foreground">Repository:</Text>
+                    <Text as="span" className="text-sm font-medium">{task.repositoryInfo.repositoryName}</Text>
+                  </Flex>
+                  <Flex className="items-center gap-2">
                     <GitBranch className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Branch:</span>
-                    <code className="text-sm bg-muted px-2 py-1 rounded">
+                    <Text as="span" className="text-sm text-muted-foreground">Branch:</Text>
+                    <Box as="code" className="text-sm bg-muted px-2 py-1 rounded">
                       {task.repositoryInfo.branch}
-                    </code>
-                  </div>
-                </div>
+                    </Box>
+                  </Flex>
+                </VStack>
               )}
               {branches.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
+                <VStack className="space-y-2">
+                  <Flex className="items-center gap-2">
                     <GitBranch className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Linked branches:</span>
-                  </div>
-                  <div className="space-y-1">
+                    <Text as="span" className="text-sm text-muted-foreground">Linked branches:</Text>
+                  </Flex>
+                  <VStack className="space-y-1">
                     {branches.map((b, idx) => (
-                      <div key={idx} className="text-sm flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded">{b.name}</code>
-                        <span className="text-xs text-muted-foreground">{b.createdAt.toLocaleString()}</span>
-                      </div>
+                      <Flex key={idx} className="text-sm items-center gap-2">
+                        <Box as="code" className="bg-muted px-2 py-0.5 rounded">{b.name}</Box>
+                        <Text as="span" className="text-xs text-muted-foreground">{b.createdAt.toLocaleString()}</Text>
+                      </Flex>
                     ))}
-                  </div>
-                </div>
+                  </VStack>
+                </VStack>
               )}
-            </div>
+            </VStack>
 
             <Separator />
 
             {/* Comments Section */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
+            <Box>
+              <Flex className="items-center gap-2 mb-4">
                 <MessageSquare className="w-4 h-4" />
-                <h4 className="font-medium">Activity ({comments.length})</h4>
-              </div>
+                <Heading level={4} className="font-medium text-base">Activity ({comments.length})</Heading>
+              </Flex>
 
-              <div className="space-y-4">
+              <VStack className="space-y-4">
                 {comments.map((comment) => (
-                  <div key={comment.id}>
+                  <Box key={comment.id}>
                     {comment.type === 'system' ? (
-                      <div className="text-sm text-muted-foreground flex items-start gap-2">
+                      <Flex className="text-sm text-muted-foreground items-start gap-2">
                         <GitCommit className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                          <span>{comment.content}</span>
-                          <div className="text-xs mt-1">
+                        <Box className="flex-1">
+                          <Text as="span">{comment.content}</Text>
+                          <Text className="text-xs mt-1">
                             {comment.createdAt.toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
+                          </Text>
+                        </Box>
+                      </Flex>
                     ) : (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
+                      <VStack className="space-y-2">
+                        <Flex className="items-center gap-2">
                           <Avatar className="w-6 h-6">
                             <AvatarFallback className="text-xs">
                               {comment.author.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-medium">{comment.author}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <Text as="span" className="text-sm font-medium">{comment.author}</Text>
+                          <Text as="span" className="text-xs text-muted-foreground">
                             {comment.createdAt.toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-sm bg-muted p-3 rounded-lg ml-8">
+                          </Text>
+                        </Flex>
+                        <Text className="text-sm bg-muted p-3 rounded-lg ml-8">
                           {comment.content}
-                        </p>
-                      </div>
+                        </Text>
+                      </VStack>
                     )}
-                  </div>
+                  </Box>
                 ))}
-              </div>
+              </VStack>
 
               {/* Add Comment */}
-              <div className="mt-4 space-y-2">
+              <VStack className="mt-4 space-y-2">
                 <Textarea
                   placeholder="Add a comment..."
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   className="min-h-[80px]"
                 />
-                <div className="flex justify-end">
+                <Flex className="justify-end">
                   <Button size="sm" onClick={addComment}>
                     <Send className="w-4 h-4 mr-2" />
                     Comment
                   </Button>
-                </div>
-              </div>
+                </Flex>
+              </VStack>
 
               {/* Attach Branch */}
-              <div className="mt-6 space-y-2">
-                <div className="flex items-center gap-2">
+              <VStack className="mt-6 space-y-2">
+                <Flex className="items-center gap-2">
                   <GitBranch className="w-4 h-4" />
-                  <h4 className="font-medium">Attach Repository Branch</h4>
-                </div>
-                <div className="flex gap-2">
+                  <Heading level={4} className="font-medium text-base">Attach Repository Branch</Heading>
+                </Flex>
+                <Flex className="gap-2">
                   <Input placeholder="branch/name" value={newBranch} onChange={(e) => setNewBranch(e.target.value)} />
                   <Button size="sm" onClick={async () => {
                     if (!newBranch.trim()) return;
@@ -285,22 +286,22 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
                       setBranches(bs.map(b => ({ name: b.branch_name, createdAt: new Date(b.created_at) })));
                     } catch { }
                   }}>Attach</Button>
-                </div>
-              </div>
+                </Flex>
+              </VStack>
 
               {/* Whiteboard Sections */}
               {projectId && (
-                <div className="mt-6 space-y-2">
-                  <div className="flex items-center gap-2">
+                <VStack className="mt-6 space-y-2">
+                  <Flex className="items-center gap-2">
                     <Folder className="w-4 h-4" />
-                    <h4 className="font-medium">Whiteboard Sections</h4>
-                  </div>
+                    <Heading level={4} className="font-medium text-base">Whiteboard Sections</Heading>
+                  </Flex>
                   {linkedSections.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Linked sections:</div>
+                    <VStack className="space-y-2">
+                      <Text className="text-sm text-muted-foreground">Linked sections:</Text>
                       {linkedSections.map((section: any) => (
-                        <div key={section.id} className="flex items-center justify-between p-2 bg-muted rounded">
-                          <span className="text-sm">{section.text || 'Untitled Section'}</span>
+                        <Flex key={section.id} className="items-center justify-between p-2 bg-muted rounded">
+                          <Text as="span" className="text-sm">{section.text || 'Untitled Section'}</Text>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -322,11 +323,11 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
                             <ExternalLink className="w-4 h-4 mr-1" />
                             Go to
                           </Button>
-                        </div>
+                        </Flex>
                       ))}
-                    </div>
+                    </VStack>
                   )}
-                  <div className="flex gap-2">
+                  <Flex className="gap-2">
                     <Select onValueChange={async (sectionId) => {
                       try {
                         const { linkElementToTask } = await import('../api/whiteboards');
@@ -351,13 +352,13 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                </div>
+                  </Flex>
+                </VStack>
               )}
-            </div>
-          </div>
+            </Box>
+          </VStack>
         </ScrollArea>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useEffect } from 'react';
+import { Box, Flex, Grid, Text } from '@nicorp/nui';
 import { CallResponse } from '../../api/calls';
 import CallCard from './CallCard';
 
@@ -200,19 +201,19 @@ const WeekView: React.FC<WeekViewProps> = ({
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-background overflow-hidden">
+    <Box className="h-full min-h-0 flex flex-col bg-background overflow-hidden">
       {/* Week Grid */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0" ref={containerRef}>
-        <div className="grid grid-cols-[80px_repeat(7,1fr)] min-h-full">
+      <Box className="flex-1 overflow-y-auto overflow-x-auto min-h-0" ref={containerRef}>
+        <Grid className="grid-cols-[80px_repeat(7,1fr)] min-h-full">
           {/* Time column */}
-          <div className="border-r border-border sticky left-0 bg-background z-10">
-            <div className="h-12 border-b border-border bg-background" /> {/* Header spacer */}
+          <Box className="border-r border-border sticky left-0 bg-background z-10">
+            <Box className="h-12 border-b border-border bg-background" /> {/* Header spacer */}
             {HOURS.map(hour => (
-              <div key={hour} className="h-[90px] border-b border-border px-2 py-1 text-xs text-muted-foreground bg-background">
+              <Box key={hour} className="h-[90px] border-b border-border px-2 py-1 text-xs text-muted-foreground bg-background">
                 {hour.toString().padStart(2, '0')}:00
-              </div>
+              </Box>
             ))}
-          </div>
+          </Box>
 
           {/* Day columns */}
           {weekDays.map((day, dayIndex) => {
@@ -221,21 +222,21 @@ const WeekView: React.FC<WeekViewProps> = ({
             const today = isToday(day);
 
             return (
-              <div key={dayIndex} className="border-r border-border relative">
+              <Box key={dayIndex} className="border-r border-border relative">
                 {/* Day header */}
-                <div className={`
-                  h-12 border-b border-border flex flex-col items-center justify-center sticky top-0 z-10
+                <Flex className={`
+                  h-12 border-b border-border flex-col items-center justify-center sticky top-0 z-10
                   ${today ? 'bg-blue-100/90 dark:bg-blue-900/90 backdrop-blur-sm' : 'bg-background'}
                 `}>
-                  <div className="text-xs text-muted-foreground">{DAYS_OF_WEEK_FULL[dayIndex].slice(0, 3)}</div>
-                  <div className={`text-sm font-medium ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                  <Text className="text-xs text-muted-foreground">{DAYS_OF_WEEK_FULL[dayIndex].slice(0, 3)}</Text>
+                  <Text className={`text-sm font-medium ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>
                     {day.getDate()}
-                  </div>
-                </div>
+                  </Text>
+                </Flex>
 
                 {/* Hour rows */}
                 {HOURS.map(hour => (
-                  <div key={hour} className="h-[90px] border-b border-border" />
+                  <Box key={hour} className="h-[90px] border-b border-border" />
                 ))}
 
                 {/* Calls */}
@@ -245,7 +246,7 @@ const WeekView: React.FC<WeekViewProps> = ({
                   const leftPercent = (call.column / call.columnSpan) * 100;
 
                   return (
-                    <div
+                    <Box
                       key={index}
                       className="absolute px-0.5"
                       style={{
@@ -257,27 +258,27 @@ const WeekView: React.FC<WeekViewProps> = ({
                       }}
                     >
                       <CallCard call={call} onClick={() => onCallClick(call)} compact />
-                    </div>
+                    </Box>
                   );
                 })}
 
                 {/* Current time indicator */}
                 {today && (
-                  <div
+                  <Box
                     className="absolute left-0 right-0 h-0.5 bg-red-500 z-20"
                     style={{
                       top: `${getCurrentTimePosition() + 48}px`
                     }}
                   >
-                    <div className="w-2 h-2 rounded-full bg-red-500 -mt-0.5 -ml-1" />
-                  </div>
+                    <Box className="w-2 h-2 rounded-full bg-red-500 -mt-0.5 -ml-1" />
+                  </Box>
                 )}
-              </div>
+              </Box>
             );
           })}
-        </div>
-      </div>
-    </div>
+        </Grid>
+      </Box>
+    </Box>
   );
 };
 

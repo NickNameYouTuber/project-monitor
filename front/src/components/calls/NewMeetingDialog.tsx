@@ -3,7 +3,8 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
   Button, Calendar, Input, Label, Textarea, Separator, Switch, cn,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-  Popover, PopoverContent, PopoverTrigger
+  Popover, PopoverContent, PopoverTrigger,
+  Box, Flex, Heading, Text
 } from '@nicorp/nui';
 import { Clock, Calendar as CalendarIcon, Users, AlignLeft } from 'lucide-react';
 import MeetingColorPicker from './MeetingColorPicker';
@@ -35,9 +36,9 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[800px] h-[600px] overflow-hidden flex flex-col p-0">
-        <div className="flex h-full">
+        <Flex className="h-full">
           {/* Left Column: General Info - Changed background to muted/5 for slight distinction but readable */}
-          <div className="w-[60%] p-6 flex flex-col gap-6 border-r h-full overflow-hidden">
+          <Box className="w-[60%] p-6 flex flex-col gap-6 border-r h-full overflow-hidden">
             <DialogHeader className="p-0 space-y-1">
               <DialogTitle className="text-xl">Новая встреча</DialogTitle>
               <DialogDescription>
@@ -90,13 +91,13 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
                 <MeetingColorPicker colors={colors} value={newMeeting.color} onChange={(c: string) => setNewMeeting((prev: any) => ({ ...prev, color: c }))} />
               </div>
             </div>
-          </div>
+          </Box>
           {/* Right Column: Time & Settings */}
-          <div className="w-[40%] bg-muted p-6 flex flex-col gap-6 h-full overflow-y-auto">
-            <div className="space-y-1">
-              <h3 className="font-semibold text-sm">Время и дата</h3>
-              <p className="text-xs text-muted-foreground">Когда состоится встреча?</p>
-            </div>
+          <Box className="w-[40%] bg-muted p-6 flex flex-col gap-6 h-full overflow-y-auto">
+            <Box className="space-y-1">
+              <Heading level={3} className="font-semibold text-sm">Время и дата</Heading>
+              <Text className="text-xs text-muted-foreground">Когда состоится встреча?</Text>
+            </Box>
 
             <div className="space-y-5">
               <div className="space-y-2">
@@ -243,8 +244,8 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
                 Запланировать
               </Button>
             </div>
-          </div>
-        </div>
+          </Box>
+        </Flex>
       </DialogContent >
     </Dialog >
   );

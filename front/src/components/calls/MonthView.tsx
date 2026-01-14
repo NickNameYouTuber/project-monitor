@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { Box, Flex, Grid, Text } from '@nicorp/nui';
 import { CallResponse } from '../../api/calls';
 
 interface MonthViewProps {
@@ -172,15 +173,15 @@ const MonthView: React.FC<MonthViewProps> = ({
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-background overflow-hidden">
+    <Box className="h-full min-h-0 flex flex-col bg-background overflow-hidden">
       {/* Calendar Grid */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 min-h-0">
-        <div className="grid grid-cols-7 h-full min-h-[600px]">
+      <Box className="flex-1 overflow-y-auto overflow-x-hidden p-6 min-h-0">
+        <Grid className="grid-cols-7 h-full min-h-[600px]">
           {/* День недели headers */}
           {DAYS_OF_WEEK.map(day => (
-            <div key={day} className="text-center py-2 font-medium text-sm text-muted-foreground border-b border-border bg-background sticky top-0 z-10">
+            <Box key={day} className="text-center py-2 font-medium text-sm text-muted-foreground border-b border-border bg-background sticky top-0 z-10">
               {day}
-            </div>
+            </Box>
           ))}
 
           {/* Days */}
@@ -190,7 +191,7 @@ const MonthView: React.FC<MonthViewProps> = ({
             const today = isToday(date);
 
             return (
-              <div
+              <Box
                 key={index}
                 className={`
                   border-r border-b border-border p-2 min-h-[120px] cursor-pointer
@@ -202,20 +203,20 @@ const MonthView: React.FC<MonthViewProps> = ({
               >
                 {date && (
                   <>
-                    <div className={`text-sm font-medium mb-2 ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                    <Box className={`text-sm font-medium mb-2 ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>
                       {date.getDate()}
-                    </div>
+                    </Box>
 
                     {/* Call indicators - показываем первые 3 звонка */}
                     {dateCalls.length > 0 && (
-                      <div className="space-y-1">
+                      <Box className="space-y-1">
                         {dateCalls.slice(0, 3).map((call) => {
                           const timeStr = call.scheduled_time || call.start_at;
                           const time = timeStr ? new Date(timeStr) : null;
                           const timeFormatted = time ? `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}` : '';
 
                           return (
-                            <div
+                            <Box
                               key={call.id}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -229,8 +230,8 @@ const MonthView: React.FC<MonthViewProps> = ({
                                       getActualStatus(call) === 'cancelled' ? '#ef4444' : '#22c55e'
                               }}
                             >
-                              <span className="font-medium">{timeFormatted}</span> {call.title || 'Без названия'}
-                            </div>
+                              <Text as="span" className="font-medium">{timeFormatted}</Text> {call.title || 'Без названия'}
+                            </Box>
                           );
                         })}
                         {dateCalls.length > 3 && (
@@ -238,16 +239,16 @@ const MonthView: React.FC<MonthViewProps> = ({
                             +{dateCalls.length - 3} ещё
                           </div>
                         )}
-                      </div>
+                      </Box>
                     )}
                   </>
                 )}
-              </div>
+              </Box>
             );
           })}
-        </div>
-      </div>
-    </div>
+        </Grid>
+      </Box>
+    </Box>
   );
 };
 

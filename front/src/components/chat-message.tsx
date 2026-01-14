@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Box, Flex } from '@nicorp/nui';
 import { StructuredMessage } from './ai/structured-message';
 import type { ChatMessage as ChatMessageType } from '../api/chat';
 
@@ -17,10 +18,10 @@ export function ChatMessage({ message, onAction, isAnswered }: ChatMessageProps)
   const isUser = message.role === 'user';
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 group`}>
-      <div className={`max-w-[90%] ${isUser ? 'order-2' : 'order-1'} ${!isUser && 'w-full'}`}>
+    <Flex className={`${isUser ? 'justify-end' : 'justify-start'} mb-4 group`}>
+      <Box className={`max-w-[90%] ${isUser ? 'order-2' : 'order-1'} ${!isUser && 'w-full'}`}>
         {isUser ? (
-          <div className="bg-primary text-primary-foreground rounded-lg p-3 prose prose-sm max-w-none prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground prose-code:text-primary-foreground">
+          <Box className="bg-primary text-primary-foreground rounded-lg p-3 prose prose-sm max-w-none prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground prose-code:text-primary-foreground">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
@@ -50,13 +51,13 @@ export function ChatMessage({ message, onAction, isAnswered }: ChatMessageProps)
             >
               {message.content}
             </ReactMarkdown>
-          </div>
+          </Box>
         ) : (
-          <div className="pl-2 pr-4">
+          <Box className="pl-2 pr-4">
             <StructuredMessage message={message} onAction={onAction} isAnswered={isAnswered} />
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }

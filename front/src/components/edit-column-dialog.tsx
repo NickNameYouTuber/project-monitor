@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Button, Input, Label, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle
+  Button, Input, Label, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Box, Flex, VStack
 } from '@nicorp/nui';
 import type { Column } from '../App';
 
@@ -68,8 +69,8 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+          <Box as="form" onSubmit={handleSubmit} className="space-y-4">
+            <Box className="space-y-2">
               <Label htmlFor="title">Column Title</Label>
               <Input
                 id="title"
@@ -78,11 +79,11 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
                 placeholder="Enter column title"
                 required
               />
-            </div>
+            </Box>
 
-            <div className="space-y-2">
+            <Box className="space-y-2">
               <Label>Color</Label>
-              <div className="grid grid-cols-4 gap-2">
+              <Box className="grid grid-cols-4 gap-2">
                 {colorOptions.map((colorOption) => (
                   <button
                     key={colorOption.value}
@@ -91,19 +92,22 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
                       }`}
                     onClick={() => setColor(colorOption.value)}
                   >
-                    <div className={`w-6 h-6 rounded-full ${colorOption.value}`} />
+                    <Box className={`w-6 h-6 rounded-full ${colorOption.value}`} />
                   </button>
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange?.(false) || onCancel()}>
+            <Flex className="justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => {
+                if (onOpenChange) onOpenChange(false);
+                else onCancel();
+              }}>
                 Cancel
               </Button>
               <Button type="submit">{column ? 'Update' : 'Create'} Column</Button>
-            </div>
-          </form>
+            </Flex>
+          </Box>
         </DialogContent>
       </Dialog>
     );
@@ -111,8 +115,8 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
 
   // Inline form (for use inside other dialogs)
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <Box as="form" onSubmit={handleSubmit} className="space-y-4">
+      <Box className="space-y-2">
         <Label htmlFor="title">Column Title</Label>
         <Input
           id="title"
@@ -121,11 +125,11 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
           placeholder="Enter column title"
           required
         />
-      </div>
+      </Box>
 
-      <div className="space-y-2">
+      <Box className="space-y-2">
         <Label>Color</Label>
-        <div className="grid grid-cols-4 gap-2">
+        <Box className="grid grid-cols-4 gap-2">
           {colorOptions.map((colorOption) => (
             <button
               key={colorOption.value}
@@ -134,18 +138,18 @@ export function EditColumnDialog({ column, open, onOpenChange, onSave, onCancel 
                 }`}
               onClick={() => setColor(colorOption.value)}
             >
-              <div className={`w-6 h-6 rounded-full ${colorOption.value}`} />
+              <Box className={`w-6 h-6 rounded-full ${colorOption.value}`} />
             </button>
           ))}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="flex justify-end gap-2 pt-4">
+      <Flex className="justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit">{column ? 'Update' : 'Create'} Column</Button>
-      </div>
-    </form>
+      </Flex>
+    </Box>
   );
 }

@@ -3,7 +3,8 @@ import {
   Button, Input, Label, Textarea, Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription,
   DialogHeader, DialogTitle, DialogFooter, Calendar, Popover, PopoverContent,
-  PopoverTrigger, Separator
+  PopoverTrigger, Separator,
+  Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { CalendarIcon, Trash2 } from 'lucide-react';
 import { AutocompleteInput } from './autocomplete-input';
@@ -95,8 +96,8 @@ export function EditTaskDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <Box as="form" onSubmit={handleSubmit} className="space-y-4">
+          <Box className="space-y-2">
             <Label htmlFor="title">Task Title</Label>
             <Input
               id="title"
@@ -105,9 +106,9 @@ export function EditTaskDialog({
               placeholder="Enter task title"
               required
             />
-          </div>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
@@ -116,10 +117,10 @@ export function EditTaskDialog({
               placeholder="Enter task description"
               rows={3}
             />
-          </div>
+          </Box>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <Box className="grid grid-cols-2 gap-4">
+            <Box className="space-y-2">
               <Label>Status</Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger>
@@ -133,9 +134,9 @@ export function EditTaskDialog({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </Box>
 
-            <div className="space-y-2">
+            <Box className="space-y-2">
               <Label>Priority</Label>
               <Select value={priority} onValueChange={(value: Task['priority']) => setPriority(value)}>
                 <SelectTrigger>
@@ -147,10 +148,10 @@ export function EditTaskDialog({
                   <SelectItem value="high">High</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label htmlFor="assignee">Assignee</Label>
             <AutocompleteInput
               value={assignee}
@@ -158,9 +159,9 @@ export function EditTaskDialog({
               suggestions={assigneeSuggestions}
               placeholder="Enter assignee name"
             />
-          </div>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label>Due Date</Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -181,9 +182,9 @@ export function EditTaskDialog({
                 />
               </PopoverContent>
             </Popover>
-          </div>
+          </Box>
 
-          <div className="space-y-2">
+          <Box className="space-y-2">
             <Label htmlFor="branch">Repository Branch</Label>
             <AutocompleteInput
               value={repositoryBranch}
@@ -191,13 +192,13 @@ export function EditTaskDialog({
               suggestions={branchSuggestions}
               placeholder="e.g., feature/task-implementation"
             />
-          </div>
+          </Box>
 
           <Separator />
 
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Created: {task.createdAt.toLocaleDateString()}</span>
-          </div>
+          <Flex className="items-center justify-between text-sm text-muted-foreground">
+            <Text as="span">Created: {task.createdAt.toLocaleDateString()}</Text>
+          </Flex>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
@@ -210,14 +211,14 @@ export function EditTaskDialog({
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Task
             </Button>
-            <div className="flex gap-2">
+            <Flex className="gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit">Update Task</Button>
-            </div>
+            </Flex>
           </DialogFooter>
-        </form>
+        </Box>
       </DialogContent>
     </Dialog>
   );

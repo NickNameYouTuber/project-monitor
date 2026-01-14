@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
-  Popover, PopoverContent, PopoverTrigger, Button, Badge, Avatar, AvatarFallback, cn
+  Popover, PopoverContent, PopoverTrigger, Button, Badge, Avatar, AvatarFallback, cn,
+  Box, Flex, Text, Label
 } from '@nicorp/nui';
 import { Check, ChevronsUpDown, X, UserPlus } from 'lucide-react';
 import { UserDto } from '../../api/users';
@@ -87,18 +88,18 @@ export default function UserAutocomplete({
   };
 
   return (
-    <div className="space-y-2">
-      {label && <label className="text-sm font-medium">{label}</label>}
+    <Box className="space-y-2">
+      {label && <Label className="text-sm font-medium">{label}</Label>}
 
       {/* Список выбранных участников */}
       {selectedUsers.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
+        <Flex className="flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
           {selectedUsers.map(user => (
             <Badge key={user.id} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-2">
               <Avatar className="h-5 w-5">
                 <AvatarFallback className="text-[10px]">{getUserInitials(user)}</AvatarFallback>
               </Avatar>
-              <span className="text-sm">{user.displayName || user.username}</span>
+              <Text as="span" className="text-sm">{user.displayName || user.username}</Text>
               <button
                 onClick={() => handleRemove(user.id)}
                 className="ml-1 rounded-full hover:bg-muted p-0.5"
@@ -107,7 +108,7 @@ export default function UserAutocomplete({
               </button>
             </Badge>
           ))}
-        </div>
+        </Flex>
       )}
 
       {/* Popover для выбора */}
@@ -134,9 +135,9 @@ export default function UserAutocomplete({
             <CommandInput placeholder="Поиск пользователей..." />
             <CommandList className="max-h-[200px] overflow-y-auto">
               {isLoading ? (
-                <div className="p-4 text-sm text-center text-muted-foreground">
+                <Box className="p-4 text-sm text-center text-muted-foreground">
                   Загрузка...
-                </div>
+                </Box>
               ) : (
                 <>
                   <CommandEmpty>Пользователи не найдены</CommandEmpty>
@@ -150,23 +151,23 @@ export default function UserAutocomplete({
                           value={user.username}
                           onSelect={() => handleSelect(user)}
                         >
-                          <div className="flex items-center gap-2 flex-1">
+                          <Flex className="items-center gap-2 flex-1">
                             <Avatar className="h-6 w-6">
                               <AvatarFallback className="text-xs">{getUserInitials(user)}</AvatarFallback>
                             </Avatar>
-                            <div className="flex-1">
-                              <div className="text-sm font-medium">{user.displayName || user.username}</div>
+                            <Box className="flex-1">
+                              <Text className="text-sm font-medium">{user.displayName || user.username}</Text>
                               {user.displayName && (
-                                <div className="text-xs text-muted-foreground">@{user.username}</div>
+                                <Text className="text-xs text-muted-foreground">@{user.username}</Text>
                               )}
-                            </div>
+                            </Box>
                             <Check
                               className={cn(
                                 "h-4 w-4",
                                 isSelected ? "opacity-100" : "opacity-0"
                               )}
                             />
-                          </div>
+                          </Flex>
                         </CommandItem>
                       );
                     })}
@@ -177,7 +178,7 @@ export default function UserAutocomplete({
           </Command>
         </PopoverContent>
       </Popover>
-    </div>
+    </Box>
   );
 }
 

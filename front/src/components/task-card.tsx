@@ -2,7 +2,8 @@ import React from 'react';
 import { useDrag } from 'react-dnd';
 import { Calendar, User, GitBranch, AlertCircle, MoreVertical } from 'lucide-react';
 import {
-  Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, cn
+  Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, cn,
+  Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import type { Task } from '../App';
 
@@ -34,7 +35,7 @@ export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) 
   return (
     <div
       id={`task-${task.id}`}
-      ref={drag}
+      ref={drag as any}
       className={cn(
         "bg-card border border-border rounded-lg p-3 cursor-pointer hover:shadow-md transition-all",
         isDragging && "opacity-50",
@@ -42,7 +43,7 @@ export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) 
       )}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between mb-2">
+      <Flex className="items-start justify-between mb-2">
         <Badge className={getPriorityColor(task.priority)}>
           {task.priority}
         </Badge>
@@ -71,35 +72,35 @@ export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) 
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-      </div>
+      </Flex>
 
-      <h4 className="font-medium mb-2">{task.title}</h4>
-      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+      <Heading level={4} className="font-medium mb-2 text-base">{task.title}</Heading>
+      <Text className="text-sm text-muted-foreground mb-3 line-clamp-2">
         {task.description}
-      </p>
+      </Text>
 
-      <div className="space-y-2">
+      <VStack className="space-y-2">
         {task.assignee && (
-          <div className="flex items-center text-xs text-muted-foreground">
+          <Flex className="items-center text-xs text-muted-foreground">
             <User className="w-3 h-3 mr-1" />
-            {task.assignee}
-          </div>
+            <Text as="span">{task.assignee}</Text>
+          </Flex>
         )}
 
         {task.repositoryBranch && (
-          <div className="flex items-center text-xs text-muted-foreground">
+          <Flex className="items-center text-xs text-muted-foreground">
             <GitBranch className="w-3 h-3 mr-1" />
-            <code className="bg-muted px-1 rounded text-xs">
+            <Box as="code" className="bg-muted px-1 rounded text-xs">
               {task.repositoryBranch}
-            </code>
-          </div>
+            </Box>
+          </Flex>
         )}
 
-        <div className="flex items-center text-xs text-muted-foreground">
+        <Flex className="items-center text-xs text-muted-foreground">
           <Calendar className="w-3 h-3 mr-1" />
-          {task.createdAt.toLocaleDateString()}
-        </div>
-      </div>
+          <Text as="span">{task.createdAt.toLocaleDateString()}</Text>
+        </Flex>
+      </VStack>
     </div>
   );
 }

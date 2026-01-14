@@ -3,7 +3,7 @@ import { ArrowLeft, GitBranch, Eye, MessageSquare, Check, X, Plus, Send, GitMerg
 import {
   Button, Badge, Card, CardContent, CardHeader, CardTitle,
   Tabs, TabsContent, TabsList, TabsTrigger, Avatar, AvatarFallback,
-  Textarea, ScrollArea, Separator
+  Textarea, ScrollArea, Separator, Box, Flex, VStack, Grid, Heading, Text
 } from '@nicorp/nui';
 
 interface MergeRequestPageProps {
@@ -181,43 +181,43 @@ This merge request implements drag and drop functionality for the kanban boards 
   const totalDeletions = mockFileChanges.reduce((sum, file) => sum + file.deletions, 0);
 
   return (
-    <div className="h-full flex flex-col">
+    <Flex className="h-full flex-col">
       {/* Header */}
-      <div className="border-b border-border p-6">
-        <div className="flex items-center gap-4 mb-4">
+      <Box className="border-b border-border p-6">
+        <Flex className="items-center gap-4 mb-4">
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          <div className="flex items-center gap-2">
+          <Flex className="items-center gap-2">
             <GitMerge className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Merge Request #42</span>
-          </div>
-        </div>
+            <Text variant="muted" size="sm">Merge Request #42</Text>
+          </Flex>
+        </Flex>
 
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h1 className="text-2xl font-medium mb-2">
+        <Flex className="items-start justify-between">
+          <Box className="flex-1">
+            <Heading level={1} className="text-2xl font-medium mb-2">
               Implement drag and drop functionality for kanban boards
-            </h1>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
+            </Heading>
+            <Flex className="items-center gap-4 text-sm text-muted-foreground">
+              <Flex className="items-center gap-1">
                 <GitBranch className="w-4 h-4" />
-                <code className="bg-muted px-2 py-1 rounded text-xs">{branch}</code>
-                <span>→</span>
-                <code className="bg-muted px-2 py-1 rounded text-xs">main</code>
-              </div>
-              <div className="flex items-center gap-1">
+                <Box as="code" className="bg-muted px-2 py-1 rounded text-xs">{branch}</Box>
+                <Text as="span">→</Text>
+                <Box as="code" className="bg-muted px-2 py-1 rounded text-xs">main</Box>
+              </Flex>
+              <Flex className="items-center gap-1">
                 <User className="w-4 h-4" />
-                <span>Created by John Doe</span>
-              </div>
-              <div className="flex items-center gap-1">
+                <Text as="span">Created by John Doe</Text>
+              </Flex>
+              <Flex className="items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                <span>2 hours ago</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+                <Text as="span">2 hours ago</Text>
+              </Flex>
+            </Flex>
+          </Box>
+          <Flex className="items-center gap-2">
             <Badge variant="secondary" className="bg-green-100 text-green-800">
               Open
             </Badge>
@@ -229,18 +229,18 @@ This merge request implements drag and drop functionality for the kanban boards 
               <GitMerge className="w-4 h-4 mr-2" />
               Merge
             </Button>
-          </div>
-        </div>
+          </Flex>
+        </Flex>
 
-        <div className="flex items-center gap-4 mt-4 text-sm">
-          <span className="text-green-600">+{totalAdditions} additions</span>
-          <span className="text-red-600">-{totalDeletions} deletions</span>
-          <span className="text-muted-foreground">{mockFileChanges.length} files changed</span>
-        </div>
-      </div>
+        <Flex className="items-center gap-4 mt-4 text-sm">
+          <Text as="span" className="text-green-600">+{totalAdditions} additions</Text>
+          <Text as="span" className="text-red-600">-{totalDeletions} deletions</Text>
+          <Text as="span" className="text-muted-foreground">{mockFileChanges.length} files changed</Text>
+        </Flex>
+      </Box>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <Box className="flex-1 overflow-hidden">
         <Tabs defaultValue="overview" className="h-full flex flex-col">
           <TabsList className="mx-6 mt-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -249,7 +249,7 @@ This merge request implements drag and drop functionality for the kanban boards 
           </TabsList>
 
           <TabsContent value="overview" className="flex-1 p-6 overflow-auto">
-            <div className="max-w-4xl space-y-6">
+            <VStack className="max-w-4xl space-y-6">
               {/* Description */}
               <Card>
                 <CardHeader>
@@ -274,37 +274,37 @@ This merge request implements drag and drop functionality for the kanban boards 
                 <CardContent className="space-y-4">
                   {/* Existing Comments */}
                   {getTopLevelComments().map((comment) => (
-                    <div key={comment.id} className="space-y-3">
+                    <VStack key={comment.id} className="space-y-3">
                       {comment.type === 'system' ? (
-                        <div className="text-sm text-muted-foreground flex items-start gap-2">
-                          <div className="w-1 h-1 bg-muted-foreground rounded-full mt-2 flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <span>{comment.content}</span>
-                            <div className="text-xs mt-1">
+                        <Flex className="text-sm text-muted-foreground items-start gap-2">
+                          <Box className="w-1 h-1 bg-muted-foreground rounded-full mt-2 flex-shrink-0"></Box>
+                          <Box className="flex-1">
+                            <Text as="span">{comment.content}</Text>
+                            <Text size="xs" className="mt-1">
                               {comment.timestamp.toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
+                            </Text>
+                          </Box>
+                        </Flex>
                       ) : comment.type === 'code' ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
+                        <VStack className="space-y-2">
+                          <Flex className="items-center gap-2">
                             <Avatar className="w-6 h-6">
                               <AvatarFallback className="text-xs">
                                 {comment.author.split(' ').map(n => n[0]).join('')}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm font-medium">{comment.author}</span>
-                            <span className="text-xs text-muted-foreground">
+                            <Text size="sm" weight="medium" as="span">{comment.author}</Text>
+                            <Text size="xs" variant="muted" as="span">
                               {comment.timestamp.toLocaleString()}
-                            </span>
-                          </div>
+                            </Text>
+                          </Flex>
 
                           {/* Code snippet styled like Changes tab */}
                           {comment.changes && (
-                            <div className="ml-8 mb-2 bg-muted/30 rounded-lg overflow-hidden">
-                              <div className="text-xs text-muted-foreground px-3 py-2 bg-muted/50 border-b">
+                            <Box className="ml-8 mb-2 bg-muted/30 rounded-lg overflow-hidden">
+                              <Box className="text-xs text-muted-foreground px-3 py-2 bg-muted/50 border-b">
                                 {comment.changes.file}
-                              </div>
+                              </Box>
                               {comment.changes.code.map((codeLine, index) => {
                                 // Determine line type from original file changes
                                 const lineNumber = comment.changes!.lines[index];
@@ -313,44 +313,44 @@ This merge request implements drag and drop functionality for the kanban boards 
                                 const lineType = originalLine?.type || 'context';
 
                                 return (
-                                  <div key={index} className={`flex items-center text-sm font-mono ${lineType === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
-                                      lineType === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
-                                        ''
+                                  <Flex key={index} className={`items-center text-sm font-mono ${lineType === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
+                                    lineType === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
+                                      ''
                                     }`}>
-                                    <div className="w-12 text-center text-muted-foreground border-r border-border py-1">
+                                    <Box className="w-12 text-center text-muted-foreground border-r border-border py-1">
                                       {lineNumber}
-                                    </div>
-                                    <div className={`w-6 text-center ${lineType === 'addition' ? 'text-green-600' :
-                                        lineType === 'deletion' ? 'text-red-600' :
-                                          ''
+                                    </Box>
+                                    <Box className={`w-6 text-center ${lineType === 'addition' ? 'text-green-600' :
+                                      lineType === 'deletion' ? 'text-red-600' :
+                                        ''
                                       }`}>
                                       {lineType === 'addition' ? '+' :
                                         lineType === 'deletion' ? '-' : ''}
-                                    </div>
-                                    <div className="flex-1 px-4 py-1">
+                                    </Box>
+                                    <Box className="flex-1 px-4 py-1">
                                       {codeLine}
-                                    </div>
-                                  </div>
+                                    </Box>
+                                  </Flex>
                                 );
                               })}
-                            </div>
+                            </Box>
                           )}
 
-                          <p className="text-sm bg-muted p-3 rounded-lg ml-8">
+                          <Text size="sm" className="bg-muted p-3 rounded-lg ml-8">
                             {comment.content}
-                          </p>
+                          </Text>
 
                           {/* Reply input for code comments */}
-                          <div className="ml-8">
+                          <Box className="ml-8">
                             {replyingTo === comment.id ? (
-                              <div className="space-y-2">
+                              <VStack className="space-y-2">
                                 <Textarea
                                   placeholder="Reply to this comment..."
                                   value={replyText}
                                   onChange={(e) => setReplyText(e.target.value)}
                                   className="min-h-[60px]"
                                 />
-                                <div className="flex justify-end gap-2">
+                                <Flex className="justify-end gap-2">
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -361,8 +361,8 @@ This merge request implements drag and drop functionality for the kanban boards 
                                   <Button size="sm" onClick={() => addReply(comment.id)}>
                                     Reply
                                   </Button>
-                                </div>
-                              </div>
+                                </Flex>
+                              </VStack>
                             ) : (
                               <Button
                                 variant="ghost"
@@ -374,56 +374,56 @@ This merge request implements drag and drop functionality for the kanban boards 
                             )}
 
                             {/* Show replies */}
-                            <div className="mt-2 space-y-2">
+                            <VStack className="mt-2 space-y-2">
                               {getCommentReplies(comment.id).map(reply => (
-                                <div key={reply.id} className="space-y-2">
-                                  <div className="flex items-center gap-2">
+                                <VStack key={reply.id} className="space-y-2">
+                                  <Flex className="items-center gap-2">
                                     <Avatar className="w-5 h-5">
                                       <AvatarFallback className="text-xs">
                                         {reply.author.split(' ').map(n => n[0]).join('')}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-sm font-medium">{reply.author}</span>
-                                    <span className="text-xs text-muted-foreground">
+                                    <Text size="sm" weight="medium" as="span">{reply.author}</Text>
+                                    <Text size="xs" variant="muted" as="span">
                                       {reply.timestamp.toLocaleString()}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm bg-muted p-2 rounded ml-7">
+                                    </Text>
+                                  </Flex>
+                                  <Text size="sm" className="bg-muted p-2 rounded ml-7">
                                     {reply.content}
-                                  </p>
-                                </div>
+                                  </Text>
+                                </VStack>
                               ))}
-                            </div>
-                          </div>
-                        </div>
+                            </VStack>
+                          </Box>
+                        </VStack>
                       ) : (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
+                        <VStack className="space-y-2">
+                          <Flex className="items-center gap-2">
                             <Avatar className="w-6 h-6">
                               <AvatarFallback className="text-xs">
                                 {comment.author.split(' ').map(n => n[0]).join('')}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm font-medium">{comment.author}</span>
-                            <span className="text-xs text-muted-foreground">
+                            <Text size="sm" weight="medium" as="span">{comment.author}</Text>
+                            <Text size="xs" variant="muted" as="span">
                               {comment.timestamp.toLocaleString()}
-                            </span>
-                          </div>
-                          <p className="text-sm bg-muted p-3 rounded-lg ml-8">
+                            </Text>
+                          </Flex>
+                          <Text size="sm" className="bg-muted p-3 rounded-lg ml-8">
                             {comment.content}
-                          </p>
+                          </Text>
 
                           {/* Reply input for regular comments */}
-                          <div className="ml-8">
+                          <Box className="ml-8">
                             {replyingTo === comment.id ? (
-                              <div className="space-y-2">
+                              <VStack className="space-y-2">
                                 <Textarea
                                   placeholder="Reply to this comment..."
                                   value={replyText}
                                   onChange={(e) => setReplyText(e.target.value)}
                                   className="min-h-[60px]"
                                 />
-                                <div className="flex justify-end gap-2">
+                                <Flex className="justify-end gap-2">
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -434,8 +434,8 @@ This merge request implements drag and drop functionality for the kanban boards 
                                   <Button size="sm" onClick={() => addReply(comment.id)}>
                                     Reply
                                   </Button>
-                                </div>
-                              </div>
+                                </Flex>
+                              </VStack>
                             ) : (
                               <Button
                                 variant="ghost"
@@ -447,98 +447,98 @@ This merge request implements drag and drop functionality for the kanban boards 
                             )}
 
                             {/* Show replies */}
-                            <div className="mt-2 space-y-2">
+                            <VStack className="mt-2 space-y-2">
                               {getCommentReplies(comment.id).map(reply => (
-                                <div key={reply.id} className="space-y-2">
-                                  <div className="flex items-center gap-2">
+                                <VStack key={reply.id} className="space-y-2">
+                                  <Flex className="items-center gap-2">
                                     <Avatar className="w-5 h-5">
                                       <AvatarFallback className="text-xs">
                                         {reply.author.split(' ').map(n => n[0]).join('')}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-sm font-medium">{reply.author}</span>
-                                    <span className="text-xs text-muted-foreground">
+                                    <Text size="sm" weight="medium" as="span">{reply.author}</Text>
+                                    <Text size="xs" variant="muted" as="span">
                                       {reply.timestamp.toLocaleString()}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm bg-muted p-2 rounded ml-7">
+                                    </Text>
+                                  </Flex>
+                                  <Text size="sm" className="bg-muted p-2 rounded ml-7">
                                     {reply.content}
-                                  </p>
-                                </div>
+                                  </Text>
+                                </VStack>
                               ))}
-                            </div>
-                          </div>
-                        </div>
+                            </VStack>
+                          </Box>
+                        </VStack>
                       )}
-                    </div>
+                    </VStack>
                   ))}
 
                   <Separator />
 
                   {/* Add Comment */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
+                  <VStack className="space-y-3">
+                    <Flex className="items-center gap-2">
                       <Avatar className="w-6 h-6">
                         <AvatarFallback className="text-xs">You</AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium">Add a comment</span>
-                    </div>
+                      <Text size="sm" weight="medium" as="span">Add a comment</Text>
+                    </Flex>
                     <Textarea
                       placeholder="Write a comment..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       className="min-h-[80px]"
                     />
-                    <div className="flex justify-end">
+                    <Flex className="justify-end">
                       <Button size="sm" onClick={addComment}>
                         <Send className="w-4 h-4 mr-2" />
                         Comment
                       </Button>
-                    </div>
-                  </div>
+                    </Flex>
+                  </VStack>
 
                   {/* Code comment dialog */}
                   {selectedLines && (
                     <Card className="border-primary/50">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm">Comment on selected code</CardTitle>
-                        <div className="text-xs text-muted-foreground">
+                        <Text size="xs" variant="muted">
                           {selectedLines.lines.length} line{selectedLines.lines.length > 1 ? 's' : ''} selected
-                        </div>
+                        </Text>
                       </CardHeader>
                       <CardContent className="space-y-3">
-                        <div className="bg-muted/30 rounded-lg overflow-hidden">
-                          <div className="text-xs text-muted-foreground px-3 py-2 bg-muted/50 border-b">
+                        <Box className="bg-muted/30 rounded-lg overflow-hidden">
+                          <Box className="text-xs text-muted-foreground px-3 py-2 bg-muted/50 border-b">
                             {selectedLines.file}
-                          </div>
+                          </Box>
                           {selectedLines.lines.map((line, index) => (
-                            <div key={index} className={`flex items-center text-sm font-mono ${line.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
-                                line.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
-                                  ''
+                            <Flex key={index} className={`items-center text-sm font-mono ${line.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
+                              line.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
+                                ''
                               }`}>
-                              <div className="w-12 text-center text-muted-foreground border-r border-border py-1">
+                              <Box className="w-12 text-center text-muted-foreground border-r border-border py-1">
                                 {line.lineNumber}
-                              </div>
-                              <div className={`w-6 text-center ${line.type === 'addition' ? 'text-green-600' :
-                                  line.type === 'deletion' ? 'text-red-600' :
-                                    ''
+                              </Box>
+                              <Box className={`w-6 text-center ${line.type === 'addition' ? 'text-green-600' :
+                                line.type === 'deletion' ? 'text-red-600' :
+                                  ''
                                 }`}>
                                 {line.type === 'addition' ? '+' :
                                   line.type === 'deletion' ? '-' : ''}
-                              </div>
-                              <div className="flex-1 px-4 py-1">
+                              </Box>
+                              <Box className="flex-1 px-4 py-1">
                                 {line.content}
-                              </div>
-                            </div>
+                              </Box>
+                            </Flex>
                           ))}
-                        </div>
+                        </Box>
                         <Textarea
                           placeholder="Add your comment about this code..."
                           value={codeCommentText}
                           onChange={(e) => setCodeCommentText(e.target.value)}
                           className="min-h-[60px]"
                         />
-                        <div className="flex justify-end gap-2">
+                        <Flex className="justify-end gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -550,84 +550,84 @@ This merge request implements drag and drop functionality for the kanban boards 
                             <Send className="w-4 h-4 mr-2" />
                             Comment
                           </Button>
-                        </div>
+                        </Flex>
                       </CardContent>
                     </Card>
                   )}
                 </CardContent>
               </Card>
-            </div>
+            </VStack>
           </TabsContent>
 
           <TabsContent value="commits" className="flex-1 p-6 overflow-auto">
-            <div className="max-w-4xl space-y-4">
+            <VStack className="max-w-4xl space-y-4">
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="font-medium">Implement drag and drop functionality for kanban boards</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <span>a1b2c3d4</span>
-                        <span>•</span>
-                        <span>John Doe</span>
-                        <span>•</span>
-                        <span>30 minutes ago</span>
-                      </div>
-                    </div>
-                  </div>
+                  <Flex className="items-center gap-3">
+                    <Box className="w-2 h-2 bg-green-500 rounded-full"></Box>
+                    <Box className="flex-1">
+                      <Text weight="medium">Implement drag and drop functionality for kanban boards</Text>
+                      <Flex className="items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <Text as="span">a1b2c3d4</Text>
+                        <Text as="span">•</Text>
+                        <Text as="span">John Doe</Text>
+                        <Text as="span">•</Text>
+                        <Text as="span">30 minutes ago</Text>
+                      </Flex>
+                    </Box>
+                  </Flex>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="font-medium">Add TypeScript interfaces for drag and drop</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <span>b2c3d4e5</span>
-                        <span>•</span>
-                        <span>John Doe</span>
-                        <span>•</span>
-                        <span>1 hour ago</span>
-                      </div>
-                    </div>
-                  </div>
+                  <Flex className="items-center gap-3">
+                    <Box className="w-2 h-2 bg-green-500 rounded-full"></Box>
+                    <Box className="flex-1">
+                      <Text weight="medium">Add TypeScript interfaces for drag and drop</Text>
+                      <Flex className="items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <Text as="span">b2c3d4e5</Text>
+                        <Text as="span">•</Text>
+                        <Text as="span">John Doe</Text>
+                        <Text as="span">•</Text>
+                        <Text as="span">1 hour ago</Text>
+                      </Flex>
+                    </Box>
+                  </Flex>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="font-medium">Initial drag and drop setup</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <span>c3d4e5f6</span>
-                        <span>•</span>
-                        <span>John Doe</span>
-                        <span>•</span>
-                        <span>2 hours ago</span>
-                      </div>
-                    </div>
-                  </div>
+                  <Flex className="items-center gap-3">
+                    <Box className="w-2 h-2 bg-green-500 rounded-full"></Box>
+                    <Box className="flex-1">
+                      <Text weight="medium">Initial drag and drop setup</Text>
+                      <Flex className="items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <Text as="span">c3d4e5f6</Text>
+                        <Text as="span">•</Text>
+                        <Text as="span">John Doe</Text>
+                        <Text as="span">•</Text>
+                        <Text as="span">2 hours ago</Text>
+                      </Flex>
+                    </Box>
+                  </Flex>
                 </CardContent>
               </Card>
-            </div>
+            </VStack>
           </TabsContent>
 
           <TabsContent value="changes" className="flex-1 overflow-auto">
             {selectedLines && (
-              <div className="mx-6 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm">
-                    <span className="font-medium">
+              <Box className="mx-6 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <Flex className="items-center justify-between">
+                  <Box className="text-sm">
+                    <Text as="span" weight="medium">
                       {selectedLines.lines.length} line{selectedLines.lines.length > 1 ? 's' : ''} selected in {selectedLines.file}
-                    </span>
-                    <span className="text-muted-foreground ml-2">
+                    </Text>
+                    <Text as="span" className="text-muted-foreground ml-2">
                       Add a comment about this code
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
+                    </Text>
+                  </Box>
+                  <Flex className="gap-2">
                     <Button size="sm" onClick={addCodeComment} disabled={!codeCommentText.trim()}>
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Comment
@@ -639,67 +639,67 @@ This merge request implements drag and drop functionality for the kanban boards 
                     >
                       Clear
                     </Button>
-                  </div>
-                </div>
+                  </Flex>
+                </Flex>
                 {selectedLines && (
-                  <div className="mt-3 space-y-3">
-                    <div className="bg-muted/30 rounded-lg overflow-hidden">
-                      <div className="text-xs text-muted-foreground px-3 py-2 bg-muted/50 border-b">
+                  <VStack className="mt-3 space-y-3">
+                    <Box className="bg-muted/30 rounded-lg overflow-hidden">
+                      <Box className="text-xs text-muted-foreground px-3 py-2 bg-muted/50 border-b">
                         {selectedLines.file}
-                      </div>
+                      </Box>
                       {selectedLines.lines.map((line, index) => (
-                        <div key={index} className={`flex items-center text-sm font-mono ${line.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
-                            line.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
-                              ''
+                        <Flex key={index} className={`items-center text-sm font-mono ${line.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
+                          line.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
+                            ''
                           }`}>
-                          <div className="w-12 text-center text-muted-foreground border-r border-border py-1">
+                          <Box className="w-12 text-center text-muted-foreground border-r border-border py-1">
                             {line.lineNumber}
-                          </div>
-                          <div className={`w-6 text-center ${line.type === 'addition' ? 'text-green-600' :
-                              line.type === 'deletion' ? 'text-red-600' :
-                                ''
+                          </Box>
+                          <Box className={`w-6 text-center ${line.type === 'addition' ? 'text-green-600' :
+                            line.type === 'deletion' ? 'text-red-600' :
+                              ''
                             }`}>
                             {line.type === 'addition' ? '+' :
                               line.type === 'deletion' ? '-' : ''}
-                          </div>
-                          <div className="flex-1 px-4 py-1">
+                          </Box>
+                          <Box className="flex-1 px-4 py-1">
                             {line.content}
-                          </div>
-                        </div>
+                          </Box>
+                        </Flex>
                       ))}
-                    </div>
+                    </Box>
                     <Textarea
                       placeholder="Add your comment about this code..."
                       value={codeCommentText}
                       onChange={(e) => setCodeCommentText(e.target.value)}
                       className="min-h-[60px]"
                     />
-                  </div>
+                  </VStack>
                 )}
-              </div>
+              </Box>
             )}
-            <div className="space-y-6">
+            <VStack className="space-y-6">
               {mockFileChanges.map((file, fileIndex) => (
                 <Card key={fileIndex} className="mx-6">
                   <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-mono text-sm">{file.path}</h3>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-green-600">+{file.additions}</span>
-                        <span className="text-red-600">-{file.deletions}</span>
-                      </div>
-                    </div>
+                    <Flex className="items-center justify-between">
+                      <Flex className="items-center gap-2">
+                        <Heading level={3} className="font-mono text-sm">{file.path}</Heading>
+                      </Flex>
+                      <Flex className="items-center gap-2 text-sm">
+                        <Text as="span" className="text-green-600">+{file.additions}</Text>
+                        <Text as="span" className="text-red-600">-{file.deletions}</Text>
+                      </Flex>
+                    </Flex>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="bg-muted/30">
+                    <Box className="bg-muted/30">
                       {file.changes.map((change, changeIndex) => (
-                        <div
+                        <Flex
                           key={changeIndex}
-                          className={`flex items-center text-sm font-mono cursor-pointer hover:bg-muted/70 transition-colors select-none ${change.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
-                              change.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
-                                ''
+                          className={`items-center text-sm font-mono cursor-pointer hover:bg-muted/70 transition-colors select-none ${change.type === 'addition' ? 'bg-green-50 dark:bg-green-900/20' :
+                            change.type === 'deletion' ? 'bg-red-50 dark:bg-red-900/20' :
+                              ''
                             } ${selectedLines &&
                               selectedLines.file === file.path &&
                               selectedLines.lines.some(l => l.lineNumber === change.lineNumber)
@@ -709,29 +709,29 @@ This merge request implements drag and drop functionality for the kanban boards 
                           onClick={(e) => handleLineSelection(file.path, change.lineNumber, change.content, change.type, e)}
                           title={`Click to select line ${change.lineNumber}. Hold Shift to extend selection.`}
                         >
-                          <div className="w-12 text-center text-muted-foreground border-r border-border py-1">
+                          <Box className="w-12 text-center text-muted-foreground border-r border-border py-1">
                             {change.lineNumber}
-                          </div>
-                          <div className={`w-6 text-center ${change.type === 'addition' ? 'text-green-600' :
-                              change.type === 'deletion' ? 'text-red-600' :
-                                ''
+                          </Box>
+                          <Box className={`w-6 text-center ${change.type === 'addition' ? 'text-green-600' :
+                            change.type === 'deletion' ? 'text-red-600' :
+                              ''
                             }`}>
                             {change.type === 'addition' ? '+' :
                               change.type === 'deletion' ? '-' : ''}
-                          </div>
-                          <div className="flex-1 px-4 py-1">
+                          </Box>
+                          <Box className="flex-1 px-4 py-1">
                             {change.content}
-                          </div>
-                        </div>
+                          </Box>
+                        </Flex>
                       ))}
-                    </div>
+                    </Box>
                   </CardContent>
                 </Card>
               ))}
-            </div>
+            </VStack>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }

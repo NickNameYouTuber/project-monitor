@@ -2,7 +2,8 @@ import React, { useMemo, useRef } from 'react';
 import { Video, Calendar, Clock, MoreVertical, Copy, Trash2, Mic, Users, ArrowRight } from 'lucide-react';
 import {
   Button, Badge, Avatar, AvatarFallback, cn,
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+  Box, Flex, Heading, Text
 } from '@nicorp/nui';
 
 interface MeetingsListProps {
@@ -89,28 +90,28 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
 
   if (!items.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center h-full">
-        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+      <Flex className="flex-col items-center justify-center py-12 text-center h-full">
+        <Flex className="w-16 h-16 bg-muted rounded-full items-center justify-center mb-4">
           <Calendar className="w-8 h-8 text-muted-foreground" />
-        </div>
-        <h3 className="text-xl font-semibold mb-2">No meetings found</h3>
-        <p className="text-muted-foreground max-w-sm">
+        </Flex>
+        <Heading level={3} className="text-xl font-semibold mb-2">No meetings found</Heading>
+        <Text className="text-muted-foreground max-w-sm">
           Check back later or create a new meeting to get started.
-        </p>
-      </div>
+        </Text>
+      </Flex>
     )
   }
 
   return (
-    <div className="h-full overflow-y-auto p-6">
-      <div className="max-w-5xl mx-auto space-y-1">
+    <Box className="h-full overflow-y-auto p-6">
+      <Box className="max-w-5xl mx-auto space-y-1">
         {sortedItems.map((meeting) => {
           const status = getActualStatus(meeting);
           const isJoinable = meeting.roomId && status !== 'completed' && status !== 'cancelled';
           const isLive = status === 'active' || status === 'in-progress';
 
           return (
-            <div
+            <Box
               key={meeting.id}
               className={cn(
                 "group flex items-center justify-between p-4 rounded-xl border transition-all duration-200",
@@ -119,43 +120,43 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                   : "bg-card hover:bg-muted/50 border-border"
               )}
             >
-              <div className="flex items-center gap-4 flex-1 min-w-0">
+              <Flex className="items-center gap-4 flex-1 min-w-0">
                 {/* Date Box */}
-                <div className={cn(
-                  "flex flex-col items-center justify-center w-14 h-14 rounded-lg bg-muted/50 border border-border flex-shrink-0",
+                <Flex className={cn(
+                  "flex-col items-center justify-center w-14 h-14 rounded-lg bg-muted/50 border border-border flex-shrink-0",
                   isLive && "bg-blue-100/50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700"
                 )}>
-                  <span className="text-xs font-semibold text-muted-foreground uppercase">{meeting.date.toLocaleDateString('en-US', { month: 'short' })}</span>
-                  <span className="text-lg font-bold">{meeting.date.getDate()}</span>
-                </div>
+                  <Text className="text-xs font-semibold text-muted-foreground uppercase">{meeting.date.toLocaleDateString('en-US', { month: 'short' })}</Text>
+                  <Text className="text-lg font-bold">{meeting.date.getDate()}</Text>
+                </Flex>
 
                 {/* Info */}
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-base truncate">{meeting.title}</h4>
+                <Flex className="flex-col min-w-0">
+                  <Flex className="items-center gap-2 mb-1">
+                    <Heading level={4} className="font-semibold text-base truncate">{meeting.title}</Heading>
                     {getStatusBadge(status)}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
+                  </Flex>
+                  <Flex className="items-center gap-4 text-sm text-muted-foreground">
+                    <Flex className="items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" />
-                      <span>
+                      <Text as="span">
                         {meeting.date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                        <span className="mx-1">•</span>
+                        <Text as="span" className="mx-1">•</Text>
                         {meeting.duration} min
-                      </span>
-                    </div>
+                      </Text>
+                    </Flex>
                     {meeting.participants && meeting.participants.length > 0 && (
-                      <div className="flex items-center gap-1.5">
+                      <Flex className="items-center gap-1.5">
                         <Users className="w-3.5 h-3.5" />
-                        <span>{meeting.participants.length} invited</span>
-                      </div>
+                        <Text as="span">{meeting.participants.length} invited</Text>
+                      </Flex>
                     )}
-                  </div>
-                </div>
-              </div>
+                  </Flex>
+                </Flex>
+              </Flex>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 pl-4">
+              <Flex className="items-center gap-2 pl-4">
                 {isJoinable && onJoinCall && (
                   <Button
                     onClick={() => onJoinCall(meeting.roomId!)}
@@ -193,12 +194,12 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-            </div>
+              </Flex>
+            </Box>
           );
         })}
-      </div>
-    </div>
+      </Box>
+    </Box >
   );
 }
 

@@ -2,7 +2,8 @@ import React from 'react';
 import { useDrag } from 'react-dnd';
 import { Calendar, User, MoreVertical } from 'lucide-react';
 import {
-  Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
+  Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  Box, Flex, Heading, Text
 } from '@nicorp/nui';
 import type { Project } from '../App';
 
@@ -33,13 +34,13 @@ export function ProjectCard({ project, onClick, onEdit }: ProjectCardProps) {
 
   return (
     <div
-      ref={drag}
+      ref={drag as any}
       className={`bg-card border border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''
         }`}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between mb-3">
-        <div
+      <Flex className="items-start justify-between mb-3">
+        <Box
           className="w-4 h-4 rounded-full flex-shrink-0 mt-1"
           style={{ backgroundColor: project.color }}
         />
@@ -66,22 +67,22 @@ export function ProjectCard({ project, onClick, onEdit }: ProjectCardProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </Flex>
 
-      <h3 className="font-medium mb-2">{project.title}</h3>
-      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+      <Heading level={3} className="font-medium mb-2 text-base">{project.title}</Heading>
+      <Text className="text-sm text-muted-foreground mb-3 line-clamp-2">
         {project.description}
-      </p>
+      </Text>
 
-      <div className="flex items-center justify-between">
+      <Flex className="items-center justify-between">
         <Badge variant="secondary" className={getStatusColor(project.status)}>
           {project.status.replace('-', ' ')}
         </Badge>
-        <div className="flex items-center text-xs text-muted-foreground">
+        <Flex className="items-center text-xs text-muted-foreground">
           <Calendar className="w-3 h-3 mr-1" />
           {project.createdAt.toLocaleDateString()}
-        </div>
-      </div>
+        </Flex>
+      </Flex>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Checkbox, Label, Card, CardContent, CardHeader, CardTitle, CardDescription } from '@nicorp/nui';
+import { Checkbox, Label, Card, CardContent, CardHeader, CardTitle, Box, Flex, Grid, VStack, Text } from '@nicorp/nui';
 import { OrgPermission } from '../../types/organization';
 import { getGroupedPermissions } from '../../api/roles';
 import { LoadingSpinner } from '../loading-spinner';
@@ -33,7 +33,7 @@ export function PermissionsMatrix({ selectedPermissions, onChange, readOnly = fa
     }
 
     if (!groupedPermissions) {
-        return <div className="text-red-500">Failed to load permissions.</div>;
+        return <Text className="text-red-500">Failed to load permissions.</Text>;
     }
 
     const handleToggle = (permission: OrgPermission) => {
@@ -67,7 +67,7 @@ export function PermissionsMatrix({ selectedPermissions, onChange, readOnly = fa
     };
 
     return (
-        <div className="space-y-6">
+        <VStack className="space-y-6">
             {Object.entries(groupedPermissions).map(([group, permissions]) => {
                 const allSelected = permissions.every(p => selectedPermissions.includes(p));
                 const someSelected = permissions.some(p => selectedPermissions.includes(p));
@@ -75,7 +75,7 @@ export function PermissionsMatrix({ selectedPermissions, onChange, readOnly = fa
                 return (
                     <Card key={group}>
                         <CardHeader className="pb-3">
-                            <div className="flex items-center space-x-2">
+                            <Flex className="items-center space-x-2">
                                 <Checkbox
                                     id={`group-${group}`}
                                     checked={allSelected ? true : (someSelected ? 'indeterminate' : false)}
@@ -83,19 +83,19 @@ export function PermissionsMatrix({ selectedPermissions, onChange, readOnly = fa
                                     disabled={readOnly}
                                 />
                                 <CardTitle className="text-base">{group}</CardTitle>
-                            </div>
+                            </Flex>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <Grid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {permissions.map((perm) => (
-                                    <div key={perm} className="flex items-start space-x-2">
+                                    <Flex key={perm} className="items-start space-x-2">
                                         <Checkbox
                                             id={perm}
                                             checked={selectedPermissions.includes(perm)}
                                             onCheckedChange={() => handleToggle(perm)}
                                             disabled={readOnly}
                                         />
-                                        <div className="grid gap-1.5 leading-none">
+                                        <Grid className="gap-1.5 leading-none">
                                             <Label
                                                 htmlFor={perm}
                                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
@@ -104,15 +104,15 @@ export function PermissionsMatrix({ selectedPermissions, onChange, readOnly = fa
                                                 {formatPermissionName(perm)}
                                             </Label>
                                             {/* Description could be added here if we had it in API response map */}
-                                        </div>
-                                    </div>
+                                        </Grid>
+                                    </Flex>
                                 ))}
-                            </div>
+                            </Grid>
                         </CardContent>
                     </Card>
                 );
             })}
-        </div>
+        </VStack>
     );
 }
 

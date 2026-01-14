@@ -6,7 +6,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import { useRouteState } from '../../hooks/useRouteState';
 import { useNavigate } from 'react-router-dom';
 import type { Page } from '../../App';
-import { cn } from '@nicorp/nui';
+import { cn, Box, Flex } from '@nicorp/nui';
 
 interface AppLayoutProps {
     children: ReactNode;
@@ -21,7 +21,7 @@ export function AppLayout({ children, currentPage, onNavigate }: AppLayoutProps)
     const navigate = useNavigate();
 
     return (
-        <div className="relative flex h-screen overflow-hidden bg-background">
+        <Flex className="relative h-screen overflow-hidden bg-background">
             {/* Left Navigation Sidebar */}
             <Sidebar
                 currentPage={currentPage}
@@ -31,17 +31,17 @@ export function AppLayout({ children, currentPage, onNavigate }: AppLayoutProps)
             />
 
             {/* Main Content Area */}
-            <div
-                className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out"
+            <Flex
+                className="flex-1 flex-col min-w-0 transition-all duration-300 ease-in-out"
                 style={{ marginRight: isOpen ? 0 : 0 }}
             >
                 {children}
-            </div>
+            </Flex>
 
             {/* Right AI Sidebar */}
-            <div
+            <Flex
                 className={cn(
-                    "bg-card flex flex-col transition-all duration-300 ease-in-out z-20",
+                    "bg-card flex-col transition-all duration-300 ease-in-out z-20",
                     isOpen ? "translate-x-0 border-l border-border shadow-xl" : "translate-x-full absolute right-0 h-full border-l-0 shadow-none"
                 )}
                 style={{
@@ -51,7 +51,7 @@ export function AppLayout({ children, currentPage, onNavigate }: AppLayoutProps)
                 }}
             >
                 {isOpen && <AISidebar />}
-            </div>
-        </div>
+            </Flex>
+        </Flex>
     );
 }

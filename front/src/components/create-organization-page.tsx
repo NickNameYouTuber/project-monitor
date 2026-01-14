@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
-  Button, Input, Label, Textarea, Switch, Separator
+  Button, Input, Label, Textarea, Switch, Separator,
+  Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { createOrganization } from '../api/organizations';
 import { useNotifications } from '../hooks/useNotifications';
@@ -65,32 +66,32 @@ export function CreateOrganizationPage() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
+    <Flex className="h-full flex-col">
+      <Box className="border-b border-border p-6">
         <Button variant="ghost" size="sm" onClick={() => navigate('/organizations')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Organizations
         </Button>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+        <Flex className="items-center gap-3">
+          <Flex className="w-12 h-12 bg-primary/10 rounded-lg items-center justify-center">
             <Building2 className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold">Create Organization</h1>
-            <p className="text-muted-foreground">Set up a new organization for your team</p>
-          </div>
-        </div>
-      </div>
+          </Flex>
+          <Box>
+            <Heading level={1} className="text-2xl font-semibold">Create Organization</Heading>
+            <Text className="text-muted-foreground">Set up a new organization for your team</Text>
+          </Box>
+        </Flex>
+      </Box>
 
-      <div className="flex-1 p-6 overflow-auto">
+      <Box className="flex-1 p-6 overflow-auto">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle>Organization Details</CardTitle>
             <CardDescription>Basic information about your organization</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
+            <Box as="form" onSubmit={handleSubmit} className="space-y-6">
+              <Box>
                 <Label>Organization Name *</Label>
                 <Input
                   value={formData.name}
@@ -98,29 +99,29 @@ export function CreateOrganizationPage() {
                   placeholder="ACME Corporation"
                   required
                 />
-              </div>
+              </Box>
 
-              <div>
+              <Box>
                 <Label>Slug (URL)</Label>
-                <div className="flex gap-2">
-                  <div className="flex-1 flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">nit.nicorp.tech/org/</span>
+                <Flex className="gap-2">
+                  <Flex className="flex-1 items-center gap-2">
+                    <Text as="span" className="text-sm text-muted-foreground">nit.nicorp.tech/org/</Text>
                     <Input
                       value={formData.slug}
                       onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
                       placeholder="acme-corp"
                     />
-                  </div>
+                  </Flex>
                   <Button type="button" variant="outline" onClick={generateSlug}>
                     Generate
                   </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                </Flex>
+                <Text className="text-xs text-muted-foreground mt-1">
                   Leave empty to auto-generate from name
-                </p>
-              </div>
+                </Text>
+              </Box>
 
-              <div>
+              <Box>
                 <Label>Description</Label>
                 <Textarea
                   value={formData.description}
@@ -128,9 +129,9 @@ export function CreateOrganizationPage() {
                   placeholder="Brief description of your organization..."
                   rows={3}
                 />
-              </div>
+              </Box>
 
-              <div>
+              <Box>
                 <Label>Website</Label>
                 <Input
                   type="url"
@@ -138,28 +139,28 @@ export function CreateOrganizationPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
                   placeholder="https://acme.com"
                 />
-              </div>
+              </Box>
 
               <Separator />
 
-              <div className="space-y-4">
-                <h3 className="font-medium">Security Settings</h3>
+              <VStack className="space-y-4">
+                <Heading level={3} className="font-medium">Security Settings</Heading>
 
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
+                <Flex className="items-start justify-between gap-4">
+                  <Box className="flex-1">
                     <Label>Require Organization Password</Label>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <Text className="text-xs text-muted-foreground mt-1">
                       Members will need an additional password to access this organization
-                    </p>
-                  </div>
+                    </Text>
+                  </Box>
                   <Switch
                     checked={formData.requirePassword}
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requirePassword: checked }))}
                   />
-                </div>
+                </Flex>
 
                 {formData.requirePassword && (
-                  <div>
+                  <Box>
                     <Label>Organization Password</Label>
                     <Input
                       type="password"
@@ -167,51 +168,51 @@ export function CreateOrganizationPage() {
                       onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                       placeholder="Enter organization password"
                     />
-                  </div>
+                  </Box>
                 )}
 
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
+                <Flex className="items-start justify-between gap-4">
+                  <Box className="flex-1">
                     <Label>Corporate Email Domain</Label>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <Text className="text-xs text-muted-foreground mt-1">
                       Restrict membership to specific email domains
-                    </p>
-                  </div>
+                    </Text>
+                  </Box>
                   <Input
                     value={formData.corporateDomain}
                     onChange={(e) => setFormData(prev => ({ ...prev, corporateDomain: e.target.value }))}
                     placeholder="@company.com"
                     className="w-48"
                   />
-                </div>
+                </Flex>
 
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
+                <Flex className="items-start justify-between gap-4">
+                  <Box className="flex-1">
                     <Label>Require Corporate Email</Label>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <Text className="text-xs text-muted-foreground mt-1">
                       All members must verify a corporate email
-                    </p>
-                  </div>
+                    </Text>
+                  </Box>
                   <Switch
                     checked={formData.requireCorporateEmail}
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requireCorporateEmail: checked }))}
                   />
-                </div>
-              </div>
+                </Flex>
+              </VStack>
 
-              <div className="flex justify-end gap-2 pt-4">
+              <Flex className="justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => navigate('/organizations')}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={creating || !formData.name.trim()}>
                   {creating ? 'Creating...' : 'Create Organization'}
                 </Button>
-              </div>
-            </form>
+              </Flex>
+            </Box>
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }
 

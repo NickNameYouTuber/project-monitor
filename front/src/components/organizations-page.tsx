@@ -4,7 +4,7 @@ import { Building2, Plus, Link as LinkIcon, Settings, Users, FolderKanban, Shiel
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
   Button, Badge, Dialog, DialogContent, DialogDescription,
-  DialogHeader, DialogTitle, DialogTrigger, Input, Label
+  DialogHeader, DialogTitle, DialogTrigger, Input, Label, Box, Flex, VStack, Grid, Heading, Text
 } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { RoleBadge } from './role-badge';
@@ -130,55 +130,55 @@ export function OrganizationsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Your Organizations</h1>
-          <p className="text-muted-foreground mt-1">
+    <Flex className="h-full flex-col">
+      <Box className="border-b border-border p-6">
+        <Box>
+          <Heading level={1} className="text-2xl">Your Organizations</Heading>
+          <Text variant="muted" className="mt-1">
             Select an organization to view projects and collaborate with your team
-          </p>
-        </div>
-      </div>
+          </Text>
+        </Box>
+      </Box>
 
-      <div className="flex-1 p-6 overflow-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <Box className="flex-1 p-6 overflow-auto">
+        <Grid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {organizations.map(org => (
             <Card key={org.id} className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
+                <Flex className="items-start justify-between">
+                  <Flex className="items-center gap-3">
                     {org.logo_url ? (
                       <img src={org.logo_url} alt={org.name} className="w-12 h-12 rounded" />
                     ) : (
-                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                      <Box className="w-12 h-12 bg-muted rounded flex items-center justify-center">
                         <Building2 className="w-6 h-6" />
-                      </div>
+                      </Box>
                     )}
-                    <div>
+                    <Box>
                       <CardTitle className="text-lg">{org.name}</CardTitle>
-                      <p className="text-xs text-muted-foreground">/{org.slug}</p>
-                    </div>
-                  </div>
+                      <Text size="xs" variant="muted">/{org.slug}</Text>
+                    </Box>
+                  </Flex>
                   {org.current_user_role && (
                     <RoleBadge role={org.current_user_role} type="project" variant="secondary" />
                   )}
-                </div>
+                </Flex>
                 <CardDescription className="mt-2">
                   {org.description || 'No description'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center gap-1">
+                <Flex className="items-center gap-4 text-sm text-muted-foreground mb-4">
+                  <Flex className="items-center gap-1">
                     <FolderKanban className="w-4 h-4" />
-                    <span>{org.project_count || 0} projects</span>
-                  </div>
-                  <div className="flex items-center gap-1">
+                    <Text as="span">{org.project_count || 0} projects</Text>
+                  </Flex>
+                  <Flex className="items-center gap-1">
                     <Users className="w-4 h-4" />
-                    <span>{org.member_count || 0} members</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
+                    <Text as="span">{org.member_count || 0} members</Text>
+                  </Flex>
+                </Flex>
+                <Flex className="gap-2">
                   {org.sso_enabled ? (
                     <>
                       <Button
@@ -206,13 +206,13 @@ export function OrganizationsPage() {
                     </Button>
                   )}
 
-                </div>
+                </Flex>
               </CardContent>
             </Card>
           ))}
-        </div>
+        </Grid>
 
-        <div className="flex gap-4">
+        <Flex className="gap-4">
           <Button onClick={() => navigate('/organizations/create')}>
             <Plus className="w-4 h-4 mr-2" />
             Create Organization
@@ -232,27 +232,27 @@ export function OrganizationsPage() {
                   Enter an invitation link to join an organization
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
+              <VStack className="space-y-4">
+                <Box>
                   <Label>Invitation Link</Label>
                   <Input
                     value={inviteLink}
                     onChange={(e) => setInviteLink(e.target.value)}
                     placeholder="https://nit.nicorp.tech/invite/abc123..."
                   />
-                </div>
-                <div className="flex justify-end gap-2">
+                </Box>
+                <Flex className="justify-end gap-2">
                   <Button variant="outline" onClick={() => setJoinDialogOpen(false)}>
                     Cancel
                   </Button>
                   <Button onClick={handleJoinWithLink}>
                     Join Organization
                   </Button>
-                </div>
-              </div>
+                </Flex>
+              </VStack>
             </DialogContent>
           </Dialog>
-        </div>
+        </Flex>
 
         <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
           <DialogContent>
@@ -262,8 +262,8 @@ export function OrganizationsPage() {
                 {selectedOrgForPassword?.name} requires a password to access
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
+            <VStack className="space-y-4">
+              <Box>
                 <Label>Password</Label>
                 <Input
                   type="password"
@@ -276,8 +276,8 @@ export function OrganizationsPage() {
                     }
                   }}
                 />
-              </div>
-              <div className="flex justify-end gap-2">
+              </Box>
+              <Flex className="justify-end gap-2">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -290,12 +290,12 @@ export function OrganizationsPage() {
                 <Button onClick={handleVerifyPassword} disabled={verifying || !orgPassword}>
                   {verifying ? 'Verifying...' : 'Continue'}
                 </Button>
-              </div>
-            </div>
+              </Flex>
+            </VStack>
           </DialogContent>
         </Dialog>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }
 

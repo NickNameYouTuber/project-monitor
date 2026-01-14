@@ -4,7 +4,7 @@ import { Plus, Search, Filter, Settings, Edit, Trash2, GripVertical, MoreVertica
 import {
   Button, Input, Badge, Dialog, DialogContent, DialogDescription,
   DialogHeader, DialogTitle, DialogTrigger, DropdownMenu,
-  DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
+  DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { ProjectCard } from './project-card';
 import { CreateProjectDialog } from './create-project-dialog';
@@ -72,7 +72,7 @@ function Column({
   const columnProjects = projects.filter(project => project.status === column.id);
 
   return (
-    <div
+    <Box
       ref={(node) => {
         dragRef(node);
         dropRef(node);
@@ -80,15 +80,15 @@ function Column({
       className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${isOver ? 'bg-accent/50' : ''
         } ${isDragging ? 'opacity-50' : ''}`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3 cursor-move">
+      <Flex className="items-center justify-between mb-4">
+        <Flex className="items-center gap-3 cursor-move">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
-          <div className={`w-3 h-3 rounded-full ${column.color}`} />
-          <h3 className="font-medium">{column.title}</h3>
-          <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
+          <Box className={`w-3 h-3 rounded-full ${column.color}`} />
+          <Heading level={3} className="font-medium">{column.title}</Heading>
+          <Text as="span" size="sm" variant="muted" className="bg-muted px-2 py-1 rounded-full">
             {columnProjects.length}
-          </span>
-        </div>
+          </Text>
+        </Flex>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -110,9 +110,9 @@ function Column({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </Flex>
 
-      <div className="space-y-3">
+      <VStack className="space-y-3">
         {columnProjects.map((project) => (
           <ProjectCard
             key={project.id}
@@ -124,8 +124,8 @@ function Column({
             }}
           />
         ))}
-      </div>
-    </div>
+      </VStack>
+    </Box>
   );
 }
 
@@ -422,14 +422,14 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1>Projects</h1>
-            <p className="text-muted-foreground">Manage your project portfolio</p>
-          </div>
-          <div className="flex items-center gap-2">
+    <Flex className="h-full flex-col">
+      <Box className="border-b border-border p-6">
+        <Flex className="items-center justify-between mb-4">
+          <Box>
+            <Heading level={1}>Projects</Heading>
+            <Text variant="muted">Manage your project portfolio</Text>
+          </Box>
+          <Flex className="items-center gap-2">
             <Dialog open={isCreateColumnOpen} onOpenChange={setIsCreateColumnOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -455,10 +455,10 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
               <Plus className="w-4 h-4 mr-2" />
               New Project
             </Button>
-          </div>
-        </div>
+          </Flex>
+        </Flex>
 
-        <div className="relative">
+        <Box className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search projects..."
@@ -466,11 +466,11 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="flex-1 p-6 overflow-auto">
-        <div className="flex gap-6 h-full">
+      <Box className="flex-1 p-6 overflow-auto">
+        <Flex className="gap-6 h-full">
           {sortedColumns.map((column, index) => (
             <Column
               key={column.id}
@@ -485,8 +485,8 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
               index={index}
             />
           ))}
-        </div>
-      </div>
+        </Flex>
+      </Box>
 
       <CreateProjectDialog
         open={isCreateDialogOpen}
@@ -518,6 +518,6 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
           onCancel={() => setEditingColumn(null)}
         />
       )}
-    </div>
+    </Flex>
   );
 }

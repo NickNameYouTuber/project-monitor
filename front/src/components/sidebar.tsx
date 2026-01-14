@@ -11,7 +11,7 @@ import {
   Building2,
   Settings
 } from 'lucide-react';
-import { Button, cn } from '@nicorp/nui';
+import { Button, cn, Box, Flex, VStack, Heading, Text } from '@nicorp/nui';
 import type { Page, Project } from '../App';
 import { NotificationBell } from './NotificationBell';
 import { setAccessToken } from '../api/client';
@@ -67,55 +67,55 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
   const mainEmail = mainAccount?.username || '';
   const ssoEmail = ssoAccount?.sso_email || null;
   return (
-    <div className="w-64 bg-card border-r border-border flex flex-col">
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-transparent rounded-lg flex items-center justify-center">
+    <Flex className="w-64 bg-card border-r border-border flex-col">
+      <Box className="p-6">
+        <Flex className="items-center gap-3 mb-4">
+          <Box className="w-8 h-8 bg-transparent rounded-lg flex items-center justify-center">
             <img src="/logo.svg" alt="NIGIT" className="w-8 h-8" draggable={false} />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-xl font-semibold">NIGIt</h1>
-            <p className="text-sm text-muted-foreground">Team Workspace</p>
-          </div>
+          </Box>
+          <Box className="flex-1">
+            <Heading level={1} className="text-xl">NIGIt</Heading>
+            <Text size="sm" variant="muted">Team Workspace</Text>
+          </Box>
           <NotificationBell />
-        </div>
-      </div>
+        </Flex>
+      </Box>
 
       {/* Context section - Organization */}
       {isInOrganization && currentOrganization && (
-        <div className="px-4 mb-4">
-          <div className="mb-2 text-xs text-muted-foreground">Current organization</div>
-          <div className="px-3 py-2 rounded bg-muted">
-            <div className="text-sm font-medium truncate">{currentOrganization.name}</div>
-            <div className="text-xs text-muted-foreground truncate">/{currentOrganization.slug}</div>
-          </div>
+        <Box className="px-4 mb-4">
+          <Box className="mb-2 text-xs text-muted-foreground">Current organization</Box>
+          <Box className="px-3 py-2 rounded bg-muted">
+            <Box className="text-sm font-medium truncate">{currentOrganization.name}</Box>
+            <Box className="text-xs text-muted-foreground truncate">/{currentOrganization.slug}</Box>
+          </Box>
           <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => navigate('/organizations')}>
             Back to Organizations
           </Button>
-        </div>
+        </Box>
       )}
 
       {/* Context section - Project */}
       {isInProject && currentOrganization && currentProject && (
-        <div className="px-4 mb-4">
-          <div className="mb-2 text-xs text-muted-foreground">Current organization</div>
-          <div className="px-3 py-2 rounded bg-muted mb-3">
-            <div className="text-sm font-medium truncate">{currentOrganization.name}</div>
-            <div className="text-xs text-muted-foreground truncate">/{currentOrganization.slug}</div>
-          </div>
-          <div className="mb-2 text-xs text-muted-foreground">Current project</div>
-          <div className="px-3 py-2 rounded bg-muted mb-2">
-            <div className="text-sm font-medium truncate">{currentProject.title}</div>
-            <div className="text-xs truncate" style={{ color: currentProject.color }}>{currentProject.id}</div>
-          </div>
+        <Box className="px-4 mb-4">
+          <Box className="mb-2 text-xs text-muted-foreground">Current organization</Box>
+          <Box className="px-3 py-2 rounded bg-muted mb-3">
+            <Box className="text-sm font-medium truncate">{currentOrganization.name}</Box>
+            <Box className="text-xs text-muted-foreground truncate">/{currentOrganization.slug}</Box>
+          </Box>
+          <Box className="mb-2 text-xs text-muted-foreground">Current project</Box>
+          <Box className="px-3 py-2 rounded bg-muted mb-2">
+            <Box className="text-sm font-medium truncate">{currentProject.title}</Box>
+            <Box className="text-xs truncate" style={{ color: currentProject.color }}>{currentProject.id}</Box>
+          </Box>
           <Button variant="outline" size="sm" className="w-full" onClick={() => onNavigate('projects')}>
             Back to Projects
           </Button>
-        </div>
+        </Box>
       )}
 
-      <nav className="flex-1 px-4 pb-4 overflow-y-auto">
-        <div className="space-y-2">
+      <Box as="nav" className="flex-1 px-4 pb-4 overflow-y-auto">
+        <VStack className="space-y-2">
           {(() => {
             let navigation;
             if (isOrganizationsPage || currentPage === 'account') {
@@ -146,42 +146,42 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
               );
             });
           })()}
-        </div>
-      </nav>
+        </VStack>
+      </Box>
 
-      <div className="p-4 border-t border-border space-y-2">
+      <Box className="p-4 border-t border-border space-y-2">
         {isOrganizationsPage ? (
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium">{(userName || ' ').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{userName}</p>
-              <p className="text-xs text-muted-foreground truncate">{mainEmail}</p>
-            </div>
-          </div>
+          <Flex className="items-center gap-3">
+            <Box className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+              <Text as="span" size="sm" weight="medium">{(userName || ' ').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</Text>
+            </Box>
+            <Box className="flex-1 min-w-0">
+              <Text size="sm" weight="medium" className="truncate">{userName}</Text>
+              <Text size="xs" variant="muted" className="truncate">{mainEmail}</Text>
+            </Box>
+          </Flex>
         ) : (
           <>
             {ssoEmail && ssoEmail !== mainEmail && (
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+              <Flex className="items-center gap-3 mb-2">
+                <Box className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
                   <Shield className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground mb-0.5">SSO Account</p>
-                  <p className="text-sm font-medium truncate">{ssoEmail}</p>
-                </div>
-              </div>
+                </Box>
+                <Box className="flex-1 min-w-0">
+                  <Text size="xs" variant="muted" className="mb-0.5">SSO Account</Text>
+                  <Text size="sm" weight="medium" className="truncate">{ssoEmail}</Text>
+                </Box>
+              </Flex>
             )}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium">{(userName || ' ').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn("text-sm font-medium truncate", ssoEmail && ssoEmail !== mainEmail && "text-xs text-muted-foreground")}>{userName}</p>
-                <p className={cn("text-xs truncate", ssoEmail && ssoEmail !== mainEmail ? "text-xs text-muted-foreground" : "text-muted-foreground")}>{mainEmail}</p>
-              </div>
-            </div>
+            <Flex className="items-center gap-3">
+              <Box className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                <Text as="span" size="sm" weight="medium">{(userName || ' ').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</Text>
+              </Box>
+              <Box className="flex-1 min-w-0">
+                <Text className={cn("text-sm font-medium truncate", ssoEmail && ssoEmail !== mainEmail && "text-xs text-muted-foreground")}>{userName}</Text>
+                <Text className={cn("text-xs truncate", ssoEmail && ssoEmail !== mainEmail ? "text-xs text-muted-foreground" : "text-muted-foreground")}>{mainEmail}</Text>
+              </Box>
+            </Flex>
           </>
         )}
         <AIAssistantButton hasUnreadMessages={false} />
@@ -206,7 +206,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           <LogOut className="w-4 h-4" />
           Logout
         </Button>
-      </div>
-    </div>
+      </Box>
+    </Flex>
   );
 }

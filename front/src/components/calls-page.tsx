@@ -5,7 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { Button, cn } from '@nicorp/nui';
+import { Button, cn, Box, Flex, Heading, Text } from '@nicorp/nui';
 import NewMeetingDialog from './calls/NewMeetingDialog';
 import UpcomingOverlay from './calls/UpcomingOverlay';
 import CallPage from '../features/call/pages/CallPage';
@@ -343,24 +343,24 @@ export function CallsPage() {
 
   if (isInCall) {
     return (
-      <div className="h-full w-full">
+      <Box className="h-full w-full">
         <CallPage />
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
+    <Flex className="h-screen flex-col overflow-hidden bg-background">
       {/* Header - matching Projects page layout */}
-      <div className="border-b border-border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1>Calls & Meetings</h1>
-            <p className="text-muted-foreground">Schedule and manage your team meetings</p>
-          </div>
-          <div className="flex items-center gap-2">
+      <Box className="border-b border-border p-6">
+        <Flex className="items-center justify-between mb-4">
+          <Box>
+            <Heading level={1}>Calls & Meetings</Heading>
+            <Text variant="muted">Schedule and manage your team meetings</Text>
+          </Box>
+          <Flex className="items-center gap-2">
             {/* View Toggle */}
-            <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
+            <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
               <Button
                 variant={activeTab === 'calendar' ? 'secondary' : 'ghost'}
                 size="sm"
@@ -377,28 +377,28 @@ export function CallsPage() {
               >
                 List
               </Button>
-            </div>
+            </Flex>
             <Button onClick={() => setIsCreateMeetingOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               New Meeting
             </Button>
-          </div>
-        </div>
+          </Flex>
+        </Flex>
 
         {/* Second row: Search and contextual controls */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
+        <Flex className="items-center gap-4">
+          <Box className="flex-1">
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
               className="w-full"
             />
-          </div>
+          </Box>
 
           {/* Calendar Controls - only in calendar view */}
           {activeTab === 'calendar' && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
+            <Flex className="items-center gap-2">
+              <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                   const newDate = new Date(currentDate);
                   if (calendarView === 'month') newDate.setMonth(newDate.getMonth() - 1);
@@ -407,7 +407,7 @@ export function CallsPage() {
                 }}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-sm font-medium min-w-[120px] text-center">
+                <Text as="span" size="sm" weight="medium" className="min-w-[120px] text-center">
                   {calendarView === 'month'
                     ? currentDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
                     : (() => {
@@ -420,7 +420,7 @@ export function CallsPage() {
                       return `${start.getDate()} ${start.toLocaleDateString('ru-RU', { month: 'short' })} - ${end.getDate()} ${end.toLocaleDateString('ru-RU', { month: 'short' })}`;
                     })()
                   }
-                </span>
+                </Text>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                   const newDate = new Date(currentDate);
                   if (calendarView === 'month') newDate.setMonth(newDate.getMonth() + 1);
@@ -429,9 +429,9 @@ export function CallsPage() {
                 }}>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
-              </div>
+              </Flex>
 
-              <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
+              <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
                 <Button
                   variant={calendarView === 'month' ? 'secondary' : 'ghost'}
                   size="sm"
@@ -448,10 +448,10 @@ export function CallsPage() {
                 >
                   Неделя
                 </Button>
-              </div>
+              </Flex>
 
               {/* Upcoming button - matching style */}
-              <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
+              <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
                 <Button
                   variant={isUpcomingOpen ? 'secondary' : 'ghost'}
                   size="sm"
@@ -460,8 +460,8 @@ export function CallsPage() {
                 >
                   Upcoming ({upcomingMeetings.length})
                 </Button>
-              </div>
-            </div>
+              </Flex>
+            </Flex>
           )}
 
           {/* List Filters - only in list view */}
@@ -472,7 +472,7 @@ export function CallsPage() {
                 onStatusFilterChange={setStatusFilter}
               />
               {/* Upcoming button for list view too */}
-              <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border">
+              <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
                 <Button
                   variant={isUpcomingOpen ? 'secondary' : 'ghost'}
                   size="sm"
@@ -481,32 +481,34 @@ export function CallsPage() {
                 >
                   Upcoming ({upcomingMeetings.length})
                 </Button>
-              </div>
+              </Flex>
             </>
           )}
-        </div>
-      </div>
+        </Flex>
+      </Box>
 
       <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} organizationId={organizationId} />
 
       {/* Error banner */}
       {error && (
-        <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-3 flex items-center justify-between">
-          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-          <button
+        <Flex className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-3 items-center justify-between">
+          <Text size="sm" className="text-red-800 dark:text-red-300">{error}</Text>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setError(null)}
             className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
           >
             ✕
-          </button>
-        </div>
+          </Button>
+        </Flex>
       )}
 
       {/* Content area - растягивается на оставшееся пространство */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
+      <Flex className="flex-1 min-h-0 flex-col overflow-hidden relative">
 
         {/* Tabs content - растягивается на оставшееся пространство */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <Box className="flex-1 min-h-0 overflow-hidden">
           {activeTab === 'calendar' ? (
             <CalendarContainer>
               {calendarView === 'month' ? (
@@ -551,7 +553,7 @@ export function CallsPage() {
               onCopyLink={(roomId) => showSuccess('Ссылка скопирована')}
             />
           )}
-        </div>
+        </Box>
 
         {/* Sliding Upcoming Meetings Panel */}
         <UpcomingPanel open={isUpcomingOpen} onClose={() => setIsUpcomingOpen(false)} items={upcomingMeetings} onStart={(id) => {
@@ -572,7 +574,7 @@ export function CallsPage() {
           }}
           onJoinCall={(roomId) => navigate(`/call/${roomId}`)}
         />
-      </div>
-    </div >
+      </Flex>
+    </Flex>
   );
 }

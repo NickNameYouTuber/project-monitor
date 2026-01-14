@@ -1,5 +1,5 @@
 import React from 'react';
-import { ToggleGroup, ToggleGroupItem, cn } from '@nicorp/nui';
+import { ToggleGroup, ToggleGroupItem, cn, Flex, Text } from '@nicorp/nui';
 
 export interface MeetingFiltersProps {
   statusFilter: 'all' | 'scheduled' | 'active' | 'completed' | 'cancelled';
@@ -17,8 +17,8 @@ export default function MeetingFilters({ statusFilter, onStatusFilterChange, cla
   ];
 
   return (
-    <div className={cn("flex items-center gap-4 py-1 bg-background", className)}>
-      <span className="text-sm font-medium text-muted-foreground mr-2">Фильтр:</span>
+    <Flex className={cn("items-center gap-4 py-1 bg-background", className)}>
+      <Text className="text-sm font-medium text-muted-foreground mr-2">Фильтр:</Text>
       <ToggleGroup
         type="single"
         value={statusFilter}
@@ -36,6 +36,6 @@ export default function MeetingFilters({ statusFilter, onStatusFilterChange, cla
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
-    </div>
+    </Flex>
   );
 }

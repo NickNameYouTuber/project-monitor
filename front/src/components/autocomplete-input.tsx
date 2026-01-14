@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Input, Command, CommandEmpty, CommandGroup, CommandItem,
-  Popover, PopoverContent, PopoverTrigger, cn
+  Popover, PopoverContent, PopoverTrigger, cn, Box
 } from '@nicorp/nui';
 import { Check, ChevronDown } from 'lucide-react';
 
@@ -63,7 +63,7 @@ export function AutocompleteInput({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="relative">
+        <Box className="relative">
           <Input
             ref={inputRef}
             value={inputValue}
@@ -76,7 +76,7 @@ export function AutocompleteInput({
           {filteredSuggestions.length > 0 && (
             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           )}
-        </div>
+        </Box>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
         <Command>

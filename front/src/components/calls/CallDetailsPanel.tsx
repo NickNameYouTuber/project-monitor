@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CallResponse, CallParticipant, getCallParticipants } from '../../api/calls';
 import { X, Video, Calendar, Clock, Users, Tag, Copy, Check } from 'lucide-react';
-import { Button, Avatar, AvatarFallback } from '@nicorp/nui';
+import { Button, Avatar, AvatarFallback, Box, Flex, Heading, Text, VStack } from '@nicorp/nui';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -101,20 +101,20 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
   return (
     <>
       {/* Overlay */}
-      <div
+      <Box
         className={`fixed inset-0 bg-black/20 transition-opacity z-40 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div
-        className={`fixed top-0 right-0 h-full w-96 bg-background border-l border-border shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col ${open ? 'translate-x-0' : 'translate-x-full'
+      <Flex
+        className={`fixed top-0 right-0 h-full w-96 bg-background border-l border-border shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex-col ${open ? 'translate-x-0' : 'translate-x-full'
           }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-semibold">Детали звонка</h2>
+        <Flex className="items-center justify-between p-4 border-b border-border">
+          <Heading level={2} className="text-lg font-semibold">Детали звонка</Heading>
           <button
             onClick={onClose}
             className="p-2 hover:bg-accent rounded-lg transition"
@@ -122,52 +122,52 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
+        </Flex>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <Box className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Title */}
-          <div>
-            <h3 className="text-xl font-bold mb-2">{call.title || 'Без названия'}</h3>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(call.status)}`}>
+          <Box>
+            <Heading level={3} className="text-xl font-bold mb-2">{call.title || 'Без названия'}</Heading>
+            <Text as="span" className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(call.status)}`}>
               {getStatusText(call.status)}
-            </span>
-          </div>
+            </Text>
+          </Box>
 
           {/* Description */}
           {call.description && (
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">Описание</h4>
-              <p className="text-sm">{call.description}</p>
-            </div>
+            <Box>
+              <Heading level={4} className="text-sm font-medium text-muted-foreground mb-1">Описание</Heading>
+              <Text className="text-sm">{call.description}</Text>
+            </Box>
           )}
 
           {/* Date & Time */}
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
+          <VStack className="space-y-3">
+            <Flex className="items-start gap-3">
               <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-muted-foreground">Дата и время</div>
-                <div className="text-sm">{formatDateTime(call.scheduled_time || call.start_at)}</div>
-              </div>
-            </div>
+              <Box className="flex-1">
+                <Text className="text-sm font-medium text-muted-foreground">Дата и время</Text>
+                <Text className="text-sm">{formatDateTime(call.scheduled_time || call.start_at)}</Text>
+              </Box>
+            </Flex>
 
-            <div className="flex items-start gap-3">
+            <Flex className="items-start gap-3">
               <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-muted-foreground">Длительность</div>
-                <div className="text-sm">{formatDuration(call.duration_minutes)}</div>
-              </div>
-            </div>
-          </div>
+              <Box className="flex-1">
+                <Text className="text-sm font-medium text-muted-foreground">Длительность</Text>
+                <Text className="text-sm">{formatDuration(call.duration_minutes)}</Text>
+              </Box>
+            </Flex>
+          </VStack>
 
           {/* Room ID */}
-          <div className="flex items-start gap-3">
+          <Flex className="items-start gap-3">
             <Tag className="w-5 h-5 text-muted-foreground mt-0.5" />
-            <div className="flex-1">
-              <div className="text-sm font-medium text-muted-foreground mb-1">ID комнаты</div>
-              <div className="flex items-center gap-2">
-                <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">{call.room_id}</code>
+            <Box className="flex-1">
+              <Text className="text-sm font-medium text-muted-foreground mb-1">ID комнаты</Text>
+              <Flex className="items-center gap-2">
+                <Box as="code" className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">{call.room_id}</Box>
                 <button
                   onClick={copyRoomLink}
                   className="p-1.5 hover:bg-accent rounded transition"
@@ -175,71 +175,71 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
                 >
                   {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                 </button>
-              </div>
-            </div>
-          </div>
+              </Flex>
+            </Box>
+          </Flex>
 
           {/* Task ID */}
           {call.task_id && (
-            <div className="flex items-start gap-3">
+            <Flex className="items-start gap-3">
               <Tag className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-muted-foreground">Связанная задача</div>
-                <code className="text-xs bg-muted px-2 py-1 rounded inline-block">{call.task_id}</code>
-              </div>
-            </div>
+              <Box className="flex-1">
+                <Text className="text-sm font-medium text-muted-foreground">Связанная задача</Text>
+                <Box as="code" className="text-xs bg-muted px-2 py-1 rounded inline-block">{call.task_id}</Box>
+              </Box>
+            </Flex>
           )}
 
           {/* Project ID */}
           {call.project_id && (
-            <div className="flex items-start gap-3">
+            <Flex className="items-start gap-3">
               <Tag className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-muted-foreground">Проект</div>
-                <code className="text-xs bg-muted px-2 py-1 rounded inline-block">{call.project_id}</code>
-              </div>
-            </div>
+              <Box className="flex-1">
+                <Text className="text-sm font-medium text-muted-foreground">Проект</Text>
+                <Box as="code" className="text-xs bg-muted px-2 py-1 rounded inline-block">{call.project_id}</Box>
+              </Box>
+            </Flex>
           )}
 
           {/* Participants */}
-          <div className="flex items-start gap-3">
+          <Flex className="items-start gap-3">
             <Users className="w-5 h-5 text-muted-foreground mt-0.5" />
-            <div className="flex-1">
-              <div className="text-sm font-medium text-muted-foreground mb-2">Участники</div>
+            <Box className="flex-1">
+              <Text className="text-sm font-medium text-muted-foreground mb-2">Участники</Text>
               {loadingParticipants ? (
-                <div className="text-xs text-muted-foreground">Загрузка...</div>
+                <Text className="text-xs text-muted-foreground">Загрузка...</Text>
               ) : participants.length === 0 ? (
-                <div className="text-xs text-muted-foreground">Нет участников</div>
+                <Text className="text-xs text-muted-foreground">Нет участников</Text>
               ) : (
-                <div className="space-y-2">
+                <VStack className="space-y-2">
                   {participants.map(p => (
-                    <div key={p.id} className="flex items-center gap-2 text-sm">
+                    <Flex key={p.id} className="items-center gap-2 text-sm">
                       <Avatar className="w-6 h-6">
                         <AvatarFallback className="text-xs">
                           {p.user.displayName?.[0] || p.user.username[0]}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{p.user.displayName || p.user.username}</span>
+                      <Text as="span">{p.user.displayName || p.user.username}</Text>
                       {p.role === 'ORGANIZER' && (
-                        <span className="text-xs text-muted-foreground">(организатор)</span>
+                        <Text as="span" className="text-xs text-muted-foreground">(организатор)</Text>
                       )}
-                    </div>
+                    </Flex>
                   ))}
-                </div>
+                </VStack>
               )}
-            </div>
-          </div>
+            </Box>
+          </Flex>
 
           {/* Created At */}
           {call.created_at && (
-            <div className="text-xs text-muted-foreground pt-4 border-t border-border">
+            <Text className="text-xs text-muted-foreground pt-4 border-t border-border">
               Создано: {formatDateTime(call.created_at)}
-            </div>
+            </Text>
           )}
-        </div>
+        </Box>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-border space-y-2">
+        <Box className="p-4 border-t border-border space-y-2">
           {isJoinable && (
             <Button
               onClick={() => {
@@ -260,8 +260,8 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
           >
             Закрыть
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Flex >
     </>
   );
 };

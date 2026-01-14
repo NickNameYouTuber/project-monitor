@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Input, cn } from '@nicorp/nui';
+import { Button, Input, cn, Box, Flex, Text } from '@nicorp/nui';
 import { MessageCircleQuestion, Send, Check, ChevronRight } from 'lucide-react';
 
 export interface ClarificationData {
@@ -74,25 +74,25 @@ export function ClarificationCard({ data, onSelect, isAnswered = false }: Clarif
             : (selected ? data.options?.find(o => o.value === selected)?.label || selected : customValue);
 
         return (
-            <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+            <Flex className="items-center gap-2 py-2 px-3 rounded-lg bg-primary/10 border border-primary/20 text-sm">
                 <Check className="w-4 h-4 text-primary" />
-                <span className="text-primary font-medium">{displayValue}</span>
-            </div>
+                <Text as="span" className="text-primary font-medium">{displayValue}</Text>
+            </Flex>
         );
     }
 
     // Multi-field form
     if (data.fields && data.fields.length > 0) {
         return (
-            <div className="rounded-xl border border-border bg-gradient-to-br from-muted/50 to-muted/30 backdrop-blur-sm overflow-hidden shadow-lg animate-in slide-in-from-bottom-2 duration-300">
-                <div className="px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border/50">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-primary/20">
+            <Box className="rounded-xl border border-border bg-gradient-to-br from-muted/50 to-muted/30 backdrop-blur-sm overflow-hidden shadow-lg animate-in slide-in-from-bottom-2 duration-300">
+                <Box className="px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border/50">
+                    <Flex className="items-center gap-2">
+                        <Box className="p-1.5 rounded-lg bg-primary/20">
                             <MessageCircleQuestion className="w-4 h-4 text-primary" />
-                        </div>
-                        <span className="text-sm font-semibold text-foreground">{data.question}</span>
-                    </div>
-                </div>
+                        </Box>
+                        <Text as="span" className="text-sm font-semibold text-foreground">{data.question}</Text>
+                    </Flex>
+                </Box>
                 <div className="p-4 space-y-3">
                     {data.fields.map((field, idx) => (
                         <div key={field.name} className="space-y-1">
@@ -116,26 +116,26 @@ export function ClarificationCard({ data, onSelect, isAnswered = false }: Clarif
                         Отправить
                     </Button>
                 </div>
-            </div>
+            </Box>
         );
     }
 
     return (
-        <div className="rounded-xl border border-border bg-gradient-to-br from-muted/50 to-muted/30 backdrop-blur-sm overflow-hidden shadow-lg animate-in slide-in-from-bottom-2 duration-300">
+        <Box className="rounded-xl border border-border bg-gradient-to-br from-muted/50 to-muted/30 backdrop-blur-sm overflow-hidden shadow-lg animate-in slide-in-from-bottom-2 duration-300">
             {/* Header */}
-            <div className="px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border/50">
-                <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-primary/20">
+            <Box className="px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border/50">
+                <Flex className="items-center gap-2">
+                    <Box className="p-1.5 rounded-lg bg-primary/20">
                         <MessageCircleQuestion className="w-4 h-4 text-primary" />
-                    </div>
-                    <span className="text-sm font-semibold text-foreground">{data.question}</span>
-                </div>
-            </div>
+                    </Box>
+                    <Text as="span" className="text-sm font-semibold text-foreground">{data.question}</Text>
+                </Flex>
+            </Box>
 
             {/* Options */}
-            <div className="p-3 space-y-2">
+            <Box className="p-3 space-y-2">
                 {data.options && data.options.length > 0 && (
-                    <div className="grid gap-2">
+                    <Box className="grid gap-2">
                         {data.options.map((option, idx) => (
                             <button
                                 key={option.value}
@@ -147,21 +147,21 @@ export function ClarificationCard({ data, onSelect, isAnswered = false }: Clarif
                                 )}
                                 onClick={() => handleSelect(option.value)}
                             >
-                                <div className="flex-1 text-left">
-                                    <div className="font-medium text-sm text-foreground">{option.label}</div>
+                                <Box className="flex-1 text-left">
+                                    <Box className="font-medium text-sm text-foreground">{option.label}</Box>
                                     {option.description && (
-                                        <div className="text-xs text-muted-foreground mt-0.5">{option.description}</div>
+                                        <Text className="text-xs text-muted-foreground mt-0.5">{option.description}</Text>
                                     )}
-                                </div>
+                                </Box>
                                 <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                             </button>
                         ))}
-                    </div>
+                    </Box>
                 )}
 
                 {/* Custom input */}
                 {data.allowCustomInput && (
-                    <div className="flex gap-2 pt-2">
+                    <Flex className="gap-2 pt-2">
                         <Input
                             value={customValue}
                             onChange={(e) => setCustomValue(e.target.value)}
@@ -177,10 +177,10 @@ export function ClarificationCard({ data, onSelect, isAnswered = false }: Clarif
                         >
                             <Send className="w-4 h-4" />
                         </Button>
-                    </div>
+                    </Flex>
                 )}
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 }
 

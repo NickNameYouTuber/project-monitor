@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAIAssistant } from '../../hooks/useAIAssistant';
-import { ScrollArea, Textarea, Button, cn } from '@nicorp/nui';
+import { ScrollArea, Textarea, Button, cn, Box, Flex, Text } from '@nicorp/nui';
 import { Send, Loader2, ArrowLeft, Bot, User } from 'lucide-react';
 import { ChatMessage } from '../chat-message';
 import { useNavigate } from 'react-router-dom';
@@ -51,23 +51,23 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
 
     if (!chatId) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-center p-6 text-muted-foreground">
-                <p>Select a chat or start a new conversation.</p>
+            <Flex className="flex-col items-center justify-center h-full text-center p-6 text-muted-foreground">
+                <Text>Select a chat or start a new conversation.</Text>
                 <Button variant="outline" className="mt-4" onClick={onBack}>Back to History</Button>
-            </div>
+            </Flex>
         );
     }
 
     return (
-        <div className="flex flex-col h-full overflow-hidden bg-background">
+        <Flex className="flex-col h-full overflow-hidden bg-background">
             {/* Messages */}
             <ScrollArea className="flex-1 min-h-0 p-4" ref={scrollAreaRef}>
-                <div className="space-y-6 pb-4">
+                <Box className="space-y-6 pb-4">
                     {messages.length === 0 && (
-                        <div className="text-center py-10 opacity-50">
+                        <Box className="text-center py-10 opacity-50">
                             <Bot className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                            <p>No messages yet. Start the conversation!</p>
-                        </div>
+                            <Text>No messages yet. Start the conversation!</Text>
+                        </Box>
                     )}
                     {messages
                         .filter(msg => !msg.isWidgetResponse) // Hide widget response messages
@@ -108,21 +108,21 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
                             );
                         })}
                     {isLoading && (
-                        <div className="flex items-center gap-2 py-2 pl-11 animate-in fade-in duration-300">
-                            <div className="flex gap-1">
+                        <Flex className="items-center gap-2 py-2 pl-11 animate-in fade-in duration-300">
+                            <Flex className="gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[bounce_1s_infinite_0ms]"></span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[bounce_1s_infinite_150ms]"></span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[bounce_1s_infinite_300ms]"></span>
-                            </div>
-                            <span className="text-sm text-muted-foreground">AI печатает</span>
-                        </div>
+                            </Flex>
+                            <Text as="span" className="text-sm text-muted-foreground">AI печатает</Text>
+                        </Flex>
                     )}
-                </div>
+                </Box>
             </ScrollArea>
 
             {/* Input */}
-            <div className="p-4 border-t border-border bg-background">
-                <div className="relative">
+            <Box className="p-4 border-t border-border bg-background">
+                <Box className="relative">
                     <Textarea
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
@@ -140,12 +140,12 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
                     >
                         <Send className="w-4 h-4" />
                     </Button>
-                </div>
-                <div className="text-[10px] text-muted-foreground mt-2 flex justify-between px-1">
-                    <span>Enter to send, Shift + Enter for new line</span>
-                    <span>AI can make mistakes. Verify important info.</span>
-                </div>
-            </div>
-        </div>
+                </Box>
+                <Flex className="text-[10px] text-muted-foreground mt-2 justify-between px-1">
+                    <Text as="span">Enter to send, Shift + Enter for new line</Text>
+                    <Text as="span">AI can make mistakes. Verify important info.</Text>
+                </Flex>
+            </Box>
+        </Flex>
     );
 }

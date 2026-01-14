@@ -5,7 +5,7 @@ import { getOrganization } from '../api/organizations';
 import { initiateSSOLogin } from '../api/sso';
 import type { Organization } from '../types/organization';
 import { LoadingSpinner } from './loading-spinner';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input, Label, Button } from '@nicorp/nui';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input, Label, Button, Box, Flex, VStack, Heading, Text } from '@nicorp/nui';
 import { useNotifications } from '../hooks/useNotifications';
 import { setAccessToken, getAccessToken } from '../api/client';
 
@@ -133,7 +133,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div>
+              <Box>
                 <Label>Password</Label>
                 <Input
                   type="password"
@@ -143,26 +143,26 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
                   placeholder="Enter organization password"
                   autoFocus
                 />
-              </div>
-              <div className="flex justify-end gap-2">
+              </Box>
+              <Flex className="justify-end gap-2">
                 <Button variant="outline" onClick={() => window.location.href = '/organizations'}>
                   Cancel
                 </Button>
                 <Button onClick={handleVerifyPassword} disabled={!password || verifying}>
                   {verifying ? 'Verifying...' : 'Continue'}
                 </Button>
-              </div>
+              </Flex>
             </div>
           </DialogContent>
         </Dialog>
 
-        <div className="h-screen flex items-center justify-center bg-background">
-          <div className="text-center">
+        <Flex className="h-screen items-center justify-center bg-background">
+          <Box className="text-center">
             <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
-            <p className="text-muted-foreground">Please authenticate to access this organization</p>
-          </div>
-        </div>
+            <Heading level={2} className="text-xl font-semibold mb-2">Authentication Required</Heading>
+            <Text className="text-muted-foreground">Please authenticate to access this organization</Text>
+          </Box>
+        </Flex>
       </>
     );
   }

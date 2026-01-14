@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@nicorp/nui';
+import { Card, CardContent, CardHeader, CardTitle, Box, Flex, Text, Button } from '@nicorp/nui';
 import { Loader2 } from 'lucide-react';
 import { apiClient, setAccessToken } from '../api/client';
 import { NIIDClient } from '@niid/sdk/react'; // Use React import for potential hooks if needed, or core class
@@ -52,36 +52,37 @@ export function SSOCallbackPage() {
     }, [searchParams, navigate]);
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Flex className="min-h-screen bg-background items-center justify-center p-4">
             <Card className="w-full max-w-md">
                 <CardHeader>
                     <CardTitle className="text-center flex flex-col items-center gap-2">
                         {error ? (
-                            <span className="text-destructive">Authentication Failed</span>
+                            <Text as="span" className="text-destructive">Authentication Failed</Text>
                         ) : (
                             <>
                                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                <span>Signing in with NIID...</span>
+                                <Text as="span">Signing in with NIID...</Text>
                             </>
                         )}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
                     {error && (
-                        <div className="text-sm text-muted-foreground mb-4">
+                        <Text className="text-sm text-muted-foreground mb-4">
                             {error}
-                        </div>
+                        </Text>
                     )}
                     {error && (
-                        <button
+                        <Button
+                            variant="link"
                             onClick={() => navigate('/auth')}
-                            className="text-primary hover:underline"
+                            className="text-primary hover:underline h-auto p-0"
                         >
                             Back to Login
-                        </button>
+                        </Button>
                     )}
                 </CardContent>
             </Card>
-        </div>
+        </Flex>
     );
 }
