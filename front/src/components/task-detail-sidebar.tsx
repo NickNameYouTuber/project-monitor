@@ -86,7 +86,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
     <Flex className="fixed right-0 top-0 bottom-0 w-96 bg-card border-l border-border z-50 flex-col">
       {/* Header */}
       <Flex className="items-center justify-between p-4 border-b border-border flex-shrink-0">
-        <Heading level={2} className="font-medium text-base">Task Details</Heading>
+        <Heading level={3} className="font-medium text-base">Task Details</Heading>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="w-4 h-4" />
         </Button>
@@ -98,7 +98,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
           <VStack className="p-4 space-y-6">
             {/* Task Title */}
             <Box>
-              <Heading level={3} className="font-medium text-lg">{task.title}</Heading>
+              <Heading level={4} className="font-medium text-lg">{task.title}</Heading>
               <Text className="text-muted-foreground mt-1">{task.description}</Text>
               <Button
                 variant="default"
@@ -213,7 +213,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
             <Box>
               <Flex className="items-center gap-2 mb-4">
                 <MessageSquare className="w-4 h-4" />
-                <Heading level={4} className="font-medium text-base">Activity ({comments.length})</Heading>
+                <Heading level={5} className="font-medium text-base">Activity ({comments.length})</Heading>
               </Flex>
 
               <VStack className="space-y-4">
@@ -271,7 +271,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
               <VStack className="mt-6 space-y-2">
                 <Flex className="items-center gap-2">
                   <GitBranch className="w-4 h-4" />
-                  <Heading level={4} className="font-medium text-base">Attach Repository Branch</Heading>
+                  <Heading level={5} className="font-medium text-base">Attach Repository Branch</Heading>
                 </Flex>
                 <Flex className="gap-2">
                   <Input placeholder="branch/name" value={newBranch} onChange={(e) => setNewBranch(e.target.value)} />
@@ -294,7 +294,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
                 <VStack className="mt-6 space-y-2">
                   <Flex className="items-center gap-2">
                     <Folder className="w-4 h-4" />
-                    <Heading level={4} className="font-medium text-base">Whiteboard Sections</Heading>
+                    <Heading level={5} className="font-medium text-base">Whiteboard Sections</Heading>
                   </Flex>
                   {linkedSections.length > 0 && (
                     <VStack className="space-y-2">

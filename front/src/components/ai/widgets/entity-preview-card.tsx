@@ -37,7 +37,7 @@ export function EntityPreviewCard({ data }: EntityPreviewCardProps) {
                                 </Badge>
                             )}
                         </Flex>
-                        <Heading level={4} className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <Heading level={5} className="text-sm font-bold text-foreground flex items-center gap-2">
                             <Icon className="w-4 h-4 text-muted-foreground" />
                             {data.title}
                         </Heading>

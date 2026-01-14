@@ -86,7 +86,7 @@ export const InviteParticipantsDialog: React.FC<InviteParticipantsDialogProps> =
 
                     {existingParticipants.length > 0 && (
                         <Box className="space-y-2">
-                            <Heading level={4} className="text-sm font-medium text-muted-foreground">Уже приглашены</Heading>
+                            <Heading level={5} className="text-sm font-medium text-muted-foreground">Уже приглашены</Heading>
                             <Flex className="flex-wrap gap-2 max-h-[100px] overflow-y-auto">
                                 {existingParticipants.map(p => (
                                     <Badge key={p.id} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-2 opacity-70">

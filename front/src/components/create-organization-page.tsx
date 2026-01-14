@@ -77,7 +77,7 @@ export function CreateOrganizationPage() {
             <Building2 className="w-6 h-6 text-primary" />
           </Flex>
           <Box>
-            <Heading level={1} className="text-2xl font-semibold">Create Organization</Heading>
+            <Heading level={2} className="text-2xl font-semibold">Create Organization</Heading>
             <Text className="text-muted-foreground">Set up a new organization for your team</Text>
           </Box>
         </Flex>
@@ -144,7 +144,7 @@ export function CreateOrganizationPage() {
               <Separator />
 
               <VStack className="space-y-4">
-                <Heading level={3} className="font-medium">Security Settings</Heading>
+                <Heading level={4} className="font-medium">Security Settings</Heading>
 
                 <Flex className="items-start justify-between gap-4">
                   <Box className="flex-1">

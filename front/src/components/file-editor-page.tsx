@@ -215,7 +215,7 @@ export function FileEditorPage() {
                   </Button>
                   <Flex className="items-center gap-2 min-w-0 flex-1">
                     <FileCode className="w-5 h-5 flex-shrink-0" />
-                    <Heading level={1} className="text-sm sm:text-base font-semibold truncate">{filePath.split('/').pop()}</Heading>
+                    <Heading level={2} className="text-sm sm:text-base font-semibold truncate">{filePath.split('/').pop()}</Heading>
                   </Flex>
                 </Flex>
                 <Flex className="items-center gap-2">

@@ -94,7 +94,7 @@ export function AISidebar() {
                             <Sparkles className="w-4 h-4 text-primary" />
                         </Box>
                         <Flex className="flex-col">
-                            <Heading level={2} className="text-sm font-semibold leading-none">AI Assistant</Heading>
+                            <Heading level={3} className="text-sm font-semibold leading-none">AI Assistant</Heading>
                             <Flex className="items-center gap-1.5 mt-0.5">
                                 <Text as="span" className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wider">
                                     {activeContext.type}

@@ -12,7 +12,7 @@ export function WhiteboardPage({ project }: WhiteboardPageProps) {
     <Flex className="h-full flex-col">
       <Box className="border-b border-border p-6 flex-shrink-0">
         <Box>
-          <Heading level={1} className="text-2xl font-semibold">Whiteboard</Heading>
+          <Heading level={2} className="text-2xl font-semibold">Whiteboard</Heading>
           <Text className="text-muted-foreground">Collaborative drawing and diagramming</Text>
         </Box>
       </Box>

@@ -108,7 +108,7 @@ function Column({
         <Flex className="items-center gap-3 cursor-move">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
           <Box className={`w-3 h-3 rounded-full ${column.color}`} />
-          <Heading level={3} className="font-medium">{column.title}</Heading>
+          <Heading level={4} className="font-medium">{column.title}</Heading>
           <Text as="span" size="sm" variant="muted" className="bg-muted px-2 py-1 rounded-full">
             {columnTasks.length}
           </Text>
@@ -546,7 +546,7 @@ export function ProjectTasksPage({
             style={{ backgroundColor: project.color }}
           />
           <Box className="flex-1">
-            <Heading level={1}>{project.title}</Heading>
+            <Heading level={2}>{project.title}</Heading>
             <Text variant="muted">{project.description}</Text>
           </Box>
           <Button

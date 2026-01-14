@@ -109,7 +109,7 @@ export function ProjectSettingsPage({ project, onUpdateProject }: ProjectSetting
               </Box>
             </Flex>
             <Box>
-              <Heading level={1} className="text-3xl font-bold tracking-tight">{localProject.title}</Heading>
+              <Heading level={2} className="text-3xl font-bold tracking-tight">{localProject.title}</Heading>
               <Flex className="items-center gap-3 mt-1.5 flex-wrap">
                 <Flex className="items-center gap-2 text-muted-foreground text-sm">
                   <Text as="span">Project Settings</Text>

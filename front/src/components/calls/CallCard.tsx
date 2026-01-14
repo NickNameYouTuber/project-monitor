@@ -145,7 +145,7 @@ const CallCard: React.FC<CallCardProps> = ({ call, onClick, compact = false }) =
       <Flex className="items-start justify-between mb-2">
         <Flex className="items-center gap-2">
           {getStatusIcon(actualStatus)}
-          <Heading level={4} className="font-medium text-sm">{call.title || 'Без названия'}</Heading>
+          <Heading level={5} className="font-medium text-sm">{call.title || 'Без названия'}</Heading>
         </Flex>
       </Flex>
 

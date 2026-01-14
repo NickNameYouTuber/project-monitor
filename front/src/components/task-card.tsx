@@ -74,7 +74,7 @@ export function TaskCard({ task, onClick, onEdit, highlighted }: TaskCardProps) 
         )}
       </Flex>
 
-      <Heading level={4} className="font-medium mb-2 text-base">{task.title}</Heading>
+      <Heading level={5} className="font-medium mb-2 text-base">{task.title}</Heading>
       <Text className="text-sm text-muted-foreground mb-3 line-clamp-2">
         {task.description}
       </Text>

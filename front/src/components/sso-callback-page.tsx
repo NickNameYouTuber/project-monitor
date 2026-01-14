@@ -104,7 +104,7 @@ export function SSOCallbackPage() {
       <Flex className="h-screen items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6">
-            <Heading level={2} className="text-lg font-semibold mb-2">Authentication Failed</Heading>
+            <Heading level={3} className="text-lg font-semibold mb-2">Authentication Failed</Heading>
             <Text className="text-muted-foreground mb-4">{error}</Text>
             <Button onClick={() => navigate('/organizations')}>
               Back to Organizations

@@ -329,7 +329,7 @@ export function CommitDetailsPage() {
             <GitCommit className="w-6 h-6 text-primary mt-1" />
             <Box className="flex-1">
               <Flex className="items-center gap-3 mb-2">
-                <Heading level={1} className="text-2xl font-bold">
+                <Heading level={2} className="text-2xl font-bold">
                   Commit {commitSha?.substring(0, 7)}
                 </Heading>
                 <Box as="code" className="px-3 py-1 bg-muted rounded text-xs font-mono">

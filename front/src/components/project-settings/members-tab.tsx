@@ -128,7 +128,7 @@ export function MembersTab({ projectId, permissions }: MembersTabProps) {
               <Users className="w-6 h-6 text-muted-foreground" />
             </Flex>
             <Box>
-              <Heading level={3} className="text-lg font-medium">No members found</Heading>
+              <Heading level={4} className="text-lg font-medium">No members found</Heading>
               <Text variant="muted" className="max-w-sm mx-auto mt-1">Start by adding members from your organization to this project.</Text>
             </Box>
             {permissions.canManageMembers && (

@@ -365,7 +365,7 @@ export function OrganizationSettingsPage() {
               <Building2 className="w-8 h-8 text-primary" />
             </Flex>
             <Box>
-              <Heading level={1} className="text-3xl font-bold tracking-tight">{organization.name}</Heading>
+              <Heading level={2} className="text-3xl font-bold tracking-tight">{organization.name}</Heading>
               <Flex className="items-center gap-2 text-muted-foreground mt-1">
                 <Text size="sm" as="span">Organization Settings</Text>
                 <Text size="xs" as="span" className="px-2 py-0.5 rounded-full bg-muted font-mono">/{organization.slug}</Text>
@@ -493,7 +493,7 @@ export function OrganizationSettingsPage() {
                         <Users className="w-6 h-6 text-muted-foreground" />
                       </Flex>
                       <Box>
-                        <Heading level={3} className="text-lg font-medium">No members found</Heading>
+                        <Heading level={4} className="text-lg font-medium">No members found</Heading>
                         <Text variant="muted" className="max-w-sm mx-auto mt-1">Start building your team by inviting new members to the organization.</Text>
                       </Box>
                       <Button variant="outline" onClick={() => setCreateInviteDialogOpen(true)}>
@@ -829,7 +829,7 @@ export function OrganizationSettingsPage() {
                         <Mail className="w-6 h-6 text-muted-foreground" />
                       </Flex>
                       <Box>
-                        <Heading level={3} className="text-lg font-medium">No active invitations</Heading>
+                        <Heading level={4} className="text-lg font-medium">No active invitations</Heading>
                         <Text variant="muted" className="max-w-sm mx-auto mt-1">Create an invitation link to share with people you want to join your organization.</Text>
                       </Box>
                       <Button variant="outline" onClick={() => setCreateInviteDialogOpen(true)}>

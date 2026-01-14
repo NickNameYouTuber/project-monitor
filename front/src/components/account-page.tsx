@@ -109,7 +109,7 @@ export function AccountPage() {
     <Flex className="h-full flex-col">
       <Box className="border-b border-border p-6">
         <Box>
-          <Heading level={1}>Account</Heading>
+          <Heading level={2}>Account</Heading>
           <Text variant="muted">Manage your personal settings and preferences</Text>
         </Box>
       </Box>
@@ -221,7 +221,7 @@ export function AccountPage() {
                 <VStack className="space-y-4">
                   <Flex className="items-center justify-between">
                     <Box>
-                      <Heading level={4} className="font-medium">Email Notifications</Heading>
+                      <Heading level={5} className="font-medium">Email Notifications</Heading>
                       <Text size="sm" variant="muted">Receive notifications via email</Text>
                     </Box>
                     <Switch
@@ -232,7 +232,7 @@ export function AccountPage() {
 
                   <Flex className="items-center justify-between">
                     <Box>
-                      <Heading level={4} className="font-medium">Push Notifications</Heading>
+                      <Heading level={5} className="font-medium">Push Notifications</Heading>
                       <Text size="sm" variant="muted">Receive push notifications in your browser</Text>
                     </Box>
                     <Switch
@@ -245,7 +245,7 @@ export function AccountPage() {
 
                   <Flex className="items-center justify-between">
                     <Box>
-                      <Heading level={4} className="font-medium">Project Updates</Heading>
+                      <Heading level={5} className="font-medium">Project Updates</Heading>
                       <Text size="sm" variant="muted">Notifications about project status changes</Text>
                     </Box>
                     <Switch
@@ -256,7 +256,7 @@ export function AccountPage() {
 
                   <Flex className="items-center justify-between">
                     <Box>
-                      <Heading level={4} className="font-medium">Task Assignments</Heading>
+                      <Heading level={5} className="font-medium">Task Assignments</Heading>
                       <Text size="sm" variant="muted">When you're assigned to a task</Text>
                     </Box>
                     <Switch
@@ -267,7 +267,7 @@ export function AccountPage() {
 
                   <Flex className="items-center justify-between">
                     <Box>
-                      <Heading level={4} className="font-medium">Comments</Heading>
+                      <Heading level={5} className="font-medium">Comments</Heading>
                       <Text size="sm" variant="muted">When someone comments on your tasks</Text>
                     </Box>
                     <Switch
@@ -339,7 +339,7 @@ export function AccountPage() {
                 <Flex className="items-center justify-center py-12">
                   <Box className="text-center">
                     <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <Heading level={3} className="font-medium mb-2">Team Features</Heading>
+                    <Heading level={4} className="font-medium mb-2">Team Features</Heading>
                     <Text size="sm" variant="muted" className="mb-4">
                       Invite team members and collaborate on projects together.
                     </Text>
@@ -364,7 +364,7 @@ export function AccountPage() {
               <CardContent className="space-y-4">
                 <VStack className="space-y-4">
                   <Box>
-                    <Heading level={4} className="font-medium mb-2">Change Password</Heading>
+                    <Heading level={5} className="font-medium mb-2">Change Password</Heading>
                     <VStack className="space-y-2">
                       <Input type="password" placeholder="Current password" />
                       <Input type="password" placeholder="New password" />
@@ -376,7 +376,7 @@ export function AccountPage() {
                   <Separator />
 
                   <Box>
-                    <Heading level={4} className="font-medium mb-2">Two-Factor Authentication</Heading>
+                    <Heading level={5} className="font-medium mb-2">Two-Factor Authentication</Heading>
                     <Text size="sm" variant="muted" className="mb-4">
                       Add an extra layer of security to your account.
                     </Text>
@@ -460,7 +460,7 @@ export function AccountPage() {
                 <Grid className="grid-cols-1 md:grid-cols-2 gap-4">
                   <Box className="p-4 border border-border rounded-lg">
                     <Flex className="items-center justify-between mb-2">
-                      <Heading level={4} className="font-medium">GitHub</Heading>
+                      <Heading level={5} className="font-medium">GitHub</Heading>
                       <Button variant="outline" size="sm">Connect</Button>
                     </Flex>
                     <Text size="sm" variant="muted">
@@ -470,7 +470,7 @@ export function AccountPage() {
 
                   <Box className="p-4 border border-border rounded-lg">
                     <Flex className="items-center justify-between mb-2">
-                      <Heading level={4} className="font-medium">Slack</Heading>
+                      <Heading level={5} className="font-medium">Slack</Heading>
                       <Button variant="outline" size="sm">Connect</Button>
                     </Flex>
                     <Text size="sm" variant="muted">
@@ -480,7 +480,7 @@ export function AccountPage() {
 
                   <Box className="p-4 border border-border rounded-lg">
                     <Flex className="items-center justify-between mb-2">
-                      <Heading level={4} className="font-medium">Figma</Heading>
+                      <Heading level={5} className="font-medium">Figma</Heading>
                       <Button variant="outline" size="sm">Connect</Button>
                     </Flex>
                     <Text size="sm" variant="muted">
@@ -490,7 +490,7 @@ export function AccountPage() {
 
                   <Box className="p-4 border border-border rounded-lg">
                     <Flex className="items-center justify-between mb-2">
-                      <Heading level={4} className="font-medium">Jira</Heading>
+                      <Heading level={5} className="font-medium">Jira</Heading>
                       <Button variant="outline" size="sm">Connect</Button>
                     </Flex>
                     <Text size="sm" variant="muted">
@@ -502,7 +502,7 @@ export function AccountPage() {
                 <Separator />
 
                 <Box>
-                  <Heading level={4} className="font-medium mb-4">Data Management</Heading>
+                  <Heading level={5} className="font-medium mb-4">Data Management</Heading>
                   <Flex className="gap-2">
                     <Button variant="outline" size="sm">
                       <Download className="w-4 h-4 mr-2" />
