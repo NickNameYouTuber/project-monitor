@@ -332,6 +332,27 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
                             <ExternalLink className="w-4 h-4 mr-1" />
                             Go to
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={async () => {
+                              try {
+                                const { unlinkElementFromTask } = await import('../api/whiteboards');
+                                await unlinkElementFromTask(section.id);
+                                // Refresh sections
+                                const { getProjectSections } = await import('../api/whiteboards');
+                                const allSections = await getProjectSections(projectId);
+                                setSections(allSections);
+                                const linked = allSections.filter((s: any) => s.task_id === task.id);
+                                setLinkedSections(linked);
+                              } catch (error) {
+                                console.error('Failed to unlink section:', error);
+                              }
+                            }}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
                         </Flex>
                       ))}
                     </VStack>

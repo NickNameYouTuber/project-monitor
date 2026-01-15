@@ -95,73 +95,86 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
       {/* Task Linking - Multi-Select Support for Sections */}
       {projectId && selectedShape.type === ShapeType.SECTION && (
         <>
-          <Flex className="flex-col gap-2 items-start">
+          <Flex className="flex-col gap-2 items-start w-full">
             <span className="text-xs font-medium text-muted-foreground w-full">Linked Tasks</span>
-            <Flex className="flex-wrap gap-1 max-w-[200px]">
-              {(selectedShape as SectionShape).taskIds?.map(taskId => {
-                const task = tasks.find(t => t.id === taskId);
-                return task ? (
-                  <div key={taskId} className="flex items-center gap-1 bg-accent text-accent-foreground px-1.5 py-0.5 rounded text-[10px]">
-                    <span className="truncate max-w-[80px]">{task.title}</span>
-                    <button onClick={() => {
-                      // Unlink specific task
-                      // Since backend unlink API is singular (unlinkElementFromTask), 
-                      // we might need to rely on the fact that if we link multiple, they stick?
-                      // OR if we unlink, we might need to re-link others?
-                      // Let's try to just update local state logic and call unlink if it's the LAST one?
-                      // Actually, if we want M:N, we should call unlink if we remove one.
-                      // BUT unlinkElementFromTask(id) might remove ALL.
-                      // Let's assume for now we just remove from local array and try to sync via link calls?
-                      // No, that's risky. 
-                      // Let's try calling linkElementToTask with remaining?
-                      // OR better: if user removes one, we update the shape state locally.
-                      // AND we call unlinkElementFromTask if array becomes empty.
-                      // For removing a single one from many, we might be limited by backend.
-                      // User said: "I removed it in none ... but it is still linked".
-                      // This implies we NEED to call unlink.
 
-                      const newTaskIds = ((selectedShape as SectionShape).taskIds || []).filter(id => id !== taskId);
-                      updateShape(selectedShape.id, { taskIds: newTaskIds } as Partial<SectionShape>, true);
-                      // If empty, call unlink
-                      if (newTaskIds.length === 0) {
-                        unlinkElementFromTask(elementId!).catch(console.error);
-                      } else {
-                        // If we remove one, how to let backend know?
-                        // Maybe we just link the first existing one to update the 'primary' link?
-                        linkElementToTask(elementId!, newTaskIds[0]).catch(console.error);
-                      }
-                    }} className="hover:text-destructive">
-                      <X size={10} />
-                    </button>
-                  </div>
-                ) : null;
-              })}
-            </Flex>
             <Select
-              value="add_new"
+              value="multi_select_placeholder"
               onValueChange={(taskId) => {
-                if (taskId === "add_new") return;
+                if (taskId === "multi_select_placeholder") return;
+
                 const currentIds = (selectedShape as SectionShape).taskIds || [];
-                if (!currentIds.includes(taskId)) {
-                  const newIds = [...currentIds, taskId];
-                  updateShape(selectedShape.id, { taskIds: newIds } as Partial<SectionShape>, true);
-                  if (elementId) {
+                const isSelected = currentIds.includes(taskId);
+
+                let newIds: string[];
+                if (isSelected) {
+                  // Remove
+                  newIds = currentIds.filter(id => id !== taskId);
+                } else {
+                  // Add
+                  newIds = [...currentIds, taskId];
+                }
+
+                updateShape(selectedShape.id, { taskIds: newIds } as Partial<SectionShape>, true);
+
+                // Sync with Backend
+                if (elementId) {
+                  if (isSelected) {
+                    // Unlinking logic
+                    // If empty, definitive unlink
+                    if (newIds.length === 0) {
+                      unlinkElementFromTask(elementId).catch(console.error);
+                    } else {
+                      // If removing one but others exist, we might need to re-assert links or do nothing if backend is limited.
+                      // But let's assume unlinkElementFromTask removes ALL.
+                      // So we might need to unlink AND THEN re-link the remaining? 
+                      // Or just leave it if the backend "task_id" is just one of many?
+                      // Best effort: always ensure at least one is linked if list not empty.
+                      linkElementToTask(elementId, newIds[0]).catch(console.error);
+                    }
+                  } else {
+                    // Linking logic
                     linkElementToTask(elementId, taskId).catch(console.error);
                   }
                 }
               }}
             >
-              <SelectTrigger className="w-full h-7 text-xs bg-background border-border">
-                <SelectValue placeholder="+ Link Task" />
+              <SelectTrigger className="w-full h-8 text-xs bg-background border-border overflow-hidden">
+                {/* Custom Value Display: Comma separated, ellipsis */}
+                <span className="truncate block w-full text-left">
+                  {(() => {
+                    const ids = (selectedShape as SectionShape).taskIds || [];
+                    if (ids.length === 0) return <span className="text-muted-foreground">Select tasks...</span>;
+
+                    const selectedTasks = tasks.filter(t => ids.includes(t.id));
+                    const names = selectedTasks.map(t => t.title).join(', ');
+                    return names;
+                  })()}
+                </span>
               </SelectTrigger>
               <SelectContent className="bg-popover text-popover-foreground border-border max-h-60">
-                {tasks
-                  .filter(t => !((selectedShape as SectionShape).taskIds || []).includes(t.id))
-                  .map(task => (
-                    <SelectItem key={task.id} value={task.id} className="text-xs hover:bg-accent hover:text-accent-foreground">
-                      {task.title}
+                {tasks.map(task => {
+                  const isSelected = ((selectedShape as SectionShape).taskIds || []).includes(task.id);
+                  return (
+                    <SelectItem
+                      key={task.id}
+                      value={task.id}
+                      className="text-xs hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                    // Prevent default closing to allow multiple selections? 
+                    // Standard Select closes. User has to re-open. 
+                    // For a true multi-select experience we might need a different component, 
+                    // but user just asked for the UI look.
+                    // To keep it simple, we let it close.
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <div className={`w-3 h-3 border rounded-sm flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+                          {isSelected && <div className="w-1.5 h-1.5 bg-primary-foreground rounded-[1px]" />}
+                        </div>
+                        <span className={isSelected ? 'font-medium' : ''}>{task.title}</span>
+                      </div>
                     </SelectItem>
-                  ))}
+                  );
+                })}
               </SelectContent>
             </Select>
           </Flex>
