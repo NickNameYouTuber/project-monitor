@@ -94,7 +94,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
         <Flex className="w-16 h-16 bg-muted rounded-full items-center justify-center mb-4">
           <Calendar className="w-8 h-8 text-muted-foreground" />
         </Flex>
-        <Heading level={4} className="text-xl font-semibold mb-2">No meetings found</Heading>
+        <Heading level={3} className="text-xl font-semibold mb-2">No meetings found</Heading>
         <Text className="text-muted-foreground max-w-sm">
           Check back later or create a new meeting to get started.
         </Text>
@@ -133,7 +133,7 @@ export default function MeetingsList({ items, activeTab = 'list', onTabChange, o
                 {/* Info */}
                 <Flex className="flex-col min-w-0">
                   <Flex className="items-center gap-2 mb-1">
-                    <Heading level={5} className="font-semibold text-base truncate">{meeting.title}</Heading>
+                    <Heading level={4} className="font-semibold text-base truncate">{meeting.title}</Heading>
                     {getStatusBadge(status)}
                   </Flex>
                   <Flex className="items-center gap-4 text-sm text-muted-foreground">

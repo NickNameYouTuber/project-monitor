@@ -23,7 +23,7 @@ export function AdvancedTab({ project }: AdvancedTabProps) {
                 <CardContent className="space-y-4">
                     <Flex className="items-center justify-between p-4 border border-destructive/20 rounded-lg bg-background/50">
                         <Box>
-                            <Heading level={5} className="font-medium text-foreground">Delete Project</Heading>
+                            <Heading level={4} className="font-medium text-foreground">Delete Project</Heading>
                             <Text size="sm" variant="muted">
                                 Permanently remove this project and all its data.
                             </Text>

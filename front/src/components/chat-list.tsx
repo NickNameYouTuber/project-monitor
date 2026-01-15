@@ -32,7 +32,7 @@ export function ChatList({
             <Box className="p-2 rounded-lg bg-primary/10 text-primary">
               <Sparkles className="w-5 h-5" />
             </Box>
-            <Heading level={6} className="text-foreground text-lg font-semibold">AI Assistant</Heading>
+            <Heading level={5} className="text-foreground text-lg font-semibold">AI Assistant</Heading>
           </Flex>
           {onClose && (
             <Button

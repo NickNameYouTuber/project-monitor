@@ -161,7 +161,7 @@ function MergeRequestCard({ mr, onViewMR }: { mr: MergeRequest; onViewMR: (branc
           <Box className="flex-1">
             <Flex className="items-center gap-2 mb-2">
               <GitMerge className="w-4 h-4" />
-              <Heading level={5} className="font-medium">{mr.title}</Heading>
+              <Heading level={4} className="font-medium">{mr.title}</Heading>
               <Badge className={statusColors[mr.status]}>
                 {mr.status}
               </Badge>
@@ -193,7 +193,7 @@ function MergeRequestCard({ mr, onViewMR }: { mr: MergeRequest; onViewMR: (branc
           <Box className="border-t pt-4">
             <VStack className="space-y-4">
               <Box>
-                <Heading level={6} className="font-medium mb-2">Comments ({mr.comments.length})</Heading>
+                <Heading level={5} className="font-medium mb-2">Comments ({mr.comments.length})</Heading>
                 <VStack className="space-y-2">
                   {mr.comments.map((comment) => (
                     <Box key={comment.id} className="bg-muted p-3 rounded">
@@ -716,7 +716,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
         <Flex className="items-center justify-between mb-4">
           <Box className="flex-1">
             <Flex className="items-center gap-3">
-              <Heading level={2}>Repository</Heading>
+              <Heading level={1}>Repository</Heading>
               {selectedRepoId && repoPermissions.role && (
                 <RoleBadge role={repoPermissions.role} type="repository" />
               )}
@@ -935,7 +935,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
             <TabsContent value="branches" className="space-y-4">
               <Flex className="items-center justify-between mb-4">
-                <Heading level={4} className="text-lg font-medium">Ветки</Heading>
+                <Heading level={3} className="text-lg font-medium">Ветки</Heading>
                 {repoPermissions.canCreateBranch && (
                   <Dialog open={isCreateBranchOpen} onOpenChange={setIsCreateBranchOpen}>
                     <DialogTrigger asChild>
@@ -1005,7 +1005,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
             <TabsContent value="members" className="space-y-4">
               <Flex className="items-center justify-between mb-4">
-                <Heading level={4} className="text-lg font-medium">Участники</Heading>
+                <Heading level={3} className="text-lg font-medium">Участники</Heading>
                 {repoPermissions.canManageMembers && (
                   <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
                     <DialogTrigger asChild>
@@ -1089,7 +1089,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
             <TabsContent value="merge-requests" className="space-y-4">
               <Flex className="items-center justify-between">
-                <Heading level={4} className="text-lg font-medium">Merge Requests</Heading>
+                <Heading level={3} className="text-lg font-medium">Merge Requests</Heading>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
                   New Merge Request
@@ -1105,7 +1105,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
             <TabsContent value="tasks" className="space-y-4">
               <Flex className="items-center justify-between">
-                <Heading level={4} className="text-lg font-medium">Linked Tasks</Heading>
+                <Heading level={3} className="text-lg font-medium">Linked Tasks</Heading>
                 <Badge variant="secondary">{linkedTasks.length} tasks</Badge>
               </Flex>
 
@@ -1139,7 +1139,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                 {linkedTasks.length === 0 && (
                   <Flex className="flex-col items-center py-8 text-center">
                     <Code className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <Heading level={4} className="font-medium mb-2">No linked tasks</Heading>
+                    <Heading level={3} className="font-medium mb-2">No linked tasks</Heading>
                     <Text size="sm" variant="muted">
                       Tasks with repository branches will appear here.
                     </Text>

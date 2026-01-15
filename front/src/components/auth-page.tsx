@@ -13,7 +13,7 @@ export function AuthPage() {
           <Flex className="w-16 h-16 bg-primary rounded-xl items-center justify-center mx-auto mb-4">
             <GitBranch className="w-8 h-8 text-primary-foreground" />
           </Flex>
-          <Heading level={2} className="text-2xl font-bold">NIGIt</Heading>
+          <Heading level={1} className="text-2xl font-bold">NIGIt</Heading>
           <Text variant="muted">Project management made simple</Text>
         </Box>
 

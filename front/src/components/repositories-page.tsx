@@ -119,7 +119,7 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
       <Box className="border-b border-border p-6">
         <Flex className="items-center justify-between mb-4">
           <Box>
-            <Heading level={2}>Repositories</Heading>
+            <Heading level={1}>Repositories</Heading>
             <Text className="text-muted-foreground">Select a repository to view details</Text>
           </Box>
           <Flex className="items-center gap-3">

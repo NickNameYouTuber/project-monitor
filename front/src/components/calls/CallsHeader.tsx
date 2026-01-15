@@ -6,7 +6,7 @@ export default function CallsHeader({ onOpenNew }: { onOpenNew: () => void }) {
   return (
     <Flex className="items-center justify-between mb-4">
       <Box>
-        <Heading level={2}>Calls & Meetings</Heading>
+        <Heading level={1}>Calls & Meetings</Heading>
         <Text className="text-muted-foreground">Schedule and manage your team meetings</Text>
       </Box>
       <Button onClick={onOpenNew}>

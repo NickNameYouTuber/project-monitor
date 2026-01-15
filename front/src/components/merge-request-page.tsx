@@ -197,7 +197,7 @@ This merge request implements drag and drop functionality for the kanban boards 
 
         <Flex className="items-start justify-between">
           <Box className="flex-1">
-            <Heading level={2} className="text-2xl font-medium mb-2">
+            <Heading level={1} className="text-2xl font-medium mb-2">
               Implement drag and drop functionality for kanban boards
             </Heading>
             <Flex className="items-center gap-4 text-sm text-muted-foreground">
@@ -684,7 +684,7 @@ This merge request implements drag and drop functionality for the kanban boards 
                   <CardHeader className="pb-3">
                     <Flex className="items-center justify-between">
                       <Flex className="items-center gap-2">
-                        <Heading level={4} className="font-mono text-sm">{file.path}</Heading>
+                        <Heading level={3} className="font-mono text-sm">{file.path}</Heading>
                       </Flex>
                       <Flex className="items-center gap-2 text-sm">
                         <Text as="span" className="text-green-600">+{file.additions}</Text>

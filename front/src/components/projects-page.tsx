@@ -84,7 +84,7 @@ function Column({
         <Flex className="items-center gap-3 cursor-move">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
           <Box className={`w-3 h-3 rounded-full ${column.color}`} />
-          <Heading level={4} className="font-medium">{column.title}</Heading>
+          <Heading level={3} className="font-medium">{column.title}</Heading>
           <Text as="span" size="sm" variant="muted" className="bg-muted px-2 py-1 rounded-full">
             {columnProjects.length}
           </Text>
@@ -426,7 +426,7 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
       <Box className="border-b border-border p-6">
         <Flex className="items-center justify-between mb-4">
           <Box>
-            <Heading level={2}>Projects</Heading>
+            <Heading level={1}>Projects</Heading>
             <Text variant="muted">Manage your project portfolio</Text>
           </Box>
           <Flex className="items-center gap-2">

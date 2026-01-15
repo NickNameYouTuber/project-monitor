@@ -69,7 +69,7 @@ export function ProjectCard({ project, onClick, onEdit }: ProjectCardProps) {
         </DropdownMenu>
       </Flex>
 
-      <Heading level={4} className="font-medium mb-2 text-base">{project.title}</Heading>
+      <Heading level={3} className="font-medium mb-2 text-base">{project.title}</Heading>
       <Text className="text-sm text-muted-foreground mb-3 line-clamp-2">
         {project.description}
       </Text>

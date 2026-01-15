@@ -355,7 +355,7 @@ export function CallsPage() {
       <Box className="border-b border-border p-6">
         <Flex className="items-center justify-between mb-4">
           <Box>
-            <Heading level={2}>Calls & Meetings</Heading>
+            <Heading level={1}>Calls & Meetings</Heading>
             <Text variant="muted">Schedule and manage your team meetings</Text>
           </Box>
           <Flex className="items-center gap-2">

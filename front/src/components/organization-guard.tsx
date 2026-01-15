@@ -159,7 +159,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
         <Flex className="h-screen items-center justify-center bg-background">
           <Box className="text-center">
             <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <Heading level={3} className="text-xl font-semibold mb-2">Authentication Required</Heading>
+            <Heading level={2} className="text-xl font-semibold mb-2">Authentication Required</Heading>
             <Text className="text-muted-foreground">Please authenticate to access this organization</Text>
           </Box>
         </Flex>

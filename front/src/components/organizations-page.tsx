@@ -133,7 +133,7 @@ export function OrganizationsPage() {
     <Flex className="h-full flex-col">
       <Box className="border-b border-border p-6">
         <Box>
-          <Heading level={2} className="text-2xl">Your Organizations</Heading>
+          <Heading level={1} className="text-2xl">Your Organizations</Heading>
           <Text variant="muted" className="mt-1">
             Select an organization to view projects and collaborate with your team
           </Text>

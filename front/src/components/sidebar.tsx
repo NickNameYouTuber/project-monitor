@@ -74,7 +74,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
             <img src="/logo.svg" alt="NIGIT" className="w-8 h-8" draggable={false} />
           </Box>
           <Box className="flex-1">
-            <Heading level={2} className="text-xl">NIGIt</Heading>
+            <Heading level={1} className="text-xl">NIGIt</Heading>
             <Text size="sm" variant="muted">Team Workspace</Text>
           </Box>
           <NotificationBell />

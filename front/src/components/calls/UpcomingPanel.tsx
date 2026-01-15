@@ -12,7 +12,7 @@ export default function UpcomingPanel({ open, onClose, items, onStart }: {
     <Box className={`absolute top-0 right-0 h-full w-80 bg-background border-l border-border transition-transform duration-300 ease-in-out z-20 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
       <Flex className="p-6 h-full flex-col">
         <Flex className="items-center justify-between mb-4">
-          <Heading level={4} className="flex items-center gap-2 text-lg font-semibold">
+          <Heading level={3} className="flex items-center gap-2 text-lg font-semibold">
             <Clock className="w-5 h-5" />
             Upcoming Meetings
           </Heading>

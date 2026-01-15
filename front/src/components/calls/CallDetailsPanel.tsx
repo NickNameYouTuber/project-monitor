@@ -114,7 +114,7 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
       >
         {/* Header */}
         <Flex className="items-center justify-between p-4 border-b border-border">
-          <Heading level={3} className="text-lg font-semibold">Детали звонка</Heading>
+          <Heading level={2} className="text-lg font-semibold">Детали звонка</Heading>
           <button
             onClick={onClose}
             className="p-2 hover:bg-accent rounded-lg transition"
@@ -128,7 +128,7 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
         <Box className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Title */}
           <Box>
-            <Heading level={4} className="text-xl font-bold mb-2">{call.title || 'Без названия'}</Heading>
+            <Heading level={3} className="text-xl font-bold mb-2">{call.title || 'Без названия'}</Heading>
             <Text as="span" className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(call.status)}`}>
               {getStatusText(call.status)}
             </Text>
@@ -137,7 +137,7 @@ const CallDetailsPanel: React.FC<CallDetailsPanelProps> = ({ call, open, onClose
           {/* Description */}
           {call.description && (
             <Box>
-              <Heading level={5} className="text-sm font-medium text-muted-foreground mb-1">Описание</Heading>
+              <Heading level={4} className="text-sm font-medium text-muted-foreground mb-1">Описание</Heading>
               <Text className="text-sm">{call.description}</Text>
             </Box>
           )}
