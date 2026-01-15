@@ -1553,7 +1553,7 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
   });
 
   return (
-    <Box className={`w-full h-full relative overflow-hidden flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <Box className="w-full h-full relative overflow-hidden flex flex-col bg-background">
 
       {/* UI Overlay - Independent Layers */}
       <Box className="absolute inset-0 pointer-events-none z-50">
@@ -1566,7 +1566,6 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
                 selectedShape={shapes.find(s => s.id === selectedId) || null}
                 updateShape={(id, updates, sh) => handleUpdateShape(id, updates, sh)}
                 deleteShape={handleDeleteShape}
-                isDarkMode={isDarkMode}
                 projectId={projectId}
                 elementId={shapeIdToElementIdMap.current.get(selectedId) || null}
               />
@@ -1582,7 +1581,6 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
                 currentTool={tool}
                 setTool={setTool}
                 onOpenAI={() => setIsAIModalOpen(true)}
-                isDarkMode={isDarkMode}
                 shapes={shapes}
                 onScrollToSection={scrollToSection}
                 isNavOpen={isNavOpen}
@@ -1602,7 +1600,6 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
         onClose={() => setIsAIModalOpen(false)}
         onGenerate={handleAIGenerated}
         onGenerateDiagram={handleAIDiagram}
-        isDarkMode={isDarkMode}
       />
 
       <Box
@@ -1625,20 +1622,20 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
         >
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <circle cx="2" cy="2" r="1" fill={isDarkMode ? '#ffffff' : '#000000'} />
+              <circle cx="2" cy="2" r="1" className="fill-foreground/20" />
             </pattern>
 
             <marker id="arrowhead-end" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-              <polygon points="0 0, 10 3.5, 0 7" fill={isDarkMode ? '#e2e8f0' : '#000000'} />
+              <polygon points="0 0, 10 3.5, 0 7" className="fill-foreground" />
             </marker>
             <marker id="arrowhead-start" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
-              <polygon points="10 0, 0 3.5, 10 7" fill={isDarkMode ? '#e2e8f0' : '#000000'} />
+              <polygon points="10 0, 0 3.5, 10 7" className="fill-foreground" />
             </marker>
             <marker id="circle-end" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-              <circle cx="4" cy="4" r="3" fill={isDarkMode ? '#e2e8f0' : '#000000'} />
+              <circle cx="4" cy="4" r="3" className="fill-foreground" />
             </marker>
             <marker id="circle-start" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-              <circle cx="4" cy="4" r="3" fill={isDarkMode ? '#e2e8f0' : '#000000'} />
+              <circle cx="4" cy="4" r="3" className="fill-foreground" />
             </marker>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" style={{ pointerEvents: 'none' }} />

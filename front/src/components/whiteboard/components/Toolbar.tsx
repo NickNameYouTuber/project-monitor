@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useTheme } from 'next-themes';
 import {
     MousePointer2,
     Square,
@@ -26,7 +27,6 @@ interface ToolbarProps {
     currentTool: ToolType;
     setTool: (tool: ToolType) => void;
     onOpenAI: () => void;
-    isDarkMode: boolean;
     // Navigation props
     shapes: Shape[];
     onScrollToSection: (s: SectionShape) => void;
@@ -44,7 +44,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     currentTool,
     setTool,
     onOpenAI,
-    isDarkMode,
     shapes,
     onScrollToSection,
     isNavOpen,
@@ -54,39 +53,35 @@ const Toolbar: React.FC<ToolbarProps> = ({
     canUndo,
     canRedo
 }) => {
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
     const [hoveredTooltip, setHoveredTooltip] = useState<{ label: string, top: number, left: number } | null>(null);
 
     const tools = [
-        { type: ToolType.SELECT, icon: <MousePointer2 size={20} />, label: 'Select (V)' },
-        { type: ToolType.HAND, icon: <Hand size={20} />, label: 'Pan (H)' },
-        { type: ToolType.SECTION, icon: <Frame size={20} />, label: 'Section' },
-        { type: ToolType.COMMENT, icon: <MessageSquare size={20} />, label: 'Comment' },
-        { type: ToolType.RECTANGLE, icon: <Square size={20} />, label: 'Rectangle (R)' },
-        { type: ToolType.CIRCLE, icon: <Circle size={20} />, label: 'Circle (C)' },
-        { type: ToolType.ARROW, icon: <ArrowRight size={20} />, label: 'Arrow (A)' },
-        { type: ToolType.STICKY, icon: <StickyNote size={20} />, label: 'Sticky Note (S)' },
-        { type: ToolType.TEXT, icon: <Type size={20} />, label: 'Text (T)' },
-        { type: ToolType.PENCIL, icon: <Pen size={20} />, label: 'Pen (P)' },
+        { type: ToolType.SELECT, icon: <MousePointer2 size={18} />, label: 'Select (V)' },
+        { type: ToolType.HAND, icon: <Hand size={18} />, label: 'Hand (H)' },
     ];
 
-    const activeClass = isDarkMode ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-100 text-blue-600';
-    const buttonHoverClass = isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100';
+    const creationTools = [
+        { type: ToolType.RECTANGLE, icon: <Square size={18} />, label: 'Rectangle (R)' },
+        { type: ToolType.CIRCLE, icon: <Circle size={18} />, label: 'Circle (C)' },
+        { type: ToolType.ARROW, icon: <ArrowRight size={18} />, label: 'Arrow (A)' },
+        { type: ToolType.STICKY, icon: <StickyNote size={18} />, label: 'Sticky (S)' },
+        { type: ToolType.TEXT, icon: <Type size={18} />, label: 'Text (T)' },
+        { type: ToolType.PENCIL, icon: <Pen size={18} />, label: 'Pen (P)' },
+    ];
 
     const sections = shapes.filter(s => s.type === ShapeType.SECTION) as SectionShape[];
 
     return (
-        <Box className={`flex flex-col gap-2 h-full py-2 z-50 pointer-events-auto transition-all duration-300 ${isNavOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 lg:translate-x-0 lg:opacity-100'
-            } lg:transform-none select-none`} style={{ maxHeight: '100%' }}>
+        <Box className={`flex flex-col gap-2 h-full py-6 z-50 pointer-events-auto select-none`} style={{ maxHeight: '100%' }}>
 
             {/* Main Toolbar Container */}
-            <Box className={`flex flex-col items-center gap-0 py-2 rounded-xl border shadow-xl backdrop-blur-sm transition-colors ${isDarkMode
-                ? 'bg-gray-900/90 border-gray-700 shadow-black/20'
-                : 'bg-white/90 border-gray-200 shadow-gray-200/50'
-                }`} style={{ maxHeight: '100%' }}>
+            <div className="flex flex-col items-center gap-2 p-2 rounded-2xl border shadow-2xl backdrop-blur-md bg-card/95 border-border/50">
 
                 {/* Undo/Redo Group */}
-                <Flex className={`flex-col items-center gap-1 p-1 w-full ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100/50'}`}>
-                    <TooltipProvider delayDuration={300}>
+                <div className="flex flex-col gap-1 p-1 w-full bg-muted/30 rounded-lg">
+                    <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
@@ -94,16 +89,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
                                     size="icon"
                                     onClick={onUndo}
                                     disabled={!canUndo}
-                                    className={`rounded-md hover:bg-transparent ${!canUndo ? 'opacity-30' : ''} ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                                    className="w-8 h-8 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30"
                                 >
-                                    <Undo2 size={18} />
+                                    <Undo2 size={16} />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="right"><Text>Undo (Ctrl+Z)</Text></TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 
-                    <TooltipProvider delayDuration={300}>
+                    <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
@@ -111,26 +106,52 @@ const Toolbar: React.FC<ToolbarProps> = ({
                                     size="icon"
                                     onClick={onRedo}
                                     disabled={!canRedo}
-                                    className={`rounded-md hover:bg-transparent ${!canRedo ? 'opacity-30' : ''} ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                                    className="w-8 h-8 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30"
                                 >
-                                    <Redo2 size={18} />
+                                    <Redo2 size={16} />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="right"><Text>Redo (Ctrl+Y)</Text></TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                </Flex>
+                </div>
 
-                <Separator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
+                <Separator className="bg-border/50 w-8" />
 
-                {/* Tools Scroll Area */}
-                <Separator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
+                {/* Primary Tools */}
+                <div className="flex flex-col gap-1 p-1">
+                    {tools.map((t) => (
+                        <TooltipProvider key={t.type} delayDuration={0}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setTool(t.type)}
+                                        className={cn(
+                                            "w-9 h-9 rounded-xl transition-all duration-200",
+                                            currentTool === t.type
+                                                ? "bg-primary text-primary-foreground shadow-sm scale-105"
+                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        )}
+                                    >
+                                        {t.icon}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="bg-popover text-popover-foreground border-border">
+                                    <Text className="text-xs">{t.label}</Text>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ))}
+                </div>
 
-                {/* Tools Scroll Area */}
-                {/* Tools Scroll Area */}
-                <ScrollArea className="flex-1 w-full min-h-0">
-                    <Flex className="flex-col items-center gap-0.5 p-1">
-                        {tools.map((t) => (
+                <Separator className="bg-border/50 w-8" />
+
+                {/* Creation Tools */}
+                <ScrollArea className="flex-1 w-full min-h-0 px-1">
+                    <div className="flex flex-col gap-1">
+                        {creationTools.map((t) => (
                             <TooltipProvider key={t.type} delayDuration={0}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -139,107 +160,93 @@ const Toolbar: React.FC<ToolbarProps> = ({
                                             size="icon"
                                             onClick={() => setTool(t.type)}
                                             className={cn(
-                                                "w-8 h-8 rounded-lg transition-all duration-200 relative group",
+                                                "w-9 h-9 rounded-xl transition-all duration-200",
                                                 currentTool === t.type
-                                                    ? (isDarkMode
-                                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50 scale-105'
-                                                        : 'bg-blue-600 text-white shadow-lg shadow-blue-200 scale-105')
-                                                    : (isDarkMode
-                                                        ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
-                                                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900')
+                                                    ? "bg-primary text-primary-foreground shadow-sm scale-105"
+                                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                             )}
                                         >
-                                            {React.isValidElement(t.icon) && React.cloneElement(t.icon as React.ReactElement<{ size?: number }>, { size: 18 })}
-                                            {/* Active Indicator Dot */}
-                                            {currentTool === t.type && (
-                                                <Box className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-white opacity-50" />
-                                            )}
+                                            {t.icon}
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent side="right" className="flex items-center gap-2">
-                                        <Text className="font-semibold">{t.label}</Text>
+                                    <TooltipContent side="right" className="bg-popover text-popover-foreground border-border">
+                                        <Text className="text-xs">{t.label}</Text>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
                         ))}
-                    </Flex>
+                    </div>
                 </ScrollArea>
 
-                <Separator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
+                <Separator className="bg-border/50 w-8" />
 
-                {/* AI Button */}
-                <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={onOpenAI}
-                                className={`w-8 h-8 rounded-lg transition-all duration-300 group ${isDarkMode
-                                    ? 'bg-gradient-to-br from-purple-900/50 to-blue-900/50 text-blue-300 hover:from-purple-800/50 hover:to-blue-800/50 border border-blue-500/30'
-                                    : 'bg-gradient-to-br from-purple-50 to-blue-50 text-blue-600 hover:from-purple-100 hover:to-blue-100 border border-blue-200'
-                                    }`}
-                            >
-                                <Sparkles size={18} className="animate-pulse" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" className="bg-gradient-to-r from-purple-600 to-blue-600 border-none text-white">
-                            <Flex className="items-center gap-2">
-                                <Sparkles size={14} />
-                                <Text className="font-semibold">AI Assistant</Text>
-                            </Flex>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-
-                <Separator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
-
-                {/* Navigation Button Container */}
-                <Box className="relative flex items-center justify-center w-full p-1">
+                {/* AI & Navigation */}
+                <div className="flex flex-col gap-2 p-1 w-full mt-auto">
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={onToggleNav}
-                                    className={`rounded-md transition-colors w-full ${isNavOpen ? activeClass : buttonHoverClass}`}
+                                    onClick={onOpenAI}
+                                    className="w-9 h-9 rounded-xl text-purple-500 hover:bg-purple-100/20 hover:text-purple-600 transition-colors"
                                 >
-                                    <Map size={18} />
+                                    <Sparkles size={18} />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent side="right"><Text>Navigation</Text></TooltipContent>
+                            <TooltipContent side="right"><Text>AI Assistant</Text></TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 
-                    {/* Navigation Popover */}
-                    {isNavOpen && (
-                        <Box className={`absolute left-full top-1/2 -translate-y-1/2 ml-4 w-64 rounded-lg shadow-2xl border flex flex-col z-50 ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'}`}>
-                            <Flex className="justify-between items-center p-4 pb-2 border-b border-gray-100/10 mb-1">
-                                <Text className="font-bold text-sm">Sections</Text>
-                                <button onClick={onToggleNav} className="hover:text-red-500 transition-colors"><X size={16} /></button>
-                            </Flex>
-                            <ScrollArea className="h-64 px-4 pb-4">
-                                <Flex className="flex-col gap-1">
-                                    {sections.length === 0 && (
-                                        <Text className="text-sm italic opacity-50 py-4 text-center">No sections found.</Text>
-                                    )}
-                                    {sections.map((s) => (
-                                        <button
-                                            key={s.id}
-                                            onClick={() => onScrollToSection(s)}
-                                            className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all flex items-center gap-2 group ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                                        >
-                                            <Frame size={14} className="opacity-50 group-hover:opacity-100 transition-opacity" />
-                                            <Text className="truncate">{s.label || "Untitled Section"}</Text>
-                                        </button>
-                                    ))}
-                                </Flex>
-                            </ScrollArea>
-                        </Box>
-                    )}
-                </Box>
-            </Box>
+                    <Box className="relative flex items-center justify-center w-full">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={onToggleNav}
+                                        className={cn(
+                                            "w-9 h-9 rounded-xl transition-all",
+                                            isNavOpen ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        )}
+                                    >
+                                        <Map size={18} />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right"><Text>Navigation</Text></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        {/* Navigation Popover */}
+                        {isNavOpen && (
+                            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-64 rounded-xl shadow-2xl border flex flex-col z-50 bg-popover text-popover-foreground border-border animate-in fade-in slide-in-from-left-2 duration-200">
+                                <div className="flex justify-between items-center p-4 pb-2 border-b border-border/50 mb-1">
+                                    <Text className="font-bold text-sm">Sections</Text>
+                                    <button onClick={onToggleNav} className="hover:text-destructive transition-colors"><X size={16} /></button>
+                                </div>
+                                <ScrollArea className="h-64 px-2 pb-2">
+                                    <div className="flex flex-col gap-1 p-1">
+                                        {sections.length === 0 && (
+                                            <Text className="text-sm italic opacity-50 py-4 text-center">No sections found.</Text>
+                                        )}
+                                        {sections.map((s) => (
+                                            <button
+                                                key={s.id}
+                                                onClick={() => onScrollToSection(s)}
+                                                className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 group hover:bg-muted/50"
+                                            >
+                                                <Frame size={14} className="opacity-50 group-hover:opacity-100 transition-opacity" />
+                                                <Text className="truncate">{s.label || "Untitled Section"}</Text>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                            </div>
+                        )}
+                    </Box>
+                </div>
+            </div>
         </Box>
     );
 };

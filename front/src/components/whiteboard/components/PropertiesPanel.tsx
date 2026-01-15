@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { COLORS, STROKE_COLORS, Shape, ShapeType, ArrowShape, SectionShape } from '../types';
 import { Trash2, MoveRight, Circle as CircleIcon, Minus, Palette, X } from 'lucide-react';
 import { getProjectTasks, linkElementToTask, unlinkElementFromTask } from '../../../api/whiteboards';
@@ -8,12 +9,13 @@ interface PropertiesPanelProps {
   selectedShape: Shape | null;
   updateShape: (id: string, updates: Partial<Shape>, saveHistory?: boolean) => void;
   deleteShape: (id: string) => void;
-  isDarkMode: boolean;
   projectId?: string | null;
   elementId?: string | null;
 }
 
-const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, updateShape, deleteShape, isDarkMode, projectId, elementId }) => {
+const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, updateShape, deleteShape, projectId, elementId }) => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
   if (!selectedShape) return null;
 
   const [tasks, setTasks] = useState<any[]>([]);
@@ -54,36 +56,33 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
     }
   };
 
-  const themeClass = isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200 shadow-xl' : 'bg-white border-gray-200 text-gray-700 shadow-md';
-  const separatorClass = isDarkMode ? 'bg-gray-600' : 'bg-gray-200';
-
   // Removed absolute positioning, added pointer-events-auto
   return (
-    <Box className={`border rounded-lg flex items-center p-2 gap-4 z-50 pointer-events-auto ${themeClass}`}>
+    <Box className="border rounded-xl flex items-center p-2 gap-4 z-50 pointer-events-auto shadow-2xl bg-card text-card-foreground">
 
       {selectedShape.type === ShapeType.SECTION && (
         <>
           <Flex className="items-center gap-2">
-            <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Label</span>
+            <span className="text-xs font-medium text-muted-foreground">Label</span>
             <Input
               type="text"
               value={section?.label || ''}
               onChange={(e) => updateShape(selectedShape.id, { label: e.target.value } as Partial<SectionShape>, true)}
-              className="h-7 w-32 px-2 text-sm"
+              className="h-8 w-32 px-2 text-sm bg-background border-border"
             />
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6 bg-border" />
           </Flex>
           {projectId && (
             <>
               <Flex className="items-center gap-2">
-                <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Задача</span>
+                <span className="text-xs font-medium text-muted-foreground">Task</span>
                 <Select onValueChange={handleLinkTask} disabled={loading}>
-                  <SelectTrigger className="w-40 h-8 text-xs">
-                    <SelectValue placeholder="Выбрать задачу" />
+                  <SelectTrigger className="w-40 h-8 text-xs bg-background border-border">
+                    <SelectValue placeholder="Select Task" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-popover text-popover-foreground border-border">
                     {tasks.map(task => (
-                      <SelectItem key={task.id} value={task.id}>
+                      <SelectItem key={task.id} value={task.id} className="text-xs hover:bg-accent hover:text-accent-foreground">
                         {task.title}
                       </SelectItem>
                     ))}
@@ -95,11 +94,11 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
                   {section.taskIds.map(taskId => {
                     const task = tasks.find(t => t.id === taskId);
                     return task ? (
-                      <Flex key={taskId} className={`items-center gap-1 px-2 py-1 rounded text-xs ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                      <Flex key={taskId} className="items-center gap-1 px-2 py-1 rounded text-xs bg-accent text-accent-foreground">
                         <span>{task.title}</span>
                         <button
                           onClick={() => handleUnlinkTask(taskId)}
-                          className="hover:text-red-500"
+                          className="hover:text-destructive transition-colors"
                         >
                           <X size={12} />
                         </button>
@@ -108,7 +107,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
                   })}
                 </Flex>
               )}
-              <Separator orientation="vertical" className="h-6" />
+              <Separator orientation="vertical" className="h-6 bg-border" />
             </>
           )}
         </>
@@ -117,7 +116,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
       {/* Fill Color Picker (Not for Path/Arrow) */}
       {selectedShape.type !== ShapeType.PATH && selectedShape.type !== ShapeType.ARROW && (
         <Flex className="items-center gap-2">
-          <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Fill</span>
+          <span className="text-xs font-medium text-muted-foreground">Fill</span>
           <Flex className="gap-1 items-center">
             {COLORS.slice(0, 5).map(c => (
               <button
@@ -141,12 +140,12 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
       )}
 
       {selectedShape.type !== ShapeType.PATH && selectedShape.type !== ShapeType.ARROW && (
-        <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-6 bg-border" />
       )}
 
       {/* Stroke Color Picker */}
       <Flex className="items-center gap-2">
-        <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Stroke</span>
+        <span className="text-xs font-medium text-muted-foreground">Stroke</span>
         <Flex className="gap-1 items-center">
           {STROKE_COLORS.map(c => (
             <button
@@ -172,14 +171,14 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
         </Flex>
       </Flex>
 
-      <Separator orientation="vertical" className="h-6" />
+      <Separator orientation="vertical" className="h-6 bg-border" />
 
       {/* Arrow Specific Controls */}
       {selectedShape.type === ShapeType.ARROW && (
         <>
           <Flex className="items-center gap-2">
-            <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Start</span>
-            <div className="flex bg-gray-100/10 rounded-md overflow-hidden border border-gray-200/20">
+            <span className="text-xs font-medium text-muted-foreground">Start</span>
+            <div className="flex bg-muted rounded-md overflow-hidden border border-border">
               <button
                 onClick={() => updateShape(selectedShape.id, { startHead: 'none' }, true)}
                 className={`p-1 ${selectedShape.startHead === 'none' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100/10'}`}
@@ -195,11 +194,11 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
             </div>
           </Flex>
 
-          <Separator orientation="vertical" className="h-6" />
+          <Separator orientation="vertical" className="h-6 bg-border" />
 
           <Flex className="items-center gap-2">
-            <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>End</span>
-            <div className="flex bg-gray-100/10 rounded-md overflow-hidden border border-gray-200/20">
+            <span className="text-xs font-medium text-muted-foreground">End</span>
+            <div className="flex bg-muted rounded-md overflow-hidden border border-border">
               <button
                 onClick={() => updateShape(selectedShape.id, { endHead: 'none' }, true)}
                 className={`p-1 ${selectedShape.endHead === 'none' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100/10'}`}
@@ -223,7 +222,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
         variant="ghost"
         size="icon"
         onClick={() => deleteShape(selectedShape.id)}
-        className="text-red-500 hover:bg-red-500/10"
+        className="text-destructive hover:bg-destructive/10"
         title="Delete"
       >
         <Trash2 size={18} />

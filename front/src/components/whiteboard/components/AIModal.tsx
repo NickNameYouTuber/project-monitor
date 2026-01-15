@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from 'next-themes';
 import { X, Sparkles, Loader2, StickyNote, GitGraph } from 'lucide-react';
 import { generateBrainstormIdeas, generateDiagram, AIGeneratedShape } from '../services/geminiService';
 
@@ -9,10 +10,11 @@ interface AIModalProps {
   onClose: () => void;
   onGenerate: (title: string, ideas: string[]) => void;
   onGenerateDiagram: (title: string, shapes: AIGeneratedShape[]) => void;
-  isDarkMode: boolean;
 }
 
-const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onGenerate, onGenerateDiagram, isDarkMode }) => {
+const AIModal: React.FC<AIModalProps> = ({ isOpen, onClose, onGenerate, onGenerateDiagram }) => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
   const [topic, setTopic] = useState('');
   const [mode, setMode] = useState<'BRAINSTORM' | 'DIAGRAM'>('BRAINSTORM');
   const [isLoading, setIsLoading] = useState(false);
