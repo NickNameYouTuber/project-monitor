@@ -375,11 +375,15 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
                         <SelectValue placeholder="Select section" />
                       </SelectTrigger>
                       <SelectContent>
-                        {sections.filter((s: any) => s.task_id !== task.id).map((section: any) => (
-                          <SelectItem key={section.id} value={section.id}>
-                            {section.text || 'Untitled Section'}
-                          </SelectItem>
-                        ))}
+                        {sections.filter((s: any) => s.task_id !== task.id).length === 0 ? (
+                          <SelectItem value="none" disabled>No sections available</SelectItem>
+                        ) : (
+                          sections.filter((s: any) => s.task_id !== task.id).map((section: any) => (
+                            <SelectItem key={section.id} value={section.id}>
+                              {section.text || 'Untitled Section'}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </Flex>

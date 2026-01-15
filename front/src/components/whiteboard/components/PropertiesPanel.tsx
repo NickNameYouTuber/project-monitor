@@ -95,8 +95,9 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
       {/* Task Linking - Multi-Select Support for Sections */}
       {projectId && selectedShape.type === ShapeType.SECTION && (
         <>
-          <Flex className="flex-col gap-2 items-start w-full">
-            <span className="text-xs font-medium text-muted-foreground w-full">Linked Tasks</span>
+
+          <Flex className="items-center gap-2 w-full">
+            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Linked Tasks</span>
 
             <Select
               value="multi_select_placeholder"
