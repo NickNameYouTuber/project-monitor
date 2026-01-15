@@ -153,7 +153,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
                   })()}
                 </span>
               </SelectTrigger>
-              <SelectContent className="bg-popover text-popover-foreground border-border max-h-60">
+              <SelectContent side="top" className="bg-popover text-popover-foreground border-border max-h-60">
                 {tasks.map(task => {
                   const isSelected = ((selectedShape as SectionShape).taskIds || []).includes(task.id);
                   return (

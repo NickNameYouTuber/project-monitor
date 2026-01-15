@@ -60,7 +60,7 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
   const navigate = useNavigate();
   const { account: mainAccount } = useMainAccount();
   const { account: ssoAccount } = useSSOAccount();
-  const { clearContext, currentOrganization, currentProject } = useAppContext();
+  const { clearContext, currentOrganization, currentProject, isLoading } = useAppContext();
   const { clearAccounts } = useAccountContext();
   const routeState = useRouteState();
   const { isOrganizationsPage, isInOrganization, isInProject } = routeState;
@@ -88,8 +88,14 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
         <Box className="px-4 mb-4">
           <Box className="mb-2 text-xs text-muted-foreground">Current organization</Box>
           <Box className="px-3 py-2 rounded bg-muted">
-            <Box className="text-sm font-medium truncate">{currentOrganization.name}</Box>
-            <Box className="text-xs text-muted-foreground truncate">/{currentOrganization.slug}</Box>
+            {isLoading ? (
+              <Box className="text-sm text-muted-foreground animate-pulse">Loading...</Box>
+            ) : (
+              <>
+                <Box className="text-sm font-medium truncate">{currentOrganization.name}</Box>
+                <Box className="text-xs text-muted-foreground truncate">/{currentOrganization.slug}</Box>
+              </>
+            )}
           </Box>
           <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => navigate('/organizations')}>
             Back to Organizations
@@ -107,14 +113,21 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           </Box>
           <Box className="mb-2 text-xs text-muted-foreground">Current project</Box>
           <Box className="px-3 py-2 rounded bg-muted mb-2">
-            <Box className="text-sm font-medium truncate">{currentProject.title}</Box>
-            <Box className="text-xs truncate" style={{ color: currentProject.color }}>{currentProject.id}</Box>
+            {isLoading ? (
+              <Box className="text-sm text-muted-foreground animate-pulse">Loading...</Box>
+            ) : (
+              <>
+                <Box className="text-sm font-medium truncate">{currentProject.title}</Box>
+                <Box className="text-xs truncate" style={{ color: currentProject.color }}>{currentProject.id}</Box>
+              </>
+            )}
           </Box>
           <Button variant="outline" size="sm" className="w-full" onClick={() => onNavigate('projects')}>
             Back to Projects
           </Button>
         </Box>
       )}
+
 
       <Box as="nav" className="flex-1 px-4 pb-4 overflow-y-auto">
         <VStack className="space-y-2">
@@ -209,6 +222,6 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
           Logout
         </Button>
       </Box>
-    </Flex>
+    </Flex >
   );
 }

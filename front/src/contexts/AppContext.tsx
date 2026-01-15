@@ -48,7 +48,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const params = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [currentOrganization, setCurrentOrganizationState] = useState<Organization | null>(null);
   const [currentProject, setCurrentProjectState] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -117,7 +117,7 @@ export function AppProvider({ children }: AppProviderProps) {
       }
 
       const orgId = orgIdFromUrl || localStorage.getItem(STORAGE_KEY);
-      
+
       if (!orgId || orgId === 'null' || orgId === 'undefined') {
         if (currentOrganizationRef.current && !orgIdFromUrl) {
           setIsLoading(false);
@@ -191,7 +191,7 @@ export function AppProvider({ children }: AppProviderProps) {
 
       try {
         const projectDto = await getProject(projectIdFromUrl);
-        if (projectDto.organization_id === currentOrganization.id) {
+        if (projectDto.organization_id === currentOrganizationRef.current?.id) {
           const project = projectDtoToProject(projectDto);
           setCurrentProjectState(project);
           currentProjectRef.current = project;
