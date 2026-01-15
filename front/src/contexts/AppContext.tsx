@@ -45,7 +45,8 @@ interface AppProviderProps {
 }
 
 export function AppProvider({ children }: AppProviderProps) {
-  const params = useParams();
+  // NOTE: useParams() returns empty object when AppProvider is outside <Routes>
+  // So we extract IDs directly from the URL pathname
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -55,8 +56,11 @@ export function AppProvider({ children }: AppProviderProps) {
   const currentOrganizationRef = useRef<Organization | null>(null);
   const currentProjectRef = useRef<Project | null>(null);
 
-  const orgIdFromUrl = params.orgId;
-  const projectIdFromUrl = params.projectId;
+  // Parse orgId and projectId from URL path directly
+  const pathParts = location.pathname.split('/');
+  // URL pattern: /:orgId/... or /:orgId/projects/:projectId/...
+  const orgIdFromUrl = pathParts.length > 1 && pathParts[1] && !['organizations', 'auth', 'invite', 'sso', 'call'].includes(pathParts[1]) ? pathParts[1] : null;
+  const projectIdFromUrl = pathParts.length > 3 && pathParts[2] === 'projects' ? pathParts[3] : null;
 
   const setCurrentOrganization = useCallback((org: Organization | null) => {
     setCurrentOrganizationState(org);
