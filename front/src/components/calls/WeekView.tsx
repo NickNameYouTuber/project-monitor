@@ -202,85 +202,86 @@ const WeekView: React.FC<WeekViewProps> = ({
 
   return (
     <Box className="h-full min-h-0 flex flex-col bg-background overflow-hidden">
-      {/* Week Grid */}
-      <Box className="flex-1 overflow-y-auto overflow-x-auto min-h-0" ref={containerRef}>
-        <Grid className="grid-cols-[80px_repeat(7,1fr)] min-h-full">
-          {/* Time column */}
-          <Box className="border-r border-border sticky left-0 bg-background z-10">
-            <Box className="h-12 border-b border-border bg-background" /> {/* Header spacer */}
-            {HOURS.map(hour => (
-              <Box key={hour} className="h-[90px] border-b border-border px-2 py-1 text-xs text-muted-foreground bg-background">
-                {hour.toString().padStart(2, '0')}:00
-              </Box>
-            ))}
-          </Box>
+      {/* Week Grid - horizontal scroll on mobile */}
+      <Box className="flex-1 overflow-auto min-h-0" ref={containerRef}>
+        <Box className="min-w-[800px]">
+          <Grid className="grid-cols-[60px_repeat(7,1fr)] md:grid-cols-[80px_repeat(7,1fr)] min-h-full">
+            {/* Time column */}
+            <Box className="border-r border-border sticky left-0 bg-background z-10">
+              <Box className="h-10 md:h-12 border-b border-border bg-background" /> {/* Header spacer */}
+              {HOURS.map(hour => (
+                <Box key={hour} className="h-[70px] md:h-[90px] border-b border-border px-1 md:px-2 py-1 text-xs text-muted-foreground bg-background">
+                  {hour.toString().padStart(2, '0')}:00
+                </Box>
+              ))}
+            </Box>
 
-          {/* Day columns */}
-          {weekDays.map((day, dayIndex) => {
-            const dateKey = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
-            const dayCalls = callsWithLayout.get(dateKey) || [];
-            const today = isToday(day);
+            {/* Day columns */}
+            {weekDays.map((day, dayIndex) => {
+              const dateKey = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
+              const dayCalls = callsWithLayout.get(dateKey) || [];
+              const today = isToday(day);
 
-            return (
-              <Box key={dayIndex} className="border-r border-border relative">
-                {/* Day header */}
-                <Flex className={`
+              return (
+                <Box key={dayIndex} className="border-r border-border relative">
+                  {/* Day header */}
+                  <Flex className={`
                   h-12 border-b border-border flex-col items-center justify-center sticky top-0 z-10
                   ${today ? 'bg-blue-100/90 dark:bg-blue-900/90 backdrop-blur-sm' : 'bg-background'}
                 `}>
-                  <Text className="text-xs text-muted-foreground">{DAYS_OF_WEEK_FULL[dayIndex].slice(0, 3)}</Text>
-                  <Text className={`text-sm font-medium ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>
-                    {day.getDate()}
-                  </Text>
-                </Flex>
+                    <Text className="text-xs text-muted-foreground">{DAYS_OF_WEEK_FULL[dayIndex].slice(0, 3)}</Text>
+                    <Text className={`text-sm font-medium ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                      {day.getDate()}
+                    </Text>
+                  </Flex>
 
-                {/* Hour rows */}
-                {HOURS.map(hour => (
-                  <Box key={hour} className="h-[90px] border-b border-border" />
-                ))}
+                  {/* Hour rows */}
+                  {HOURS.map(hour => (
+                    <Box key={hour} className="h-[90px] border-b border-border" />
+                  ))}
 
-                {/* Calls */}
-                {dayCalls.map((call, index) => {
-                  const { top, height } = getCallPosition(call);
-                  const widthPercent = 100 / call.columnSpan;
-                  const leftPercent = (call.column / call.columnSpan) * 100;
+                  {/* Calls */}
+                  {dayCalls.map((call, index) => {
+                    const { top, height } = getCallPosition(call);
+                    const widthPercent = 100 / call.columnSpan;
+                    const leftPercent = (call.column / call.columnSpan) * 100;
 
-                  return (
+                    return (
+                      <Box
+                        key={index}
+                        className="absolute px-0.5"
+                        style={{
+                          top: `${top + 48}px`, // +48px for header
+                          height: `${height}px`,
+                          left: `${leftPercent}%`,
+                          width: `${widthPercent}%`,
+                          zIndex: 5
+                        }}
+                      >
+                        <CallCard call={call} onClick={() => onCallClick(call)} compact />
+                      </Box>
+                    );
+                  })}
+
+                  {/* Current time indicator */}
+                  {today && (
                     <Box
-                      key={index}
-                      className="absolute px-0.5"
+                      className="absolute left-0 right-0 h-0.5 bg-red-500 z-20"
                       style={{
-                        top: `${top + 48}px`, // +48px for header
-                        height: `${height}px`,
-                        left: `${leftPercent}%`,
-                        width: `${widthPercent}%`,
-                        zIndex: 5
+                        top: `${getCurrentTimePosition() + 48}px`
                       }}
                     >
-                      <CallCard call={call} onClick={() => onCallClick(call)} compact />
+                      <Box className="w-2 h-2 rounded-full bg-red-500 -mt-0.5 -ml-1" />
                     </Box>
-                  );
-                })}
-
-                {/* Current time indicator */}
-                {today && (
-                  <Box
-                    className="absolute left-0 right-0 h-0.5 bg-red-500 z-20"
-                    style={{
-                      top: `${getCurrentTimePosition() + 48}px`
-                    }}
-                  >
-                    <Box className="w-2 h-2 rounded-full bg-red-500 -mt-0.5 -ml-1" />
-                  </Box>
-                )}
-              </Box>
-            );
-          })}
-        </Grid>
+                  )}
+                </Box>
+              );
+            })}
+          </Grid>
+        </Box>
       </Box>
     </Box>
   );
 };
 
 export default WeekView;
-

@@ -35,18 +35,18 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[800px] h-[600px] overflow-hidden flex flex-col p-0">
-        <Flex className="h-full">
-          {/* Left Column: General Info - Changed background to muted/5 for slight distinction but readable */}
-          <Box className="w-[60%] p-6 flex flex-col gap-6 border-r h-full overflow-hidden">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] sm:h-[600px] overflow-hidden flex flex-col p-0">
+        <Flex className="h-full flex-col sm:flex-row overflow-auto sm:overflow-hidden">
+          {/* Left Column: General Info */}
+          <Box className="w-full sm:w-[60%] p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 sm:border-r sm:h-full sm:overflow-hidden">
             <DialogHeader className="p-0 space-y-1">
-              <DialogTitle className="text-xl">Новая встреча</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Новая встреча</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm">
                 Основные детали встречи
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 flex-1 overflow-y-auto pr-2">
+            <div className="space-y-4 flex-1 sm:overflow-y-auto sm:pr-2">
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-sm font-medium">Название</Label>
                 <Input
@@ -93,7 +93,7 @@ export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeet
             </div>
           </Box>
           {/* Right Column: Time & Settings */}
-          <Box className="w-[40%] bg-muted p-6 flex flex-col gap-6 h-full overflow-y-auto">
+          <Box className="w-full sm:w-[40%] bg-muted p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 sm:h-full sm:overflow-y-auto">
             <Box className="space-y-1">
               <Heading level={3} className="font-semibold text-sm">Время и дата</Heading>
               <Text className="text-xs text-muted-foreground">Когда состоится встреча?</Text>

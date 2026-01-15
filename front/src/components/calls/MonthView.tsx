@@ -174,83 +174,84 @@ const MonthView: React.FC<MonthViewProps> = ({
 
   return (
     <Box className="h-full min-h-0 flex flex-col bg-background overflow-hidden">
-      {/* Calendar Grid */}
-      <Box className="flex-1 overflow-y-auto overflow-x-hidden p-6 min-h-0">
-        <Grid className="grid-cols-7 h-full min-h-[600px]">
-          {/* День недели headers */}
-          {DAYS_OF_WEEK.map(day => (
-            <Box key={day} className="text-center py-2 font-medium text-sm text-muted-foreground border-b border-border bg-background sticky top-0 z-10">
-              {day}
-            </Box>
-          ))}
+      {/* Calendar Grid - horizontal scroll on mobile */}
+      <Box className="flex-1 overflow-auto p-4 md:p-6 min-h-0">
+        <Box className="min-w-[700px]">
+          <Grid className="grid-cols-7 h-full min-h-[500px] md:min-h-[600px]">
+            {/* День недели headers */}
+            {DAYS_OF_WEEK.map(day => (
+              <Box key={day} className="text-center py-2 font-medium text-xs md:text-sm text-muted-foreground border-b border-border bg-background sticky top-0 z-10">
+                {day}
+              </Box>
+            ))}
 
-          {/* Days */}
-          {monthDays.map((date, index) => {
-            const dateCalls = getCallsForDate(date);
-            const counts = getCallCountByStatus(dateCalls);
-            const today = isToday(date);
+            {/* Days */}
+            {monthDays.map((date, index) => {
+              const dateCalls = getCallsForDate(date);
+              const counts = getCallCountByStatus(dateCalls);
+              const today = isToday(date);
 
-            return (
-              <Box
-                key={index}
-                className={`
+              return (
+                <Box
+                  key={index}
+                  className={`
                   border-r border-b border-border p-2 min-h-[120px] cursor-pointer
                   hover:bg-accent transition
                   ${!date ? 'bg-muted/30' : ''}
                   ${today ? 'bg-blue-50 dark:bg-blue-950/20' : ''}
                 `}
-                onClick={() => date && onDayClick(date)}
-              >
-                {date && (
-                  <>
-                    <Box className={`text-sm font-medium mb-2 ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>
-                      {date.getDate()}
-                    </Box>
-
-                    {/* Call indicators - показываем первые 3 звонка */}
-                    {dateCalls.length > 0 && (
-                      <Box className="space-y-1">
-                        {dateCalls.slice(0, 3).map((call) => {
-                          const timeStr = call.scheduled_time || call.start_at;
-                          const time = timeStr ? new Date(timeStr) : null;
-                          const timeFormatted = time ? `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}` : '';
-
-                          return (
-                            <Box
-                              key={call.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onCallClick?.(call);
-                              }}
-                              className="text-xs truncate px-1.5 py-0.5 rounded hover:bg-accent/50 transition cursor-pointer border-l-2"
-                              style={{
-                                borderLeftColor:
-                                  getActualStatus(call) === 'active' ? '#3b82f6' :
-                                    getActualStatus(call) === 'completed' ? '#eab308' :
-                                      getActualStatus(call) === 'cancelled' ? '#ef4444' : '#22c55e'
-                              }}
-                            >
-                              <Text as="span" className="font-medium">{timeFormatted}</Text> {call.title || 'Без названия'}
-                            </Box>
-                          );
-                        })}
-                        {dateCalls.length > 3 && (
-                          <div className="text-xs text-muted-foreground px-1.5">
-                            +{dateCalls.length - 3} ещё
-                          </div>
-                        )}
+                  onClick={() => date && onDayClick(date)}
+                >
+                  {date && (
+                    <>
+                      <Box className={`text-sm font-medium mb-2 ${today ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                        {date.getDate()}
                       </Box>
-                    )}
-                  </>
-                )}
-              </Box>
-            );
-          })}
-        </Grid>
+
+                      {/* Call indicators - показываем первые 3 звонка */}
+                      {dateCalls.length > 0 && (
+                        <Box className="space-y-1">
+                          {dateCalls.slice(0, 3).map((call) => {
+                            const timeStr = call.scheduled_time || call.start_at;
+                            const time = timeStr ? new Date(timeStr) : null;
+                            const timeFormatted = time ? `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}` : '';
+
+                            return (
+                              <Box
+                                key={call.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCallClick?.(call);
+                                }}
+                                className="text-xs truncate px-1.5 py-0.5 rounded hover:bg-accent/50 transition cursor-pointer border-l-2"
+                                style={{
+                                  borderLeftColor:
+                                    getActualStatus(call) === 'active' ? '#3b82f6' :
+                                      getActualStatus(call) === 'completed' ? '#eab308' :
+                                        getActualStatus(call) === 'cancelled' ? '#ef4444' : '#22c55e'
+                                }}
+                              >
+                                <Text as="span" className="font-medium">{timeFormatted}</Text> {call.title || 'Без названия'}
+                              </Box>
+                            );
+                          })}
+                          {dateCalls.length > 3 && (
+                            <div className="text-xs text-muted-foreground px-1.5">
+                              +{dateCalls.length - 3} ещё
+                            </div>
+                          )}
+                        </Box>
+                      )}
+                    </>
+                  )}
+                </Box>
+              );
+            })}
+          </Grid>
+        </Box>
       </Box>
     </Box>
   );
 };
 
 export default MonthView;
-
