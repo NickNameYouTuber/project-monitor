@@ -153,26 +153,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
             <Separator orientation="vertical" className="h-6 bg-border" />
           </Flex>
 
-          {projectId && (
-            <>
-              <Flex className="items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground w-20">Add Sticky</span>
-                <Select onValueChange={handleCreateTaskSticky} disabled={loading}>
-                  <SelectTrigger className="w-40 h-8 text-xs bg-background border-border">
-                    <SelectValue placeholder="Select to Add..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover text-popover-foreground border-border max-h-60">
-                    {tasks.map(task => (
-                      <SelectItem key={task.id} value={task.id} className="text-xs hover:bg-accent hover:text-accent-foreground">
-                        {task.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Flex>
-              <Separator orientation="vertical" className="h-6 bg-border" />
-            </>
-          )}
+
 
         </>
       )}
