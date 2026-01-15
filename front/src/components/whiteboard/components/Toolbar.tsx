@@ -101,7 +101,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             } lg:transform-none`}>
 
             {/* Main Toolbar Container */}
-            <Box className={`flex-1 flex flex-col items-center gap-0 p-0 rounded-xl border shadow-xl backdrop-blur-sm transition-colors ${isDarkMode
+            <Box className={`flex-1 flex flex-col items-center gap-0 py-2 rounded-xl border shadow-xl backdrop-blur-sm transition-colors ${isDarkMode
                 ? 'bg-gray-900/90 border-gray-700 shadow-black/20'
                 : 'bg-white/90 border-gray-200 shadow-gray-200/50'
                 }`}>
@@ -150,7 +150,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
                 {/* Tools Scroll Area */}
                 <ScrollArea className="flex-1 w-full">
-                    <Flex className="flex-col items-center gap-1 p-1">
+                    <Flex className="flex-col items-center gap-0.5 p-1">
                         {tools.map((t) => (
                             <TooltipProvider key={t.type} delayDuration={0}>
                                 <Tooltip>
@@ -160,7 +160,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                                             size="icon"
                                             onClick={() => setTool(t.type)}
                                             className={cn(
-                                                "w-10 h-10 rounded-lg transition-all duration-200 relative group",
+                                                "w-8 h-8 rounded-lg transition-all duration-200 relative group",
                                                 currentTool === t.type
                                                     ? (isDarkMode
                                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50 scale-105'
@@ -170,7 +170,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                                                         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900')
                                             )}
                                         >
-                                            {t.icon}
+                                            {React.isValidElement(t.icon) && React.cloneElement(t.icon as React.ReactElement<{ size?: number }>, { size: 18 })}
                                             {/* Active Indicator Dot */}
                                             {currentTool === t.type && (
                                                 <Box className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-white opacity-50" />
@@ -196,12 +196,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
                                 variant="ghost"
                                 size="icon"
                                 onClick={onOpenAI}
-                                className={`w-10 h-10 rounded-lg transition-all duration-300 group ${isDarkMode
+                                className={`w-8 h-8 rounded-lg transition-all duration-300 group ${isDarkMode
                                     ? 'bg-gradient-to-br from-purple-900/50 to-blue-900/50 text-blue-300 hover:from-purple-800/50 hover:to-blue-800/50 border border-blue-500/30'
                                     : 'bg-gradient-to-br from-purple-50 to-blue-50 text-blue-600 hover:from-purple-100 hover:to-blue-100 border border-blue-200'
                                     }`}
                             >
-                                <Sparkles size={20} className="animate-pulse" />
+                                <Sparkles size={18} className="animate-pulse" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent side="right" className="bg-gradient-to-r from-purple-600 to-blue-600 border-none text-white">
