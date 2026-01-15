@@ -29,7 +29,8 @@ import {
   deleteElement,
   createConnection,
   updateConnection,
-  deleteConnection
+  deleteConnection,
+  WhiteboardConnectionDto
 } from '../../api/whiteboards';
 import {
   shapesToElements,
@@ -41,6 +42,7 @@ import {
 } from './utils/whiteboardTransform';
 import { useNotifications } from '../../hooks/useNotifications';
 import { websocketService } from '../../services/websocketService';
+import { useTheme } from 'next-themes';
 
 // Helper to generate IDs
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -120,6 +122,8 @@ interface WhiteboardPageProps {
 function WhiteboardPage({ projectId }: WhiteboardPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { showError, showSuccess } = useNotifications();
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
 
   // State
   const [shapes, setShapes] = useState<Shape[]>([]);
@@ -131,6 +135,9 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
   const lastSavedCommentsRef = useRef<Comment[]>([]);
   const shapeIdToElementIdMap = useRef<Map<string, string>>(new Map());
   const elementIdToShapeIdMap = useRef<Map<string, string>>(new Map());
+  const arrowIdToConnectionIdMap = useRef<Map<string, string>>(new Map());
+  const connectionIdToArrowIdMap = useRef<Map<string, string>>(new Map());
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tool, setTool] = useState<ToolType>(ToolType.SELECT);
@@ -138,7 +145,6 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isNavOpen, setIsNavOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   // History State
@@ -367,6 +373,18 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
 
       const loadedArrows = connectionsToArrows(board.connections, elementIdToShapeIdMap.current);
 
+      arrowIdToConnectionIdMap.current.clear();
+      connectionIdToArrowIdMap.current.clear();
+
+      board.connections.forEach((conn, index) => {
+        const arrow = loadedArrows.find(a => a.id === conn.id); // connectionsToArrows preserves IDs if possible? Actually it maps conn.id to arrow.id
+        // connectionsToArrows implementation uses conn.id as arrow.id. So this mapping is 1:1 initially but critical for updates.
+        if (arrow) {
+          arrowIdToConnectionIdMap.current.set(arrow.id, conn.id);
+          connectionIdToArrowIdMap.current.set(conn.id, arrow.id);
+        }
+      });
+
       setShapes([...loadedShapes, ...loadedArrows]);
       setComments(loadedComments);
       lastSavedShapesRef.current = [...loadedShapes, ...loadedArrows];
@@ -466,11 +484,17 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
       }
 
       const connections = arrowsToConnections(arrowsToSave, shapeIdToElementIdMap.current);
-      const currentConnectionIds = new Set(connections.map(c => c.id));
+      const currentConnectionIds = new Set<string>();
 
       for (const connection of connections) {
-        if (existingConnectionIds.has(connection.id)) {
-          await updateConnection(connection.id, {
+        // Here we need to check if we already have a server ID for this arrow.
+        // connection.id from arrowsToConnections is the LOCAL Arrow ID.
+        const localArrowId = connection.id;
+        const serverConnectionId = arrowIdToConnectionIdMap.current.get(localArrowId);
+
+        if (serverConnectionId && existingConnectionIds.has(serverConnectionId)) {
+          currentConnectionIds.add(serverConnectionId);
+          await updateConnection(serverConnectionId, {
             from_element_id: connection.from_element_id || undefined,
             to_element_id: connection.to_element_id || undefined,
             stroke: connection.stroke || undefined,
@@ -478,13 +502,16 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
             points: connection.points || undefined,
           });
         } else {
-          await createConnection(boardId, {
+          const created = await createConnection(boardId, {
             from_element_id: connection.from_element_id || undefined,
             to_element_id: connection.to_element_id || undefined,
             stroke: connection.stroke || undefined,
             stroke_width: connection.stroke_width || undefined,
             points: connection.points || undefined,
           });
+          arrowIdToConnectionIdMap.current.set(localArrowId, created.id);
+          connectionIdToArrowIdMap.current.set(created.id, localArrowId);
+          currentConnectionIds.add(created.id);
         }
       }
 
@@ -525,6 +552,15 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
             const loadedComments = elementsToComments(sortedElements);
 
             const loadedArrows = connectionsToArrows(whiteboardData.connections, elementIdToShapeIdMap.current);
+
+            arrowIdToConnectionIdMap.current.clear();
+            connectionIdToArrowIdMap.current.clear();
+            whiteboardData.connections.forEach((conn: any) => {
+              // The loadedArrows will have ID = conn.id.
+              // We want to map this ID (which is now both local and server) to itself so future lookups work
+              arrowIdToConnectionIdMap.current.set(conn.id, conn.id);
+              connectionIdToArrowIdMap.current.set(conn.id, conn.id);
+            });
 
             shapeIdToElementIdMap.current.clear();
             elementIdToShapeIdMap.current.clear();
@@ -1547,17 +1583,10 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
                 setTool={setTool}
                 onOpenAI={() => setIsAIModalOpen(true)}
                 isDarkMode={isDarkMode}
-                toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-                onSave={handleSave}
-                onLoad={handleLoad}
-                isSaving={isSaving}
-                lastSaved={lastSaved}
-
                 shapes={shapes}
                 onScrollToSection={scrollToSection}
                 isNavOpen={isNavOpen}
                 onToggleNav={() => setIsNavOpen(!isNavOpen)}
-
                 onUndo={undo}
                 onRedo={redo}
                 canUndo={historyIndex > 0}

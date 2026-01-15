@@ -16,9 +16,7 @@ import {
     Map,
     X,
     Undo2,
-    Redo2,
-    FileUp,
-    Save
+    Redo2
 } from 'lucide-react';
 import { ToolType, Shape, SectionShape, ShapeType } from '../types';
 import { ScrollArea, Separator, Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, Box, Flex, Text } from '@nicorp/nui';
@@ -29,12 +27,6 @@ interface ToolbarProps {
     setTool: (tool: ToolType) => void;
     onOpenAI: () => void;
     isDarkMode: boolean;
-    toggleDarkMode: () => void;
-    onSave: () => void;
-    onLoad: (file: File) => void;
-    isSaving?: boolean;
-    lastSaved?: Date | null;
-
     // Navigation props
     shapes: Shape[];
     onScrollToSection: (s: SectionShape) => void;
@@ -53,11 +45,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     setTool,
     onOpenAI,
     isDarkMode,
-    toggleDarkMode,
-    onSave,
-    onLoad,
-    isSaving,
-    lastSaved,
     shapes,
     onScrollToSection,
     isNavOpen,
@@ -67,7 +54,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     canUndo,
     canRedo
 }) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const [hoveredTooltip, setHoveredTooltip] = useState<{ label: string, top: number, left: number } | null>(null);
 
     const tools = [
@@ -83,14 +69,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         { type: ToolType.PENCIL, icon: <Pen size={20} />, label: 'Pen (P)' },
     ];
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            onLoad(file);
-        }
-        e.target.value = '';
-    };
-
     const activeClass = isDarkMode ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-100 text-blue-600';
     const buttonHoverClass = isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100';
 
@@ -98,13 +76,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
     return (
         <Box className={`flex flex-col gap-2 h-full py-2 z-50 pointer-events-auto transition-all duration-300 ${isNavOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 lg:translate-x-0 lg:opacity-100'
-            } lg:transform-none`}>
+            } lg:transform-none select-none`} style={{ maxHeight: '100%' }}>
 
             {/* Main Toolbar Container */}
-            <Box className={`flex-1 flex flex-col items-center gap-0 py-2 rounded-xl border shadow-xl backdrop-blur-sm transition-colors ${isDarkMode
+            <Box className={`flex flex-col items-center gap-0 py-2 rounded-xl border shadow-xl backdrop-blur-sm transition-colors ${isDarkMode
                 ? 'bg-gray-900/90 border-gray-700 shadow-black/20'
                 : 'bg-white/90 border-gray-200 shadow-gray-200/50'
-                }`}>
+                }`} style={{ maxHeight: '100%' }}>
 
                 {/* Undo/Redo Group */}
                 <Flex className={`flex-col items-center gap-1 p-1 w-full ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100/50'}`}>
@@ -149,7 +127,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 <Separator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
 
                 {/* Tools Scroll Area */}
-                <ScrollArea className="flex-1 w-full">
+                {/* Tools Scroll Area */}
+                <ScrollArea className="flex-1 w-full min-h-0">
                     <Flex className="flex-col items-center gap-0.5 p-1">
                         {tools.map((t) => (
                             <TooltipProvider key={t.type} delayDuration={0}>
@@ -213,119 +192,53 @@ const Toolbar: React.FC<ToolbarProps> = ({
                     </Tooltip>
                 </TooltipProvider>
 
-                {/* Actions Group */}
-                <Flex className={`flex-col items-center gap-1 p-1 w-full mt-auto ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100/50'}`}>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <label className={`w-8 h-8 flex items-center justify-center rounded-md cursor-pointer transition-colors ${isDarkMode
-                                    ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
-                                    }`}>
-                                    <input
-                                        type="file"
-                                        className="hidden"
-                                        accept=".json"
-                                        onChange={handleFileChange}
-                                        ref={fileInputRef}
-                                    />
-                                    <FileUp size={18} />
-                                </label>
-                            </TooltipTrigger>
-                            <TooltipContent side="right"><Text>Load Board</Text></TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                <Separator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
 
+                {/* Navigation Button Container */}
+                <Box className="relative flex items-center justify-center w-full p-1">
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={onSave}
-                                    disabled={isSaving}
-                                    className={`rounded-md transition-colors ${isDarkMode
-                                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
-                                        }`}
+                                    onClick={onToggleNav}
+                                    className={`rounded-md transition-colors w-full ${isNavOpen ? activeClass : buttonHoverClass}`}
                                 >
-                                    {isSaving ? <Box className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> : <Save size={18} />}
+                                    <Map size={18} />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent side="right">
-                                <Flex className="flex-col gap-0.5">
-                                    <Text>Save Board</Text>
-                                    {lastSaved && <Text className="text-[10px] opacity-70">Saved {new Date(lastSaved).toLocaleTimeString()}</Text>}
-                                </Flex>
-                            </TooltipContent>
+                            <TooltipContent side="right"><Text>Navigation</Text></TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 
-                    {/* Navigation Button Container */}
-                    <Box className="relative flex items-center justify-center w-full">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={onToggleNav}
-                                        className={`rounded-md transition-colors w-full ${isNavOpen ? activeClass : buttonHoverClass}`}
-                                    >
-                                        <Map size={18} />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right"><Text>Navigation</Text></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-
-                        {/* Navigation Popover */}
-                        {isNavOpen && (
-                            <Box className={`absolute left-full top-1/2 -translate-y-1/2 ml-4 w-64 rounded-lg shadow-2xl border flex flex-col z-50 ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'}`}>
-                                <Flex className="justify-between items-center p-4 pb-2 border-b border-gray-100/10 mb-1">
-                                    <Text className="font-bold text-sm">Sections</Text>
-                                    <button onClick={onToggleNav} className="hover:text-red-500 transition-colors"><X size={16} /></button>
+                    {/* Navigation Popover */}
+                    {isNavOpen && (
+                        <Box className={`absolute left-full top-1/2 -translate-y-1/2 ml-4 w-64 rounded-lg shadow-2xl border flex flex-col z-50 ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'}`}>
+                            <Flex className="justify-between items-center p-4 pb-2 border-b border-gray-100/10 mb-1">
+                                <Text className="font-bold text-sm">Sections</Text>
+                                <button onClick={onToggleNav} className="hover:text-red-500 transition-colors"><X size={16} /></button>
+                            </Flex>
+                            <ScrollArea className="h-64 px-4 pb-4">
+                                <Flex className="flex-col gap-1">
+                                    {sections.length === 0 && (
+                                        <Text className="text-sm italic opacity-50 py-4 text-center">No sections found.</Text>
+                                    )}
+                                    {sections.map((s) => (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => onScrollToSection(s)}
+                                            className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all flex items-center gap-2 group ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                                        >
+                                            <Frame size={14} className="opacity-50 group-hover:opacity-100 transition-opacity" />
+                                            <Text className="truncate">{s.label || "Untitled Section"}</Text>
+                                        </button>
+                                    ))}
                                 </Flex>
-                                <ScrollArea className="h-64 px-4 pb-4">
-                                    <Flex className="flex-col gap-1">
-                                        {sections.length === 0 && (
-                                            <Text className="text-sm italic opacity-50 py-4 text-center">No sections found.</Text>
-                                        )}
-                                        {sections.map((s) => (
-                                            <button
-                                                key={s.id}
-                                                onClick={() => onScrollToSection(s)}
-                                                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all flex items-center gap-2 group ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                                            >
-                                                <Frame size={14} className="opacity-50 group-hover:opacity-100 transition-opacity" />
-                                                <Text className="truncate">{s.label || "Untitled Section"}</Text>
-                                            </button>
-                                        ))}
-                                    </Flex>
-                                </ScrollArea>
-                            </Box>
-                        )}
-                    </Box>
-
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={toggleDarkMode}
-                                    className={`rounded-md transition-colors ${isDarkMode
-                                        ? 'text-yellow-400 hover:bg-gray-700'
-                                        : 'text-slate-700 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right"><Text>Toggle Theme</Text></TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </Flex>
+                            </ScrollArea>
+                        </Box>
+                    )}
+                </Box>
             </Box>
         </Box>
     );
