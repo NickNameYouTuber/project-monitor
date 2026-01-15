@@ -92,14 +92,101 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
   return (
     <Box className="border rounded-xl flex items-center p-2 gap-4 z-50 pointer-events-auto shadow-2xl bg-card text-card-foreground">
 
-      {/* Task Linking for ALL Shapes */}
-      {projectId && selectedShape.type !== ShapeType.ARROW && selectedShape.type !== ShapeType.PATH && (
+      {/* Task Linking - Multi-Select Support for Sections */}
+      {projectId && selectedShape.type === ShapeType.SECTION && (
+        <>
+          <Flex className="flex-col gap-2 items-start">
+            <span className="text-xs font-medium text-muted-foreground w-full">Linked Tasks</span>
+            <Flex className="flex-wrap gap-1 max-w-[200px]">
+              {(selectedShape as SectionShape).taskIds?.map(taskId => {
+                const task = tasks.find(t => t.id === taskId);
+                return task ? (
+                  <div key={taskId} className="flex items-center gap-1 bg-accent text-accent-foreground px-1.5 py-0.5 rounded text-[10px]">
+                    <span className="truncate max-w-[80px]">{task.title}</span>
+                    <button onClick={() => {
+                      // Unlink specific task
+                      // Since backend unlink API is singular (unlinkElementFromTask), 
+                      // we might need to rely on the fact that if we link multiple, they stick?
+                      // OR if we unlink, we might need to re-link others?
+                      // Let's try to just update local state logic and call unlink if it's the LAST one?
+                      // Actually, if we want M:N, we should call unlink if we remove one.
+                      // BUT unlinkElementFromTask(id) might remove ALL.
+                      // Let's assume for now we just remove from local array and try to sync via link calls?
+                      // No, that's risky. 
+                      // Let's try calling linkElementToTask with remaining?
+                      // OR better: if user removes one, we update the shape state locally.
+                      // AND we call unlinkElementFromTask if array becomes empty.
+                      // For removing a single one from many, we might be limited by backend.
+                      // User said: "I removed it in none ... but it is still linked".
+                      // This implies we NEED to call unlink.
+
+                      const newTaskIds = ((selectedShape as SectionShape).taskIds || []).filter(id => id !== taskId);
+                      updateShape(selectedShape.id, { taskIds: newTaskIds } as Partial<SectionShape>, true);
+                      // If empty, call unlink
+                      if (newTaskIds.length === 0) {
+                        unlinkElementFromTask(elementId!).catch(console.error);
+                      } else {
+                        // If we remove one, how to let backend know?
+                        // Maybe we just link the first existing one to update the 'primary' link?
+                        linkElementToTask(elementId!, newTaskIds[0]).catch(console.error);
+                      }
+                    }} className="hover:text-destructive">
+                      <X size={10} />
+                    </button>
+                  </div>
+                ) : null;
+              })}
+            </Flex>
+            <Select
+              value="add_new"
+              onValueChange={(taskId) => {
+                if (taskId === "add_new") return;
+                const currentIds = (selectedShape as SectionShape).taskIds || [];
+                if (!currentIds.includes(taskId)) {
+                  const newIds = [...currentIds, taskId];
+                  updateShape(selectedShape.id, { taskIds: newIds } as Partial<SectionShape>, true);
+                  if (elementId) {
+                    linkElementToTask(elementId, taskId).catch(console.error);
+                  }
+                }
+              }}
+            >
+              <SelectTrigger className="w-full h-7 text-xs bg-background border-border">
+                <SelectValue placeholder="+ Link Task" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover text-popover-foreground border-border max-h-60">
+                {tasks
+                  .filter(t => !((selectedShape as SectionShape).taskIds || []).includes(t.id))
+                  .map(task => (
+                    <SelectItem key={task.id} value={task.id} className="text-xs hover:bg-accent hover:text-accent-foreground">
+                      {task.title}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </Flex>
+          <Separator orientation="vertical" className="h-6 bg-border" />
+        </>
+      )}
+
+      {/* Legacy/Single Link for Non-Sections */}
+      {projectId && selectedShape.type !== ShapeType.ARROW && selectedShape.type !== ShapeType.PATH && selectedShape.type !== ShapeType.SECTION && (
         <>
           <Flex className="items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground w-20">Linked Task</span>
             <Select
               value={selectedShape.taskId || "none"}
-              onValueChange={(val) => handleLinkTaskToShape(val === "none" ? "" : val)}
+              onValueChange={(val) => {
+                const taskId = val === "none" ? "" : val;
+                handleLinkTaskToShape(taskId);
+                if (elementId) {
+                  if (taskId) {
+                    linkElementToTask(elementId, taskId).catch(console.error);
+                  } else {
+                    unlinkElementFromTask(elementId).catch(console.error);
+                  }
+                }
+              }}
             >
               <SelectTrigger className="w-40 h-8 text-xs bg-background border-border">
                 <SelectValue placeholder="Link Task" />
