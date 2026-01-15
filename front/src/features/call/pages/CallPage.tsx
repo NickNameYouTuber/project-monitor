@@ -68,7 +68,7 @@ const patchRTCPeerConnection = () => {
     console.log('[TURN PATCH] RTCPeerConnection patched successfully');
 };
 
-patchRTCPeerConnection();
+// patchRTCPeerConnection(); // Moved to main.tsx
 
 import { PreCallSetup } from '../components/PreCallSetup';
 import { VideoGrid } from '../components/VideoGrid';
