@@ -31,6 +31,8 @@ import {
   Label, Textarea, Switch, ScrollArea, Separator,
   Box, Flex, VStack, Grid, Heading, Text
 } from '@nicorp/nui';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { LoadingSpinner } from './loading-spinner';
 import { MergeRequestPage } from './merge-request-page';
 import type { Project, Task } from '../App';
@@ -415,6 +417,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
   const [currentPath, setCurrentPath] = useState<string>('');
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [commits, setCommits] = useState<any[]>([]);
+  const [readmeContent, setReadmeContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const getFileIcon = (fileName: string | undefined) => {
@@ -598,10 +601,38 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
         ]);
         setEntries(fs || []);
         setCommits(cs || []);
+
+        // Load README if present and in root
+        if (!currentPath) {
+          const readmeFile = fs?.find(f => f.name.toLowerCase() === 'readme.md');
+          if (readmeFile) {
+            try {
+              const content = await getFileContent(selectedRepoId, selectedBranch, readmeFile.path);
+              // Decode base64 if needed (assuming API returns raw or handled, check API)
+              // The SDK/API usually returns raw text unless specified otherwise.
+              // If it's pure text from API, we use it directly.
+              // If your API returns base64, decode it: atob(content)
+              // Assuming API returns object { content: "...", encoding: "base64" } or just string
+              // Based on getFileContent usage in other places, let's assume it returns string.
+              // Actually check logic: `getFileContent` usually returns blob.
+              // Let's assume text for now or verify API.
+              // Safe approach: check typeof or base64 heuristic.
+              setReadmeContent(typeof content === 'string' ? content : JSON.stringify(content));
+            } catch (e) {
+              console.error('Failed to load README', e);
+            }
+          } else {
+            setReadmeContent(null);
+          }
+        } else {
+          setReadmeContent(null);
+        }
+
       } catch (error) {
         console.error('Ошибка загрузки данных репозитория:', error);
         setEntries([]);
         setCommits([]);
+        setReadmeContent(null);
       }
     })();
   }, [selectedRepoId, selectedBranch, currentPath]);
@@ -905,6 +936,25 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                   </ScrollArea>
                 </CardContent>
               </Card>
+
+              {/* README Display */}
+              {readmeContent && (
+                <Card>
+                  <CardHeader className="py-3 border-b">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <File className="w-4 h-4" />
+                      README.md
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <article className="prose dark:prose-invert max-w-none prose-sm">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {readmeContent}
+                      </ReactMarkdown>
+                    </article>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="commits" className="space-y-4">

@@ -101,7 +101,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             } lg:transform-none`}>
 
             {/* Main Toolbar Container */}
-            <Box className={`flex-1 flex flex-col items-center gap-0 p-0 rounded-xl border shadow-xl backdrop-blur-sm transition-colors overflow-hidden ${isDarkMode
+            <Box className={`flex-1 flex flex-col items-center gap-0 p-0 rounded-xl border shadow-xl backdrop-blur-sm transition-colors ${isDarkMode
                 ? 'bg-gray-900/90 border-gray-700 shadow-black/20'
                 : 'bg-white/90 border-gray-200 shadow-gray-200/50'
                 }`}>
@@ -146,8 +146,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 <Separator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
 
                 {/* Tools Scroll Area */}
+                <Separator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
+
+                {/* Tools Scroll Area */}
                 <ScrollArea className="flex-1 w-full">
-                    <Flex className="flex-col items-center gap-2 p-2">
+                    <Flex className="flex-col items-center gap-1 p-1">
                         {tools.map((t) => (
                             <TooltipProvider key={t.type} delayDuration={0}>
                                 <Tooltip>
