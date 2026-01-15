@@ -11,9 +11,11 @@ interface PropertiesPanelProps {
   deleteShape: (id: string) => void;
   projectId?: string | null;
   elementId?: string | null;
+  shapes?: Shape[];
+  onAddShape?: (shape: Shape) => void;
 }
 
-const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, updateShape, deleteShape, projectId, elementId }) => {
+const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, updateShape, deleteShape, projectId, elementId, shapes = [], onAddShape }) => {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
   if (!selectedShape) return null;
@@ -22,43 +24,121 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
   const [loading, setLoading] = useState(false);
   const section = selectedShape.type === ShapeType.SECTION ? selectedShape as SectionShape : null;
 
+  // Load tasks only once
   useEffect(() => {
-    if (projectId && selectedShape.type === ShapeType.SECTION) {
-      setLoading(true);
+    if (projectId && !tasks.length) {
       getProjectTasks(projectId)
         .then(setTasks)
-        .catch(console.error)
-        .finally(() => setLoading(false));
+        .catch(console.error);
     }
-  }, [projectId, selectedShape]);
+  }, [projectId, tasks.length]);
 
-  const handleLinkTask = async (taskId: string) => {
-    if (!elementId) return;
-    try {
-      await linkElementToTask(elementId, taskId);
-      const taskIds = section?.taskIds || [];
-      if (!taskIds.includes(taskId)) {
-        updateShape(selectedShape.id, { taskIds: [...taskIds, taskId] } as Partial<SectionShape>, true);
-      }
-    } catch (error) {
-      console.error('Failed to link task:', error);
+  const handleLinkTaskToShape = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    const updates: Partial<Shape> = { taskId };
+    // If it's a sticky/text and empty, auto-fill text
+    if ((selectedShape.type === ShapeType.STICKY || selectedShape.type === ShapeType.TEXT) &&
+      !('text' in selectedShape && selectedShape.text)) {
+      (updates as any).text = task?.title || '';
+    }
+    updateShape(selectedShape.id, updates, true);
+  };
+
+  const handleMoveToSection = (sectionId: string) => {
+    const targetSection = shapes.find(s => s.id === sectionId) as SectionShape;
+    if (targetSection) {
+      // Move to center of section
+      const newX = targetSection.x + targetSection.width / 2 - (('width' in selectedShape ? selectedShape.width : 0) / 2);
+      const newY = targetSection.y + targetSection.height / 2 - (('height' in selectedShape ? selectedShape.height : 0) / 2);
+      updateShape(selectedShape.id, { x: newX, y: newY }, true);
     }
   };
 
-  const handleUnlinkTask = async (taskId: string) => {
-    if (!elementId) return;
-    try {
-      await unlinkElementFromTask(elementId);
-      const taskIds = section?.taskIds || [];
-      updateShape(selectedShape.id, { taskIds: taskIds.filter(id => id !== taskId) } as Partial<SectionShape>, true);
-    } catch (error) {
-      console.error('Failed to unlink task:', error);
-    }
+  const handleCreateTaskSticky = (taskId: string) => {
+    if (!onAddShape || selectedShape.type !== ShapeType.SECTION) return;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const section = selectedShape as SectionShape;
+    const padding = 20;
+    // Simple placement: Top-left of section + padding
+    // Ideally we would find a free spot, but for now simple.
+
+    // Generate new ID locally (we assume generateId helper is not available here, so we use math.random or pass a helper?
+    // WhiteboardPage generates IDs. We can just use a simple random string here or pass generator.
+    const id = Math.random().toString(36).substr(2, 9);
+
+    const newSticky: Shape = {
+      id,
+      type: ShapeType.STICKY,
+      x: section.x + padding,
+      y: section.y + padding + 40, // Below label
+      width: 150,
+      height: 150,
+      rotation: 0,
+      fill: COLORS[2], // Yellow default
+      stroke: 'transparent',
+      text: task.title,
+      taskId: task.id
+    };
+
+    onAddShape(newSticky);
   };
+
+  const availableSections = shapes.filter(s => s.type === ShapeType.SECTION && s.id !== selectedShape.id) as SectionShape[];
+
 
   // Removed absolute positioning, added pointer-events-auto
   return (
     <Box className="border rounded-xl flex items-center p-2 gap-4 z-50 pointer-events-auto shadow-2xl bg-card text-card-foreground">
+
+      {/* Task Linking for ALL Shapes */}
+      {projectId && selectedShape.type !== ShapeType.ARROW && selectedShape.type !== ShapeType.PATH && (
+        <>
+          <Flex className="items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Task</span>
+            <Select
+              value={selectedShape.taskId || "none"}
+              onValueChange={(val) => handleLinkTaskToShape(val === "none" ? "" : val)}
+            >
+              <SelectTrigger className="w-40 h-8 text-xs bg-background border-border">
+                <SelectValue placeholder="Link Task" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover text-popover-foreground border-border max-h-60">
+                <SelectItem value="none" className="text-xs">None</SelectItem>
+                {tasks.map(task => (
+                  <SelectItem key={task.id} value={task.id} className="text-xs hover:bg-accent hover:text-accent-foreground">
+                    {task.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Flex>
+          <Separator orientation="vertical" className="h-6 bg-border" />
+        </>
+      )}
+
+      {/* Move to Section (for non-sections) */}
+      {selectedShape.type !== ShapeType.SECTION && availableSections.length > 0 && (
+        <>
+          <Flex className="items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Section</span>
+            <Select onValueChange={handleMoveToSection}>
+              <SelectTrigger className="w-32 h-8 text-xs bg-background border-border">
+                <SelectValue placeholder="Move to..." />
+              </SelectTrigger>
+              <SelectContent className="bg-popover text-popover-foreground border-border max-h-60">
+                {availableSections.map(s => (
+                  <SelectItem key={s.id} value={s.id} className="text-xs hover:bg-accent hover:text-accent-foreground">
+                    {s.label || "Untitled Section"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Flex>
+          <Separator orientation="vertical" className="h-6 bg-border" />
+        </>
+      )}
 
       {selectedShape.type === ShapeType.SECTION && (
         <>
@@ -72,15 +152,16 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
             />
             <Separator orientation="vertical" className="h-6 bg-border" />
           </Flex>
+
           {projectId && (
             <>
               <Flex className="items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Task</span>
-                <Select onValueChange={handleLinkTask} disabled={loading}>
+                <span className="text-xs font-medium text-muted-foreground">Add Task</span>
+                <Select onValueChange={handleCreateTaskSticky} disabled={loading}>
                   <SelectTrigger className="w-40 h-8 text-xs bg-background border-border">
-                    <SelectValue placeholder="Select Task" />
+                    <SelectValue placeholder="Select to Add..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover text-popover-foreground border-border">
+                  <SelectContent className="bg-popover text-popover-foreground border-border max-h-60">
                     {tasks.map(task => (
                       <SelectItem key={task.id} value={task.id} className="text-xs hover:bg-accent hover:text-accent-foreground">
                         {task.title}
@@ -89,27 +170,10 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
                   </SelectContent>
                 </Select>
               </Flex>
-              {section?.taskIds && section.taskIds.length > 0 && (
-                <Flex className="items-center gap-1 flex-wrap">
-                  {section.taskIds.map(taskId => {
-                    const task = tasks.find(t => t.id === taskId);
-                    return task ? (
-                      <Flex key={taskId} className="items-center gap-1 px-2 py-1 rounded text-xs bg-accent text-accent-foreground">
-                        <span>{task.title}</span>
-                        <button
-                          onClick={() => handleUnlinkTask(taskId)}
-                          className="hover:text-destructive transition-colors"
-                        >
-                          <X size={12} />
-                        </button>
-                      </Flex>
-                    ) : null;
-                  })}
-                </Flex>
-              )}
               <Separator orientation="vertical" className="h-6 bg-border" />
             </>
           )}
+
         </>
       )}
 

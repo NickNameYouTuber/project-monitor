@@ -31,7 +31,7 @@ export function shapesToElements(shapes: Shape[]): Array<WhiteboardElementDto & 
         text_color: shape.stroke || null,
         font_family: null,
         font_size: 14,
-        task_id: null,
+        task_id: shape.taskId || null,
         shapeId: shape.id,
       };
 
@@ -84,7 +84,7 @@ export function shapesToElements(shapes: Shape[]): Array<WhiteboardElementDto & 
             width: s.width,
             height: s.height,
             text: s.label || null,
-            task_id: s.taskIds && s.taskIds.length > 0 ? s.taskIds[0] : null,
+            task_id: null, // Sections don't link directly to one task in this model, or if they do, use s.taskId
           };
         }
         case ShapeType.PATH: {
@@ -112,6 +112,7 @@ export function elementsToShapes(elements: WhiteboardElementDto[]): Shape[] {
       rotation: el.rotation || 0,
       fill: el.fill || '#ffffff',
       stroke: el.text_color || '#000000',
+      taskId: el.task_id || undefined,
     };
 
     switch (el.type) {
@@ -156,7 +157,7 @@ export function elementsToShapes(elements: WhiteboardElementDto[]): Shape[] {
           width: el.width,
           height: el.height,
           label: el.text || 'Section',
-          taskIds: el.task_id ? [el.task_id] : [],
+          taskIds: [], // Deprecated: we use individual shapes inside section
         };
         return section;
       }

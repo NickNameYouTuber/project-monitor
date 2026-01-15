@@ -34,6 +34,7 @@ export interface BaseShape {
   rotation: number;
   fill: string;
   stroke: string;
+  taskId?: string; // Linked project task ID
 }
 
 export interface RectangleShape extends BaseShape {

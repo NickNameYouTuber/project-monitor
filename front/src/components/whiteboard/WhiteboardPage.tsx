@@ -1568,6 +1568,11 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
                 deleteShape={handleDeleteShape}
                 projectId={projectId}
                 elementId={shapeIdToElementIdMap.current.get(selectedId) || null}
+                shapes={shapes}
+                onAddShape={(s) => {
+                  setShapes(prev => [...prev, s]);
+                  saveHistory([...shapes, s]);
+                }}
               />
             </Box>
           )}
