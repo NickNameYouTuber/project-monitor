@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, MessageSquare, Hand, PhoneOff, Youtube, Settings, RefreshCw, Disc } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, MessageSquare, Hand, PhoneOff, Youtube, Settings, RefreshCw, Disc, Download } from 'lucide-react';
 import { cn } from '@nicorp/nui';
 
 interface ControlPanelProps {
@@ -10,6 +10,7 @@ interface ControlPanelProps {
     isHandRaised: boolean;
     isYouTubeActive: boolean;
     isRecording: boolean;
+    isExtensionInstalled?: boolean;
     onToggleCamera: () => void;
     onToggleMicrophone: () => void;
     onToggleScreenShare: () => void;
@@ -30,6 +31,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     isHandRaised,
     isYouTubeActive,
     isRecording,
+    isExtensionInstalled = false,
     onToggleCamera,
     onToggleMicrophone,
     onToggleScreenShare,
@@ -113,6 +115,19 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     >
                         <Hand className="w-5 h-5" />
                     </button>
+
+                    {/* Download extension button */}
+                    {!isExtensionInstalled && (
+                        <a
+                            href="https://github.com/NickNameYouTuber/NIMeet/raw/master/nimeet-youtube-extension.zip"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 md:p-3 rounded-full bg-violet-600 hover:bg-violet-700 text-white transition-colors flex-shrink-0 animate-pulse"
+                            title="Скачать расширение для YouTube"
+                        >
+                            <Download className="w-5 h-5" />
+                        </a>
+                    )}
 
                     <button
                         onClick={onToggleYouTube}

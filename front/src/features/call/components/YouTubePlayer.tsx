@@ -95,6 +95,30 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
         localParticipant.publishData(data, { reliable: true });
     }, [localParticipant]);
 
+    // Listen for URLs from extension
+    useEffect(() => {
+        const handleExtensionUrl = (event: MessageEvent) => {
+            if (event.source !== window) return;
+            if (event.data?.type === 'nimeet_load_youtube_url' && event.data?.url) {
+                console.log('[YouTubePlayer] Received URL from extension:', event.data.url);
+                const vid = extractVideoId(event.data.url);
+                if (vid) {
+                    setVideoUrl(event.data.url);
+                    setVideoId(vid);
+                    setShowUrlInput(false);
+                    // Broadcast to other participants
+                    sendSyncMessage({
+                        type: 'youtube_sync',
+                        payload: { action: 'load', videoId: vid }
+                    });
+                }
+            }
+        };
+
+        window.addEventListener('message', handleExtensionUrl);
+        return () => window.removeEventListener('message', handleExtensionUrl);
+    }, [sendSyncMessage]);
+
     // Initialize YouTube player when video ID changes
     useEffect(() => {
         if (!apiReady || !videoId || !containerRef.current) return;

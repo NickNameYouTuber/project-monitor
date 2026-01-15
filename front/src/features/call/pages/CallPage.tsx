@@ -260,6 +260,64 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
     const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
     const chunksRef = React.useRef<Blob[]>([]);
 
+    // Extension integration state
+    const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
+
+    // Check for extension on mount
+    useEffect(() => {
+        const handleExtensionMessage = (event: MessageEvent) => {
+            if (event.source !== window) return;
+
+            if (event.data?.type === 'nimeet_extension_pong' || event.data?.type === 'nimeet_extension_loaded') {
+                console.log('[NIT] Extension detected');
+                setIsExtensionInstalled(true);
+            }
+
+            // Handle YouTube URL from extension
+            if (event.data?.type === 'nimeet_play_youtube' && event.data?.url) {
+                console.log('[NIT] Received YouTube URL from extension:', event.data.url);
+                // Activate YouTube player and load video
+                setIsYouTubeActive(true);
+                setYoutubeCreatorId(localParticipant.identity);
+                // Signal to YouTubePlayer to load this URL
+                setTimeout(() => {
+                    window.postMessage({
+                        type: 'nimeet_load_youtube_url',
+                        url: event.data.url
+                    }, '*');
+                }, 500);
+            }
+        };
+
+        window.addEventListener('message', handleExtensionMessage);
+
+        // Ping extension to check if installed
+        window.postMessage({ type: 'nimeet_extension_ping' }, '*');
+
+        return () => window.removeEventListener('message', handleExtensionMessage);
+    }, [localParticipant.identity]);
+
+    // Notify extension when joining/leaving call (Heartbeat)
+    useEffect(() => {
+        const sendHeartbeat = () => {
+            window.postMessage({ type: 'nimeet_call_started', callId }, '*');
+        };
+
+        // Send immediately
+        sendHeartbeat();
+        console.log('[NIT] Notified extension: call started');
+
+        // Send every 2 seconds to ensure extension knows we're here
+        const interval = setInterval(sendHeartbeat, 2000);
+
+        return () => {
+            clearInterval(interval);
+            // Notify extension that we left the call
+            window.postMessage({ type: 'nimeet_call_ended' }, '*');
+            console.log('[NIT] Notified extension: call ended');
+        };
+    }, [callId]);
+
     const restartIdleTimer = useCallback(() => {
         setIsUiVisible(true);
         if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
@@ -674,6 +732,7 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
                     isHandRaised={raisedHands.has(localParticipant.identity)}
                     isYouTubeActive={isYouTubeActive}
                     isRecording={isRecording}
+                    isExtensionInstalled={isExtensionInstalled}
                     onToggleCamera={toggleCamera}
                     onToggleMicrophone={toggleMicrophone}
                     onToggleScreenShare={toggleScreenShare}
