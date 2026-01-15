@@ -101,13 +101,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
             } lg:transform-none`}>
 
             {/* Main Toolbar Container */}
-            <Box className={`flex-1 flex flex-col items-center gap-2 p-2 rounded-xl border shadow-xl backdrop-blur-sm transition-colors ${isDarkMode
-                    ? 'bg-gray-900/90 border-gray-700 shadow-black/20'
-                    : 'bg-white/90 border-gray-200 shadow-gray-200/50'
+            <Box className={`flex-1 flex flex-col items-center gap-0 p-0 rounded-xl border shadow-xl backdrop-blur-sm transition-colors overflow-hidden ${isDarkMode
+                ? 'bg-gray-900/90 border-gray-700 shadow-black/20'
+                : 'bg-white/90 border-gray-200 shadow-gray-200/50'
                 }`}>
 
                 {/* Undo/Redo Group */}
-                <Flex className={`flex-col items-center gap-1 p-1 rounded-lg w-full ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100/50'}`}>
+                <Flex className={`flex-col items-center gap-1 p-1 w-full ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100/50'}`}>
                     <TooltipProvider delayDuration={300}>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -146,8 +146,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 <Separator className={isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} />
 
                 {/* Tools Scroll Area */}
-                <ScrollArea className="flex-1 w-full -mx-2 px-2">
-                    <Flex className="flex-col items-center gap-2 pb-2">
+                <ScrollArea className="flex-1 w-full">
+                    <Flex className="flex-col items-center gap-2 p-2">
                         {tools.map((t) => (
                             <TooltipProvider key={t.type} delayDuration={0}>
                                 <Tooltip>
@@ -194,8 +194,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
                                 size="icon"
                                 onClick={onOpenAI}
                                 className={`w-10 h-10 rounded-lg transition-all duration-300 group ${isDarkMode
-                                        ? 'bg-gradient-to-br from-purple-900/50 to-blue-900/50 text-blue-300 hover:from-purple-800/50 hover:to-blue-800/50 border border-blue-500/30'
-                                        : 'bg-gradient-to-br from-purple-50 to-blue-50 text-blue-600 hover:from-purple-100 hover:to-blue-100 border border-blue-200'
+                                    ? 'bg-gradient-to-br from-purple-900/50 to-blue-900/50 text-blue-300 hover:from-purple-800/50 hover:to-blue-800/50 border border-blue-500/30'
+                                    : 'bg-gradient-to-br from-purple-50 to-blue-50 text-blue-600 hover:from-purple-100 hover:to-blue-100 border border-blue-200'
                                     }`}
                             >
                                 <Sparkles size={20} className="animate-pulse" />
@@ -211,13 +211,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 </TooltipProvider>
 
                 {/* Actions Group */}
-                <Flex className={`flex-col items-center gap-1 p-1 rounded-lg w-full mt-1 ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100/50'}`}>
+                <Flex className={`flex-col items-center gap-1 p-1 w-full mt-auto ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100/50'}`}>
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <label className={`w-8 h-8 flex items-center justify-center rounded-md cursor-pointer transition-colors ${isDarkMode
-                                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
+                                    ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
                                     }`}>
                                     <input
                                         type="file"
@@ -242,8 +242,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
                                     onClick={onSave}
                                     disabled={isSaving}
                                     className={`rounded-md transition-colors ${isDarkMode
-                                            ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                                            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
+                                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
                                         }`}
                                 >
                                     {isSaving ? <Box className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> : <Save size={18} />}
@@ -312,8 +312,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
                                     size="icon"
                                     onClick={toggleDarkMode}
                                     className={`rounded-md transition-colors ${isDarkMode
-                                            ? 'text-yellow-400 hover:bg-gray-700'
-                                            : 'text-slate-700 hover:bg-gray-200'
+                                        ? 'text-yellow-400 hover:bg-gray-700'
+                                        : 'text-slate-700 hover:bg-gray-200'
                                         }`}
                                 >
                                     {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}

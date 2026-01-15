@@ -653,7 +653,7 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
     const hasFeaturedContent = featuredItems.length > 0;
 
     return (
-        <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
+        <div className="absolute inset-0 bg-background flex flex-col overflow-hidden">
             {/* Featured Content (Unified Carousel) */}
             {hasFeaturedContent && (
                 <div

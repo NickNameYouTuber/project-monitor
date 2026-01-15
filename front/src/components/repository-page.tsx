@@ -701,6 +701,19 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
     />;
   }
 
+  // Fallback if no projects found and loading finished
+  if (projects.length === 0 && !isLoading) {
+    return (
+      <Flex className="h-full items-center justify-center p-6 text-center">
+        <Box>
+          <Heading level={2}>Project Not Found</Heading>
+          <Text variant="muted" className="mt-2">Could not locate the project for this repository.</Text>
+          <Button className="mt-4" onClick={() => navigate('/')}>Go Home</Button>
+        </Box>
+      </Flex>
+    );
+  }
+
   if (viewingMR) {
     return (
       <MergeRequestPage

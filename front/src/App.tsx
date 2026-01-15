@@ -185,7 +185,7 @@ function ProjectRouteWrapperComponent({
   }
   if (repoId) return (
     <RepositoryPage
-      projects={projects}
+      projects={fetchedProject ? [...projects, fetchedProject] : projects}
       tasks={tasks}
       initialRepoId={repoId}
     />
