@@ -50,6 +50,15 @@ export function TaskDetailSidebar({ task, isOpen, onClose, projectId }: TaskDeta
         const { getTaskBranches } = await import('../api/task-repository');
         const bs = await getTaskBranches(task.id);
         setBranches(bs.map(b => ({ name: b.branch_name, createdAt: new Date(b.created_at) })));
+
+        if (projectId) {
+          const { getProjectSections } = await import('../api/whiteboards');
+          const allSections = await getProjectSections(projectId);
+          setSections(allSections);
+          // Check for task_id (snake_case from backend) or taskId (if transformed)
+          const linked = allSections.filter((s: any) => (s.task_id === task.id || s.taskId === task.id));
+          setLinkedSections(linked);
+        }
       } catch { }
     })();
   }, [isOpen, task.id]);

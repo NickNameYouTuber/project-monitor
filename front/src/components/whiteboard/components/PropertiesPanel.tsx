@@ -96,7 +96,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
       {projectId && selectedShape.type !== ShapeType.ARROW && selectedShape.type !== ShapeType.PATH && (
         <>
           <Flex className="items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Task</span>
+            <span className="text-xs font-medium text-muted-foreground w-20">Linked Task</span>
             <Select
               value={selectedShape.taskId || "none"}
               onValueChange={(val) => handleLinkTaskToShape(val === "none" ? "" : val)}
@@ -156,7 +156,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape, update
           {projectId && (
             <>
               <Flex className="items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Add Task</span>
+                <span className="text-xs font-medium text-muted-foreground w-20">Add Sticky</span>
                 <Select onValueChange={handleCreateTaskSticky} disabled={loading}>
                   <SelectTrigger className="w-40 h-8 text-xs bg-background border-border">
                     <SelectValue placeholder="Select to Add..." />
