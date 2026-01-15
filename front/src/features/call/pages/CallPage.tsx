@@ -102,14 +102,28 @@ type FeaturedItem =
 const CarouselItem = ({ item, isActive, isUiVisible, total, index, onYouTubeClose, youtubeCreatorId, localParticipantId }: { item: FeaturedItem, isActive: boolean, isUiVisible: boolean, total: number, index: number, onYouTubeClose: () => void, youtubeCreatorId: string | null, localParticipantId: string }) => {
     const videoRef = React.useRef<HTMLVideoElement>(null);
 
+    // Store track reference to avoid re-attach on every render
+    const trackRef = React.useRef<any>(null);
+
     useEffect(() => {
-        if (videoRef.current && item.type === 'screen' && item.track) {
+        if (item.type !== 'screen' || !item.track) return;
+
+        // Only re-attach if track actually changed
+        if (trackRef.current === item.track && videoRef.current?.srcObject) {
+            return;
+        }
+
+        trackRef.current = item.track;
+
+        if (videoRef.current) {
             item.track.attach(videoRef.current);
             return () => {
-                if (videoRef.current) item.track.detach(videoRef.current);
+                if (videoRef.current && trackRef.current) {
+                    trackRef.current.detach(videoRef.current);
+                }
             };
         }
-    }, [item]);
+    }, [item.type, item.type === 'screen' ? item.track : null]);
 
     if (item.type === 'youtube') {
         return (

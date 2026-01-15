@@ -3,7 +3,7 @@
       "version": "0.1.0",
       "private": true,
       "dependencies": {
-            "@nicorp/nui": "file:./nicorp-nui-0.1.7.tgz",
+            "@nicorp/nui": "^0.1.8",
             "@google/genai": "^1.33.0",
             "@livekit/components-react": "^2.0.0",
             "@livekit/components-styles": "^1.0.11",
