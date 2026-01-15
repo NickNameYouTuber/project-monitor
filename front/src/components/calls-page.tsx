@@ -352,41 +352,43 @@ export function CallsPage() {
   return (
     <Flex className="h-screen flex-col overflow-hidden bg-background">
       {/* Header - matching Projects page layout */}
-      <Box className="border-b border-border p-6">
-        <Flex className="items-center justify-between mb-4">
+      <Box className="border-b border-border p-4 md:p-6">
+        <Flex className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <Box>
             <Heading level={1}>Calls & Meetings</Heading>
-            <Text variant="muted">Schedule and manage your team meetings</Text>
+            <Text variant="muted" className="text-sm md:text-base">Schedule and manage your team meetings</Text>
           </Box>
-          <Flex className="items-center gap-2">
+          <Flex className="items-center gap-2 w-full sm:w-auto">
             {/* View Toggle */}
             <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
               <Button
                 variant={activeTab === 'calendar' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab('calendar')}
-                className={cn("h-8 px-3 text-sm", activeTab === 'calendar' && "bg-background shadow-sm")}
+                className={cn("h-8 px-2 md:px-3 text-sm", activeTab === 'calendar' && "bg-background shadow-sm")}
               >
-                Calendar
+                <span className="hidden sm:inline">Calendar</span>
+                <span className="sm:hidden">Cal</span>
               </Button>
               <Button
                 variant={activeTab === 'list' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab('list')}
-                className={cn("h-8 px-3 text-sm", activeTab === 'list' && "bg-background shadow-sm")}
+                className={cn("h-8 px-2 md:px-3 text-sm", activeTab === 'list' && "bg-background shadow-sm")}
               >
                 List
               </Button>
             </Flex>
-            <Button onClick={() => setIsCreateMeetingOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Meeting
+            <Button onClick={() => setIsCreateMeetingOpen(true)} className="flex-1 sm:flex-none">
+              <Plus className="w-4 h-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">New Meeting</span>
+              <span className="sm:hidden">Meeting</span>
             </Button>
           </Flex>
         </Flex>
 
         {/* Second row: Search and contextual controls */}
-        <Flex className="items-center gap-4">
+        <Flex className="flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4">
           <Box className="flex-1">
             <SearchBar
               value={searchQuery}
@@ -397,7 +399,7 @@ export function CallsPage() {
 
           {/* Calendar Controls - only in calendar view */}
           {activeTab === 'calendar' && (
-            <Flex className="items-center gap-2">
+            <Flex className="items-center gap-2 flex-wrap justify-end">
               <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                   const newDate = new Date(currentDate);
@@ -407,9 +409,9 @@ export function CallsPage() {
                 }}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <Text as="span" size="sm" weight="medium" className="min-w-[120px] text-center">
+                <Text as="span" size="sm" weight="medium" className="min-w-[80px] md:min-w-[120px] text-center text-xs md:text-sm">
                   {calendarView === 'month'
-                    ? currentDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
+                    ? currentDate.toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' })
                     : (() => {
                       const start = new Date(currentDate);
                       const day = start.getDay();
@@ -417,7 +419,7 @@ export function CallsPage() {
                       start.setDate(diff);
                       const end = new Date(start);
                       end.setDate(end.getDate() + 6);
-                      return `${start.getDate()} ${start.toLocaleDateString('ru-RU', { month: 'short' })} - ${end.getDate()} ${end.toLocaleDateString('ru-RU', { month: 'short' })}`;
+                      return `${start.getDate()}-${end.getDate()} ${end.toLocaleDateString('ru-RU', { month: 'short' })}`;
                     })()
                   }
                 </Text>
@@ -436,53 +438,48 @@ export function CallsPage() {
                   variant={calendarView === 'month' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setCalendarView('month')}
-                  className={cn("h-8 px-3 text-sm", calendarView === 'month' && "bg-background shadow-sm")}
+                  className={cn("h-8 px-2 md:px-3 text-xs md:text-sm", calendarView === 'month' && "bg-background shadow-sm")}
                 >
-                  Месяц
+                  М
                 </Button>
                 <Button
                   variant={calendarView === 'week' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setCalendarView('week')}
-                  className={cn("h-8 px-3 text-sm", calendarView === 'week' && "bg-background shadow-sm")}
+                  className={cn("h-8 px-2 md:px-3 text-xs md:text-sm", calendarView === 'week' && "bg-background shadow-sm")}
                 >
-                  Неделя
+                  Н
                 </Button>
               </Flex>
 
               {/* Upcoming button - matching style */}
-              <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
-                <Button
-                  variant={isUpcomingOpen ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
-                  className={cn("h-8 px-3 text-sm", isUpcomingOpen && "bg-background shadow-sm")}
-                >
-                  Upcoming ({upcomingMeetings.length})
-                </Button>
-              </Flex>
+              <Button
+                variant={isUpcomingOpen ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
+                className="h-8 px-2 md:px-3 text-xs md:text-sm"
+              >
+                <span className="hidden md:inline">Upcoming</span> ({upcomingMeetings.length})
+              </Button>
             </Flex>
           )}
 
           {/* List Filters - only in list view */}
           {activeTab === 'list' && (
-            <>
+            <Flex className="items-center gap-2 flex-wrap justify-end">
               <MeetingFilters
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
               />
-              {/* Upcoming button for list view too */}
-              <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
-                <Button
-                  variant={isUpcomingOpen ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
-                  className={cn("h-8 px-3 text-sm", isUpcomingOpen && "bg-background shadow-sm")}
-                >
-                  Upcoming ({upcomingMeetings.length})
-                </Button>
-              </Flex>
-            </>
+              <Button
+                variant={isUpcomingOpen ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
+                className="h-8 px-2 md:px-3 text-xs md:text-sm"
+              >
+                <span className="hidden md:inline">Upcoming</span> ({upcomingMeetings.length})
+              </Button>
+            </Flex>
           )}
         </Flex>
       </Box>

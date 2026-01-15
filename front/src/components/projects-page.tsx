@@ -423,18 +423,19 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
 
   return (
     <Flex className="h-full flex-col">
-      <Box className="border-b border-border p-6">
-        <Flex className="items-center justify-between mb-4">
+      <Box className="border-b border-border p-4 md:p-6">
+        <Flex className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <Box>
             <Heading level={1}>Projects</Heading>
             <Text variant="muted">Manage your project portfolio</Text>
           </Box>
-          <Flex className="items-center gap-2">
+          <Flex className="items-center gap-2 w-full sm:w-auto">
             <Dialog open={isCreateColumnOpen} onOpenChange={setIsCreateColumnOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Column
+                  <span className="hidden sm:inline">Add Column</span>
+                  <span className="sm:hidden">Column</span>
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -451,9 +452,10 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
                 />
               </DialogContent>
             </Dialog>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="flex-1 sm:flex-none">
               <Plus className="w-4 h-4 mr-2" />
-              New Project
+              <span className="hidden sm:inline">New Project</span>
+              <span className="sm:hidden">Project</span>
             </Button>
           </Flex>
         </Flex>
@@ -469,8 +471,8 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
         </Box>
       </Box>
 
-      <Box className="flex-1 p-6 overflow-auto">
-        <Flex className="gap-6 h-full">
+      <Box className="flex-1 p-4 md:p-6 overflow-x-auto overflow-y-hidden">
+        <Flex className="gap-4 md:gap-6 h-full min-w-max">
           {sortedColumns.map((column, index) => (
             <Column
               key={column.id}

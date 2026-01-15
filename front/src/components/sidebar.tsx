@@ -31,6 +31,8 @@ interface SidebarProps {
   selectedProject?: Project | null;
   currentOrgId?: string | null;
   simplified?: boolean;
+  onCloseMobile?: () => void;
+  isMobile?: boolean;
 }
 
 const organizationsNavigation = [
@@ -54,7 +56,7 @@ const projectNavigation = [
   { id: 'project-settings' as Page, label: 'Settings', icon: Settings },
 ];
 
-export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId, simplified = false }: SidebarProps) {
+export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId, simplified = false, onCloseMobile, isMobile = false }: SidebarProps) {
   const navigate = useNavigate();
   const { account: mainAccount } = useMainAccount();
   const { account: ssoAccount } = useSSOAccount();
@@ -67,8 +69,8 @@ export function Sidebar({ currentPage, onNavigate, selectedProject, currentOrgId
   const mainEmail = mainAccount?.username || '';
   const ssoEmail = ssoAccount?.sso_email || null;
   return (
-    <Flex className="w-64 bg-card border-r border-border flex-col">
-      <Box className="p-6">
+    <Flex className="w-64 h-full bg-card border-r border-border flex-col overflow-y-auto">
+      <Box className="p-4 md:p-6">
         <Flex className="items-center gap-3 mb-4">
           <Box className="w-8 h-8 bg-transparent rounded-lg flex items-center justify-center">
             <img src="/logo.svg" alt="NIGIT" className="w-8 h-8" draggable={false} />
