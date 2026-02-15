@@ -7,7 +7,6 @@ import { Bot, Sparkles, ArrowDown } from 'lucide-react';
 import { ChatMessage } from '../chat-message';
 import { useNavigate } from 'react-router-dom';
 import { executeClientAction } from '../../lib/client-actions';
-import { updateWidgetState } from '../../api/chat';
 
 interface AIConversationViewProps {
     chatId: string | null;
@@ -16,7 +15,7 @@ interface AIConversationViewProps {
 
 export function AIConversationView({ chatId, onBack }: AIConversationViewProps) {
     const navigate = useNavigate();
-    const { messages, isLoading, loadChat, sendMessage, setMessages } = useAIAssistant(chatId);
+    const { messages, isLoading, loadChat, sendMessage, setMessages, updateWidgetState } = useAIAssistant(chatId);
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -119,30 +118,16 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
                                     if (actionType === 'clarification_response') {
                                         const messageText = payload.value ? String(payload.value) : '';
                                         if (messageText.trim()) {
-                                            if (payload.widgetId && payload.widgetType && chatId) {
-                                                try {
-                                                    await updateWidgetState(chatId, msg.id, {
-                                                        widgetId: payload.widgetId,
-                                                        widgetType: payload.widgetType,
-                                                        selectedValue: String(payload.optionId || payload.value || '')
-                                                    });
-                                                } catch (error) {
-                                                    console.error('Failed to save widget state:', error);
-                                                }
+                                            const selectedVal = String(payload.optionId || payload.value || '');
+                                            if (payload.widgetId && payload.widgetType) {
+                                                await updateWidgetState(msg.id, payload.widgetId, payload.widgetType, selectedVal);
                                             }
                                             await sendMessage(messageText, true);
                                         }
                                     } else if (actionType === 'action_confirmation') {
-                                        if (payload.widgetId && payload.widgetType && chatId) {
-                                            try {
-                                                await updateWidgetState(chatId, msg.id, {
-                                                    widgetId: payload.widgetId,
-                                                    widgetType: payload.widgetType,
-                                                    selectedValue: payload.confirmed ? 'true' : 'false'
-                                                });
-                                            } catch (error) {
-                                                console.error('Failed to save widget state:', error);
-                                            }
+                                        const selectedVal = payload.confirmed ? 'true' : 'false';
+                                        if (payload.widgetId && payload.widgetType) {
+                                            await updateWidgetState(msg.id, payload.widgetId, payload.widgetType, selectedVal);
                                         }
                                         if (payload.confirmed && payload.clientAction) {
                                             executeClientAction(payload.clientAction, navigate);

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { ChatMessage, Chat } from '../api/chat';
-import { getChat, sendMessage as sendChatMessage } from '../api/chat';
+import { getChat, sendMessage as sendChatMessage, updateWidgetState as updateWidgetStateApi } from '../api/chat';
 import { useNotifications } from './useNotifications';
 
 export function useAIAssistant(chatId: string | null) {
@@ -18,6 +18,36 @@ export function useAIAssistant(chatId: string | null) {
     }
   }, [showError]);
 
+  /** Update widget selectedValue in local state AND persist to backend */
+  const updateWidgetState = useCallback(async (
+    messageId: string,
+    widgetId: string,
+    widgetType: string,
+    selectedValue: string,
+  ) => {
+    // 1. Optimistically update local state immediately so UI re-renders
+    setMessages(prev => prev.map(msg => {
+      if (msg.id !== messageId) return msg;
+      return {
+        ...msg,
+        widgets: msg.widgets?.map(w =>
+          (w.id ?? '') === widgetId
+            ? { ...w, selectedValue, selectedAt: new Date().toISOString() }
+            : w
+        ),
+      };
+    }));
+
+    // 2. Persist to backend
+    if (chatId) {
+      try {
+        await updateWidgetStateApi(chatId, messageId, { widgetId, widgetType, selectedValue });
+      } catch (error) {
+        console.error('Failed to save widget state:', error);
+      }
+    }
+  }, [chatId]);
+
   const sendMessage = useCallback(async (text: string, isWidgetResponse = false) => {
     if (!chatId || !text || !text.trim() || isLoading) return;
 
@@ -25,7 +55,7 @@ export function useAIAssistant(chatId: string | null) {
       id: Date.now().toString(),
       role: 'user',
       content: text.trim(),
-      isWidgetResponse, // Mark as widget response so UI can hide it
+      isWidgetResponse,
       createdAt: new Date().toISOString(),
     };
 
@@ -52,5 +82,6 @@ export function useAIAssistant(chatId: string | null) {
     loadChat,
     sendMessage,
     setMessages,
+    updateWidgetState,
   };
 }

@@ -39,7 +39,7 @@ export function AIAssistantSheet({
   const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   const { chats, loadChats, createNewChat, deleteChat } = useChatHistory(organizationId || null, projectId || null);
-  const { messages, isLoading, loadChat, sendMessage, setMessages } = useAIAssistant(currentChatId);
+  const { messages, isLoading, loadChat, sendMessage, setMessages, updateWidgetState } = useAIAssistant(currentChatId);
 
   useEffect(() => {
     if (chatId) {
@@ -228,21 +228,23 @@ export function AIAssistantSheet({
                       isAnswered={isAnswered}
                       onAction={async (actionType, payload) => {
                         if (actionType === 'clarification_response') {
-                          await sendMessage(payload.value, true);
+                          const messageText = payload.value ? String(payload.value) : '';
+                          if (messageText.trim()) {
+                            const selectedVal = String(payload.optionId || payload.value || '');
+                            if (payload.widgetId && payload.widgetType) {
+                              await updateWidgetState(msg.id, payload.widgetId, payload.widgetType, selectedVal);
+                            }
+                            await sendMessage(messageText, true);
+                          }
                         } else if (actionType === 'action_confirmation') {
+                          const selectedVal = payload.confirmed ? 'true' : 'false';
+                          if (payload.widgetId && payload.widgetType) {
+                            await updateWidgetState(msg.id, payload.widgetId, payload.widgetType, selectedVal);
+                          }
                           if (payload.confirmed && payload.clientAction) {
                             executeClientAction(payload.clientAction, navigate);
                           }
                           await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
-                        } else if (actionType === 'widget') {
-                          if (payload.selectedValue) {
-                            await sendMessage(payload.selectedValue, true);
-                          } else if (payload.confirmed !== undefined) {
-                            if (payload.confirmed && payload.clientAction) {
-                              executeClientAction(payload.clientAction, navigate);
-                            }
-                            await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
-                          }
                         }
                       }}
                     />
