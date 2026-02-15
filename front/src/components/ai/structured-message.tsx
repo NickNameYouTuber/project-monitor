@@ -91,8 +91,8 @@ function RenderWidget({ widget, messageId, isAnswered, onAction, navigate }: Ren
                     id={widget.id || `${messageId}-q-${Math.random().toString(36).slice(2, 6)}`}
                     question={String(d(widget, 'question'))}
                     options={options.map((o: any) => ({
-                        id: String(o?.id ?? ''),
-                        label: String(o?.label ?? o?.id ?? ''),
+                        id: String(o?.value ?? o?.id ?? ''),
+                        label: String(o?.label ?? o?.value ?? o?.id ?? ''),
                         description: o?.description ? String(o.description) : undefined,
                     }))}
                     selectedId={widget.selectedValue ?? null}
