@@ -6,6 +6,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Button, cn, Box, Flex, Heading, Text } from '@nicorp/nui';
+import { PageHeader } from './shared/page-header';
 import NewMeetingDialog from './calls/NewMeetingDialog';
 import UpcomingOverlay from './calls/UpcomingOverlay';
 import CallPage from '../features/call/pages/CallPage';
@@ -351,22 +352,17 @@ export function CallsPage() {
 
   return (
     <Flex className="h-screen flex-col overflow-hidden bg-background">
-      {/* Header - matching Projects page layout */}
-      <Box className="border-b border-border p-4 md:p-6">
-        {/* First row: Title and main actions */}
-        <Flex className="flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-          <Box>
-            <Heading level={1} className="text-xl md:text-2xl">Calls & Meetings</Heading>
-            <Text variant="muted" className="text-xs md:text-sm hidden sm:block">Schedule and manage your team meetings</Text>
-          </Box>
-          <Flex className="items-center gap-2 w-full sm:w-auto">
-            {/* View Toggle - simplified on mobile */}
+      <PageHeader
+        title="Calls & Meetings"
+        subtitle="Schedule and manage your team meetings"
+        actions={
+          <Flex className="items-center gap-2">
             <Flex className="items-center bg-muted/50 p-1 rounded-lg border border-border">
               <Button
                 variant={activeTab === 'calendar' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab('calendar')}
-                className={cn("h-9 px-3 text-sm", activeTab === 'calendar' && "bg-background shadow-sm")}
+                className={cn("h-8 px-3 text-sm", activeTab === 'calendar' && "bg-background shadow-sm")}
               >
                 📅
               </Button>
@@ -374,29 +370,28 @@ export function CallsPage() {
                 variant={activeTab === 'list' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab('list')}
-                className={cn("h-9 px-3 text-sm", activeTab === 'list' && "bg-background shadow-sm")}
+                className={cn("h-8 px-3 text-sm", activeTab === 'list' && "bg-background shadow-sm")}
               >
                 📋
               </Button>
             </Flex>
-            <Button onClick={() => setIsCreateMeetingOpen(true)} className="flex-1 sm:flex-none h-9">
+            <Button onClick={() => setIsCreateMeetingOpen(true)} className="h-9">
               <Plus className="w-4 h-4 mr-1" />
-              <span className="sm:hidden">Новый</span>
-              <span className="hidden sm:inline">New Meeting</span>
+              New Meeting
             </Button>
           </Flex>
-        </Flex>
-
-        {/* Second row: Search */}
+        }
+      >
+        {/* Search */}
         <Box className="mb-3">
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
-            className="w-full"
+            className="w-full max-w-md"
           />
         </Box>
 
-        {/* Third row: Calendar/List Controls - hidden complex controls on mobile */}
+        {/* Calendar/List Controls */}
         <Flex className="items-center gap-2 flex-wrap">
           {/* Calendar Controls - only in calendar view */}
           {activeTab === 'calendar' && (
@@ -475,7 +470,7 @@ export function CallsPage() {
             🔔 {upcomingMeetings.length}
           </Button>
         </Flex>
-      </Box>
+      </PageHeader>
 
       <NewMeetingDialog open={isCreateMeetingOpen} setOpen={setIsCreateMeetingOpen} newMeeting={newMeeting} setNewMeeting={setNewMeeting} colors={MEETING_COLORS} onCreate={handleCreateMeeting} organizationId={organizationId} />
 

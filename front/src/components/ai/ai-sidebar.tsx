@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAISidebar } from '../../contexts/AISidebarContext';
-import { GripVertical, X, Sparkles, MessageSquare, History, Settings2, MoreHorizontal } from 'lucide-react';
-import { Button, Separator, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, Box, Flex, Heading, Text } from '@nicorp/nui';
+import { X, History, Sparkles } from 'lucide-react';
+import {
+    Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+    ChatHeader, ConversationList, cn,
+    type Conversation
+} from '@nicorp/nui';
 import { AIConversationView } from './ai-conversation-view';
-import { ChatList } from '../chat-list';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import { useAppContext } from '../../contexts/AppContext';
 import { useActiveContext } from '../../hooks/useActiveContext';
@@ -19,17 +22,15 @@ export function AISidebar() {
 
     const [isResizing, setIsResizing] = useState(false);
 
-    // Load chats on mount
     useEffect(() => {
         loadChats();
     }, [loadChats]);
 
-    // If we have a saved chat ID, switch to chat view when sidebar opens
     useEffect(() => {
         if (currentChatId) {
             setView('chat');
         }
-    }, []); // Only on mount
+    }, []);
 
     // Handle resizing
     useEffect(() => {
@@ -42,14 +43,14 @@ export function AISidebar() {
         const handleMouseUp = () => {
             setIsResizing(false);
             document.body.style.cursor = 'default';
-            document.body.style.userSelect = 'auto'; // Re-enable selection
+            document.body.style.userSelect = 'auto';
         };
 
         if (isResizing) {
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('mouseup', handleMouseUp);
             document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none'; // Disable selection while resizing
+            document.body.style.userSelect = 'none';
         }
 
         return () => {
@@ -76,67 +77,76 @@ export function AISidebar() {
         }
     };
 
+    const conversations: Conversation[] = chats.map(c => ({
+        id: c.id,
+        title: c.title || 'Без названия',
+        lastMessage: undefined,
+        updatedAt: c.updatedAt ? new Date(c.updatedAt) : new Date(),
+    }));
+
     return (
-        <Flex className="h-full w-full relative bg-background/50 backdrop-blur-sm">
-            {/* Resizer Handle */}
-            <Box
-                className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors z-50 flex items-center justify-center group"
+        <div className="flex h-full w-full relative bg-background border-l border-border/50">
+            {/* Resizer */}
+            <div
+                className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-50 flex items-center justify-center group"
                 onMouseDown={startResizing}
             >
-                <Box className="h-8 w-1 bg-border group-hover:bg-primary rounded-full transition-colors" />
-            </Box>
+                <div className="h-8 w-0.5 bg-border/50 group-hover:bg-primary/50 rounded-full transition-colors" />
+            </div>
 
-            <Flex className="flex-1 flex-col h-full overflow-hidden">
+            <div className="flex-1 flex flex-col h-full overflow-hidden pl-1">
                 {/* Header */}
-                <Flex className="h-14 border-b border-border items-center justify-between px-4 shadow-sm bg-background/95">
-                    <Flex className="items-center gap-2">
-                        <Box className="bg-primary/10 p-1.5 rounded-md">
-                            <Sparkles className="w-4 h-4 text-primary" />
-                        </Box>
-                        <Flex className="flex-col">
-                            <Heading level={2} className="text-sm font-semibold leading-none">AI Assistant</Heading>
-                            <Flex className="items-center gap-1.5 mt-0.5">
-                                <Text as="span" className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wider">
-                                    {activeContext.type}
-                                </Text>
-                                <Text as="span" className="text-[10px] text-muted-foreground truncate max-w-[150px]">
-                                    {activeContext.name}
-                                </Text>
-                            </Flex>
-                        </Flex>
-                    </Flex>
-                    <Flex className="items-center gap-1">
+                <div className="flex items-center justify-between h-12 px-3 border-b border-border/40 bg-background/95 backdrop-blur-sm shrink-0">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500/15 to-blue-500/15 flex items-center justify-center">
+                            <Sparkles className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+                        </div>
+                        <div>
+                            <span className="text-sm font-semibold text-foreground">AI Assistant</span>
+                            {activeContext.name && (
+                                <span className="text-[10px] text-muted-foreground/60 ml-2">{activeContext.name}</span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-0.5">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant={view === 'history' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setView('history')}>
-                                        <History className="w-4 h-4" />
-                                    </Button>
+                                    <button
+                                        onClick={() => setView('history')}
+                                        className={cn(
+                                            "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+                                            view === 'history'
+                                                ? "bg-muted text-foreground"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                                        )}
+                                    >
+                                        <History className="w-3.5 h-3.5" />
+                                    </button>
                                 </TooltipTrigger>
-                                <TooltipContent>History</TooltipContent>
+                                <TooltipContent side="bottom">История</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
+                        <button
+                            onClick={() => setIsOpen(false)}
+                            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </div>
 
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
-                            <X className="w-4 h-4" />
-                        </Button>
-                    </Flex>
-                </Flex>
-
-                {/* Content Area */}
-                <Box className="flex-1 overflow-hidden relative">
+                {/* Content */}
+                <div className="flex-1 overflow-hidden relative">
                     {view === 'history' && (
-                        <Box className="h-full overflow-hidden">
-                            <ChatList
-                                chats={chats}
-                                currentChatId={currentChatId}
-                                onSelectChat={handleSelectChat}
-                                onCreateChat={handleCreateChat}
-                                onDeleteChat={deleteChat}
-                                onClose={() => setIsOpen(false)}
-                                hideHeader={true}
-                            />
-                        </Box>
+                        <ConversationList
+                            conversations={conversations}
+                            activeId={currentChatId || undefined}
+                            onSelect={handleSelectChat}
+                            onNew={handleCreateChat}
+                            onDelete={deleteChat}
+                            showSearch={true}
+                        />
                     )}
 
                     {view === 'chat' && (
@@ -145,8 +155,8 @@ export function AISidebar() {
                             onBack={() => setView('history')}
                         />
                     )}
-                </Box>
-            </Flex>
-        </Flex>
+                </div>
+            </div>
+        </div>
     );
 }

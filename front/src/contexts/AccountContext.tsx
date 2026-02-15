@@ -84,7 +84,7 @@ export function AccountProvider({ children }: AccountProviderProps) {
   }, [setMainAccount]);
 
   const refreshSSOAccount = useCallback(async () => {
-    if (!organizationId || !getAccessToken()) {
+    if (!organizationId || !getAccessToken() || !currentOrganization?.sso_enabled) {
       setSsoAccount(null);
       return;
     }
@@ -96,7 +96,7 @@ export function AccountProvider({ children }: AccountProviderProps) {
       console.error('Failed to refresh SSO account:', error);
       setSsoAccount(null);
     }
-  }, [organizationId]);
+  }, [organizationId, currentOrganization?.sso_enabled]);
 
   const clearAccounts = useCallback(() => {
     setMainAccountState(null);

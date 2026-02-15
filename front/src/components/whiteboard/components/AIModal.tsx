@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@nicorp/nui';
 import { X, Sparkles, Loader2, StickyNote, GitGraph } from 'lucide-react';
 import { generateBrainstormIdeas, generateDiagram, AIGeneratedShape } from '../services/geminiService';
 

@@ -52,17 +52,21 @@ public class OrganizationsController {
     @Operation(summary = "Список организаций текущего пользователя")
     public ResponseEntity<List<OrganizationResponse>> list(Authentication auth) {
         if (auth == null || auth.getName() == null) {
-            return ResponseEntity.ok(List.of());
+            System.out.println("[OrganizationsController] list: auth is null, returning 401");
+            return ResponseEntity.status(401).build();
         }
         
         try {
             UUID userId = UUID.fromString(auth.getName());
+            System.out.println("[OrganizationsController] list: loading orgs for user " + userId);
             List<Organization> userOrgs = memberService.getUserOrganizations(userId);
+            System.out.println("[OrganizationsController] list: found " + userOrgs.size() + " orgs");
             return ResponseEntity.ok(userOrgs.stream()
                     .map(org -> toResponse(org, userId))
                     .toList());
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.ok(List.of());
+            System.err.println("[OrganizationsController] list: invalid user ID format: " + auth.getName());
+            return ResponseEntity.status(401).build();
         }
     }
 

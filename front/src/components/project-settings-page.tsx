@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Settings, Users, Shield, AlertTriangle, Folder, ChevronRight, LayoutGrid } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger, Card, CardContent, CardHeader, CardTitle, Box, Flex, VStack, Heading, Text, Button } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
+import { PageHeader } from './shared/page-header';
 import { useProjectPermissions } from '../hooks/useProjectPermissions';
 import { RoleBadge } from './role-badge';
 import { MembersTab } from './project-settings/members-tab';
@@ -86,44 +87,10 @@ export function ProjectSettingsPage({ project, onUpdateProject }: ProjectSetting
 
   return (
     <Flex className="h-full flex-col bg-background/50">
-      {/* Premium Header */}
-      <Box className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <Box className="container max-w-5xl mx-auto py-6 px-4 md:px-6">
-
-          {/* Breadcrumbs */}
-          <Flex className="items-center gap-2 text-sm text-muted-foreground mb-4">
-            <Link to={`/${currentOrganization?.id || ''}/projects`} className="hover:text-foreground transition-colors flex items-center gap-1">
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <Text as="span">Projects</Text>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-            <Text as="span" className="text-foreground font-medium truncate max-w-[150px]">{localProject.title}</Text>
-            <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-            <Text as="span">Settings</Text>
-          </Flex>
-
-          <Flex className="items-center gap-5">
-            <Flex className="w-16 h-16 bg-gradient-to-br from-indigo-500/10 to-indigo-500/5 rounded-2xl items-center justify-center border border-indigo-500/10 shadow-sm shrink-0">
-              <Box style={{ color: localProject.color || '#6366f1' }}>
-                <Folder className="w-8 h-8" />
-              </Box>
-            </Flex>
-            <Box>
-              <Heading level={1} className="text-3xl font-bold tracking-tight">{localProject.title}</Heading>
-              <Flex className="items-center gap-3 mt-1.5 flex-wrap">
-                <Flex className="items-center gap-2 text-muted-foreground text-sm">
-                  <Text as="span">Project Settings</Text>
-                  <Box as="span" className="w-1 h-1 rounded-full bg-border" />
-                  <Text as="span" className="font-mono text-xs opacity-70">ID: {localProject.id.substring(0, 8)}</Text>
-                </Flex>
-                {permissions.role && (
-                  <RoleBadge role={permissions.role} type="project" variant="secondary" />
-                )}
-              </Flex>
-            </Box>
-          </Flex>
-        </Box>
-      </Box>
+      <PageHeader
+        title={localProject.title}
+        subtitle="Project Settings"
+      />
 
       {/* Content */}
       <Box className="flex-1 overflow-auto">

@@ -42,6 +42,7 @@ import {
   Text,
 } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
+import { PageHeader } from './shared/page-header';
 import { useMainAccount, useAccountContext } from '../hooks/useAccountContext';
 
 export function AccountPage() {
@@ -107,12 +108,10 @@ export function AccountPage() {
 
   return (
     <Flex className="h-full flex-col">
-      <Box className="border-b border-border p-6">
-        <Box>
-          <Heading level={1}>Account</Heading>
-          <Text variant="muted">Manage your personal settings and preferences</Text>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Account"
+        subtitle="Manage your personal settings and preferences"
+      />
 
       <Box className="flex-1 p-6 overflow-auto">
         <Tabs defaultValue="profile" className="h-full">

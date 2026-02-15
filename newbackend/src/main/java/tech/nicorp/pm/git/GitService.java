@@ -291,7 +291,7 @@ public class GitService {
         }
     }
 
-    public void initRepository(UUID repoId) throws IOException {
+    public void initRepository(UUID repoId, String repoName) throws IOException {
         Path path = config.getRepoPath(repoId.toString());
         try {
             Files.createDirectories(path);
@@ -305,6 +305,16 @@ public class GitService {
             repo.getConfig().setString("receive", null, "denyCurrentBranch", "updateInstead");
             repo.getConfig().setBoolean("http", null, "receivepack", true);
             repo.getConfig().save();
+
+            // Create README.md and initial commit
+            String readmeContent = "# " + (repoName != null ? repoName : "Repository") + "\n";
+            Path readme = path.resolve("README.md");
+            Files.writeString(readme, readmeContent);
+            git.add().addFilepattern("README.md").call();
+            git.commit()
+                    .setMessage("Initial commit")
+                    .setAuthor("System", "system@nicorp.tech")
+                    .call();
             
             git.close();
         } catch (Exception e) {

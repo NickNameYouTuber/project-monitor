@@ -50,26 +50,39 @@ public class CryptoUtils {
     }
     
     public static String decrypt(String encryptedText) throws Exception {
-        String keyString = getEncryptionKey();
+        // Проверка: если строка не похожа на base64 (содержит недопустимые символы),
+        // считаем её plain text (для обратной совместимости)
+        if (encryptedText.contains("-") || encryptedText.contains("_") || 
+            (!encryptedText.matches("^[A-Za-z0-9+/]*={0,2}$"))) {
+            System.out.println("[CryptoUtils] Value is not encrypted, returning as plain text");
+            return encryptedText;
+        }
         
-        byte[] keyBytes = Base64.getDecoder().decode(keyString);
-        SecretKey key = new SecretKeySpec(keyBytes, "AES");
-        
-        byte[] decodedBytes = Base64.getDecoder().decode(encryptedText);
-        ByteBuffer byteBuffer = ByteBuffer.wrap(decodedBytes);
-        
-        byte[] iv = new byte[GCM_IV_LENGTH];
-        byteBuffer.get(iv);
-        
-        byte[] cipherText = new byte[byteBuffer.remaining()];
-        byteBuffer.get(cipherText);
-        
-        Cipher cipher = Cipher.getInstance(ALGORITHM);
-        GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-        cipher.init(Cipher.DECRYPT_MODE, key, parameterSpec);
-        
-        byte[] plainText = cipher.doFinal(cipherText);
-        return new String(plainText, StandardCharsets.UTF_8);
+        try {
+            String keyString = getEncryptionKey();
+            
+            byte[] keyBytes = Base64.getDecoder().decode(keyString);
+            SecretKey key = new SecretKeySpec(keyBytes, "AES");
+            
+            byte[] decodedBytes = Base64.getDecoder().decode(encryptedText);
+            ByteBuffer byteBuffer = ByteBuffer.wrap(decodedBytes);
+            
+            byte[] iv = new byte[GCM_IV_LENGTH];
+            byteBuffer.get(iv);
+            
+            byte[] cipherText = new byte[byteBuffer.remaining()];
+            byteBuffer.get(cipherText);
+            
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+            cipher.init(Cipher.DECRYPT_MODE, key, parameterSpec);
+            
+            byte[] plainText = cipher.doFinal(cipherText);
+            return new String(plainText, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.err.println("[CryptoUtils] Decryption failed, returning as plain text: " + e.getMessage());
+            return encryptedText;
+        }
     }
     
     public static String generateEncryptionKey() throws Exception {

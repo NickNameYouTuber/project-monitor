@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@nicorp/nui';
 import {
     MousePointer2,
     Square,
@@ -69,6 +69,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
         { type: ToolType.STICKY, icon: <StickyNote size={18} />, label: 'Sticky (S)' },
         { type: ToolType.TEXT, icon: <Type size={18} />, label: 'Text (T)' },
         { type: ToolType.PENCIL, icon: <Pen size={18} />, label: 'Pen (P)' },
+        { type: ToolType.SECTION, icon: <Frame size={18} />, label: 'Section (F)' },
+        { type: ToolType.COMMENT, icon: <MessageSquare size={18} />, label: 'Comment (M)' },
     ];
 
     const sections = shapes.filter(s => s.type === ShapeType.SECTION) as SectionShape[];

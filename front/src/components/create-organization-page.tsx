@@ -7,6 +7,7 @@ import {
   Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { createOrganization } from '../api/organizations';
+import { PageHeader } from './shared/page-header';
 import { useNotifications } from '../hooks/useNotifications';
 import { toast } from 'sonner';
 
@@ -67,21 +68,16 @@ export function CreateOrganizationPage() {
 
   return (
     <Flex className="h-full flex-col">
-      <Box className="border-b border-border p-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/organizations')} className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Organizations
-        </Button>
-        <Flex className="items-center gap-3">
-          <Flex className="w-12 h-12 bg-primary/10 rounded-lg items-center justify-center">
-            <Building2 className="w-6 h-6 text-primary" />
-          </Flex>
-          <Box>
-            <Heading level={1} className="text-2xl font-semibold">Create Organization</Heading>
-            <Text className="text-muted-foreground">Set up a new organization for your team</Text>
-          </Box>
-        </Flex>
-      </Box>
+      <PageHeader
+        title="Create Organization"
+        subtitle="Set up a new organization for your team"
+        actions={
+          <Button variant="ghost" size="sm" onClick={() => navigate('/organizations')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Organizations
+          </Button>
+        }
+      />
 
       <Box className="flex-1 p-6 overflow-auto">
         <Card className="max-w-2xl mx-auto">

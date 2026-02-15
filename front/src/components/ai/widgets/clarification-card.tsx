@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button, Input, cn, Box, Flex, Text } from '@nicorp/nui';
-import { MessageCircleQuestion, Send, Check, ChevronRight } from 'lucide-react';
+import { Button, Input, ChatFollowUp, Box, Flex, Text } from '@nicorp/nui';
+import { Send, Check } from 'lucide-react';
 
 export interface ClarificationData {
     question: string;
@@ -40,10 +40,11 @@ export function ClarificationCard({ data, onSelect, isAnswered = false }: Clarif
         onSelect(value);
     };
 
-    const handleCustomSubmit = () => {
-        if (submitted || !customValue.trim()) return;
+    const handleCustomSubmit = (text?: string) => {
+        const valueToSubmit = text || customValue.trim();
+        if (submitted || !valueToSubmit) return;
         setSubmitted(true);
-        onSelect(customValue.trim());
+        onSelect(valueToSubmit);
     };
 
     const handleMultiFieldSubmit = () => {
@@ -84,14 +85,9 @@ export function ClarificationCard({ data, onSelect, isAnswered = false }: Clarif
     // Multi-field form
     if (data.fields && data.fields.length > 0) {
         return (
-            <Box className="rounded-xl border border-border bg-gradient-to-br from-muted/50 to-muted/30 backdrop-blur-sm overflow-hidden shadow-lg animate-in slide-in-from-bottom-2 duration-300">
-                <Box className="px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border/50">
-                    <Flex className="items-center gap-2">
-                        <Box className="p-1.5 rounded-lg bg-primary/20">
-                            <MessageCircleQuestion className="w-4 h-4 text-primary" />
-                        </Box>
-                        <Text as="span" className="text-sm font-semibold text-foreground">{data.question}</Text>
-                    </Flex>
+            <Box className="rounded-lg border border-border bg-muted/50 overflow-hidden">
+                <Box className="px-4 py-3 border-b border-border/50">
+                    <Text as="span" className="text-sm font-semibold text-foreground">{data.question}</Text>
                 </Box>
                 <div className="p-4 space-y-3">
                     {data.fields.map((field, idx) => (
@@ -102,7 +98,6 @@ export function ClarificationCard({ data, onSelect, isAnswered = false }: Clarif
                                 onChange={(e) => setFieldValues(prev => ({ ...prev, [field.name]: e.target.value }))}
                                 onKeyDown={handleKeyDown}
                                 placeholder={field.placeholder || `Введите ${field.label.toLowerCase()}...`}
-                                className="bg-background/80 border-border/50 focus:border-primary"
                                 autoFocus={idx === 0}
                             />
                         </div>
@@ -121,65 +116,44 @@ export function ClarificationCard({ data, onSelect, isAnswered = false }: Clarif
     }
 
     return (
-        <Box className="rounded-xl border border-border bg-gradient-to-br from-muted/50 to-muted/30 backdrop-blur-sm overflow-hidden shadow-lg animate-in slide-in-from-bottom-2 duration-300">
-            {/* Header */}
-            <Box className="px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border/50">
-                <Flex className="items-center gap-2">
-                    <Box className="p-1.5 rounded-lg bg-primary/20">
-                        <MessageCircleQuestion className="w-4 h-4 text-primary" />
-                    </Box>
-                    <Text as="span" className="text-sm font-semibold text-foreground">{data.question}</Text>
+        <Box className="space-y-2">
+            {/* Options with ChatFollowUp */}
+            {data.options && data.options.length > 0 && (
+                <ChatFollowUp
+                    question={data.question}
+                    options={data.options.map(opt => ({
+                        id: opt.value,
+                        label: opt.label,
+                        description: opt.description
+                    }))}
+                    onSelect={(optionId, label) => handleSelect(optionId)}
+                    selected={selected || undefined}
+                    allowFreeText={data.allowCustomInput}
+                    onFreeTextSubmit={handleCustomSubmit}
+                    columns={data.options.length > 2 ? 2 : 1}
+                />
+            )}
+
+            {/* Custom input only (no options) */}
+            {(!data.options || data.options.length === 0) && data.allowCustomInput && (
+                <Flex className="gap-2">
+                    <Input
+                        value={customValue}
+                        onChange={(e) => setCustomValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={data.customInputPlaceholder || 'Введите свой вариант...'}
+                        className="flex-1 bg-background/80 border-border/50 focus:border-primary"
+                    />
+                    <Button
+                        size="icon"
+                        onClick={() => handleCustomSubmit()}
+                        disabled={!customValue.trim()}
+                        className="shrink-0"
+                    >
+                        <Send className="w-4 h-4" />
+                    </Button>
                 </Flex>
-            </Box>
-
-            {/* Options */}
-            <Box className="p-3 space-y-2">
-                {data.options && data.options.length > 0 && (
-                    <Box className="grid gap-2">
-                        {data.options.map((option, idx) => (
-                            <button
-                                key={option.value}
-                                className={cn(
-                                    "group flex items-center gap-3 w-full p-3 rounded-lg border transition-all duration-200",
-                                    "bg-background/80 hover:bg-background border-border/50 hover:border-primary/50",
-                                    "hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
-                                    selected === option.value && "border-primary bg-primary/5"
-                                )}
-                                onClick={() => handleSelect(option.value)}
-                            >
-                                <Box className="flex-1 text-left">
-                                    <Box className="font-medium text-sm text-foreground">{option.label}</Box>
-                                    {option.description && (
-                                        <Text className="text-xs text-muted-foreground mt-0.5">{option.description}</Text>
-                                    )}
-                                </Box>
-                                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                            </button>
-                        ))}
-                    </Box>
-                )}
-
-                {/* Custom input */}
-                {data.allowCustomInput && (
-                    <Flex className="gap-2 pt-2">
-                        <Input
-                            value={customValue}
-                            onChange={(e) => setCustomValue(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder={data.customInputPlaceholder || 'Введите свой вариант...'}
-                            className="flex-1 bg-background/80 border-border/50 focus:border-primary"
-                        />
-                        <Button
-                            size="icon"
-                            onClick={handleCustomSubmit}
-                            disabled={!customValue.trim()}
-                            className="shrink-0"
-                        >
-                            <Send className="w-4 h-4" />
-                        </Button>
-                    </Flex>
-                )}
-            </Box>
+            )}
         </Box>
     );
 }

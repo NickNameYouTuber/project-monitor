@@ -50,8 +50,8 @@ export function AISidebarProvider({ children }: { children: ReactNode }) {
     };
 
     const setWidth = (w: number) => {
-        // Expanded width constraints: 250px to 1200px (or window width)
-        const newWidth = Math.max(250, Math.min(w, Math.min(window.innerWidth - 50, 1200)));
+        // Expanded width constraints: 300px to 1200px (or window width)
+        const newWidth = Math.max(300, Math.min(w, Math.min(window.innerWidth - 50, 1200)));
         setWidthState(newWidth);
         // Do NOT save to localStorage on every pixel move - performance killer
         // We will assume component using this will handle persist on drag end, 

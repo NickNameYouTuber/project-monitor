@@ -4,10 +4,12 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
   Tabs, TabsContent, TabsList, TabsTrigger, Label, Textarea,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-  Box, Flex, VStack, Heading, Text
+  Box, Flex, VStack, Heading, Text, Badge
 } from '@nicorp/nui';
-import { GitBranch, Plus } from 'lucide-react';
+import { GitBranch, Plus, Search, Lock, Calendar, FolderGit2 } from 'lucide-react';
 import { LoadingSpinner } from './loading-spinner';
+import { PageHeader } from './shared/page-header';
+import { EmptyState } from './shared/empty-state';
 import type { Project } from '../App';
 import { listRepositories, createRepository, cloneRepository, type RepositoryDto } from '../api/repositories';
 import { useNotifications } from '../hooks/useNotifications';
@@ -84,9 +86,6 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
         showSuccess('Репозиторий клонирован');
       }
       setIsDialogOpen(false);
-      loadRepositories();
-
-      setIsDialogOpen(false);
       setNewRepo({
         name: '',
         description: '',
@@ -116,26 +115,17 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
 
   return (
     <Flex className="h-full flex-col">
-      <Box className="border-b border-border p-6">
-        <Flex className="items-center justify-between mb-4">
-          <Box>
-            <Heading level={1}>Repositories</Heading>
-            <Text className="text-muted-foreground">Select a repository to view details</Text>
-          </Box>
-          <Flex className="items-center gap-3">
-            <Input
-              placeholder="Search repositories..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-64"
-            />
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Новый репозиторий
-                </Button>
-              </DialogTrigger>
+      <PageHeader
+        title="Repositories"
+        subtitle="Select a repository to view details"
+        actions={
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Новый репозиторий
+              </Button>
+            </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Создать репозиторий</DialogTitle>
@@ -185,15 +175,11 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
 
                       <Box>
                         <Label htmlFor="visibility">Видимость</Label>
-                        <Select value={newRepo.visibility} onValueChange={(v) => setNewRepo(prev => ({ ...prev, visibility: v }))}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="private">Private</SelectItem>
-                            <SelectItem value="public">Public</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Flex className="items-center gap-2 h-9 px-3 rounded-md border border-input bg-muted/50">
+                          <Lock className="w-4 h-4 text-muted-foreground" />
+                          <Text size="sm">Private</Text>
+                        </Flex>
+                        <Text size="xs" variant="muted" className="mt-1">Все репозитории создаются как приватные</Text>
                       </Box>
                     </Box>
                   </TabsContent>
@@ -253,35 +239,95 @@ export function RepositoriesPage({ project, onOpenRepository }: RepositoriesPage
                 </Flex>
               </DialogContent>
             </Dialog>
-          </Flex>
-        </Flex>
-      </Box>
+        }
+      >
+        <Input
+          placeholder="Search repositories..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm h-9 bg-muted/50 border-border/50"
+        />
+      </PageHeader>
 
       <Box className="flex-1 p-6 overflow-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>Repositories</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {repositories.filter(r => !search || r.name.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
-              <Text className="text-sm text-muted-foreground">No repositories.</Text>
-            ) : (
-              <VStack className="space-y-2">
-                {repositories
-                  .filter(r => !search || r.name.toLowerCase().includes(search.toLowerCase()))
-                  .map(repo => (
-                    <Flex key={repo.id} className="items-center justify-between p-2 hover:bg-accent rounded">
-                      <Flex className="items-center gap-2">
-                        <GitBranch className="w-4 h-4" />
-                        <Text as="span">{repo.name}</Text>
+        {repositories.filter(r => !search || r.name.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
+          repositories.length === 0 ? (
+            <EmptyState
+              icon={FolderGit2}
+              title="Нет репозиториев"
+              description="Создайте первый репозиторий чтобы начать работу с кодом в проекте"
+              action={{
+                label: 'Создать репозиторий',
+                onClick: () => setIsDialogOpen(true),
+                icon: Plus,
+              }}
+            />
+          ) : (
+            <EmptyState
+              icon={Search}
+              title="Ничего не найдено"
+              description={`По запросу «${search}» репозитории не найдены`}
+            />
+          )
+        ) : (
+          <VStack className="space-y-2">
+            {repositories
+              .filter(r => !search || r.name.toLowerCase().includes(search.toLowerCase()))
+              .map(repo => (
+                <Card
+                  key={repo.id}
+                  className="cursor-pointer hover:border-primary/50 transition-all duration-200 group"
+                  onClick={() => onOpenRepository(repo.id)}
+                >
+                  <CardContent className="p-4">
+                    <Flex className="items-center justify-between">
+                      <Flex className="items-center gap-3 min-w-0 flex-1">
+                        <Box className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
+                          <GitBranch className="w-4 h-4 text-primary" />
+                        </Box>
+                        <Box className="min-w-0 flex-1">
+                          <Flex className="items-center gap-2">
+                            <Text className="font-medium truncate group-hover:text-primary transition-colors">{repo.name}</Text>
+                            <Badge variant="outline" className="text-[10px] h-5 px-1.5 flex-shrink-0">
+                              <Lock className="w-3 h-3 mr-1" />
+                              Private
+                            </Badge>
+                          </Flex>
+                          {repo.description && (
+                            <Text size="sm" variant="muted" className="truncate mt-0.5">{repo.description}</Text>
+                          )}
+                          <Flex className="items-center gap-3 mt-1.5">
+                            {repo.default_branch && (
+                              <Flex className="items-center gap-1">
+                                <GitBranch className="w-3 h-3 text-muted-foreground" />
+                                <Text size="xs" variant="muted">{repo.default_branch}</Text>
+                              </Flex>
+                            )}
+                            {repo.created_at && (
+                              <Flex className="items-center gap-1">
+                                <Calendar className="w-3 h-3 text-muted-foreground" />
+                                <Text size="xs" variant="muted">
+                                  {new Date(repo.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </Text>
+                              </Flex>
+                            )}
+                          </Flex>
+                        </Box>
                       </Flex>
-                      <Button size="sm" variant="outline" onClick={() => onOpenRepository(repo.id)}>Open</Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                        onClick={(e) => { e.stopPropagation(); onOpenRepository(repo.id); }}
+                      >
+                        Open
+                      </Button>
                     </Flex>
-                  ))}
-              </VStack>
-            )}
-          </CardContent>
-        </Card>
+                  </CardContent>
+                </Card>
+              ))}
+          </VStack>
+        )}
       </Box>
     </Flex>
   );

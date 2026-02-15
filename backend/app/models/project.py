@@ -20,9 +20,11 @@ class Project(Base):
     # Foreign keys
     owner_id = Column(String, ForeignKey("users.id"))
     dashboard_id = Column(String, ForeignKey("dashboards.id", ondelete="CASCADE"), nullable=True)
+    organization_id = Column(String, ForeignKey("organizations.id"), nullable=True)
     
     # Relationships
     owner = relationship("User", back_populates="projects")
     dashboard = relationship("Dashboard", back_populates="projects")
+    organization = relationship("Organization", back_populates="projects")
     task_columns = relationship("TaskColumn", back_populates="project", cascade="all, delete-orphan")
     repositories = relationship("Repository", back_populates="project", cascade="all, delete-orphan")

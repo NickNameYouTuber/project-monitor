@@ -11,8 +11,11 @@ export interface ChatMessage {
 }
 
 export interface Widget {
-  type: 'clarification' | 'entity_preview' | 'action_confirmation';
-  data: any;
+  id?: string; // Unique widget identifier for persistence
+  type: 'clarification' | 'entity_preview' | 'action_confirmation' | 'action_notification' | 'action_result';
+  data: Record<string, any> | null; // Typed as Record instead of any
+  selectedValue?: string; // Persisted selected value (for questions, confirmations)
+  selectedAt?: string; // When the selection was made
 }
 
 export interface Action {
@@ -77,4 +80,40 @@ export async function sendMessage(chatId: string, message: string, isWidgetRespo
 
 export async function deleteChat(chatId: string): Promise<void> {
   await apiClient.delete(`/chats/${chatId}`);
+}
+
+export interface UpdateWidgetStateRequest {
+  widgetId: string;
+  widgetType: string;
+  selectedValue: string;
+}
+
+export interface WidgetStateResponse {
+  id: string;
+  widgetId: string;
+  widgetType: string;
+  selectedValue: string;
+  selectedAt: string;
+}
+
+export async function updateWidgetState(
+  chatId: string,
+  messageId: string,
+  request: UpdateWidgetStateRequest
+): Promise<WidgetStateResponse> {
+  const { data } = await apiClient.patch(
+    `/chats/${chatId}/messages/${messageId}/widgets`,
+    request
+  );
+  return data;
+}
+
+export async function getWidgetStates(
+  chatId: string,
+  messageId: string
+): Promise<WidgetStateResponse[]> {
+  const { data } = await apiClient.get(
+    `/chats/${chatId}/messages/${messageId}/widgets`
+  );
+  return Array.isArray(data) ? data : [];
 }

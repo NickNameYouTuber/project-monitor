@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Button, Input, Label, Textarea, Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription,
-  DialogHeader, DialogTitle, DialogFooter, Calendar, Popover, PopoverContent,
-  PopoverTrigger, Separator,
+  DialogHeader, DialogTitle, DialogFooter, DatePicker, Combobox, Separator,
   Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
-import { CalendarIcon, Trash2 } from 'lucide-react';
-import { AutocompleteInput } from './autocomplete-input';
+import { Trash2 } from 'lucide-react';
 import type { Task } from '../App';
 
 interface EditTaskDialogProps {
@@ -77,15 +75,6 @@ export function EditTaskDialog({
     } catch { }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
@@ -153,44 +142,34 @@ export function EditTaskDialog({
 
           <Box className="space-y-2">
             <Label htmlFor="assignee">Assignee</Label>
-            <AutocompleteInput
+            <Combobox
+              options={assigneeSuggestions.map(s => ({ value: s, label: s }))}
               value={assignee}
               onChange={setAssignee}
-              suggestions={assigneeSuggestions}
-              placeholder="Enter assignee name"
+              placeholder="Select assignee"
+              searchPlaceholder="Search assignees..."
+              emptyText="No assignees found"
             />
           </Box>
 
           <Box className="space-y-2">
             <Label>Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? formatDate(dueDate) : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+              value={dueDate}
+              onChange={setDueDate}
+              placeholder="Pick a date"
+            />
           </Box>
 
           <Box className="space-y-2">
             <Label htmlFor="branch">Repository Branch</Label>
-            <AutocompleteInput
+            <Combobox
+              options={branchSuggestions.map(s => ({ value: s, label: s }))}
               value={repositoryBranch}
               onChange={setRepositoryBranch}
-              suggestions={branchSuggestions}
-              placeholder="e.g., feature/task-implementation"
+              placeholder="Select branch"
+              searchPlaceholder="Search branches..."
+              emptyText="No branches found"
             />
           </Box>
 

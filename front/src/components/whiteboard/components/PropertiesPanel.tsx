@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@nicorp/nui';
 import { COLORS, STROKE_COLORS, Shape, ShapeType, ArrowShape, SectionShape } from '../types';
 import { Trash2, MoveRight, Circle as CircleIcon, Minus, Palette, X } from 'lucide-react';
 import { getProjectTasks, linkElementToTask, unlinkElementFromTask } from '../../../api/whiteboards';

@@ -9,10 +9,14 @@ import tech.nicorp.pm.security.JwtService;
 import tech.nicorp.pm.users.domain.User;
 import tech.nicorp.pm.users.repo.UserRepository;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import tech.nicorp.pm.auth.api.dto.LoginRequest;
 import tech.nicorp.pm.auth.api.dto.RegisterRequest;
 import tech.nicorp.pm.auth.api.dto.TelegramAuthRequest;
+import tech.nicorp.pm.organizations.domain.OrganizationMember;
+import tech.nicorp.pm.organizations.repo.OrganizationMemberRepository;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,13 +25,14 @@ public class AuthController {
 
     private final UserRepository users;
     private final JwtService jwt;
-
     private final tech.nicorp.pm.auth.service.NiidService niidService;
+    private final OrganizationMemberRepository orgMembers;
 
-    public AuthController(UserRepository users, JwtService jwt, tech.nicorp.pm.auth.service.NiidService niidService) {
+    public AuthController(UserRepository users, JwtService jwt, tech.nicorp.pm.auth.service.NiidService niidService, OrganizationMemberRepository orgMembers) {
         this.users = users;
         this.jwt = jwt;
         this.niidService = niidService;
+        this.orgMembers = orgMembers;
     }
 
     // ... existing endpoints ...
@@ -58,10 +63,23 @@ public class AuthController {
             }
         }
         
-        String token = jwt.createToken(u.getId().toString(), Map.of(
-            "username", u.getUsername(),
-            "niid_sub", userInfo.id
-        ));
+        String token;
+        
+        // Check if user belongs to any organization and include org_verified
+        List<OrganizationMember> memberships = orgMembers.findByUserId(u.getId());
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", u.getUsername());
+        claims.put("niid_sub", userInfo.id);
+        claims.put("email", u.getUsername());
+        
+        if (!memberships.isEmpty()) {
+            // Use first organization membership for org_verified
+            String orgId = memberships.get(0).getOrganization().getId().toString();
+            claims.put("org_verified", orgId);
+            token = jwt.createToken(u.getId().toString(), claims);
+        } else {
+            token = jwt.createToken(u.getId().toString(), claims);
+        }
         
         return ResponseEntity.ok(Map.of("token", token));
     }

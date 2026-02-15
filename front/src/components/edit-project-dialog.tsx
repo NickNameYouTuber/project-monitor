@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Button, Input, Label, Textarea, Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription,
-  DialogHeader, DialogTitle, DialogFooter, Separator,
+  DialogHeader, DialogTitle, DialogFooter, Separator, ColorPicker,
   Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import { ExternalLink, Trash2 } from 'lucide-react';
@@ -16,10 +16,6 @@ interface EditProjectDialogProps {
   onNavigateToTasks: () => void;
   availableStatuses: { id: string; title: string }[];
 }
-
-const colors = [
-  '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
-];
 
 export function EditProjectDialog({
   project,
@@ -114,18 +110,7 @@ export function EditProjectDialog({
 
           <Box className="space-y-2">
             <Label>Color</Label>
-            <Flex className="gap-2">
-              {colors.map((colorOption) => (
-                <button
-                  key={colorOption}
-                  type="button"
-                  className={`w-8 h-8 rounded-full border-2 ${color === colorOption ? 'border-foreground' : 'border-transparent'
-                    }`}
-                  style={{ backgroundColor: colorOption }}
-                  onClick={() => setColor(colorOption)}
-                />
-              ))}
-            </Flex>
+            <ColorPicker value={color} onChange={setColor} />
           </Box>
 
           <Separator />

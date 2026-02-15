@@ -3,9 +3,11 @@ import { useDrag } from 'react-dnd';
 import { Calendar, User, MoreVertical } from 'lucide-react';
 import {
   Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-  Box, Flex, Heading, Text
+  Box, Flex, Heading, Text, cn
 } from '@nicorp/nui';
+import { motion } from 'framer-motion';
 import type { Project } from '../App';
+import { getStatusConfig } from '../lib/design-tokens';
 
 interface ProjectCardProps {
   project: Project;
@@ -22,37 +24,37 @@ export function ProjectCard({ project, onClick, onEdit }: ProjectCardProps) {
     }),
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'backlog': return 'bg-gray-100 text-gray-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
-      case 'review': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const statusCfg = getStatusConfig(project.status);
 
   return (
-    <div
+    <motion.div
       ref={drag as any}
-      className={`bg-card border border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''
-        }`}
+      layout
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      className={cn(
+        'bg-card border border-border rounded-xl p-4 cursor-pointer transition-all duration-200',
+        'hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5',
+        isDragging && 'opacity-50 scale-[0.98]'
+      )}
       onClick={onClick}
     >
       <Flex className="items-start justify-between mb-3">
-        <Box
-          className="w-4 h-4 rounded-full flex-shrink-0 mt-1"
-          style={{ backgroundColor: project.color }}
-        />
+        <Flex className="items-center gap-2">
+          <Box
+            className="w-3 h-3 rounded-full flex-shrink-0 ring-2 ring-offset-1 ring-offset-card"
+            style={{ backgroundColor: project.color, boxShadow: `0 0 8px ${project.color}40` }}
+          />
+        </Flex>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
-              onClick={onEdit}
+              className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 hover:bg-muted"
+              onClick={(e) => { e.stopPropagation(); onEdit(e); }}
             >
-              <MoreVertical className="w-4 h-4" />
+              <MoreVertical className="w-3.5 h-3.5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -69,20 +71,22 @@ export function ProjectCard({ project, onClick, onEdit }: ProjectCardProps) {
         </DropdownMenu>
       </Flex>
 
-      <Heading level={3} className="font-medium mb-2 text-base">{project.title}</Heading>
-      <Text className="text-sm text-muted-foreground mb-3 line-clamp-2">
-        {project.description}
-      </Text>
+      <Heading level={3} className="font-semibold mb-1.5 text-sm leading-snug">{project.title}</Heading>
+      {project.description && (
+        <Text className="text-xs text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+          {project.description}
+        </Text>
+      )}
 
       <Flex className="items-center justify-between">
-        <Badge variant="secondary" className={getStatusColor(project.status)}>
+        <Badge variant="secondary" className={cn('text-[11px] font-medium border', statusCfg.className)}>
           {project.status.replace('-', ' ')}
         </Badge>
-        <Flex className="items-center text-xs text-muted-foreground">
-          <Calendar className="w-3 h-3 mr-1" />
+        <Flex className="items-center text-[11px] text-muted-foreground gap-1">
+          <Calendar className="w-3 h-3" />
           {project.createdAt.toLocaleDateString()}
         </Flex>
       </Flex>
-    </div>
+    </motion.div>
   );
 }

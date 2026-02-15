@@ -877,6 +877,7 @@ const CallPage: React.FC = () => {
                 audio={true}
                 data-lk-theme="default"
                 onDisconnected={handleDisconnected}
+                className="h-screen w-screen"
                 options={{
                     adaptiveStream: true,
                     dynacast: true

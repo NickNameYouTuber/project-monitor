@@ -187,7 +187,7 @@ public class RepositoriesController {
         
         UUID savedId = saved.getId();
         try {
-            git.initRepository(savedId);
+            git.initRepository(savedId, name);
         } catch (IOException e) {
             repositories.deleteById(savedId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "init_failed", "message", e.getMessage()));

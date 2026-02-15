@@ -31,8 +31,7 @@ import {
   Label, Textarea, Switch, ScrollArea, Separator,
   Box, Flex, VStack, Grid, Heading, Text
 } from '@nicorp/nui';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MarkdownRenderer } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
 import { MergeRequestPage } from './merge-request-page';
 import type { Project, Task } from '../App';
@@ -46,6 +45,7 @@ import type { UserDto } from '../api/users';
 import { Copy } from 'lucide-react';
 import { useRepositoryPermissions } from '../hooks/useRepositoryPermissions';
 import { RoleBadge } from './role-badge';
+import { PageHeader } from './shared/page-header';
 import { useCurrentOrganization } from '../hooks/useAppContext';
 
 interface RepositoryPageProps {
@@ -756,45 +756,88 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
   return (
     <Flex className="h-full flex-col">
-      <Box className="border-b border-border p-6">
-        <Flex className="items-center justify-between mb-4">
-          <Box className="flex-1">
-            <Flex className="items-center gap-3">
-              <Heading level={1}>Repository</Heading>
-              {selectedRepoId && repoPermissions.role && (
+      <PageHeader
+        title={selectedRepo ? selectedRepo.name : 'Repositories'}
+        subtitle={selectedRepo ? (selectedRepo.description || 'No description') : 'Manage your project repositories'}
+        compact
+        actions={
+          selectedRepo ? (
+            <Flex className="items-center gap-2">
+              {repoPermissions.role && (
                 <RoleBadge role={repoPermissions.role} type="repository" />
               )}
+              {repositories.length > 1 && (
+                <Select value={selectedRepoId || ''} onValueChange={(id) => {
+                  if (organizationId && selectedProject) {
+                    navigate(`/${organizationId}/projects/${selectedProject.id}/repository/${id}/files`);
+                  }
+                }}>
+                  <SelectTrigger className="w-auto max-w-[200px] h-8 text-sm">
+                    <Flex className="items-center gap-1.5">
+                      <GitBranch className="w-3.5 h-3.5 text-muted-foreground" />
+                      <SelectValue />
+                    </Flex>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {repositories.map(repo => (
+                      <SelectItem key={repo.id} value={repo.id}>
+                        <Flex className="items-center gap-2">
+                          <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                          {repo.name}
+                        </Flex>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </Flex>
-            <Text variant="muted">Manage your project repositories and code</Text>
-          </Box>
-        </Flex>
-      </Box>
+          ) : undefined
+        }
+      />
 
       <Box className="flex-1 p-6 overflow-auto">
         {/* Если репозиторий не выбран — показываем список */}
         {!selectedRepoId ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Repositories</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {repositories.length === 0 ? (
+          repositories.length === 0 ? (
+            <Flex className="items-center justify-center h-full">
+              <Box className="text-center space-y-3 py-16">
+                <GitBranch className="w-12 h-12 text-muted-foreground/40 mx-auto" />
                 <Text size="sm" variant="muted">No repositories yet.</Text>
-              ) : (
-                <VStack className="space-y-2">
-                  {repositories.map(repo => (
-                    <Flex key={repo.id} className="items-center justify-between p-2 hover:bg-accent rounded">
-                      <Flex className="items-center gap-2">
-                        <GitBranch className="w-4 h-4" />
-                        <Text as="span">{repo.name}</Text>
+              </Box>
+            </Flex>
+          ) : (
+            <VStack className="space-y-2">
+              {repositories.map(repo => (
+                <Card
+                  key={repo.id}
+                  className="cursor-pointer hover:border-primary/50 transition-all duration-200 group"
+                  onClick={() => setSelectedRepoId(repo.id)}
+                >
+                  <CardContent className="p-4">
+                    <Flex className="items-center justify-between">
+                      <Flex className="items-center gap-3 min-w-0 flex-1">
+                        <Box className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
+                          <GitBranch className="w-4 h-4 text-primary" />
+                        </Box>
+                        <Box className="min-w-0">
+                          <Flex className="items-center gap-2">
+                            <Text className="font-medium truncate group-hover:text-primary transition-colors">{repo.name}</Text>
+                            <Lock className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                          </Flex>
+                          {repo.description && (
+                            <Text size="sm" variant="muted" className="truncate mt-0.5">{repo.description}</Text>
+                          )}
+                        </Box>
                       </Flex>
-                      <Button size="sm" variant="outline" onClick={() => setSelectedRepoId(repo.id)}>Open</Button>
+                      <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        Open
+                      </Button>
                     </Flex>
-                  ))}
-                </VStack>
-              )}
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              ))}
+            </VStack>
+          )
         ) : (
           <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full">
             <TabsList>
@@ -880,12 +923,12 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
 
               <Card>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-96">
+                  <ScrollArea className="max-h-[60vh] min-h-[200px]">
                     <Box className="p-4">
-                      <Box className="text-xs text-muted-foreground px-2 mb-2">
+                      <Box className="text-xs text-muted-foreground px-2 mb-3 flex items-center gap-1">
                         <button
                           onClick={() => setCurrentPath('')}
-                          className="hover:underline hover:text-foreground transition-colors"
+                          className="hover:underline hover:text-foreground transition-colors font-medium"
                         >
                           root
                         </button>
@@ -904,7 +947,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                       {entries
                         .filter(e => !searchQuery || e.name.toLowerCase().includes(searchQuery.toLowerCase()))
                         .map((e, i) => (
-                          <Flex key={`${e.path}-${i}`} className={`items-center gap-2 py-1 px-2 hover:bg-accent rounded cursor-pointer`}
+                          <Flex key={`${e.path}-${i}`} className={`items-center gap-3 py-2 px-3 hover:bg-accent/50 rounded-md cursor-pointer transition-colors group`}
                             onClick={() => {
                               if (e.type === 'tree') {
                                 setCurrentPath((currentPath ? currentPath + '/' : '') + e.name);
@@ -913,22 +956,24 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                               }
                             }}>
                             {e.type === 'tree' ? (
-                              <Folder className="w-4 h-4 text-blue-500" />
+                              <Folder className="w-4 h-4 text-blue-500 flex-shrink-0" />
                             ) : (
-                              <File className={`w-4 h-4 ${getFileIcon(e.name)}`} />
+                              <File className={`w-4 h-4 flex-shrink-0 ${getFileIcon(e.name)}`} />
                             )}
-                            <Text as="span" className="flex-1">{e.name || 'Unnamed'}</Text>
+                            <Text as="span" className="flex-1 truncate text-sm group-hover:text-foreground">{e.name || 'Unnamed'}</Text>
                             {e.type === 'blob' && (
-                              <>
+                              <Flex className="items-center gap-2 flex-shrink-0">
                                 {e.name && e.name.includes('.') && (
-                                  <Text as="span" className="text-xs text-muted-foreground mr-2">
-                                    .{e.name.split('.').pop()}
+                                  <Text as="span" className="text-[11px] text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded">
+                                    {e.name.split('.').pop()}
                                   </Text>
                                 )}
                                 {e.size && (
-                                  <Text as="span" size="xs" variant="muted">{e.size} B</Text>
+                                  <Text as="span" size="xs" variant="muted" className="tabular-nums">
+                                    {e.size > 1024 ? `${(e.size / 1024).toFixed(1)} KB` : `${e.size} B`}
+                                  </Text>
                                 )}
-                              </>
+                              </Flex>
                             )}
                           </Flex>
                         ))}
@@ -948,9 +993,7 @@ export function RepositoryPage({ projects, tasks, initialRepoId, defaultTab = 'f
                   </CardHeader>
                   <CardContent className="p-6">
                     <article className="prose dark:prose-invert max-w-none prose-sm">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {readmeContent}
-                      </ReactMarkdown>
+                      <MarkdownRenderer content={readmeContent} />
                     </article>
                   </CardContent>
                 </Card>

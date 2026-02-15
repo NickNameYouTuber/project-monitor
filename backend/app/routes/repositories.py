@@ -78,6 +78,26 @@ async def read_repositories(
         print(f"Error in read_repositories: {e}")
         import traceback
         traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")        # Convert SQLAlchemy models to Pydantic models manually using Pydantic v2 syntax
+        result = []
+        for repo in repositories:
+            repo_dict = {
+                'id': str(repo.id),
+                'owner_id': str(repo.owner_id),
+                'name': repo.name,
+                'description': repo.description,
+                'visibility': repo.visibility,
+                'project_id': str(repo.project_id) if repo.project_id else None,
+                'url': repo.url,
+                'created_at': repo.created_at,
+                'updated_at': repo.updated_at
+            }
+            result.append(schemas.Repository.model_validate(repo_dict))
+        return result
+    except Exception as e:
+        print(f"Error in read_repositories: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
@@ -92,12 +112,12 @@ async def create_repository(
     """
     try:
         repository_data = repository.dict(exclude_unset=True)
-    db_repository = Repository(
+        db_repository = Repository(
             name=repository_data.get('name'),
             description=repository_data.get('description'),
             visibility=repository_data.get('visibility', 'private'),
-        owner_id=current_user.id
-    )
+            owner_id=current_user.id
+        )
     
         if repository_data.get('project_id'):
             try:

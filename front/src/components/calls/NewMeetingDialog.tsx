@@ -1,252 +1,292 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
-  Button, Calendar, Input, Label, Textarea, Separator, Switch, cn,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Button, DatePicker, Input, Label, Textarea, Switch, cn,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-  Popover, PopoverContent, PopoverTrigger,
-  Box, Flex, Heading, Text
+  Badge
 } from '@nicorp/nui';
-import { Clock, Calendar as CalendarIcon, Users, AlignLeft } from 'lucide-react';
+import { Clock, Calendar as CalendarIcon, Users, AlignLeft, Palette, Repeat, Video, ChevronDown, ChevronUp } from 'lucide-react';
 import MeetingColorPicker from './MeetingColorPicker';
 import UserAutocomplete from './UserAutocomplete';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+
+interface MeetingFormData {
+  title: string;
+  participants: string[];
+  description: string;
+  color: string;
+  date: Date | undefined;
+  time: string;
+  duration: number;
+  isRecurring: boolean;
+  recurrenceType: string;
+  recurrenceDays: number[];
+  recurrenceEndDate: Date | undefined;
+}
 
 interface NewMeetingDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  newMeeting: any;
-  setNewMeeting: React.Dispatch<React.SetStateAction<any>>;
+  newMeeting: MeetingFormData;
+  setNewMeeting: React.Dispatch<React.SetStateAction<MeetingFormData>>;
   colors: { name: string; value: string; bg?: string }[];
   onCreate: () => void;
-  organizationId?: string; // NEW: For filtering users to org members
+  organizationId?: string;
 }
 
 export default function NewMeetingDialog({ open, setOpen, newMeeting, setNewMeeting, colors, onCreate, organizationId }: NewMeetingDialogProps) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleRecurrenceDayToggle = (dayValue: number) => {
     const days = newMeeting.recurrenceDays || [];
     if (days.includes(dayValue)) {
-      setNewMeeting((prev: any) => ({ ...prev, recurrenceDays: days.filter((d: number) => d !== dayValue) }));
+      setNewMeeting((prev) => ({ ...prev, recurrenceDays: days.filter((d: number) => d !== dayValue) }));
     } else {
-      setNewMeeting((prev: any) => ({ ...prev, recurrenceDays: [...days, dayValue].sort() }));
+      setNewMeeting((prev) => ({ ...prev, recurrenceDays: [...days, dayValue].sort() }));
     }
   };
 
+  const isValid = !!newMeeting.title?.trim() && !!newMeeting.date;
+
+  const durationPresets = [
+    { label: '15м', value: 15 },
+    { label: '30м', value: 30 },
+    { label: '45м', value: 45 },
+    { label: '1ч', value: 60 },
+    { label: '1.5ч', value: 90 },
+    { label: '2ч', value: 120 },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] sm:h-[600px] overflow-hidden flex flex-col p-0">
-        <Flex className="h-full flex-col sm:flex-row overflow-auto sm:overflow-hidden">
-          {/* Left Column: General Info */}
-          <Box className="w-full sm:w-[60%] p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 sm:border-r sm:h-full sm:overflow-hidden">
-            <DialogHeader className="p-0 space-y-1">
-              <DialogTitle className="text-lg sm:text-xl">Новая встреча</DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm">
-                Основные детали встречи
-              </DialogDescription>
-            </DialogHeader>
+      <DialogContent className="sm:max-w-[480px] max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0">
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4">
+          <DialogHeader className="p-0 space-y-1.5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Video className="w-4.5 h-4.5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-semibold">Новая встреча</DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  Запланируйте видеозвонок
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
 
-            <div className="space-y-4 flex-1 sm:overflow-y-auto sm:pr-2">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-6 pb-2">
+          <div className="space-y-5">
+
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="meeting-title" className="text-sm font-medium">
+                Название <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="meeting-title"
+                value={newMeeting.title}
+                onChange={(e) => setNewMeeting((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="Еженедельный синк команды"
+                className="h-10"
+                autoFocus
+              />
+            </div>
+
+            {/* Date + Time row */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-sm font-medium">Название</Label>
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                  Дата <span className="text-destructive">*</span>
+                </Label>
+                <DatePicker
+                  value={newMeeting.date}
+                  onChange={(date) => date && setNewMeeting((prev) => ({ ...prev, date }))}
+                  placeholder="Выберите"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                  Время
+                </Label>
                 <Input
-                  id="title"
-                  value={newMeeting.title}
-                  onChange={(e) => setNewMeeting((prev: any) => ({ ...prev, title: e.target.value }))}
-                  placeholder="Например, Еженедельный синк"
-                  className="bg-muted/30"
-                  autoFocus
+                  type="time"
+                  value={newMeeting.time}
+                  onChange={(e) => setNewMeeting((prev) => ({ ...prev, time: e.target.value }))}
+                  className="h-10"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                  Участники
-                </Label>
-                <UserAutocomplete
-                  selectedUsers={newMeeting.participants || []}
-                  onUsersChange={(users) => setNewMeeting((prev: any) => ({ ...prev, participants: users }))}
-                  label=""
-                  organizationId={organizationId}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-medium flex items-center gap-2">
-                  <AlignLeft className="w-4 h-4 text-muted-foreground" />
-                  Описание
-                </Label>
-                <Textarea
-                  id="description"
-                  value={newMeeting.description}
-                  onChange={(e) => setNewMeeting((prev: any) => ({ ...prev, description: e.target.value }))}
-                  placeholder="Повестка дня, ссылки на документы..."
-                  className="min-h-[100px] resize-none bg-muted/30"
-                />
-              </div>
-
-              <div className="space-y-2 pt-2">
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Цвет встречи</Label>
-                <MeetingColorPicker colors={colors} value={newMeeting.color} onChange={(c: string) => setNewMeeting((prev: any) => ({ ...prev, color: c }))} />
               </div>
             </div>
-          </Box>
-          {/* Right Column: Time & Settings */}
-          <Box className="w-full sm:w-[40%] bg-muted p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 sm:h-full sm:overflow-y-auto">
-            <Box className="space-y-1">
-              <Heading level={3} className="font-semibold text-sm">Время и дата</Heading>
-              <Text className="text-xs text-muted-foreground">Когда состоится встреча?</Text>
-            </Box>
 
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Дата</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal bg-background hover:bg-background/80",
-                        !newMeeting.date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {newMeeting.date ? format(newMeeting.date, "d MMMM yyyy", { locale: ru }) : <span>Выберите дату</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end" side="bottom">
-                    <Calendar
-                      mode="single"
-                      selected={newMeeting.date}
-                      onSelect={(date: Date | undefined) => date && setNewMeeting((prev: any) => ({ ...prev, date }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Начало</Label>
-                  <Input
-                    type="time"
-                    value={newMeeting.time}
-                    onChange={(e) => setNewMeeting((prev: any) => ({ ...prev, time: e.target.value }))}
-                    className="bg-background"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Длительность</Label>
-                  <Select
-                    value={newMeeting.duration?.toString()}
-                    onValueChange={(value) => setNewMeeting((prev: any) => ({ ...prev, duration: Number(value) }))}
-                  >
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Длит." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 мин</SelectItem>
-                      <SelectItem value="30">30 мин</SelectItem>
-                      <SelectItem value="45">45 мин</SelectItem>
-                      <SelectItem value="60">1 ч</SelectItem>
-                      <SelectItem value="90">1.5 ч</SelectItem>
-                      <SelectItem value="120">2 ч</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Повторять встречу</Label>
-                  <Switch
-                    checked={newMeeting.isRecurring}
-                    onCheckedChange={(checked: boolean) => setNewMeeting((prev: any) => ({ ...prev, isRecurring: checked }))}
-                  />
-                </div>
-
-                {newMeeting.isRecurring && (
-                  <div className="space-y-3 animate-in fade-in slide-in-from-top-2 pt-2">
-                    <Select
-                      value={newMeeting.recurrenceType || 'WEEKLY'}
-                      onValueChange={(value: string) => setNewMeeting((prev: any) => ({ ...prev, recurrenceType: value }))}
-                    >
-                      <SelectTrigger className="bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DAILY">Ежедневно</SelectItem>
-                        <SelectItem value="WEEKLY">Еженедельно</SelectItem>
-                        <SelectItem value="MONTHLY">Ежемесячно</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    {newMeeting.recurrenceType === 'WEEKLY' && (
-                      <div className="flex flex-wrap gap-1.5 justify-center bg-background p-2 rounded-md border">
-                        {[{ l: 'Пн', v: 1 }, { l: 'Вт', v: 2 }, { l: 'Ср', v: 3 }, { l: 'Чт', v: 4 }, { l: 'Пт', v: 5 }, { l: 'Сб', v: 6 }, { l: 'Вс', v: 7 }].map((day) => {
-                          const isSelected = (newMeeting.recurrenceDays || []).includes(day.v);
-                          return (
-                            <div
-                              key={day.v}
-                              onClick={() => handleRecurrenceDayToggle(day.v)}
-                              className={cn(
-                                "w-7 h-7 flex items-center justify-center rounded-md text-[10px] font-medium cursor-pointer transition-all border select-none",
-                                isSelected ? "bg-primary text-primary-foreground border-primary" : "bg-muted text-muted-foreground border-transparent hover:bg-muted/80"
-                              )}
-                            >
-                              {day.l}
-                            </div>
-                          );
-                        })}
-                      </div>
+            {/* Duration chips */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Длительность</Label>
+              <div className="flex flex-wrap gap-2">
+                {durationPresets.map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() => setNewMeeting((prev) => ({ ...prev, duration: preset.value }))}
+                    className={cn(
+                      "h-8 px-3.5 rounded-full text-xs font-medium transition-all border",
+                      newMeeting.duration === preset.value
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "bg-background text-muted-foreground border-border hover:border-foreground/20 hover:text-foreground"
                     )}
-
-                    <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground uppercase">До какой даты</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            size="sm"
-                            className={cn(
-                              "w-full justify-start text-left font-normal bg-background h-8 text-xs",
-                              !newMeeting.recurrenceEndDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-3 w-3" />
-                            {newMeeting.recurrenceEndDate ? format(newMeeting.recurrenceEndDate, "d MMM yyyy", { locale: ru }) : <span>Бессрочно</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="end">
-                          <Calendar
-                            mode="single"
-                            selected={newMeeting.recurrenceEndDate}
-                            onSelect={(date: Date | undefined) => date && setNewMeeting((prev: any) => ({ ...prev, recurrenceEndDate: date }))}
-                            disabled={(date: Date) => date < new Date()}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                )}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="mt-auto pt-6 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setOpen(false)}>
-                Отмена
-              </Button>
-              <Button onClick={onCreate} disabled={!newMeeting.title || !newMeeting.date} className="w-full sm:w-auto">
-                Запланировать
-              </Button>
+            {/* Participants */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                Участники
+                {(newMeeting.participants?.length || 0) > 0 && (
+                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5 ml-auto">
+                    {newMeeting.participants.length}
+                  </Badge>
+                )}
+              </Label>
+              <UserAutocomplete
+                selectedUsers={newMeeting.participants || []}
+                onUsersChange={(users) => setNewMeeting((prev) => ({ ...prev, participants: users }))}
+                label=""
+                organizationId={organizationId}
+              />
             </div>
-          </Box>
-        </Flex>
-      </DialogContent >
-    </Dialog >
+
+            {/* Advanced toggle */}
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full py-1"
+            >
+              {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              Дополнительно
+              {(newMeeting.description || newMeeting.isRecurring) && (
+                <div className="w-1.5 h-1.5 rounded-full bg-primary ml-1" />
+              )}
+            </button>
+
+            {/* Advanced section */}
+            {showAdvanced && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="meeting-desc" className="text-sm font-medium flex items-center gap-1.5">
+                    <AlignLeft className="w-3.5 h-3.5 text-muted-foreground" />
+                    Описание
+                  </Label>
+                  <Textarea
+                    id="meeting-desc"
+                    value={newMeeting.description}
+                    onChange={(e) => setNewMeeting((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="Повестка дня, ссылки..."
+                    className="min-h-[80px] resize-none"
+                  />
+                </div>
+
+                {/* Color */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <Palette className="w-3.5 h-3.5 text-muted-foreground" />
+                    Цвет
+                  </Label>
+                  <MeetingColorPicker colors={colors} value={newMeeting.color} onChange={(c: string) => setNewMeeting((prev) => ({ ...prev, color: c }))} />
+                </div>
+
+                {/* Recurrence */}
+                <div className="space-y-3 rounded-lg border p-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Repeat className="w-3.5 h-3.5 text-muted-foreground" />
+                      Повторять
+                    </Label>
+                    <Switch
+                      checked={newMeeting.isRecurring}
+                      onCheckedChange={(checked: boolean) => setNewMeeting((prev) => ({ ...prev, isRecurring: checked }))}
+                    />
+                  </div>
+
+                  {newMeeting.isRecurring && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <Select
+                        value={newMeeting.recurrenceType || 'WEEKLY'}
+                        onValueChange={(value: string) => setNewMeeting((prev) => ({ ...prev, recurrenceType: value }))}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="DAILY">Ежедневно</SelectItem>
+                          <SelectItem value="WEEKLY">Еженедельно</SelectItem>
+                          <SelectItem value="MONTHLY">Ежемесячно</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {newMeeting.recurrenceType === 'WEEKLY' && (
+                        <div className="flex gap-1 justify-center p-2 rounded-md bg-muted/50">
+                          {[{ l: 'Пн', v: 1 }, { l: 'Вт', v: 2 }, { l: 'Ср', v: 3 }, { l: 'Чт', v: 4 }, { l: 'Пт', v: 5 }, { l: 'Сб', v: 6 }, { l: 'Вс', v: 7 }].map((day) => {
+                            const isSelected = (newMeeting.recurrenceDays || []).includes(day.v);
+                            return (
+                              <button
+                                key={day.v}
+                                type="button"
+                                onClick={() => handleRecurrenceDayToggle(day.v)}
+                                className={cn(
+                                  "w-8 h-8 flex items-center justify-center rounded-full text-xs font-semibold transition-all select-none",
+                                  isSelected
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                              >
+                                {day.l}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">До какой даты</Label>
+                        <DatePicker
+                          value={newMeeting.recurrenceEndDate}
+                          onChange={(date) => date && setNewMeeting((prev) => ({ ...prev, recurrenceEndDate: date }))}
+                          placeholder="Бессрочно"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t flex items-center justify-end gap-3">
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            Отмена
+          </Button>
+          <Button
+            onClick={onCreate}
+            disabled={!isValid}
+            size="sm"
+            className={cn("min-w-[140px]", isValid && "shadow-sm shadow-primary/20")}
+          >
+            <Video className="w-4 h-4 mr-2" />
+            Запланировать
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

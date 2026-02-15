@@ -2,6 +2,7 @@ import React from 'react';
 import { Shield, User, Mail, Calendar, Link as LinkIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Separator } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
+import { PageHeader } from './shared/page-header';
 import { useMainAccount, useSSOAccount } from '../hooks/useAccountContext';
 import { useCurrentOrganization } from '../hooks/useAppContext';
 
@@ -24,12 +25,10 @@ export function AccountOrganizationPage() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
-        <div>
-          <h1>Account Organization</h1>
-          <p className="text-muted-foreground">Your account information for {organization.name}</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Account Organization"
+        subtitle={`Your account information for ${organization.name}`}
+      />
 
       <div className="flex-1 p-6 overflow-auto">
         <div className="max-w-4xl mx-auto space-y-6">

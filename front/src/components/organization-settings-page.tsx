@@ -28,6 +28,7 @@ import {
   Box, Flex, VStack, Grid, Heading, Text
 } from '@nicorp/nui';
 import { LoadingSpinner } from './loading-spinner';
+import { PageHeader } from './shared/page-header';
 import { RoleBadge } from './role-badge';
 import { useNotifications } from '../hooks/useNotifications';
 // UserAutocomplete removed - members join via invite links only
@@ -94,10 +95,16 @@ export function OrganizationSettingsPage() {
     if (orgId && organization) {
       loadMembers();
       loadInvites();
-      loadSSOConfig();
       loadAvailableRoles();
     }
   }, [orgId, organization]);
+
+  // Lazy-load SSO config only when SSO tab is active
+  useEffect(() => {
+    if (activeTab === 'sso' && orgId && organization) {
+      loadSSOConfig();
+    }
+  }, [activeTab, orgId, organization]);
 
   const loadAvailableRoles = async () => {
     if (!orgId) return;
@@ -358,22 +365,10 @@ export function OrganizationSettingsPage() {
 
   return (
     <Flex className="h-full flex-col bg-background/50">
-      <Box className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <Box className="container max-w-5xl mx-auto py-6 px-4 md:px-6">
-          <Flex className="items-center gap-4">
-            <Flex className="w-16 h-16 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl items-center justify-center border border-primary/10 shadow-sm">
-              <Building2 className="w-8 h-8 text-primary" />
-            </Flex>
-            <Box>
-              <Heading level={1} className="text-3xl font-bold tracking-tight">{organization.name}</Heading>
-              <Flex className="items-center gap-2 text-muted-foreground mt-1">
-                <Text size="sm" as="span">Organization Settings</Text>
-                <Text size="xs" as="span" className="px-2 py-0.5 rounded-full bg-muted font-mono">/{organization.slug}</Text>
-              </Flex>
-            </Box>
-          </Flex>
-        </Box>
-      </Box>
+      <PageHeader
+        title={organization.name}
+        subtitle="Organization Settings"
+      />
 
       <Box className="flex-1 overflow-auto">
         <Box className="container max-w-5xl mx-auto py-4 px-4 md:px-6">

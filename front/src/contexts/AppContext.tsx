@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, ReactNode } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import type { Organization } from '../types/organization';
 import { getOrganization } from '../api/organizations';
@@ -55,11 +55,17 @@ export function AppProvider({ children }: AppProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const currentOrganizationRef = useRef<Organization | null>(null);
   const currentProjectRef = useRef<Project | null>(null);
+  const locationRef = useRef(location.pathname);
+
+  // Keep location ref up to date
+  useEffect(() => {
+    locationRef.current = location.pathname;
+  }, [location.pathname]);
 
   // Parse orgId and projectId from URL path directly
   const pathParts = location.pathname.split('/');
   // URL pattern: /:orgId/... or /:orgId/projects/:projectId/...
-  const orgIdFromUrl = pathParts.length > 1 && pathParts[1] && !['organizations', 'auth', 'invite', 'sso', 'call'].includes(pathParts[1]) ? pathParts[1] : null;
+  const orgIdFromUrl = pathParts.length > 1 && pathParts[1] && !['organizations', 'auth', 'invite', 'sso', 'call', 'calls', 'account'].includes(pathParts[1]) ? pathParts[1] : null;
   const projectIdFromUrl = pathParts.length > 3 && pathParts[2] === 'projects' ? pathParts[3] : null;
 
   const setCurrentOrganization = useCallback((org: Organization | null) => {
@@ -67,27 +73,21 @@ export function AppProvider({ children }: AppProviderProps) {
     currentOrganizationRef.current = org;
     if (org) {
       localStorage.setItem(STORAGE_KEY, org.id);
-      if (!location.pathname.startsWith(`/${org.id}/`)) {
+      if (!locationRef.current.startsWith(`/${org.id}/`)) {
         navigate(`/${org.id}/projects`, { replace: true });
       }
     } else {
       localStorage.removeItem(STORAGE_KEY);
-      if (!location.pathname.startsWith('/organizations')) {
+      if (!locationRef.current.startsWith('/organizations')) {
         navigate('/organizations', { replace: true });
       }
     }
-  }, [navigate, location.pathname]);
+  }, [navigate]);
 
   const setCurrentProject = useCallback((project: Project | null) => {
     setCurrentProjectState(project);
     currentProjectRef.current = project;
-    if (project && currentOrganization) {
-      const currentPath = location.pathname;
-      if (!currentPath.includes(`/projects/${project.id}`)) {
-        navigate(`/${currentOrganization.id}/projects/${project.id}/tasks`, { replace: true });
-      }
-    }
-  }, [currentOrganization, navigate, location.pathname]);
+  }, []);
 
   const clearContext = useCallback(() => {
     setCurrentOrganizationState(null);
@@ -120,15 +120,16 @@ export function AppProvider({ children }: AppProviderProps) {
         return;
       }
 
-      const orgId = orgIdFromUrl || localStorage.getItem(STORAGE_KEY);
+      // Only load org from URL — never fall back to stale localStorage value
+      // This prevents loading an old org when navigating to /organizations, /account, etc.
+      const orgId = orgIdFromUrl;
 
       if (!orgId || orgId === 'null' || orgId === 'undefined') {
-        if (currentOrganizationRef.current && !orgIdFromUrl) {
-          setIsLoading(false);
-          return;
-        }
         setCurrentOrganizationState(null);
         currentOrganizationRef.current = null;
+        setCurrentProjectState(null);
+        currentProjectRef.current = null;
+        localStorage.removeItem(STORAGE_KEY);
         setIsLoading(false);
         return;
       }
@@ -139,7 +140,13 @@ export function AppProvider({ children }: AppProviderProps) {
       }
 
       try {
+        const requestedOrgId = orgId;
         const org = await getOrganization(orgId);
+        const currentPath = locationRef.current;
+        if (!currentPath.startsWith(`/${requestedOrgId}`)) {
+          setIsLoading(false);
+          return;
+        }
         setCurrentOrganizationState(org);
         currentOrganizationRef.current = org;
         localStorage.setItem(STORAGE_KEY, org.id);
@@ -152,13 +159,15 @@ export function AppProvider({ children }: AppProviderProps) {
           currentProjectRef.current = null;
           localStorage.removeItem(STORAGE_KEY);
         } else {
-          if (orgIdFromUrl) {
+          // Only clear state if we're still on this org's page (not navigated away)
+          const currentPath = locationRef.current;
+          if (orgIdFromUrl && currentPath.startsWith(`/${orgIdFromUrl}`)) {
             setCurrentOrganizationState(null);
             currentOrganizationRef.current = null;
             localStorage.removeItem(STORAGE_KEY);
           }
         }
-        if (!location.pathname.startsWith('/organizations') && error?.response?.status === 401) {
+        if (!locationRef.current.startsWith('/organizations') && error?.response?.status === 401) {
           navigate('/organizations', { replace: true });
         }
       } finally {
@@ -171,7 +180,7 @@ export function AppProvider({ children }: AppProviderProps) {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [orgIdFromUrl, navigate, location.pathname]);
+  }, [orgIdFromUrl, navigate]);
 
   useEffect(() => {
     const loadProject = async () => {
@@ -219,7 +228,7 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   }, [projectIdFromUrl, currentOrganization]);
 
-  const value: AppContextType = {
+  const value: AppContextType = useMemo(() => ({
     currentOrganization,
     currentProject,
     setCurrentOrganization,
@@ -228,7 +237,7 @@ export function AppProvider({ children }: AppProviderProps) {
     projectId: currentProject?.id || null,
     isLoading,
     clearContext,
-  };
+  }), [currentOrganization, currentProject, setCurrentOrganization, setCurrentProject, isLoading, clearContext]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

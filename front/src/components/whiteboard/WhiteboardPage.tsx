@@ -22,6 +22,7 @@ import PropertiesPanel from './components/PropertiesPanel';
 import AIModal from './components/AIModal';
 import { AIGeneratedShape } from './services/geminiService';
 import { Send, MessageSquare, Trash2, X } from 'lucide-react';
+import { PageHeader } from '../shared/page-header';
 import {
   getOrCreateWhiteboard,
   createElement,
@@ -42,7 +43,7 @@ import {
 } from './utils/whiteboardTransform';
 import { useNotifications } from '../../hooks/useNotifications';
 import { websocketService } from '../../services/websocketService';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@nicorp/nui';
 
 // Helper to generate IDs
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -1553,7 +1554,13 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
   });
 
   return (
-    <Box className="w-full h-full relative overflow-hidden flex flex-col bg-background">
+    <Flex className="h-full flex-col">
+      <PageHeader
+        title="Whiteboard"
+        subtitle="Visual collaboration space for your team"
+        compact
+      />
+    <Box className="w-full flex-1 relative overflow-hidden flex flex-col bg-background">
 
       {/* UI Overlay - Independent Layers */}
       <Box className="absolute inset-0 pointer-events-none z-50">
@@ -1674,6 +1681,7 @@ function WhiteboardPage({ projectId }: WhiteboardPageProps) {
         )}
       </Box>
     </Box >
+    </Flex>
   );
 }
 

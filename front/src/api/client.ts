@@ -21,6 +21,8 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers = config.headers || {};
     config.headers['Authorization'] = `Bearer ${token}`;
+    // Track which token was used for this request (for safe 401 handling)
+    (config as any)._tokenUsed = token;
   }
   return config;
 });
@@ -29,7 +31,13 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401) {
-      try { localStorage.removeItem('access_token'); } catch {}
+      // Only remove token if it matches the one used for this request
+      // Prevents a stale 401 from a concurrent request from wiping a newer valid token
+      const tokenUsed = error?.config?._tokenUsed;
+      const currentToken = getAccessToken();
+      if (!currentToken || currentToken === tokenUsed) {
+        try { localStorage.removeItem('access_token'); } catch {}
+      }
     }
     return Promise.reject(error);
   }

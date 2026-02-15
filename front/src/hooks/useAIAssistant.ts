@@ -19,7 +19,7 @@ export function useAIAssistant(chatId: string | null) {
   }, [showError]);
 
   const sendMessage = useCallback(async (text: string, isWidgetResponse = false) => {
-    if (!chatId || !text.trim() || isLoading) return;
+    if (!chatId || !text || !text.trim() || isLoading) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),

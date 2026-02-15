@@ -11,40 +11,57 @@
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Premium Dark Theme - Default */
+/* ==========================================
+   UNIFIED DESIGN SYSTEM — Dark Theme
+   Using HSL format for Tailwind compatibility
+   ==========================================*/
+
+/* Light theme */
 :root {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
+  --background: 0 0% 100%;
+  --foreground: 224 71% 8%;
 
-  --card: 224 71% 4%;
-  --card-foreground: 210 40% 98%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 71% 8%;
 
-  --popover: 224 71% 4%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71% 8%;
 
   --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 220 14.3% 95.9%;
+  --secondary-foreground: 220.9 39.3% 11%;
 
-  --muted: 217.2 32.6% 12%;
-  --muted-foreground: 215 20.2% 55%;
+  --muted: 220 14.3% 95.9%;
+  --muted-foreground: 220 8.9% 46.1%;
 
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 220 14.3% 95.9%;
+  --accent-foreground: 220.9 39.3% 11%;
 
-  --destructive: 0 62.8% 50%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 72.2% 50.6%;
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
+  --success: 142.1 76.2% 36.3%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 32.1 94.6% 43.7%;
+  --warning-foreground: 0 0% 100%;
+
+  --info: 199.4 95.5% 53.8%;
+  --info-foreground: 0 0% 100%;
+
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
   --ring: 217.2 91.2% 59.8%;
 
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
   --chart-1: 220 70% 50%;
   --chart-2: 160 60% 45%;
@@ -53,37 +70,104 @@
   --chart-5: 340 75% 55%;
 }
 
-/* Custom scrollbar for dark theme */
+/* Dark theme (default) */
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+
+  --card: 224 50% 6%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 224 50% 6%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+
+  --secondary: 217.2 32.6% 14%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217.2 28% 12%;
+  --muted-foreground: 215 20.2% 55%;
+
+  --accent: 217.2 28% 16%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 62.8% 50%;
+  --destructive-foreground: 210 40% 98%;
+
+  --success: 142.1 70.6% 45.3%;
+  --success-foreground: 222.2 47.4% 11.2%;
+
+  --warning: 32.1 94.6% 53.7%;
+  --warning-foreground: 222.2 47.4% 11.2%;
+
+  --info: 199.4 95.5% 63.8%;
+  --info-foreground: 222.2 47.4% 11.2%;
+
+  --border: 217.2 25% 18%;
+  --input: 217.2 25% 18%;
+  --ring: 217.2 91.2% 59.8%;
+
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+}
+
+/* ==========================================
+   CUSTOM SCROLLBAR
+   ==========================================*/
 * {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 *::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
-  border-radius: 4px;
+  background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--muted-foreground));
-  border-radius: 4px;
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 100px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--foreground));
+  background-color: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Dialog centering fixes */
+/* ==========================================
+   GLOBAL FOCUS STYLES
+   ==========================================*/
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: calc(var(--radius) - 4px);
+}
+
+/* ==========================================
+   SELECTION
+   ==========================================*/
+::selection {
+  background: hsl(var(--primary) / 0.3);
+  color: hsl(var(--foreground));
+}
+
+/* ==========================================
+   DIALOG CENTERING FIXES
+   ==========================================*/
 [data-slot="dialog-portal"] [data-slot="dialog-overlay"] {
   position: fixed !important;
   inset: 0 !important;
   z-index: 50 !important;
-  background: rgba(0, 0, 0, 0.5) !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(4px) !important;
 }
 
 [data-slot="dialog-portal"] [data-slot="dialog-content"] {
@@ -95,4 +179,25 @@
   max-width: min(42rem, calc(100% - 2rem)) !important;
   width: 100% !important;
   margin: 0 !important;
+  animation: dialogFadeIn 0.2s ease-out !important;
+}
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ==========================================
+   SMOOTH TRANSITIONS
+   ==========================================*/
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }

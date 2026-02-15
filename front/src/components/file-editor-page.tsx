@@ -10,8 +10,7 @@ import { LoadingSpinner } from './loading-spinner';
 import { FileTree } from './repository/FileTree';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MarkdownRenderer } from '@nicorp/nui';
 import { apiClient } from '../api/client';
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs';
@@ -280,9 +279,7 @@ export function FileEditorPage() {
                     {isMarkdown && markdownMode === 'preview' ? (
                       // Markdown preview
                       <Box className="prose dark:prose-invert max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {content}
-                        </ReactMarkdown>
+                        <MarkdownRenderer content={content} />
                       </Box>
                     ) : isSvg && svgMode === 'preview' ? (
                       // SVG preview

@@ -1,22 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  ScrollArea,
-  Textarea,
-  Button,
-  cn,
+  Sheet, SheetContent,
+  ChatInput, ChatHeader,
+  ConversationList, AILoading, PromptSuggestions,
+  Button, cn,
+  type Conversation
 } from '@nicorp/nui';
 import { ChatMessage } from './chat-message';
-import { ChatList } from './chat-list';
-import { Send, Loader2, ArrowLeft, X, Sparkles } from 'lucide-react';
+import { Bot, Sparkles, ArrowDown } from 'lucide-react';
 import type { Chat } from '../api/chat';
 import { useAIAssistant } from '../hooks/useAIAssistant';
 import { useChatHistory } from '../hooks/useChatHistory';
-import { useNotifications } from '../hooks/useNotifications';
-import { createChat } from '../api/chat';
+import { useNavigate } from 'react-router-dom';
+import { executeClientAction } from '../lib/client-actions';
 
 interface AIAssistantSheetProps {
   open: boolean;
@@ -35,11 +31,12 @@ export function AIAssistantSheet({
   projectId,
   onChatCreated,
 }: AIAssistantSheetProps) {
-  const [inputValue, setInputValue] = useState('');
   const [view, setView] = useState<'list' | 'chat'>('list');
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { showError } = useNotifications();
+  const navigate = useNavigate();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   const { chats, loadChats, createNewChat, deleteChat } = useChatHistory(organizationId || null, projectId || null);
   const { messages, isLoading, loadChat, sendMessage, setMessages } = useAIAssistant(currentChatId);
@@ -67,49 +64,37 @@ export function AIAssistantSheet({
   }, [open, currentChatId, view, loadChat, loadChats, setMessages]);
 
   useEffect(() => {
-    if (scrollAreaRef.current && messages.length > 0) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-    }
-  }, [messages]);
-
-  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && view === 'chat') {
         handleBackToList();
       }
     };
-
     if (open) {
       window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-      };
+      return () => window.removeEventListener('keydown', handleKeyDown);
     }
   }, [open, view]);
 
-  const handleSend = async () => {
-    if (!inputValue.trim() || isLoading || !currentChatId) return;
+  // Auto-scroll
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
 
-    const messageText = inputValue.trim();
-    setInputValue('');
+  // Scroll button visibility
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setShowScrollBtn(gap > 120);
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [view]);
 
-    try {
-      await sendMessage(messageText);
-    } catch (error) {
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    } else if (e.key === 'Escape' && view === 'chat') {
-      e.preventDefault();
-      handleBackToList();
-    }
+  const handleSend = async (text: string) => {
+    if (!text.trim() || isLoading || !currentChatId) return;
+    await sendMessage(text.trim());
   };
 
   const handleCreateChat = async () => {
@@ -117,9 +102,7 @@ export function AIAssistantSheet({
     if (newChat) {
       setCurrentChatId(newChat.id);
       setView('chat');
-      if (onChatCreated) {
-        onChatCreated(newChat);
-      }
+      onChatCreated?.(newChat);
     }
   };
 
@@ -149,112 +132,169 @@ export function AIAssistantSheet({
   };
 
   const currentChat = chats.find(c => c.id === currentChatId);
+  const visibleMessages = messages.filter(msg => !msg.isWidgetResponse);
+
+  const conversations: Conversation[] = chats.map(c => ({
+    id: c.id,
+    title: c.title || 'Без названия',
+    lastMessage: undefined,
+    updatedAt: c.updatedAt ? new Date(c.updatedAt) : new Date(),
+  }));
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[700px] flex flex-col p-0 bg-background border-border">
+      <SheetContent side="right" className="w-full sm:w-[520px] md:w-[600px] lg:w-[680px] flex flex-col p-0 bg-background border-l border-border/50">
         <div className="relative w-full h-full overflow-hidden">
-          {/* Страница списка чатов */}
+          {/* ═══ Chat List View ═══ */}
           <div
             className={cn(
-              "absolute inset-0 transition-transform duration-300 ease-in-out bg-background",
-              view === 'list' ? 'translate-x-0' : '-translate-x-full'
+              "absolute inset-0 transition-all duration-300 ease-out bg-background flex flex-col",
+              view === 'list' ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
             )}
           >
-            <ChatList
-              chats={chats}
-              currentChatId={currentChatId}
-              onSelectChat={handleSelectChat}
-              onCreateChat={handleCreateChat}
-              onDeleteChat={handleDeleteChat}
-              onClose={() => onOpenChange(false)}
+            <ChatHeader
+              title="AI Assistant"
+              status="online"
+              onSettings={() => onOpenChange(false)}
             />
+            <div className="flex-1 overflow-hidden">
+              <ConversationList
+                conversations={conversations}
+                activeId={currentChatId || undefined}
+                onSelect={handleSelectChat}
+                onNew={handleCreateChat}
+                onDelete={handleDeleteChat}
+                showSearch={true}
+              />
+            </div>
           </div>
 
-          {/* Страница чата */}
+          {/* ═══ Chat View ═══ */}
           <div
             className={cn(
-              "absolute inset-0 transition-transform duration-300 ease-in-out bg-background flex flex-col",
-              view === 'chat' ? 'translate-x-0' : 'translate-x-full'
+              "absolute inset-0 transition-all duration-300 ease-out bg-background flex flex-col",
+              view === 'chat' ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
             )}
           >
-            {/* Шапка чата */}
-            <div className="flex items-center gap-2 p-4 border-b border-border bg-background flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleBackToList}
-                className="text-foreground"
-                aria-label="Вернуться к списку чатов"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div className="flex-1 min-w-0">
-                <SheetTitle className="text-foreground text-base font-semibold truncate">
-                  {currentChat?.title || 'AI Assistant'}
-                </SheetTitle>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onOpenChange(false)}
-                className="text-muted-foreground hover:text-foreground"
-                aria-label="Закрыть"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
+            {/* Header */}
+            <ChatHeader
+              title={currentChat?.title || 'AI Assistant'}
+              status="online"
+              onBack={handleBackToList}
+              onSettings={() => onOpenChange(false)}
+            />
 
-            {/* Область сообщений */}
-            <ScrollArea className="flex-1 p-6 bg-background" ref={scrollAreaRef}>
-              <div className="space-y-4">
-                {messages.length === 0 && !isLoading && (
-                  <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                    <div className="p-4 rounded-full bg-primary/10 mb-4">
-                      <Sparkles className="w-8 h-8 text-primary" />
+            {/* Messages */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain relative">
+              <div className="px-3 sm:px-4 py-4">
+                {/* Empty state */}
+                {visibleMessages.length === 0 && !isLoading && (
+                  <div className="flex flex-col items-center justify-center py-12 animate-in fade-in-0 duration-500">
+                    <div className="relative mb-5">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/15 to-blue-500/15 flex items-center justify-center ring-1 ring-violet-500/10">
+                        <Sparkles className="w-7 h-7 text-violet-500/70" />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center ring-1 ring-emerald-500/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      </div>
                     </div>
-                    <p className="text-base font-medium text-foreground mb-2">
+                    <p className="text-sm text-muted-foreground mb-6 text-center">
                       Начните разговор с AI ассистентом
                     </p>
-                    <p className="text-sm text-muted-foreground max-w-sm">
-                      Задайте вопрос или попросите создать проект, задачу или элемент на вайтборде
-                    </p>
-                  </div>
-                )}
-                {messages.map((message) => (
-                  <ChatMessage key={message.id} message={message} />
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-card rounded-lg p-4 border border-border flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      <span className="text-sm text-muted-foreground">AI думает...</span>
+                    <div className="w-full max-w-xs">
+                      <PromptSuggestions
+                        suggestions={[
+                          { title: '📋 Создать задачу', description: 'Создать новую задачу', prompt: 'Создай новую задачу' },
+                          { title: '📊 Статус проекта', description: 'Показать статус', prompt: 'Покажи статус проекта' },
+                          { title: '💡 Помощь', description: 'Что умеет AI?', prompt: 'Что ты умеешь?' },
+                        ]}
+                        onSelect={(prompt) => handleSend(prompt)}
+                        columns={1}
+                      />
                     </div>
                   </div>
                 )}
-              </div>
-            </ScrollArea>
 
-            {/* Поле ввода */}
-            <div className="p-4 border-t border-border bg-background flex-shrink-0">
-              <div className="flex gap-2">
-                <Textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Введите сообщение..."
-                  rows={2}
-                  disabled={isLoading || !currentChatId}
-                  className="resize-none bg-background text-foreground border-border"
-                />
-                <Button
-                  onClick={handleSend}
-                  disabled={!inputValue.trim() || isLoading || !currentChatId}
-                  size="icon"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
+                {/* Messages */}
+                {visibleMessages.map((msg) => {
+                  const originalIndex = messages.findIndex(m => m.id === msg.id);
+                  const nextMsg = messages[originalIndex + 1];
+                  const isAnswered = nextMsg?.isWidgetResponse || false;
+
+                  return (
+                    <ChatMessage
+                      key={msg.id}
+                      message={msg}
+                      isAnswered={isAnswered}
+                      onAction={async (actionType, payload) => {
+                        if (actionType === 'clarification_response') {
+                          await sendMessage(payload.value, true);
+                        } else if (actionType === 'action_confirmation') {
+                          if (payload.confirmed && payload.clientAction) {
+                            executeClientAction(payload.clientAction, navigate);
+                          }
+                          await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
+                        } else if (actionType === 'widget') {
+                          if (payload.selectedValue) {
+                            await sendMessage(payload.selectedValue, true);
+                          } else if (payload.confirmed !== undefined) {
+                            if (payload.confirmed && payload.clientAction) {
+                              executeClientAction(payload.clientAction, navigate);
+                            }
+                            await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
+                          }
+                        }
+                      }}
+                    />
+                  );
+                })}
+
+                {/* Loading indicator */}
+                {isLoading && (
+                  <div className="flex items-start gap-2.5 mb-5 animate-in fade-in-0 duration-300">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500/15 to-blue-500/15 flex items-center justify-center ring-1 ring-violet-500/15 mt-0.5">
+                      <Bot className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 animate-pulse" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[11px] font-semibold text-violet-600/70 dark:text-violet-400/70 tracking-wide uppercase pl-0.5">
+                        AI Assistant
+                      </span>
+                      <div className="rounded-2xl rounded-tl-sm px-4 py-3 bg-muted/60 border border-border/30">
+                        <AILoading variant="dots" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={bottomRef} />
               </div>
+
+              {/* Scroll to bottom */}
+              {showScrollBtn && (
+                <div className="sticky bottom-3 flex justify-center z-10">
+                  <button
+                    onClick={() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                    className="h-7 w-7 rounded-full bg-background border border-border shadow-md flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-border/50 bg-background/95 backdrop-blur-sm px-3 sm:px-4 py-3">
+              <ChatInput
+                onSend={handleSend}
+                placeholder="Напишите сообщение..."
+                isLoading={isLoading}
+                disabled={isLoading || !currentChatId}
+                footerSlot={
+                  <span className="text-[10px] text-muted-foreground/50 select-none">
+                    Enter — отправить · Shift+Enter — новая строка
+                  </span>
+                }
+              />
             </div>
           </div>
         </div>

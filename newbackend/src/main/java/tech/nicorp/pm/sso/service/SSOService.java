@@ -258,7 +258,22 @@ public class SSOService {
             return user;
         }
         
-        // 2. Создать новую связь для ГЛОБАЛЬНОГО пользователя
+        // 2. Check if this user already has a link for this org (different SSO identity)
+        Optional<SSOUserLink> existingUserLink = userLinkRepository
+                .findByUserIdAndOrganizationId(globalUserId, orgId);
+        
+        if (existingUserLink.isPresent()) {
+            System.out.println("[SSOService] User already has SSO link for this org, updating to new identity");
+            SSOUserLink link = existingUserLink.get();
+            link.setSsoProviderId(ssoProviderId);
+            link.setSsoEmail(ssoEmail);
+            link.setLastLoginAt(OffsetDateTime.now());
+            userLinkRepository.save(link);
+            ensureOrganizationMember(link.getUser(), orgId, config);
+            return link.getUser();
+        }
+
+        // 3. Создать новую связь для ГЛОБАЛЬНОГО пользователя
         User globalUser = userRepository.findById(globalUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Global user not found: " + globalUserId));
         
@@ -288,8 +303,11 @@ public class SSOService {
                 OrganizationRole defaultRole = config.getOrganization().getDefaultProjectRole() != null 
                     ? OrganizationRole.valueOf(config.getOrganization().getDefaultProjectRole())
                     : OrganizationRole.MEMBER;
-                System.out.println("[SSOService] Adding user to organization with role: " + defaultRole.name());
-                memberService.addMember(orgId, user.getId(), defaultRole.name(), null);
+                // Convert enum name to Title Case to match OrgRole names in DB (e.g. MEMBER -> Member)
+                String roleName = defaultRole.name().substring(0, 1).toUpperCase() 
+                    + defaultRole.name().substring(1).toLowerCase();
+                System.out.println("[SSOService] Adding user to organization with role: " + roleName);
+                memberService.addMember(orgId, user.getId(), roleName, null);
                 System.out.println("[SSOService] User successfully added to organization");
             } else {
                 System.out.println("[SSOService] User already has access to organization");

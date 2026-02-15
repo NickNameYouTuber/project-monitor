@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Button, Input, Label, Textarea, Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription,
-  DialogHeader, DialogTitle,
+  DialogHeader, DialogTitle, ColorPicker,
   Box, Flex, VStack, Heading, Text
 } from '@nicorp/nui';
 import type { Project } from '../App';
@@ -14,15 +14,11 @@ interface CreateProjectDialogProps {
   availableStatuses: { id: string; title: string }[];
 }
 
-const colors = [
-  '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
-];
-
 export function CreateProjectDialog({ open, onOpenChange, onCreateProject, availableStatuses }: CreateProjectDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState(availableStatuses[0]?.id || '');
-  const [color, setColor] = useState(colors[0]);
+  const [color, setColor] = useState('#6366f1');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +35,7 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject, avail
     setTitle('');
     setDescription('');
     setStatus(availableStatuses[0]?.id || '');
-    setColor(colors[0]);
+    setColor('#6366f1');
     onOpenChange(false);
   };
 
@@ -94,18 +90,7 @@ export function CreateProjectDialog({ open, onOpenChange, onCreateProject, avail
 
           <Box className="space-y-2">
             <Label>Color</Label>
-            <Flex className="gap-2">
-              {colors.map((colorOption) => (
-                <button
-                  key={colorOption}
-                  type="button"
-                  className={`w-8 h-8 rounded-full border-2 ${color === colorOption ? 'border-foreground' : 'border-transparent'
-                    }`}
-                  style={{ backgroundColor: colorOption }}
-                  onClick={() => setColor(colorOption)}
-                />
-              ))}
-            </Flex>
+            <ColorPicker value={color} onChange={setColor} />
           </Box>
 
           <Flex className="justify-end gap-2 pt-4">

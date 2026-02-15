@@ -12,13 +12,16 @@ import org.springframework.web.bind.annotation.*;
 import tech.nicorp.pm.ai.api.dto.*;
 import tech.nicorp.pm.ai.domain.Chat;
 import tech.nicorp.pm.ai.domain.ChatMessage;
+import tech.nicorp.pm.ai.domain.WidgetState;
 import tech.nicorp.pm.ai.repo.ChatMessageRepository;
 import tech.nicorp.pm.ai.repo.ChatRepository;
+import tech.nicorp.pm.ai.repo.WidgetStateRepository;
 import tech.nicorp.pm.ai.service.ChatService;
 import tech.nicorp.pm.users.domain.User;
 import tech.nicorp.pm.users.repo.UserRepository;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +31,7 @@ import java.util.stream.Collectors;
 public class ChatController {
     private final ChatRepository chatRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final WidgetStateRepository widgetStateRepository;
     private final ChatService chatService;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
@@ -35,11 +39,13 @@ public class ChatController {
     @Autowired
     public ChatController(ChatRepository chatRepository,
                          ChatMessageRepository chatMessageRepository,
+                         WidgetStateRepository widgetStateRepository,
                          ChatService chatService,
                          UserRepository userRepository,
                          ObjectMapper objectMapper) {
         this.chatRepository = chatRepository;
         this.chatMessageRepository = chatMessageRepository;
+        this.widgetStateRepository = widgetStateRepository;
         this.chatService = chatService;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
@@ -160,6 +166,86 @@ public class ChatController {
             e.printStackTrace();
             return ResponseEntity.status(500).body(null);
         }
+    }
+
+    @PatchMapping("/{chatId}/messages/{messageId}/widgets")
+    @Operation(summary = "Обновить состояние виджета (сохранить выбранный ответ)")
+    @Transactional
+    public ResponseEntity<WidgetStateResponse> updateWidgetState(
+            @PathVariable("chatId") UUID chatId,
+            @PathVariable("messageId") UUID messageId,
+            @RequestBody UpdateWidgetStateRequest request,
+            Authentication auth) {
+        UUID userId = getUserId(auth);
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        // Проверка доступа к чату
+        Chat chat = chatRepository.findById(chatId).orElse(null);
+        if (chat == null || !chat.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        // Проверка сообщения
+        ChatMessage message = chatMessageRepository.findById(messageId).orElse(null);
+        if (message == null || !message.getChat().getId().equals(chatId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Найти или создать состояние виджета
+        WidgetState state = widgetStateRepository
+                .findByChatMessage_IdAndWidgetId(messageId, request.getWidgetId())
+                .orElse(new WidgetState());
+
+        state.setChatMessage(message);
+        state.setWidgetId(request.getWidgetId());
+        state.setWidgetType(request.getWidgetType());
+        state.setSelectedValue(request.getSelectedValue());
+        state.setSelectedAt(OffsetDateTime.now());
+        state.setUserId(userId);
+
+        WidgetState saved = widgetStateRepository.save(state);
+
+        WidgetStateResponse response = new WidgetStateResponse();
+        response.setId(saved.getId());
+        response.setWidgetId(saved.getWidgetId());
+        response.setWidgetType(saved.getWidgetType());
+        response.setSelectedValue(saved.getSelectedValue());
+        response.setSelectedAt(saved.getSelectedAt());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{chatId}/messages/{messageId}/widgets")
+    @Operation(summary = "Получить состояния всех виджетов в сообщении")
+    public ResponseEntity<List<WidgetStateResponse>> getWidgetStates(
+            @PathVariable("chatId") UUID chatId,
+            @PathVariable("messageId") UUID messageId,
+            Authentication auth) {
+        UUID userId = getUserId(auth);
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        // Проверка доступа
+        Chat chat = chatRepository.findById(chatId).orElse(null);
+        if (chat == null || !chat.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        List<WidgetState> states = widgetStateRepository.findByChatMessage_Id(messageId);
+        List<WidgetStateResponse> responses = states.stream().map(state -> {
+            WidgetStateResponse response = new WidgetStateResponse();
+            response.setId(state.getId());
+            response.setWidgetId(state.getWidgetId());
+            response.setWidgetType(state.getWidgetType());
+            response.setSelectedValue(state.getSelectedValue());
+            response.setSelectedAt(state.getSelectedAt());
+            return response;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(responses);
     }
 
     @DeleteMapping("/{id}")

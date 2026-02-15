@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useDrop, useDrag } from 'react-dnd';
-import { ArrowLeft, Plus, Search, Filter, Settings, Edit, Trash2, GripVertical, X, Video } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Filter, Settings, Edit, Trash2, GripVertical, X, Video, CheckSquare } from 'lucide-react';
 import {
   Button, Input, Badge, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   Popover, PopoverContent, PopoverTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-  Label, Switch, Box, Flex, VStack, Heading, Text
+  Label, Switch, Box, Flex, VStack, Heading, Text, cn
 } from '@nicorp/nui';
 import { TaskCard } from './task-card';
 import { TaskDetailSidebar } from './task-detail-sidebar';
 import { CreateTaskDialog } from './create-task-dialog';
 import { EditTaskDialog } from './edit-task-dialog';
 import { EditColumnDialog } from './edit-column-dialog';
-import { LoadingSpinner } from './loading-spinner';
+import { PageHeader } from './shared/page-header';
+import { EmptyState } from './shared/empty-state';
+import { ColumnSkeleton, PageHeaderSkeleton } from './shared/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { ActiveCallIndicator } from './active-call-indicator';
 import type { Project, Task, Column } from '../App';
@@ -101,15 +103,18 @@ function Column({
         dragRef(node);
         dropRef(node);
       }}
-      className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${isOver ? 'bg-accent/50' : ''
-        } ${isDragging ? 'opacity-50' : ''}`}
+      className={cn(
+        'flex-1 min-w-80 rounded-xl border p-4 transition-all duration-200',
+        isOver ? 'bg-primary/5 border-primary/30 border-dashed' : 'bg-card/50 border-border',
+        isDragging && 'opacity-50'
+      )}
     >
       <Flex className="items-center justify-between mb-4">
-        <Flex className="items-center gap-3 cursor-move">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-          <Box className={`w-3 h-3 rounded-full ${column.color}`} />
-          <Heading level={3} className="font-medium">{column.title}</Heading>
-          <Text as="span" size="sm" variant="muted" className="bg-muted px-2 py-1 rounded-full">
+        <Flex className="items-center gap-2.5 cursor-move">
+          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50" />
+          <Box className={`w-2.5 h-2.5 rounded-full ${column.color}`} />
+          <Heading level={3} className="font-semibold text-sm">{column.title}</Heading>
+          <Text as="span" size="xs" variant="muted" className="bg-muted/70 px-2 py-0.5 rounded-full font-medium">
             {columnTasks.length}
           </Text>
         </Flex>
@@ -346,9 +351,16 @@ export function ProjectTasksPage({
   }, []);
 
   if (isLoading) {
-    return <LoadingSpinner
-      stages={['Fetch Tasks', 'Parse Columns', 'Sync Data', 'Ready']}
-    />;
+    return (
+      <div className="p-6">
+        <PageHeaderSkeleton />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <ColumnSkeleton />
+          <ColumnSkeleton />
+          <ColumnSkeleton />
+        </div>
+      </div>
+    );
   }
 
   const projectTasks = tasks.filter(task => task.projectId === project.id);
@@ -528,64 +540,58 @@ export function ProjectTasksPage({
   if (!project) {
     return (
       <Flex className="h-full items-center justify-center">
-        <LoadingSpinner stages={['Loading project...']} />
+        <EmptyState
+          icon={CheckSquare}
+          title="No project selected"
+          description="Select a project to view its tasks"
+        />
       </Flex>
     );
   }
 
   return (
     <Flex className="h-full flex-col">
-      <Box className="border-b border-border p-6">
-        <Flex className="items-center gap-4 mb-4">
-          <Button variant="ghost" size="sm" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Projects
-          </Button>
-          <Box
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: project.color }}
-          />
-          <Box className="flex-1">
-            <Heading level={1}>{project.title}</Heading>
-            <Text variant="muted">{project.description}</Text>
-          </Box>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={async () => {
-              const roomId = `project-${project.id}-${Date.now()}`;
-              try {
-                // Создаем звонок в БД
-                const { createCall } = await import('../api/calls');
-                await createCall({
-                  room_id: roomId,
-                  title: `Звонок: ${project.title}`,
-                  description: `Звонок по проекту ${project.title}`,
-                  project_id: project.id,
-                });
-              } catch (error) {
-                console.error('Ошибка создания звонка:', error);
-              }
-              // Переходим на страницу звонка
-              navigate(`/call/${roomId}`);
-            }}
-          >
-            <Video className="w-4 h-4 mr-2" />
-            Start Call
-          </Button>
-        </Flex>
+      <PageHeader
+        title={project.title}
+        subtitle={project.description}
+        actions={
+          <>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={async () => {
+                const roomId = `project-${project.id}-${Date.now()}`;
+                try {
+                  const { createCall } = await import('../api/calls');
+                  await createCall({
+                    room_id: roomId,
+                    title: `Звонок: ${project.title}`,
+                    description: `Звонок по проекту ${project.title}`,
+                    project_id: project.id,
+                  });
+                } catch (error) {
+                  console.error('Ошибка создания звонка:', error);
+                }
+                navigate(`/call/${roomId}`);
+              }}
+            >
+              <Video className="w-4 h-4 mr-2" />
+              Start Call
+            </Button>
+          </>
+        }
+      >
+        {/* Active call indicator */}
+        <ActiveCallIndicator projectId={project.id} className="mb-3" />
 
-        {/* Индикатор активных звонков */}
-        <ActiveCallIndicator projectId={project.id} className="mb-4" />
-
-        <Flex className="items-center gap-4">
-          <Box className="relative flex-1">
+        <Flex className="items-center gap-3">
+          <Box className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-9 bg-muted/50 border-border/50"
             />
           </Box>
           <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
@@ -707,27 +713,27 @@ export function ProjectTasksPage({
               />
             </DialogContent>
           </Dialog>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button onClick={() => setIsCreateDialogOpen(true)} size="sm">
             <Plus className="w-4 h-4 mr-2" />
             New Task
           </Button>
         </Flex>
 
-        <Flex className="items-center gap-4 mt-4">
-          <Badge variant="secondary">
-            Total Tasks: {projectTasks.length}
+        <Flex className="items-center gap-2 mt-3">
+          <Badge variant="secondary" className="text-[11px]">
+            {projectTasks.length} tasks
           </Badge>
-          <Badge variant="secondary">
-            Completed: {projectTasks.filter(t => t.status === 'done').length}
+          <Badge variant="secondary" className="text-[11px]">
+            {projectTasks.filter(t => t.status === 'done').length} done
           </Badge>
-          <Badge variant="secondary">
-            In Progress: {projectTasks.filter(t => t.status === 'in-progress').length}
+          <Badge variant="secondary" className="text-[11px]">
+            {projectTasks.filter(t => t.status === 'in-progress').length} active
           </Badge>
         </Flex>
-      </Box>
+      </PageHeader>
 
-      <Box className="flex-1 p-6 overflow-auto">
-        <Flex className="gap-6 items-stretch">
+      <Box className="flex-1 p-4 md:p-6 overflow-x-auto overflow-y-hidden">
+        <Flex className="gap-4 md:gap-5 h-full min-w-max items-stretch">
           {sortedColumns.map((column, index) => (
             <Column
               key={column.id}

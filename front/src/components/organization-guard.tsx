@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, Outlet, useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { getOrganization } from '../api/organizations';
 import { initiateSSOLogin } from '../api/sso';
@@ -17,19 +17,65 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
   const params = useParams<{ orgId: string }>();
   const orgId = params.orgId;
   const { showError } = useNotifications();
+  const guardNavigate = useNavigate();
+  const prevOrgIdRef = useRef<string | undefined>(orgId);
 
-  const [loading, setLoading] = useState(true);
+  // Synchronous init: read sessionStorage RIGHT NOW to avoid the 1-frame flash
+  const [loading, setLoading] = useState(() => {
+    if (!orgId) return false;
+    return sessionStorage.getItem(`org_verified_${orgId}`) !== 'true';
+  });
   const [organization, setOrganization] = useState<Organization | null>(null);
-  const [verified, setVerified] = useState(false);
+  const [verified, setVerified] = useState(() => {
+    if (!orgId) return false;
+    return sessionStorage.getItem(`org_verified_${orgId}`) === 'true';
+  });
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [password, setPassword] = useState('');
   const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
-    if (orgId) {
+    // Handle orgId changes (e.g., switching orgs) — reset state based on new orgId
+    if (orgId !== prevOrgIdRef.current) {
+      prevOrgIdRef.current = orgId;
+      if (!orgId) {
+        setLoading(false);
+        setVerified(false);
+        return;
+      }
+      const isVerified = sessionStorage.getItem(`org_verified_${orgId}`) === 'true';
+      if (isVerified) {
+        console.log('[OrganizationGuard] Org changed, already verified:', orgId);
+        setVerified(true);
+        setLoading(false);
+        setShowPasswordDialog(false);
+        return;
+      }
+      // New org, not verified — reset and check
+      setVerified(false);
+      setLoading(true);
+      setShowPasswordDialog(false);
+      setPassword('');
       localStorage.setItem('currentOrgId', orgId);
       checkOrganization(orgId);
+      return;
     }
+
+    if (!orgId) {
+      setLoading(false);
+      setVerified(false);
+      return;
+    }
+
+    // Initial mount: if already verified via synchronous useState init, skip
+    if (verified) {
+      console.log('[OrganizationGuard] Already verified from sync init:', orgId);
+      return;
+    }
+
+    // Not verified yet, proceed with check
+    localStorage.setItem('currentOrgId', orgId);
+    checkOrganization(orgId);
   }, [orgId]);
 
   const checkOrganization = async (currentOrgId: string) => {
@@ -40,7 +86,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
     console.log('[OrganizationGuard] Current token:', getAccessToken()?.substring(0, 20) + '...');
 
     if (!currentOrgId) {
-      window.location.href = '/organizations';
+      guardNavigate('/organizations', { replace: true });
       return;
     }
 
@@ -70,7 +116,8 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
         setLoading(false);
       }
     } catch (error) {
-      window.location.href = '/organizations';
+      console.error('[OrganizationGuard] Failed to check organization:', currentOrgId, error);
+      guardNavigate('/organizations', { replace: true });
     }
   };
 
@@ -145,7 +192,7 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
                 />
               </Box>
               <Flex className="justify-end gap-2">
-                <Button variant="outline" onClick={() => window.location.href = '/organizations'}>
+                <Button variant="outline" onClick={() => guardNavigate('/organizations', { replace: true })}>
                   Cancel
                 </Button>
                 <Button onClick={handleVerifyPassword} disabled={!password || verifying}>
@@ -168,4 +215,18 @@ export function OrganizationGuard({ children }: OrganizationGuardProps) {
   }
 
   return <>{children}</>;
+}
+
+/**
+ * Layout route wrapper: renders OrganizationGuard around an <Outlet />.
+ * Use as `<Route path="/:orgId" element={<OrgGuardLayout />}>` to protect
+ * all nested org routes with a single guard instance that never remounts
+ * during tab navigation.
+ */
+export function OrgGuardLayout() {
+  return (
+    <OrganizationGuard>
+      <Outlet />
+    </OrganizationGuard>
+  );
 }

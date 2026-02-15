@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useDrop, useDrag } from 'react-dnd';
-import { Plus, Search, Filter, Settings, Edit, Trash2, GripVertical, MoreVertical } from 'lucide-react';
+import { Plus, Search, Filter, Settings, Edit, Trash2, GripVertical, MoreVertical, FolderKanban } from 'lucide-react';
 import {
   Button, Input, Badge, Dialog, DialogContent, DialogDescription,
   DialogHeader, DialogTitle, DialogTrigger, DropdownMenu,
-  DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Box, Flex, VStack, Heading, Text
+  DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Box, Flex, VStack, Heading, Text, cn
 } from '@nicorp/nui';
 import { ProjectCard } from './project-card';
 import { CreateProjectDialog } from './create-project-dialog';
 import { EditProjectDialog } from './edit-project-dialog';
 import { EditColumnDialog } from './edit-column-dialog';
+import { PageHeader } from './shared/page-header';
+import { EmptyState } from './shared/empty-state';
+import { ColumnSkeleton } from './shared/skeleton';
 import { LoadingSpinner } from './loading-spinner';
 import type { Project, Column } from '../App';
 import { useCurrentOrganization, useAppContext } from '../hooks/useAppContext';
@@ -77,15 +80,18 @@ function Column({
         dragRef(node);
         dropRef(node);
       }}
-      className={`flex-1 min-w-80 bg-card rounded-lg border border-border p-4 ${isOver ? 'bg-accent/50' : ''
-        } ${isDragging ? 'opacity-50' : ''}`}
+      className={cn(
+        'flex-1 min-w-80 bg-card/50 rounded-xl border border-border p-4 transition-all duration-200',
+        isOver && 'bg-primary/5 border-primary/30 border-dashed',
+        isDragging && 'opacity-50'
+      )}
     >
       <Flex className="items-center justify-between mb-4">
-        <Flex className="items-center gap-3 cursor-move">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
+        <Flex className="items-center gap-2 cursor-move">
+          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50" />
           <Box className={`w-3 h-3 rounded-full ${column.color}`} />
-          <Heading level={3} className="font-medium">{column.title}</Heading>
-          <Text as="span" size="sm" variant="muted" className="bg-muted px-2 py-1 rounded-full">
+          <Heading level={3} className="font-semibold text-sm">{column.title}</Heading>
+          <Text as="span" size="xs" variant="muted" className="bg-muted/70 px-2 py-0.5 rounded-full text-[11px] font-medium">
             {columnProjects.length}
           </Text>
         </Flex>
@@ -423,19 +429,16 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
 
   return (
     <Flex className="h-full flex-col">
-      <Box className="border-b border-border p-4 md:p-6">
-        <Flex className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-          <Box>
-            <Heading level={1}>Projects</Heading>
-            <Text variant="muted">Manage your project portfolio</Text>
-          </Box>
-          <Flex className="items-center gap-2 w-full sm:w-auto">
+      <PageHeader
+        title="Projects"
+        subtitle="Manage your project portfolio"
+        actions={
+          <>
             <Dialog open={isCreateColumnOpen} onOpenChange={setIsCreateColumnOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+                <Button variant="outline" size="sm">
                   <Plus className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Add Column</span>
-                  <span className="sm:hidden">Column</span>
+                  Add Column
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -452,27 +455,26 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
                 />
               </DialogContent>
             </Dialog>
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="flex-1 sm:flex-none">
+            <Button onClick={() => setIsCreateDialogOpen(true)} size="sm">
               <Plus className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">New Project</span>
-              <span className="sm:hidden">Project</span>
+              New Project
             </Button>
-          </Flex>
-        </Flex>
-
-        <Box className="relative">
+          </>
+        }
+      >
+        <Box className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-9 bg-muted/50 border-border/50"
           />
         </Box>
-      </Box>
+      </PageHeader>
 
       <Box className="flex-1 p-4 md:p-6 overflow-x-auto overflow-y-hidden">
-        <Flex className="gap-4 md:gap-6 h-full min-w-max">
+        <Flex className="gap-4 md:gap-5 h-full min-w-max">
           {sortedColumns.map((column, index) => (
             <Column
               key={column.id}

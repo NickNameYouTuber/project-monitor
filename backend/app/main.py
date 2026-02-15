@@ -6,7 +6,7 @@ from starlette.routing import Route, Mount
 from .database import engine, SQLALCHEMY_DATABASE_URL
 from sqlalchemy import text
 from . import models
-from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards, merge_requests, pipelines
+from .routes import auth, users, projects, dashboards, dashboard_members, task_columns, tasks, comments, repositories, repository_members, repository_content, git_http, tokens, task_repository_integration, whiteboards, merge_requests, pipelines, organizations
 from .utils.telegram_notify import notify_task_event_silent
 import subprocess
 import os
@@ -17,6 +17,7 @@ import sqlite3
 # Create database tables (works for both SQLite and Postgres)
 for base in [
     models.user.Base,
+    models.organization.Base,
     models.project.Base,
     models.dashboard.Base,
     models.dashboard_member.Base,
@@ -203,6 +204,7 @@ api_prefix = "/api"
 # Регистрируем все роутеры
 app.include_router(auth.router, prefix=f"{api_prefix}/auth", tags=["auth"])
 app.include_router(users.router, prefix=f"{api_prefix}/users", tags=["users"])
+app.include_router(organizations.router, prefix=api_prefix, tags=["organizations"])
 app.include_router(projects.router, prefix=f"{api_prefix}/projects", tags=["projects"])
 app.include_router(dashboards.router, prefix=f"{api_prefix}/dashboards", tags=["dashboards"])
 app.include_router(dashboard_members.router, prefix=f"{api_prefix}/dashboards", tags=["dashboard_members"])

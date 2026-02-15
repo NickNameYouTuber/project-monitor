@@ -1,24 +1,22 @@
 import React from 'react';
 import type { Project } from '../App';
-import { Box, Flex, Heading, Text } from '@nicorp/nui';
+import { Box, Flex } from '@nicorp/nui';
 import WhiteboardPageComponent from './whiteboard/WhiteboardPage';
+import { useParams } from 'react-router-dom';
 
 interface WhiteboardPageProps {
   project: Project | null;
 }
 
 export function WhiteboardPage({ project }: WhiteboardPageProps) {
-  return (
-    <Flex className="h-full flex-col">
-      <Box className="border-b border-border p-6 flex-shrink-0">
-        <Box>
-          <Heading level={1} className="text-2xl font-semibold">Whiteboard</Heading>
-          <Text className="text-muted-foreground">Collaborative drawing and diagramming</Text>
-        </Box>
-      </Box>
+  const params = useParams<{ projectId?: string }>();
+  const projectIdFromUrl = params.projectId || null;
+  const projectId = project?.id || projectIdFromUrl;
 
-      <Box className="flex-1 relative overflow-hidden min-h-0">
-        <WhiteboardPageComponent projectId={project?.id || null} />
+  return (
+    <Flex className="flex-1 min-h-0 flex-col">
+      <Box className="flex-1 min-h-0 relative overflow-hidden">
+        <WhiteboardPageComponent key={projectId || 'no-project'} projectId={projectId} />
       </Box>
     </Flex>
   );

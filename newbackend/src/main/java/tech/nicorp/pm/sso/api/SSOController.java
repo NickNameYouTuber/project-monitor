@@ -72,7 +72,7 @@ public class SSOController {
         return config
                 .map(this::toResponse)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.ok(null));
     }
     
     @PostMapping("/organizations/{orgId}/config")
@@ -160,14 +160,22 @@ public class SSOController {
             @RequestParam String code,
             @RequestParam String state) {
         
+        System.out.println("[SSOController] handleCallback called with code=" + code + ", state=" + state);
         try {
+            System.out.println("[SSOController] Calling ssoService.handleCallback...");
             Map<String, Object> result = ssoService.handleCallback(code, state);
+            System.out.println("[SSOController] ssoService.handleCallback returned: " + result);
+            System.out.println("[SSOController] ssoService.handleCallback returned: " + result);
             UUID userId = UUID.fromString((String) result.get("user_id"));
             UUID orgId = UUID.fromString((String) result.get("organization_id"));
             
+            System.out.println("[SSOController] Parsed userId=" + userId + ", orgId=" + orgId);
+            
             User user = userRepository.findById(userId).orElseThrow();
+            System.out.println("[SSOController] Found user: " + user.getUsername());
             
             String ssoEmail = (String) result.get("sso_email");
+            System.out.println("[SSOController] SSO email: " + ssoEmail);
             
             // Создать токен с org_verified, email и sso_email
             Map<String, Object> claims = new java.util.HashMap<>();
@@ -177,20 +185,26 @@ public class SSOController {
                 claims.put("sso_email", ssoEmail);
             }
             
+            System.out.println("[SSOController] Creating JWT token...");
             String token = jwtService.createTokenWithOrgVerification(
                 userId.toString(),
                 orgId,
                 claims
             );
+            System.out.println("[SSOController] Token created successfully");
             
             // Вернуть JSON с токеном и orgId для frontend
-            return ResponseEntity.ok(Map.of(
+            Map<String, Object> response = Map.of(
                 "token", token,
                 "user_id", userId.toString(),
                 "organization_id", orgId.toString()
-            ));
+            );
+            System.out.println("[SSOController] Returning response with org_id=" + orgId);
+            return ResponseEntity.ok(response);
                     
         } catch (Exception e) {
+            System.err.println("[SSOController] ERROR in handleCallback: " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(400).body(Map.of(
                 "error", "sso_failed",
                 "message", e.getMessage() != null ? e.getMessage() : "SSO authentication failed"
