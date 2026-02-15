@@ -3,7 +3,7 @@ FROM node:20-alpine as build
 WORKDIR /app
 
 COPY package*.json ./
-COPY nicorp-nui-0.1.7.tgz ./
+COPY nicorp-nui-0.10.1.tgz ./
 RUN npm install --no-audit --no-fund
 
 COPY . .

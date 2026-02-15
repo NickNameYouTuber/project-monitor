@@ -88,7 +88,7 @@ function RenderWidget({ widget, messageId, isAnswered, onAction, navigate }: Ren
 
             return (
                 <ChatQuestion
-                    id={widget.id || `${messageId}-q-${Math.random().toString(36).slice(2, 6)}`}
+                    id={widget.id || `${messageId}-q`}
                     question={String(d(widget, 'question'))}
                     options={options.map((o: any) => ({
                         id: String(o?.value ?? o?.id ?? ''),

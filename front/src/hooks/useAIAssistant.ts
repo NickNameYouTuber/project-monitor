@@ -3,6 +3,18 @@ import type { ChatMessage, Chat } from '../api/chat';
 import { getChat, sendMessage as sendChatMessage, updateWidgetState as updateWidgetStateApi } from '../api/chat';
 import { useNotifications } from './useNotifications';
 
+/** Ensure every widget in a message has a stable id */
+function normalizeWidgets(msg: ChatMessage): ChatMessage {
+  if (!msg.widgets || !Array.isArray(msg.widgets) || msg.widgets.length === 0) return msg;
+  return {
+    ...msg,
+    widgets: msg.widgets.map((w, i) => ({
+      ...w,
+      id: w.id || `${msg.id}-w-${i}`,
+    })),
+  };
+}
+
 export function useAIAssistant(chatId: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -11,7 +23,7 @@ export function useAIAssistant(chatId: string | null) {
   const loadChat = useCallback(async (id: string) => {
     try {
       const chat = await getChat(id);
-      setMessages(chat.messages || []);
+      setMessages((chat.messages || []).map(normalizeWidgets));
     } catch (error) {
       console.error('Failed to load chat:', error);
       showError('Не удалось загрузить чат');
@@ -64,7 +76,7 @@ export function useAIAssistant(chatId: string | null) {
 
     try {
       const response = await sendChatMessage(chatId, text.trim(), isWidgetResponse);
-      setMessages((prev) => [...prev, response.message]);
+      setMessages((prev) => [...prev, normalizeWidgets(response.message)]);
       return response;
     } catch (error) {
       console.error('Failed to send message:', error);
