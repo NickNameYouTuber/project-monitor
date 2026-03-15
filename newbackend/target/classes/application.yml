@@ -15,7 +15,7 @@ spring:
       hibernate:
         format_sql: true
         jdbc.lob.non_contextual_creation: true
-    open-in-view: false
+    open-in-view: true
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -59,5 +59,10 @@ gptunnel:
   base-url: ${GPTUNNEL_BASE_URL:https://gptunnel.com/v1}
   api-key: ${GPTUNNEL_API_KEY:shds-Lq3Vw7K18HYtAZfAYWSKjpmBefh}
   model: ${LLM_MODEL:gpt-4o}
+
+niid:
+  base-url: ${NIID_BASE_URL:https://api.id.nicorp.tech}
+  client-id: ${NIID_CLIENT_ID:r0n86C5hVO6J04nDJwe_0A}
+  client-secret: ${NIID_CLIENT_SECRET:GdtZHuGg5eGvcqU-1OlGsPB3woH3ItMOdAWSCi600_c}
 
 

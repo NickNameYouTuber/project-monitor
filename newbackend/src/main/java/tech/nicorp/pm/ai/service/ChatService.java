@@ -174,6 +174,31 @@ public class ChatService {
                 }
             }
 
+            // Generate action_result widgets from executed actions
+            for (AIAction executed : executedActions) {
+                if (executed.getNotification() != null) {
+                    Map<String, Object> resultWidget = new HashMap<>();
+                    resultWidget.put("type", "action_result");
+                    Map<String, Object> widgetData = new HashMap<>();
+                    widgetData.put("message", executed.getNotification().getMessage());
+                    widgetData.put("link", executed.getNotification().getLink());
+                    widgetData.put("linkText", executed.getNotification().getLinkText());
+                    resultWidget.put("data", widgetData);
+                    widgetsFromAI.add(resultWidget);
+                }
+            }
+
+            // Re-serialize widgets (may have been extended with action results)
+            if (!widgetsFromAI.isEmpty()) {
+                try {
+                    String widgetsJsonStr = objectMapper.writeValueAsString(widgetsFromAI);
+                    aiMessage.setWidgets(widgetsJsonStr);
+                    log.debug("Saved {} widgets (including action results)", widgetsFromAI.size());
+                } catch (Exception e) {
+                    log.error("Error re-serializing widgets to JSON: {}", e.getMessage(), e);
+                }
+            }
+
             try {
                 String actionsJsonStr = objectMapper.writeValueAsString(actionsJson);
                 aiMessage.setActions(actionsJsonStr);
@@ -382,6 +407,7 @@ public class ChatService {
             "  \"message\": \"Brief explanation of what you need\",\n" +
             "  \"widgets\": [\n" +
             "    {\n" +
+            "      \"id\": \"w-<unique_short_name>\",\n" +
             "      \"type\": \"clarification\",\n" +
             "      \"data\": {\n" +
             "        \"question\": \"The question to ask\",\n" +
@@ -394,10 +420,29 @@ public class ChatService {
             "    }\n" +
             "  ]\n" +
             "}\n\n" +
+            "IMPORTANT: Every widget MUST have a unique \"id\" field (e.g. \"w-column\", \"w-name\", \"w-confirm-delete\"). " +
+            "This is REQUIRED for state persistence!\n\n" +
+            "Widget types:\n" +
+            "- \"clarification\" — ask user a question with options or free text input\n" +
+            "- \"action_confirmation\" — ask user to confirm a destructive or important action before executing it\n\n" +
+            "Action confirmation widget format:\n" +
+            "{\n" +
+            "  \"message\": \"Brief explanation\",\n" +
+            "  \"widgets\": [{\n" +
+            "    \"id\": \"w-confirm-action\",\n" +
+            "    \"type\": \"action_confirmation\",\n" +
+            "    \"data\": {\n" +
+            "      \"title\": \"Confirm action title\",\n" +
+            "      \"description\": \"Detailed description of what will happen\",\n" +
+            "      \"actionLabel\": \"Button text (e.g. 'Удалить', 'Подтвердить')\"\n" +
+            "    }\n" +
+            "  }]\n" +
+            "}\n\n" +
             "For MULTIPLE INPUTS (e.g. create 3 columns), use 'fields' array:\n" +
             "{\n" +
             "  \"message\": \"Введите названия для 3 колонок\",\n" +
             "  \"widgets\": [{\n" +
+            "    \"id\": \"w-columns\",\n" +
             "    \"type\": \"clarification\",\n" +
             "    \"data\": {\n" +
             "      \"question\": \"Названия колонок\",\n" +
@@ -415,6 +460,7 @@ public class ChatService {
             "  \"message\": \"Отлично! Давайте создадим проект. Как вы хотите его назвать?\",\n" +
             "  \"widgets\": [\n" +
             "    {\n" +
+            "      \"id\": \"w-project-name\",\n" +
             "      \"type\": \"clarification\",\n" +
             "      \"data\": {\n" +
             "        \"question\": \"Введите название проекта\",\n" +
@@ -431,6 +477,7 @@ public class ChatService {
             "  \"message\": \"Создаю задачу. В какую колонку её добавить?\",\n" +
             "  \"widgets\": [\n" +
             "    {\n" +
+            "      \"id\": \"w-column\",\n" +
             "      \"type\": \"clarification\",\n" +
             "      \"data\": {\n" +
             "        \"question\": \"Выберите колонку для задачи\",\n" +
@@ -478,7 +525,7 @@ public class ChatService {
             "WRONG (never do this):\n" +
             "{\"message\": \"Choose status:\\n- Backlog\\n- In Progress\"}\n\n" +
             "CORRECT:\n" +
-            "{\"message\": \"Выберите статус\", \"widgets\": [{\"type\": \"clarification\", \"data\": {\"question\": \"Статус проекта\", \"field\": \"status\", \"allowCustomInput\": false, \"options\": [{\"value\": \"backlog\", \"label\": \"Backlog\"}]}}]}\n");
+            "{\"message\": \"Выберите статус\", \"widgets\": [{\"id\": \"w-status\", \"type\": \"clarification\", \"data\": {\"question\": \"Статус проекта\", \"field\": \"status\", \"allowCustomInput\": false, \"options\": [{\"value\": \"backlog\", \"label\": \"Backlog\"}]}}]}\n");
         messages.add(systemMsg);
 
         List<ChatMessage> chatMessages = chatMessageRepository.findByChat_IdOrderByCreatedAtAsc(chat.getId());

@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: tech.nicorp.pm.pipelines.service.PipelineYamlParserTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.081 s -- in tech.nicorp.pm.pipelines.service.PipelineYamlParserTest

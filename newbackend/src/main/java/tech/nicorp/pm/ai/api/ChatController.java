@@ -307,6 +307,36 @@ public class ChatController {
             } catch (Exception e) {
             }
         }
+
+        // Assign stable IDs to widgets that don't have one
+        for (int i = 0; i < widgets.size(); i++) {
+            Map<String, Object> w = widgets.get(i);
+            if (w.get("id") == null || w.get("id").toString().isEmpty()) {
+                w.put("id", message.getId().toString() + "-w-" + i);
+            }
+        }
+
+        // Merge widget states (selectedValue, selectedAt) from widget_states table
+        try {
+            List<WidgetState> states = widgetStateRepository.findByChatMessage_Id(message.getId());
+            if (!states.isEmpty()) {
+                Map<String, WidgetState> stateMap = new HashMap<>();
+                for (WidgetState st : states) {
+                    stateMap.put(st.getWidgetId(), st);
+                }
+                for (Map<String, Object> w : widgets) {
+                    String wId = w.get("id") != null ? w.get("id").toString() : "";
+                    WidgetState st = stateMap.get(wId);
+                    if (st != null) {
+                        w.put("selectedValue", st.getSelectedValue());
+                        w.put("selectedAt", st.getSelectedAt() != null ? st.getSelectedAt().toString() : null);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Don't fail message loading if widget state merge fails
+        }
+
         response.setWidgets(widgets);
         response.setWidgetResponse(message.isWidgetResponse());
 

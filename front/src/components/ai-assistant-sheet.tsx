@@ -11,8 +11,7 @@ import { Bot, Sparkles, ArrowDown } from 'lucide-react';
 import type { Chat } from '../api/chat';
 import { useAIAssistant } from '../hooks/useAIAssistant';
 import { useChatHistory } from '../hooks/useChatHistory';
-import { useNavigate } from 'react-router-dom';
-import { executeClientAction } from '../lib/client-actions';
+import { useWidgetActionHandler } from '../hooks/useWidgetActionHandler';
 
 interface AIAssistantSheetProps {
   open: boolean;
@@ -33,13 +32,13 @@ export function AIAssistantSheet({
 }: AIAssistantSheetProps) {
   const [view, setView] = useState<'list' | 'chat'>('list');
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
-  const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   const { chats, loadChats, createNewChat, deleteChat } = useChatHistory(organizationId || null, projectId || null);
   const { messages, isLoading, loadChat, sendMessage, setMessages, updateWidgetState } = useAIAssistant(currentChatId);
+  const handleWidgetAction = useWidgetActionHandler({ sendMessage, updateWidgetState });
 
   useEffect(() => {
     if (chatId) {
@@ -226,27 +225,7 @@ export function AIAssistantSheet({
                       key={msg.id}
                       message={msg}
                       isAnswered={isAnswered}
-                      onAction={async (actionType, payload) => {
-                        if (actionType === 'clarification_response') {
-                          const messageText = payload.value ? String(payload.value) : '';
-                          if (messageText.trim()) {
-                            const selectedVal = String(payload.optionId || payload.value || '');
-                            if (payload.widgetType) {
-                              await updateWidgetState(msg.id, payload.widgetId || '', payload.widgetType, selectedVal);
-                            }
-                            await sendMessage(messageText, true);
-                          }
-                        } else if (actionType === 'action_confirmation') {
-                          const selectedVal = payload.confirmed ? 'true' : 'false';
-                          if (payload.widgetType) {
-                            await updateWidgetState(msg.id, payload.widgetId || '', payload.widgetType, selectedVal);
-                          }
-                          if (payload.confirmed && payload.clientAction) {
-                            executeClientAction(payload.clientAction, navigate);
-                          }
-                          await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
-                        }
-                      }}
+                      onAction={(actionType, payload) => handleWidgetAction(msg.id, actionType, payload)}
                     />
                   );
                 })}

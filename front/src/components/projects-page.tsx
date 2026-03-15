@@ -81,7 +81,7 @@ function Column({
         dropRef(node);
       }}
       className={cn(
-        'flex-1 min-w-80 bg-card/50 rounded-xl border border-border p-4 transition-all duration-200',
+        'min-w-80 w-80 bg-card/50 rounded-xl border border-border p-4 transition-all duration-200 flex flex-col',
         isOver && 'bg-primary/5 border-primary/30 border-dashed',
         isDragging && 'opacity-50'
       )}
@@ -473,8 +473,8 @@ export function ProjectsPage({ projects, setProjects, columns, setColumns, onPro
         </Box>
       </PageHeader>
 
-      <Box className="flex-1 p-4 md:p-6 overflow-x-auto overflow-y-hidden">
-        <Flex className="gap-4 md:gap-5 h-full min-w-max">
+      <Box className="flex-1 p-4 md:p-6 overflow-auto">
+        <Flex className="gap-4 md:gap-5 min-w-max items-start">
           {sortedColumns.map((column, index) => (
             <Column
               key={column.id}

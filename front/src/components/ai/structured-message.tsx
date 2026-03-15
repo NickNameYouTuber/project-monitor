@@ -61,6 +61,19 @@ export function StructuredMessage({ message, isAnswered, onAction }: StructuredM
                     ))}
                 </div>
             )}
+
+            {/* Fallback: render action notifications as ChatResultCard when no explicit action_result widgets exist */}
+            {widgets.every(w => w.type !== 'action_result' && w.type !== 'action_notification') &&
+              message.actions?.filter(a => a.notification).map((action, idx) => (
+                <div key={`action-notif-${idx}`} className="pl-0.5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300" style={{ animationDelay: `${(widgets.length + idx) * 80}ms` }}>
+                    <ChatResultCard
+                        title={action.notification!.message}
+                        linkLabel={action.notification!.linkText || 'Перейти'}
+                        onNavigate={action.notification!.link ? () => navigate(action.notification!.link) : undefined}
+                        variant="success"
+                    />
+                </div>
+            ))}
         </div>
     );
 }
@@ -85,17 +98,25 @@ function RenderWidget({ widget, messageId, isAnswered, onAction, navigate }: Ren
         case 'clarification': {
             const rawOptions = d(widget, 'options', []);
             const options = Array.isArray(rawOptions) ? rawOptions : [];
+            const mappedOptions = options.map((o: any) => ({
+                id: String(o?.value ?? o?.id ?? ''),
+                label: String(o?.label ?? o?.value ?? o?.id ?? ''),
+                description: o?.description ? String(o.description) : undefined,
+            }));
+
+            // Determine if selectedValue is a free-text answer (not matching any option id)
+            const savedValue = widget.selectedValue ?? null;
+            const isOptionMatch = savedValue != null && mappedOptions.some((o: any) => o.id === savedValue);
+            const restoredSelectedId = isOptionMatch ? savedValue : null;
+            const restoredFreeText = (savedValue != null && !isOptionMatch) ? savedValue : null;
 
             return (
                 <ChatQuestion
                     id={widget.id || `${messageId}-q`}
                     question={String(d(widget, 'question'))}
-                    options={options.map((o: any) => ({
-                        id: String(o?.value ?? o?.id ?? ''),
-                        label: String(o?.label ?? o?.value ?? o?.id ?? ''),
-                        description: o?.description ? String(o.description) : undefined,
-                    }))}
-                    selectedId={widget.selectedValue ?? null}
+                    options={mappedOptions}
+                    selectedId={restoredSelectedId}
+                    freeTextValue={restoredFreeText}
                     disabled={isAnswered || !!widget.selectedValue}
                     allowFreeText={!!d(widget, 'allowCustomInput', false)}
                     columns={options.length > 2 ? 2 : 1}

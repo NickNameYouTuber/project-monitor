@@ -5,8 +5,7 @@ import {
 } from '@nicorp/nui';
 import { Bot, Sparkles, ArrowDown } from 'lucide-react';
 import { ChatMessage } from '../chat-message';
-import { useNavigate } from 'react-router-dom';
-import { executeClientAction } from '../../lib/client-actions';
+import { useWidgetActionHandler } from '../../hooks/useWidgetActionHandler';
 
 interface AIConversationViewProps {
     chatId: string | null;
@@ -14,8 +13,8 @@ interface AIConversationViewProps {
 }
 
 export function AIConversationView({ chatId, onBack }: AIConversationViewProps) {
-    const navigate = useNavigate();
     const { messages, isLoading, loadChat, sendMessage, setMessages, updateWidgetState } = useAIAssistant(chatId);
+    const handleWidgetAction = useWidgetActionHandler({ sendMessage, updateWidgetState });
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -114,27 +113,7 @@ export function AIConversationView({ chatId, onBack }: AIConversationViewProps) 
                                 key={msg.id}
                                 message={msg}
                                 isAnswered={isAnswered}
-                                onAction={async (actionType, payload) => {
-                                    if (actionType === 'clarification_response') {
-                                        const messageText = payload.value ? String(payload.value) : '';
-                                        if (messageText.trim()) {
-                                            const selectedVal = String(payload.optionId || payload.value || '');
-                                            if (payload.widgetType) {
-                                                await updateWidgetState(msg.id, payload.widgetId || '', payload.widgetType, selectedVal);
-                                            }
-                                            await sendMessage(messageText, true);
-                                        }
-                                    } else if (actionType === 'action_confirmation') {
-                                        const selectedVal = payload.confirmed ? 'true' : 'false';
-                                        if (payload.widgetType) {
-                                            await updateWidgetState(msg.id, payload.widgetId || '', payload.widgetType, selectedVal);
-                                        }
-                                        if (payload.confirmed && payload.clientAction) {
-                                            executeClientAction(payload.clientAction, navigate);
-                                        }
-                                        await sendMessage(payload.confirmed ? "Confirmed" : "Cancelled", true);
-                                    }
-                                }}
+                                onAction={(actionType, payload) => handleWidgetAction(msg.id, actionType, payload)}
                             />
                         );
                     })}

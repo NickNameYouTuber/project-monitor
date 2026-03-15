@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: tech.nicorp.pm.calls.service.CallStatusManagerTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.134 s -- in tech.nicorp.pm.calls.service.CallStatusManagerTest
