@@ -1,0 +1,205 @@
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: project-monitor-frontend
+    ports:
+      - "7670:7670"
+    depends_on:
+      - backend
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./newbackend
+      dockerfile: Dockerfile
+    container_name: project-monitor-backend
+    ports:
+      - "7671:7671"
+    environment:
+      - JAVA_OPTS=-Dserver.port=7671
+      - DATABASE_URL=jdbc:postgresql://db:5432/nit
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - GIT_REPOS_ROOT=/git-repos
+      - JWT_SECRET=${JWT_SECRET:-CHANGE_ME_TO_RANDOM_256BIT_SECRET}
+      - GPTUNNEL_BASE_URL=https://gptunnel.com/v1
+      - GPTUNNEL_API_KEY=${GPTUNNEL_API_KEY:-shds-Lq3Vw7K18HYtAZfAYWSKjpmBefh}
+      - LLM_MODEL=gpt-4o
+      - NIID_BASE_URL=https://api.id.nicorp.tech
+      - NIID_CLIENT_ID=${NIID_CLIENT_ID:-Qsl3U0qBryglR-3YkbuH7g}
+      - NIID_CLIENT_SECRET=${NIID_CLIENT_SECRET:-N46sgUQ9Pbfc0l8pN9iIMJ3jjcoixip3YEHL7rWLRho}
+      - LIVEKIT_API_URL=http://livekit:7880
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret_must_be_at_least_32_chars_long_for_security_reasons}
+      - SSO_REDIRECT_URI=https://nit.nicorp.tech
+    volumes:
+      - gitrepos:/git-repos
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+    depends_on:
+      - db
+      - git-http
+
+  git-http:
+    image: gitea/gitea:1.21.10
+    container_name: project-monitor-git-http
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__server__DOMAIN=nit.nicorp.tech
+      - GITEA__server__ROOT_URL=https://nit.nicorp.tech/git/
+      - GITEA__server__HTTP_PORT=7681
+    ports:
+      - "7681:7681"
+    volumes:
+      - gitrepos:/data/git/repositories
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: project-monitor-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=nit
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - project-monitor-network
+
+  runner:
+    build:
+      context: ./runner
+    container_name: project-monitor-runner
+    environment:
+      - API_URL=http://backend:7671/api
+      - RUNNER_TOKEN=${RUNNER_TOKEN:-dev-runner-token}
+      - RUNNER_NAME=default-runner
+      - WORKSPACE_ROOT=/git-repos
+    volumes:
+      - gitrepos:/git-repos
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - project-monitor-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  nimeet-backend:
+    build:
+      context: ./services/nimeet-backend
+      dockerfile: Dockerfile
+    container_name: project-monitor-nimeet-backend
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./services/nimeet-backend/.env
+    depends_on:
+      - mongo
+      - redis
+      - turn
+      - mediasoup-server
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  mediasoup-server:
+    build:
+      context: ./services/mediasoup-server
+      dockerfile: Dockerfile
+    container_name: project-monitor-mediasoup
+    ports:
+      - "4001:4001"
+      - "40000-40100:40000-40100/udp"
+      - "40000-40100:40000-40100/tcp"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-nimeet_redis_pass}@redis:6379
+      - ANNOUNCED_IP=${PUBLIC_IP}
+      - RTC_MIN_PORT=40000
+      - RTC_MAX_PORT=40100
+      - ALLOWED_ORIGINS=https://nit.nicorp.tech,https://meet.nicorp.tech
+    depends_on:
+      - redis
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: project-monitor-mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-nimeet}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-nimeetpass}
+      - MONGO_INITDB_DATABASE=nimeet
+    volumes:
+      - mongodata:/data/db
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: project-monitor-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-nimeet_redis_pass}
+    volumes:
+      - redisdata:/data
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  turn:
+    image: coturn/coturn:4.6.2
+    container_name: project-monitor-turn
+    command: [
+      "-c", "/etc/coturn/turnserver.conf",
+      "--no-cli",
+      "--no-tls",
+      "--no-dtls"
+    ]
+    environment:
+      - TURN_PORT=3478
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+    volumes:
+      - ./turn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: project-monitor-livekit
+    command: --config /etc/livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit.yaml
+    depends_on:
+      - redis
+    networks:
+      - project-monitor-network
+    restart: unless-stopped
+
+networks:
+  project-monitor-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  gitrepos:
+  mongodata:
+  redisdata:
