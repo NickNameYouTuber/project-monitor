@@ -4,6 +4,10 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY nicorp-nui-0.10.1.tgz ./
+
+# Copy environment file for build-time variables (Vite needs this to embed env vars)
+COPY .env* ./
+
 RUN npm install --no-audit --no-fund
 
 COPY . .

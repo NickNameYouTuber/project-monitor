@@ -31,9 +31,9 @@ services:
       - GPTUNNEL_BASE_URL=https://gptunnel.com/v1
       - GPTUNNEL_API_KEY=shds-Lq3Vw7K18HYtAZfAYWSKjpmBefh
       - LLM_MODEL=gpt-4o
-      - NIID_BASE_URL=http://host.docker.internal:11700
-      - NIID_CLIENT_ID=pxTtZsjvwDsnaDGH4zZ5Jw
-      - NIID_CLIENT_SECRET=gTX3EAD-_5eadOBwysA6Btfg9m1-_DfTb_triYeCZ58
+      - NIID_BASE_URL=http://niid-api-gateway:11700
+      - NIID_CLIENT_ID=Qsl3U0qBryglR-3YkbuH7g
+      - NIID_CLIENT_SECRET=N46sgUQ9Pbfc0l8pN9iIMJ3jjcoixip3YEHL7rWLRho
       - LIVEKIT_API_URL=http://livekit:7880
       - LIVEKIT_API_KEY=devkey
       - LIVEKIT_API_SECRET=secret_must_be_at_least_32_chars_long_for_security_reasons
@@ -42,6 +42,7 @@ services:
       - gitrepos:/git-repos
     networks:
       - project-monitor-network
+      - niid_niid-network
     restart: unless-stopped
     depends_on:
       - db
@@ -199,6 +200,8 @@ services:
 networks:
   project-monitor-network:
     driver: bridge
+  niid_niid-network:
+    external: true
 
 volumes:
   pgdata:
